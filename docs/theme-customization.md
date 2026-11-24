@@ -137,15 +137,18 @@ has answered, so painting from it alone flashed the built-in light palette on
 every reload for a user on a dark theme. To avoid that, the app keeps the
 colours of every configured theme in local storage (`themeColors`, written each
 time the configuration loads), and `apps/chat/public/theme-init.js` — a
-synchronous classic script in the `index.html` head, served from `'self'`
-because the app-shell CSP allows no inline scripts — writes the stored theme's
+synchronous classic script in the `index.html` head — writes the stored theme's
 colours onto `<html>` before the bundle runs, resolving `system` against
 `prefers-color-scheme` itself. It lists the properties it wrote in
 `data-theme-preload`; `ThemeContext` removes them before applying the fetched
 configuration, so a key the cached theme had and the current one lacks does not
-linger. A production build loads it from a content-hashed copy under
-`assets/` (`tools/vite/hashed-public-script.mjs`), which chat-api caches as
-`immutable`, so a warm load runs it from cache instead of revalidating it.
+linger. A production build inlines it into the head
+(`tools/vite/inline-public-script.mjs`), so first paint never waits on a
+request for it. The app-shell CSP still allows no inline scripts in general:
+chat-api hashes every inline script of the built `index.html` once at startup
+(`collectInlineScriptHashes` in `apps/chat-api/src/app/static-assets.ts`) and
+adds exactly those `'sha256-…'` sources to `script-src`. The dev server loads
+the script from `public/`.
 
 The cache is per device. On the very first visit, or after the storage is
 cleared, there is nothing to paint and the page starts in the built-in palette

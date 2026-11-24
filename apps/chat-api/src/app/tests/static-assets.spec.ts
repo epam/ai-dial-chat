@@ -1,3 +1,4 @@
+import { createHash } from 'crypto';
 import { mkdir, mkdtemp, rm, writeFile } from 'fs/promises';
 import { tmpdir } from 'os';
 import { join } from 'path';
@@ -18,6 +19,7 @@ import {
   CSP_NONCE_PLACEHOLDER,
 } from '../../config/csp';
 import {
+  collectInlineScriptHashes,
   createFrontendMiddleware,
   HASHED_ASSET_CACHE_CONTROL,
   OVERLAY_SANDBOX_ROUTE,
@@ -390,6 +392,50 @@ describe('static assets serving', () => {
     expect(warn).not.toHaveBeenCalled();
   });
 
+  it.each([CspMode.Enforce, CspMode.ReportOnly])(
+    'allows exactly the inline head script by hash in every HTML policy in %s mode',
+    async (mode) => {
+      const inlineScript = '(() => { paint(); })();';
+      const hash = createHash('sha256').update(inlineScript).digest('base64');
+      await writeFile(
+        join(staticRoot, 'index.html'),
+        CHAT_INDEX_HTML.replace(
+          '</head>',
+          `<script nonce="${CSP_NONCE_PLACEHOLDER}">${inlineScript}</script><script type="module" src="/assets/app.js"></script></head>`,
+        ),
+      );
+      await app.close();
+      app = await createStaticTestApp(
+        staticRoot,
+        overlaySandboxRoot,
+        false,
+        mode,
+      );
+
+      const response = await request(app.getHttpServer()).get('/').expect(200);
+      const policies = [response.headers['content-security-policy']];
+      if (mode === CspMode.ReportOnly) {
+        policies.push(response.headers['content-security-policy-report-only']);
+      }
+      for (const policy of policies) {
+        const scriptSrc = policy
+          .split(';')
+          .find((directive: string) => directive.startsWith('script-src '));
+        expect(scriptSrc).toBe(
+          `script-src 'self' 'sha256-${hash}' 'wasm-unsafe-eval'`,
+        );
+      }
+    },
+  );
+
+  it('adds no script hash when the HTML has no inline script', async () => {
+    const response = await request(app.getHttpServer()).get('/').expect(200);
+
+    expect(response.headers['content-security-policy']).not.toContain(
+      "'sha256-",
+    );
+  });
+
   it('limits WASM to chat HTML and the bundled PDF worker', async () => {
     await writeFile(
       join(staticRoot, 'assets', 'pdf.worker.min-abc123.mjs'),
@@ -506,5 +552,16 @@ describe('static assets serving', () => {
     await expect(
       createFrontendMiddleware({ frontendRootPath: staticRoot }),
     ).rejects.toThrow('Rebuild the frontend');
+  });
+});
+
+describe('collectInlineScriptHashes', () => {
+  it('hashes inline scripts and skips external and empty ones', () => {
+    const html =
+      '<script nonce="n">a();</script><script src="/x.js"></script><script type="module" src="/y.js"></script><script></script>';
+
+    expect(collectInlineScriptHashes(html)).toEqual([
+      `sha256-${createHash('sha256').update('a();').digest('base64')}`,
+    ]);
   });
 });
