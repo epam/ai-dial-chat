@@ -565,6 +565,15 @@ The `ClientConfigResponseDto` response DTO SHALL declare this field with Swagger
 - **WHEN** `WELCOME_SCREEN_DESCRIPTION` is set to `Explore <b>everything</b> DIAL offers`
 - **THEN** the returned `config.welcomeScreenDescription` is the literal string `Explore <b>everything</b> DIAL offers`, unmodified
 
+### Requirement: client-config exposes the skill file count limit
+
+`GET /api/v1/client-config` SHALL return the validated chat-api setting `SKILL_UPLOAD_MAX_FILES` as the positive integer `config.skillUploadMaxFiles`. Its default is 100. The count includes the root `SKILL.md`. The field describes the limit enforced by chat-api independently of DIAL Core's settings.
+
+#### Scenario: Operator raises the file count limit
+
+- **WHEN** chat-api starts with `SKILL_UPLOAD_MAX_FILES=500` and the editor requests client configuration
+- **THEN** the response contains the number `500` in `config.skillUploadMaxFiles`
+
 ### Requirement: client-config exposes maxAttachmentFileSizeBytes
 
 `GET /api/v1/client-config` SHALL include an additional `visibility='client'` key under `config`: `maxAttachmentFileSizeBytes: number` (sourced from `EnvironmentVariables.FILE_UPLOAD_MAX_BYTES` via the `attachments.maxFileSizeBytes` registry entry, default `536870912`) — added to the same cached response `client-config-endpoint` already returns, with no change to the endpoint's existing path, query parameters, authorization (none required), or cache key/TTL.

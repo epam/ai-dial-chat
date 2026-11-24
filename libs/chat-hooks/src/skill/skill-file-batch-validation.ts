@@ -11,7 +11,6 @@ import {
   parseSkillManifest,
   SKILL_FILE_UPLOAD_MAX_BYTES,
   SKILL_MANIFEST_FILE,
-  SKILL_UPLOAD_MAX_FILES,
   SKILL_UPLOAD_MAX_TOTAL_BYTES,
 } from './skill';
 
@@ -57,6 +56,8 @@ export interface SkillFileBatchValidationMessages {
 
 /** Snapshot of editor state the batch validator projects new totals against. */
 export interface SkillFileBatchValidationContext {
+  /** Maximum total files including SKILL.md. When omitted, the server checks the count. */
+  maxFiles?: number;
   /** Paths already present in the editor's supporting-file tree. */
   existingPaths: string[];
   /** Sum of the bytes already held for existing supporting files. */
@@ -232,7 +233,10 @@ export const validateSkillFileBatch = async (
   // A replaced path is already one of the existing files, so it is counted once.
   const projectedTotalFiles =
     new Set([...existingPathSet, ...countedSupportingPaths]).size + 1;
-  if (projectedTotalFiles > SKILL_UPLOAD_MAX_FILES) {
+  if (
+    context.maxFiles !== undefined &&
+    projectedTotalFiles > context.maxFiles
+  ) {
     batchErrors.push({ message: messages.totalCountExceeded });
   }
 

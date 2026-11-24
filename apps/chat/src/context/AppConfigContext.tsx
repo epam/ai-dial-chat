@@ -66,6 +66,7 @@ export interface AppConfigState {
   config: {
     activeEventId: string | null;
     aiTextRefinementAvailable?: boolean;
+    skillUploadMaxFiles?: number;
     appVersion: string;
     asrModelId: string | null;
     transcribeSizeLimitBytes: number;
@@ -208,6 +209,7 @@ const toProviderState = (
     features: (response.features ?? {}) as Record<string, boolean>,
     config: {
       activeEventId: response.config?.activeEventId ?? null,
+      skillUploadMaxFiles: response.config?.skillUploadMaxFiles,
       aiTextRefinementAvailable:
         response.config?.aiTextRefinementAvailable ?? false,
       appVersion: response.config?.appVersion ?? '',

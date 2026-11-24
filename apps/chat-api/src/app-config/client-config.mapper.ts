@@ -36,7 +36,7 @@ const isSpendingLimitsMode = (value: unknown): value is SpendingLimitsMode =>
 /**
  * The `config` fields of the client-config response that are derived from a
  * single registry key. `appVersion` (resolved ahead of the loop),
- * `aiTextRefinementAvailable` and `modelCatalogAvailable` (read from
+ * `aiTextRefinementAvailable`, `skillUploadMaxFiles` and `modelCatalogAvailable` (read from
  * `ConfigService`) and `catalogCreationPermissions` (evaluated from the
  * server-only `CATALOG_CREATION_ROLES`, which is not a registry key) are
  * assembled by `AppConfigService` itself. `Required` keeps
@@ -51,6 +51,7 @@ export type MappedClientConfig = Required<
     | 'catalogCreationPermissions'
     | 'modelCatalogAvailable'
     | 'themesBaseUrl'
+    | 'skillUploadMaxFiles'
   >
 >;
 
