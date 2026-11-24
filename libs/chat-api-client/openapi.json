@@ -12835,6 +12835,203 @@
         "summary": "Call a deployment-configured custom Core API DELETE operation",
         "tags": ["custom-api"]
       }
+    },
+    "/api/v1/content-sources/{sourceId}": {
+      "get": {
+        "description": "Lists the Markdown documents of a GitHub or GitLab source configured in CONTENT_SOURCES_CONFIG. The upstream token stays on the server.",
+        "operationId": "getContentSource",
+        "parameters": [
+          {
+            "name": "sourceId",
+            "required": true,
+            "in": "path",
+            "description": "Source id from the deployment-configured CONTENT_SOURCES_CONFIG registry.",
+            "schema": {
+              "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+              "example": "release-notes",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The source and its documents",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContentSourceResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "404": {
+            "description": "No such source, or the repository path does not exist"
+          },
+          "429": {
+            "description": "Too many concurrent content-source requests"
+          },
+          "502": {
+            "description": "The hosting provider rejected the credentials or returned an invalid or oversized response"
+          },
+          "503": {
+            "description": "The hosting provider is unreachable or timed out"
+          }
+        },
+        "summary": "List the documents of a deployment-configured content source",
+        "tags": ["content-sources"]
+      }
+    },
+    "/api/v1/content-sources/{sourceId}/document": {
+      "get": {
+        "description": "Returns the document Markdown unchanged. The path must be inside the source and match its include glob.",
+        "operationId": "getContentSourceDocument",
+        "parameters": [
+          {
+            "name": "sourceId",
+            "required": true,
+            "in": "path",
+            "description": "Source id from the deployment-configured CONTENT_SOURCES_CONFIG registry.",
+            "schema": {
+              "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+              "example": "release-notes",
+              "type": "string"
+            }
+          },
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "Repository-relative path, normalized by the server. Absolute paths, backslashes, NUL and \"..\" segments that escape the root are rejected.",
+            "schema": {
+              "maxLength": 1024,
+              "example": "docs/releases/1.0.0.md",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The document",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContentDocumentResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing or unsafe path"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "404": {
+            "description": "No such source or document"
+          },
+          "429": {
+            "description": "Too many concurrent content-source requests"
+          },
+          "502": {
+            "description": "The hosting provider rejected the credentials or returned an invalid or oversized response"
+          },
+          "503": {
+            "description": "The hosting provider is unreachable or timed out"
+          }
+        },
+        "summary": "Read one Markdown document of a content source",
+        "tags": ["content-sources"]
+      }
+    },
+    "/api/v1/content-sources/{sourceId}/asset": {
+      "get": {
+        "description": "Returns image bytes (png, jpg, jpeg, gif, webp, svg) from within the source assets folder. SVG responses carry a sandboxing Content-Security-Policy.",
+        "operationId": "getContentSourceAsset",
+        "parameters": [
+          {
+            "name": "sourceId",
+            "required": true,
+            "in": "path",
+            "description": "Source id from the deployment-configured CONTENT_SOURCES_CONFIG registry.",
+            "schema": {
+              "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+              "example": "release-notes",
+              "type": "string"
+            }
+          },
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "Repository-relative path, normalized by the server. Absolute paths, backslashes, NUL and \"..\" segments that escape the root are rejected.",
+            "schema": {
+              "maxLength": 1024,
+              "example": "docs/releases/1.0.0.md",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The image bytes",
+            "content": {
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/gif": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/webp": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/svg+xml": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing or unsafe path, or an unsupported file type"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "404": {
+            "description": "No such source or asset, or the path is outside the assets folder"
+          },
+          "429": {
+            "description": "Too many concurrent content-source requests"
+          },
+          "502": {
+            "description": "The hosting provider rejected the credentials or returned an invalid or oversized response"
+          },
+          "503": {
+            "description": "The hosting provider is unreachable or timed out"
+          }
+        },
+        "summary": "Read one image of a content source",
+        "tags": ["content-sources"]
+      }
     }
   },
   "info": {
@@ -12871,6 +13068,10 @@
     {
       "name": "custom-api",
       "description": "Deployment-configured custom Core API operations (CUSTOM_CORE_API_CONFIG)"
+    },
+    {
+      "name": "content-sources",
+      "description": "Read-only Markdown and image proxy for deployment-configured GitHub/GitLab sources (CONTENT_SOURCES_CONFIG)"
     }
   ],
   "servers": [
@@ -22122,6 +22323,103 @@
           }
         },
         "required": ["data"]
+      },
+      "ContentSourceKind": {
+        "type": "string",
+        "enum": ["file", "directory"]
+      },
+      "ContentSourceFeedDto": {
+        "type": "object",
+        "properties": {
+          "summaryHeading": {
+            "type": "string",
+            "description": "Heading text whose section a feed client uses as the document summary.",
+            "example": "Summary"
+          }
+        }
+      },
+      "ContentDocumentSummaryDto": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "example": "docs/releases/1.0.0.md"
+          },
+          "title": {
+            "type": "string",
+            "description": "First H1 of the document, or its file name without extension.",
+            "example": "Release 1.0.0"
+          },
+          "date": {
+            "type": "string",
+            "description": "Created or updated commit date; null when the source has no dates or the date is unknown.",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": ["path", "title", "date"]
+      },
+      "ContentSourceResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "release-notes"
+          },
+          "title": {
+            "type": "string",
+            "example": "Release notes"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContentSourceKind"
+              }
+            ]
+          },
+          "feed": {
+            "$ref": "#/components/schemas/ContentSourceFeedDto"
+          },
+          "webUrl": {
+            "type": "string",
+            "description": "Repository page of the source on the hosting provider.",
+            "example": "https://github.com/epam/ai-dial-chat/tree/development/docs/releases"
+          },
+          "documents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContentDocumentSummaryDto"
+            }
+          }
+        },
+        "required": ["id", "title", "kind", "feed", "webUrl", "documents"]
+      },
+      "ContentDocumentResponseDto": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "example": "docs/releases/1.0.0.md"
+          },
+          "title": {
+            "type": "string",
+            "example": "Release 1.0.0"
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "markdown": {
+            "type": "string",
+            "description": "Document Markdown exactly as stored in the repository. Untrusted: clients must sanitize their rendering and rewrite relative links themselves."
+          },
+          "webUrl": {
+            "type": "string",
+            "description": "Page of the document on the hosting provider."
+          }
+        },
+        "required": ["path", "title", "date", "markdown", "webUrl"]
       },
       "ConversationTitleStreamEventDto": {
         "description": "One `data:` JSON payload of the conversation title stream, discriminated by `type`.",

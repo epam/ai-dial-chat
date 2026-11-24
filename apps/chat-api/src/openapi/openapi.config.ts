@@ -45,6 +45,10 @@ export const createOpenApiConfig = (port: string | number) =>
       'custom-api',
       'Deployment-configured custom Core API operations (CUSTOM_CORE_API_CONFIG)',
     )
+    .addTag(
+      'content-sources',
+      'Read-only Markdown and image proxy for deployment-configured GitHub/GitLab sources (CONTENT_SOURCES_CONFIG)',
+    )
     .addCookieAuth(
       DEFAULT_SESSION_COOKIE_NAME,
       {

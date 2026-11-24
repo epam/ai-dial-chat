@@ -2270,6 +2270,137 @@ export interface CommitApplicationVersionDto {
 /**
  *
  * @export
+ * @interface ContentDocumentResponseDto
+ */
+export interface ContentDocumentResponseDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ContentDocumentResponseDto
+   */
+  path: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ContentDocumentResponseDto
+   */
+  title: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ContentDocumentResponseDto
+   */
+  date: string | null;
+  /**
+   * Document Markdown exactly as stored in the repository. Untrusted: clients must sanitize their rendering and rewrite relative links themselves.
+   * @type {string}
+   * @memberof ContentDocumentResponseDto
+   */
+  markdown: string;
+  /**
+   * Page of the document on the hosting provider.
+   * @type {string}
+   * @memberof ContentDocumentResponseDto
+   */
+  webUrl: string;
+}
+/**
+ *
+ * @export
+ * @interface ContentDocumentSummaryDto
+ */
+export interface ContentDocumentSummaryDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ContentDocumentSummaryDto
+   */
+  path: string;
+  /**
+   * First H1 of the document, or its file name without extension.
+   * @type {string}
+   * @memberof ContentDocumentSummaryDto
+   */
+  title: string;
+  /**
+   * Created or updated commit date; null when the source has no dates or the date is unknown.
+   * @type {string}
+   * @memberof ContentDocumentSummaryDto
+   */
+  date: string | null;
+}
+/**
+ *
+ * @export
+ * @interface ContentSourceFeedDto
+ */
+export interface ContentSourceFeedDto {
+  /**
+   * Heading text whose section a feed client uses as the document summary.
+   * @type {string}
+   * @memberof ContentSourceFeedDto
+   */
+  summaryHeading?: string;
+}
+
+/**
+ *
+ * @export
+ */
+export const ContentSourceKind = {
+  File: 'file',
+  Directory: 'directory',
+} as const;
+export type ContentSourceKind =
+  (typeof ContentSourceKind)[keyof typeof ContentSourceKind];
+
+/**
+ *
+ * @export
+ * @interface ContentSourceResponseDto
+ */
+export interface ContentSourceResponseDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ContentSourceResponseDto
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ContentSourceResponseDto
+   */
+  title: string;
+  /**
+   *
+   * @type {ContentSourceKind}
+   * @memberof ContentSourceResponseDto
+   */
+  kind: ContentSourceKind;
+  /**
+   *
+   * @type {ContentSourceFeedDto}
+   * @memberof ContentSourceResponseDto
+   */
+  feed: ContentSourceFeedDto;
+  /**
+   * Repository page of the source on the hosting provider.
+   * @type {string}
+   * @memberof ContentSourceResponseDto
+   */
+  webUrl: string;
+  /**
+   *
+   * @type {Array<ContentDocumentSummaryDto>}
+   * @memberof ContentSourceResponseDto
+   */
+  documents: Array<ContentDocumentSummaryDto>;
+}
+
+/**
+ *
+ * @export
  * @interface ConversationAttachmentMissingErrorDto
  */
 export interface ConversationAttachmentMissingErrorDto {
