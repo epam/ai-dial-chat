@@ -53,7 +53,7 @@ import '@epam/ai-dial-skills/styles.css';
 ## Peer Dependencies
 
 - `react` `^19.2.8`
-- `@epam/ai-dial-ui-kit` `^0.16.0`
+- `@epam/ai-dial-ui-kit` `^0.17.0-dev.18`
 - `@epam/ai-dial-chat-shared` `*`
 - `@epam/ai-dial-react-file-manager` `^0.4.3` — `SkillDetailsSidePanel`
   renders its `DialFoldersTree`
@@ -273,8 +273,10 @@ message (`deletedMessage` for `SkillUnresolvedReason.Deleted`,
 `notSharedMessage` for `SkillUnresolvedReason.NotShared`) beside an icon
 (`IconTrash` or `IconLock`, `DIAL_ICON_SIZE.MD`) — again no description
 paragraph and no "View details" button. `colors`
-(`SkillInfoTooltipContentColors`) sets `unresolvedMessage` (default
-`--text-primary`) and `unresolvedIcon` (default `--text-secondary`).
+(`SkillInfoTooltipContentColors`) sets `unresolvedMessage` and `unresolvedIcon`;
+both default to the inverted `InteractiveTooltip` panel's own text colour,
+which the content inherits. The "View details" action is a
+`ButtonVariant.Inverted` link button for the same reason.
 
 `viewDetailsTabIndex` sets the "View details" button's `tabIndex`; pass `-1`
 to keep it clickable but out of the Tab sequence, as `FavoriteSkillsPanel`

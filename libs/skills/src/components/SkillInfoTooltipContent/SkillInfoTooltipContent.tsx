@@ -93,8 +93,9 @@ export const SkillInfoTooltipContent: FC<SkillInfoTooltipContentProps> = ({
        * content's start edge instead of stretching it across the panel; the
        * kit's Small size is 24px tall with a 12px label, matching the text.
        */}
+      {/* The kit draws the `InteractiveTooltip` panel inverted, so the link uses the inverted variant to keep its contrast. */}
       <Button
-        variant={ButtonVariant.Primary}
+        variant={ButtonVariant.Inverted}
         appearance={ButtonAppearance.Link}
         size={ElementSize.Small}
         className="self-start"

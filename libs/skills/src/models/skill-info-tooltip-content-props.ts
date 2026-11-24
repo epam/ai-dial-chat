@@ -2,9 +2,9 @@ import type { SkillUnresolvedReason } from '../types/skill-unresolved-reason';
 
 /** Color overrides for `SkillInfoTooltipContent`. */
 export interface SkillInfoTooltipContentColors {
-  /** Color of the trash-can / lock icon shown for an unresolved skill. Defaults to `--text-secondary`. */
+  /** Color of the trash-can / lock icon shown for an unresolved skill. Defaults to the inverted tooltip panel's text color. */
   unresolvedIcon?: string;
-  /** Text color of the unresolved-skill message. Defaults to `--text-primary`. */
+  /** Text color of the unresolved-skill message. Defaults to the inverted tooltip panel's text color. */
   unresolvedMessage?: string;
 }
 

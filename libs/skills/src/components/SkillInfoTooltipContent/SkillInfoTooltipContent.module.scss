@@ -1,7 +1,12 @@
+/*
+ * The content sits on the kit's inverted `InteractiveTooltip` panel, so by
+ * default it inherits the panel's `--text-control-inverted` colour; a
+ * light-surface token such as `--text-primary` would lose its contrast there.
+ */
 .unresolvedIcon {
-  color: var(--sk-tooltip-unresolved-icon, var(--text-secondary, #57647a));
+  color: var(--sk-tooltip-unresolved-icon, currentColor);
 }
 
 .unresolvedMessage {
-  color: var(--sk-tooltip-unresolved-message, var(--text-primary, #161b2d));
+  color: var(--sk-tooltip-unresolved-message, inherit);
 }
