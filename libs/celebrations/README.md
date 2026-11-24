@@ -403,7 +403,7 @@ export const halloweenLabels: Partial<HalloweenLabels> = {
 
 ### NewYearScene
 
-`PenguinStar` and `SnowmanDelivery` play on a gift click, picked at random.
+`PenguinStar`, `SnowmanDelivery` and `ElfFireworks` play on a gift click, picked at random.
 `GiftWrapping` and `ReindeerTakeoff` form the secret pool for `happy new year`,
 selected without consecutive repeats independently of gift clicks. Snow, confetti
 and sleigh scenes are no longer included.
@@ -464,7 +464,7 @@ its reversible visual transform is cancelled when playback stops.
 Typing, pointer/focus interaction, scrolling, viewport or target changes,
 hidden tabs, navigation, scene replacement and motion-preference changes stop
 the scene and release its player, listeners, observers and timers. The gift
-picks the penguin or the snowman; the secret phrase picks the elves or reindeer.
+picks the penguin, the snowman or the fireworks elf; the secret phrase picks the elves or reindeer.
 Hosts can override `penguinStarToastMessage` through existing labels. The scene
 budgets 140 generated SVG artwork nodes, 32 animated properties, 80 keyframes
 per property and 120 KB of composition data. It uses no external assets,
@@ -615,6 +615,49 @@ properties (48 on mobile), 128 keyframes per property, 1,300 keyframes in
 total, 170 KB of composition data and 10 snow puffs (4 on mobile). It uses no
 external assets, filters, masks, gradients or per-frame host measurements;
 these limits are not a frame-rate guarantee.
+
+New Year's elf fireworks, "Some Buttons Were Made for Launching", reuses the
+gift-wrapping master elf. He fades in on the composer's upper edge with a sack of
+rockets, sets the sack down and tosses the rockets one by one onto the rim, where
+each lands upright with a wobble. Wondering what could launch them, he looks
+along the rim, walks to the composer's send button, lowers a candy cane, hooks
+an inert visual copy of the button, tugs twice and yanks it over his shoulder
+onto the rim. A press by hand does nothing; he scratches his cap, then jumps on
+the button with both boots. The fuses spark, the rockets fire from the far end
+of the rack and burst across the whole viewport above the composer while he
+cheers with two hops on the squashed button. He hops off, kicks the copy back
+into its exact slot and walks to the last rocket, which only fizzles. He peers
+into it, it fires, and he rides it away holding on; his cap flutters down to the
+rim, the final burst goes off, he falls back beside the cap, shakes off the
+dizziness, puts the cap on, bows and leaves with his sack.
+
+The send button is the composer's inline-end-most button. It is borrowed only
+when it is idle, visible, unfocused, unhovered, untransformed, 24–120 × 24–64 px
+with at most 40 nodes, inside the composer and far enough toward its end, and
+when a cane of at most 200 px reaches its top; a disabled button still qualifies,
+since only its copy moves. Otherwise he pulls a drawn detonator out of the sack
+and the story is the same, without borrowing anything. Without an eligible
+composer that leaves 170 px of headroom (140 px on mobile), the scene shows a
+static elf under one burst. Reduced motion, unsupported browser APIs and player
+failures show the same still. RTL mirrors the rim and the travel but never the
+copied button's text. Mobile keeps the full story with fewer rockets and
+smaller bursts.
+
+One 25.6-second native Lottie SVG composition carries the elf, rockets, bursts
+and props; the provider allows 28.1 seconds. The button copy is an inert,
+`aria-hidden` snapshot driven by WAAPI keyframes generated from the same plan
+and started on the Lottie clock through the session's `onPlaybackStarted`
+callback; only the original's opacity is animated, from the hook until the copy
+is back in its rect, and the original is never clicked, focused or reparented.
+Typing, pointer/focus interaction, scrolling, viewport or target changes, hidden
+tabs, navigation and motion-preference changes stop the scene and release its
+player, copy, listeners, observers and timers. Hosts can override
+`elfFireworksToastMessage` through the New Year labels. The scene budgets one
+player, one button copy, at most 17 layers, 6 rockets with 5 bursts of 12 sparks
+plus an 18-spark finale (4 rockets, 3 × 8 + 12 sparks on mobile) and 220 KB of
+composition data (150 KB on mobile). It uses no external assets, filters, masks,
+gradients or per-frame host measurements; these limits are not a frame-rate
+guarantee.
 
 The Halloween portal briefly pulls visual copies of up to two adjacent, visible
 conversation-history rows into its claw, then restores the rows. It never changes

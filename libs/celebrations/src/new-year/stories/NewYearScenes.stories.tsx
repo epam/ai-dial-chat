@@ -187,3 +187,54 @@ export const SnowmanDeliveryInterruption: Story = {
     });
   },
 };
+
+/** The elf fishes the composer's send button onto the rim and stomps it to launch the fireworks. */
+export const ElfFireworks: Story = {
+  args: { sceneId: NewYearScene.ElfFireworks },
+  parameters: { celebrationScene: NewYearScene.ElfFireworks },
+};
+
+export const ElfFireworksMobile: Story = {
+  args: { sceneId: NewYearScene.ElfFireworks, isMobile: true },
+};
+
+export const ElfFireworksRtl: Story = {
+  args: { sceneId: NewYearScene.ElfFireworks, dir: 'rtl' },
+};
+
+export const ElfFireworksReducedMotion: Story = {
+  args: { sceneId: NewYearScene.ElfFireworks, isReducedMotion: true },
+};
+
+/** Starters below the composer, as in the chat's default layout. */
+export const ElfFireworksStartersBelow: Story = {
+  args: { sceneId: NewYearScene.ElfFireworks, startersBelowComposer: true },
+};
+
+/** Clicking the page mid-launch ends the scene and the original send button is back at once. */
+export const ElfFireworksInterruption: Story = {
+  args: { sceneId: NewYearScene.ElfFireworks },
+  play: async ({ canvasElement }) => {
+    const scene = await waitFor(
+      () => {
+        const found = canvasElement.ownerDocument.querySelector(
+          '[data-new-year-scene="elf-fireworks"]',
+        );
+        if (!found) throw new Error('Scene not started');
+        return found;
+      },
+      { timeout: 5000 },
+    );
+    await new Promise((resolve) => setTimeout(resolve, 12000));
+    canvasElement.ownerDocument.body.dispatchEvent(
+      new PointerEvent('pointerdown', { bubbles: true }),
+    );
+    await waitFor(() => {
+      if (scene.isConnected) throw new Error('Scene still running');
+      if (
+        canvasElement.ownerDocument.querySelector('[data-celebration-snapshot]')
+      )
+        throw new Error('A button copy remains');
+    });
+  },
+};
