@@ -85,6 +85,12 @@ export interface McpAppInlinePreviewProps {
   /** Accessible label of the spinner shown while the app loads. Defaults to `'Loading app'`. */
   loadingAriaLabel?: string;
   /**
+   * Called with the error when the renderer fails to load or throws while
+   * rendering, so the host can log it; the preview then shows
+   * `loadErrorLabel`.
+   */
+  onRendererError?: (error: Error) => void;
+  /**
    * Whether this message's MCP App is currently open in the full-width
    * canvas. When `true`, the header stays (so the tool/app identity is still
    * visible) but the body shows `openedInCanvasLabel` centered instead of
@@ -112,6 +118,7 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
   actionsGroupAriaLabel = 'MCP app actions',
   loadErrorLabel,
   loadingAriaLabel = 'Loading app',
+  onRendererError,
   isOpenedInCanvas = false,
   openedInCanvasLabel,
   colors,
@@ -170,8 +177,11 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
   >(undefined);
   const isRendererFailed = failedRendererAttempt === attemptId;
   const handleRendererError = useCallback(
-    () => setFailedRendererAttempt(attemptId),
-    [attemptId],
+    (error: Error) => {
+      setFailedRendererAttempt(attemptId);
+      onRendererError?.(error);
+    },
+    [attemptId, onRendererError],
   );
 
   if (status === McpAppInlinePreviewStatus.Unavailable) {

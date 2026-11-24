@@ -1,7 +1,7 @@
-import {
+import type {
   AttachmentContentType,
-  type McpAppCanvasContent,
-  type McpAppDisplayMode,
+  McpAppCanvasContent,
+  McpAppDisplayMode,
 } from '@epam/ai-dial-attachment-canvas';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -16,6 +16,15 @@ import {
   computeMcpAppSeedKey,
   resolveMcpAppToolResult,
 } from '../../utils/mcp-app';
+
+/*
+ * `McpAppInlinePreview` loads this package's renderer subpath lazily, and Nx
+ * forbids a value import from a lazily loaded package (it cannot tell that
+ * subpath from the root), so the enum is imported as a type only. The
+ * `satisfies` check keeps the literal in step with the enum member.
+ */
+const MCP_APP_CONTENT_TYPE =
+  'mcp_app' satisfies `${AttachmentContentType.McpApp}` as AttachmentContentType.McpApp;
 
 /** State returned by `useMcpAppInlinePreview`. */
 export interface McpAppInlinePreviewState {
@@ -159,7 +168,7 @@ export const useMcpAppInlinePreview = (
     reload,
     attemptId: reloadToken,
     content: {
-      type: AttachmentContentType.McpApp,
+      type: MCP_APP_CONTENT_TYPE,
       html,
       sandboxUrl,
       toolInput,

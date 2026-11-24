@@ -55,6 +55,7 @@ const hostAdapter: McpAppHostAdapter = {
 describe('McpAppInlinePreview — renderer load failure', () => {
   it('shows the load error, and reload loads the renderer again', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const onRendererError = vi.fn();
     render(
       <McpAppInlinePreview
         match={match}
@@ -65,6 +66,7 @@ describe('McpAppInlinePreview — renderer load failure', () => {
         expandAriaLabel="Expand"
         reloadAriaLabel="Reload"
         loadErrorLabel="Could not load the app"
+        onRendererError={onRendererError}
         openedInCanvasLabel="Opened in canvas"
       />,
     );
@@ -72,6 +74,11 @@ describe('McpAppInlinePreview — renderer load failure', () => {
     expect(
       (await screen.findAllByText('Could not load the app')).length,
     ).toBeGreaterThan(0);
+    expect(onRendererError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'Failed to fetch dynamically imported module',
+      }),
+    );
     expect(screen.queryByText('mounted app')).toBeNull();
 
     rendererModule.isFailing = false;

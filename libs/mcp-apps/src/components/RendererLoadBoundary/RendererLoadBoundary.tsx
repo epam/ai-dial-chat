@@ -4,8 +4,8 @@ import { Component, type ReactNode } from 'react';
 export interface RendererLoadBoundaryProps {
   /** The lazily loaded renderer. */
   children: ReactNode;
-  /** Called once when loading or rendering `children` throws. */
-  onError: () => void;
+  /** Called once with the thrown error when loading or rendering `children` fails. */
+  onError: (error: Error) => void;
 }
 
 interface RendererLoadBoundaryState {
@@ -29,8 +29,10 @@ export class RendererLoadBoundary extends Component<
     return { hasError: true };
   }
 
-  override componentDidCatch(): void {
-    this.props.onError();
+  override componentDidCatch(error: unknown): void {
+    this.props.onError(
+      error instanceof Error ? error : new Error(String(error)),
+    );
   }
 
   override render(): ReactNode {
