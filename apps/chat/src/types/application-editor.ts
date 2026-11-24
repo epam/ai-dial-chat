@@ -14,3 +14,10 @@ export enum ApplicationCreateStrategy {
   /** Metadata is created first; the editor switches to edit mode in place and setup saves separately. */
   MetadataFirst = 'metadata-first',
 }
+
+/** Where the Access section's stored list stands. */
+export enum ApplicationAccessLoadStatus {
+  Loading = 'loading',
+  Loaded = 'loaded',
+  Failed = 'failed',
+}

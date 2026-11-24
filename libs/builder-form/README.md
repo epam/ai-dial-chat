@@ -464,6 +464,80 @@ import { DeploymentLocalesField } from '@epam/ai-dial-builder-form';
 
 `summaryClassName` (`'dial-body-text'`) and `rowLabelClassName` (`'dial-tiny-lead-text'`) set typography only. Colors come from `colors` (`DeploymentLocalesFieldColors`): `summaryText` and `rowLabelText`, both defaulting to `--text-secondary`. `DeploymentCreationForm` forwards `styles.localesColors` to it.
 
+### AccessField
+
+The **Access** section of an editor: a title, a description, a `Configure` button, one removable chip per configured entry, read-only chips for entries the author cannot edit, and an informational section message. The library knows nothing about what the content kinds are. The host supplies them as `contentOptions`, maps `AccessEntry` values to and from its stored format, and writes every string.
+
+`value`, `onChange`, `contentOptions` and `labels` are required. `value` holds only complete entries (`{ contentId, level }`); `onChange` receives the full list when a chip is removed or the modal is saved. The section is the kit's `FormSection` with a `NeutralButton` as its action, so `Configure` sits on the heading row. A chip is a kit `Tag` (`TagAppearance.Bordered`) reading `<option label>: <level label>`, and its remove control is named by `labels.removeEntry(chipText)`. `readOnlyChips` (`{ id, label }`) render without a remove control and are never listed in the modal. `noticeText` renders as an informational section message while `value` or `readOnlyChips` is not empty; the host decides the wording. Adding and removing entries is announced through a polite live region that stays mounted (`labels.announceAdded` / `labels.announceRemoved`). The modal opens from `Configure`, and focus returns to that button when it closes.
+
+```tsx
+import {
+  AccessField,
+  AccessLevel,
+  DEFAULT_ACCESS_FIELD_LABELS,
+  type AccessContentOption,
+  type AccessEntry,
+} from '@epam/ai-dial-builder-form';
+import { useState } from 'react';
+
+const contentOptions: AccessContentOption[] = [
+  {
+    id: 'documents',
+    label: 'Documents',
+    allowedAccess: [AccessLevel.Read, AccessLevel.ReadWrite],
+  },
+  { id: 'catalog', label: 'Catalog', allowedAccess: [AccessLevel.Read] },
+];
+
+export const AccessSection = () => {
+  const [value, setValue] = useState<AccessEntry[]>([]);
+
+  return (
+    <AccessField
+      value={value}
+      onChange={setValue}
+      contentOptions={contentOptions}
+      readOnlyChips={[{ id: 'managed', label: 'Managed: Read' }]}
+      noticeText="Access takes effect after an administrator approves the app."
+      labels={DEFAULT_ACCESS_FIELD_LABELS}
+    />
+  );
+};
+```
+
+`DEFAULT_ACCESS_FIELD_LABELS` holds the English defaults for every `AccessFieldLabels` key (`title`, `description`, `configureLabel`, `modalTitle`, `selectContent`, `selectAccess`, `accessRead`, `accessReadWrite`, `removeEntry`, `deleteCard`, `announceAdded`, `announceRemoved`, `cancelLabel`, `saveLabel`, `closeAriaLabel`); `removeEntry`, `announceAdded` and `announceRemoved` are functions of the chip text. `titleClassName` and `descriptionClassName` add classes to the heading and the description on top of the form section's own type scale; `chipClassName` (`'dial-tiny-text'`) sets the chip typography. The section and the button take their colours from the kit. Colors come from `colors` (`AccessFieldColors`): `chipText` (`--text-secondary`), and the modal's `cardBackground` (`--bg-layer-base`) and `cardBorder` (`--stroke-tertiary`). The library exposes no public `dial-*` class for these components.
+
+### AccessModal
+
+The modal `AccessField` opens, documented here as a building block. `open`, `value`, `contentOptions`, `labels` (`AccessModalLabels`), `onSave` and `onClose` are required.
+
+The modal edits a draft copy of `value`, restarted from `value` each time it opens. Each card holds a content dropdown and an access dropdown. The access dropdown offers only the chosen option's `allowedAccess`, and changing the content to an option that does not allow the chosen level resets the level to `Read`. A content option chosen in another card is disabled. Exactly one empty card trails the list and is never saved; deleting it does nothing. `Save` calls `onSave` with the complete cards in order and drops any card with only one field filled. `Cancel`, the close control and `Escape` call `onClose` and discard the draft; a click outside the modal does nothing, so a stray click cannot discard a half-edited draft. A card and its delete button are named `<prefix> <n>`, with `: <option label>` appended once the card has a content option.
+
+```tsx
+import {
+  AccessLevel,
+  AccessModal,
+  DEFAULT_ACCESS_FIELD_LABELS,
+} from '@epam/ai-dial-builder-form';
+
+<AccessModal
+  open={isOpen}
+  value={[{ contentId: 'documents', level: AccessLevel.Read }]}
+  contentOptions={[
+    {
+      id: 'documents',
+      label: 'Documents',
+      allowedAccess: [AccessLevel.Read, AccessLevel.ReadWrite],
+    },
+  ]}
+  labels={DEFAULT_ACCESS_FIELD_LABELS}
+  onSave={handleSave}
+  onClose={handleClose}
+/>;
+```
+
+`colors` (`AccessModalColors`) is applied inside the popup, since the kit renders it in a portal.
+
 ## Utilities
 
 ### validateDeploymentCreationFields
@@ -581,6 +655,13 @@ MetadataField.Locales;
 MetadataField.Tags;
 ```
 
+```tsx
+import { AccessLevel } from '@epam/ai-dial-builder-form';
+
+AccessLevel.Read; // the entry grants read only
+AccessLevel.ReadWrite; // the entry grants read and write
+```
+
 ## Types
 
 ```tsx
@@ -604,6 +685,15 @@ import type {
   DeploymentCreationFormValidationOptions,
   DeploymentLocalesFieldProps,
   DeploymentLocalesFieldColors,
+  AccessContentOption,
+  AccessEntry,
+  AccessReadOnlyChip,
+  AccessFieldProps,
+  AccessFieldLabels,
+  AccessFieldColors,
+  AccessModalProps,
+  AccessModalLabels,
+  AccessModalColors,
   BuilderFormContainerProps,
   BuilderFormContainerStyles,
   BuilderFormContainerColors,

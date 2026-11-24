@@ -47,6 +47,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
+import ApplicationAccessSection from '../../components/ApplicationAccessSection/ApplicationAccessSection';
 import {
   AppsEditorI18nKeys,
   ButtonsI18nKeys,
@@ -58,6 +59,7 @@ import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
+import { useApplicationAccessEditor } from '../../hooks/application-editor/useApplicationAccessEditor';
 import { useApplicationAvatarPicker } from '../../hooks/application-editor/useApplicationAvatarPicker';
 import { useEditedApplication } from '../../hooks/application-editor/useEditedApplication';
 import { useMetadataLabels } from '../../hooks/application-editor/useMetadataLabels';
@@ -163,6 +165,20 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
     validationOptions: metadataValidationOptions,
     reseedKey: wasCreatedThisSession ? undefined : deployment?.id,
   });
+
+  const accessEditor = useApplicationAccessEditor({
+    isEnabled: Boolean(definition.hasAccess),
+    appId,
+    shouldLoad: !wasCreatedThisSession,
+    failedMessage: t(definition.messageKeys.saveFailed),
+  });
+  const { save: saveAccess, saveOrThrow: saveAccessOrThrow } = accessEditor;
+  /* The panel's adapter outlives a render: a retry must see that an earlier attempt already sent the draft. */
+  const saveAccessOrThrowRef = useRef(saveAccessOrThrow);
+  useLayoutEffect(() => {
+    saveAccessOrThrowRef.current = saveAccessOrThrow;
+  });
+  const isAccessDirty = accessEditor.access.isDirty;
 
   const [setup, setSetup] = useState<ApplicationSetupValues>(
     definition.defaultSetup,
@@ -347,7 +363,8 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
     [setup, setupBaseline],
   );
   const { allowNextNavigation } = useBuilderLeaveGuard({
-    isDirty: metadata.isDirty || isSetupDirty || isSetupEditorDirty,
+    isDirty:
+      metadata.isDirty || isSetupDirty || isSetupEditorDirty || isAccessDirty,
   });
 
   const handleSetupFieldBlur = useCallback(
@@ -428,15 +445,31 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
             type: notificationType,
           });
           switchToCreatedApp(newAppId, metadata.values);
+          /* The application exists and the editor is in edit mode for it: a refused Access step leaves the draft to retry. */
+          await saveAccess(newAppId, metadata.values);
           return;
         }
-      } else if (definition.update) {
-        await definition.update(appId, metadata.values, setup);
+        if (isAccessDirty) {
+          const createdId = result?.id;
+          if (!createdId) throw new Error('Created application has no id');
+          if (!(await saveAccess(createdId, metadata.values))) {
+            switchToCreatedApp(createdId, metadata.values);
+            return;
+          }
+        }
       } else {
-        try {
-          await setupRef.current?.save(metadata.values);
-        } catch {
-          // The Setup component shows its own save error inline.
+        if (definition.update) {
+          await definition.update(appId, metadata.values, setup);
+        } else {
+          try {
+            await setupRef.current?.save(metadata.values);
+          } catch {
+            // The Setup component shows its own save error inline.
+            return;
+          }
+        }
+        if (!(await saveAccess(appId, metadata.values))) {
+          void refetchDeployments().catch(() => undefined);
           return;
         }
       }
@@ -487,6 +520,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
     context,
     definition,
     isCreationBlocked,
+    isAccessDirty,
     isEditMode,
     isMetadataFirst,
     metadata.values,
@@ -496,6 +530,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
     notifyOperationSuccess,
     refetchDeployments,
     returnUrl,
+    saveAccess,
     setup,
     showErrorNotification,
     switchToCreatedApp,
@@ -526,18 +561,41 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
    * while it is open.
    */
   const [saveAdapter, setSaveAdapter] = useState<ResourceSaveAdapter>();
+  /*
+   * The application a create in the Save panel made, kept until the panel
+   * saves successfully or is dismissed, so a retry in the same folder reuses
+   * it and a dismissed panel leaves the editor in edit mode for it.
+   */
+  const createdApplicationRef = useRef<
+    { id: string; folderKey: string } | undefined
+  >(undefined);
   const openSavePanel = useCallback(() => {
     const values = metadata.values;
     const { update } = definition;
+    /*
+     * The Access step runs inside the save phase, before the panel publishes,
+     * moves, commits a new version or copies into an organisation unit, so
+     * every copy those stages make carries the new list. A refusal rejects
+     * with the message the panel shows inline.
+     */
+    const saveAccessStep = (id: string, stepValues = values) =>
+      saveAccessOrThrowRef.current(id, stepValues);
     if (!isEditMode) {
       setSaveAdapter({
         publishEntityType: 'application',
         isVersioned: false,
         createIn: async (folderPath) => {
-          const created = await definition.create(values, setup, context, {
-            folderPath,
-          });
-          if (!created?.id) throw new Error('Created application has no id');
+          const folderKey = folderPath.join('/');
+          let created = createdApplicationRef.current;
+          if (created?.folderKey !== folderKey) {
+            const result = await definition.create(values, setup, context, {
+              folderPath,
+            });
+            if (!result?.id) throw new Error('Created application has no id');
+            created = { id: result.id, folderKey };
+            createdApplicationRef.current = created;
+          }
+          await saveAccessStep(created.id);
           return { id: created.id };
         },
         ...createOrgUnitWriter(publishApiClient, 'application'),
@@ -551,18 +609,37 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
             applicationsApi,
             applicationId: appId,
             publishClient: publishApiClient,
-            update: () => update(appId, values, setup),
-            createVersion: (version, folderPath) =>
-              definition.create({ ...values, version }, setup, context, {
-                folderPath,
-              }),
+            update: async () => {
+              await update(appId, values, setup);
+              await saveAccessStep(appId);
+            },
+            createVersion: async (version, folderPath) => {
+              const created = await definition.create(
+                { ...values, version },
+                setup,
+                context,
+                { folderPath },
+              );
+              if (created?.id) {
+                await saveAccessStep(created.id, { ...values, version });
+              }
+              return created;
+            },
           })
         : createEmbeddedApplicationSaveAdapter({
             applicationsApi,
             applicationId: appId,
             publishClient: publishApiClient,
-            // The embedded editor is the single writer; it shows its own save error inline.
+            /*
+             * The embedded editor is the single writer and shows its own save
+             * error inline. The Access step goes first, so a refusal aborts
+             * before anything is written; the editor's own save keeps the
+             * stored list. For a new version both land on the source and the
+             * commit then moves the saved body, list included, to the new
+             * version.
+             */
             runEmbeddedSave: async () => {
+              await saveAccessStep(appId);
               await setupRef.current?.save(values);
             },
             getCommitFailedMessage: (version) =>
@@ -574,7 +651,12 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
     );
     setIsSavePanelOpen(true);
   }, [appId, context, definition, isEditMode, metadata.values, setup, t]);
-  const handleSavePanelClose = useCallback(() => setIsSavePanelOpen(false), []);
+  const handleSavePanelClose = useCallback(() => {
+    setIsSavePanelOpen(false);
+    const created = createdApplicationRef.current;
+    createdApplicationRef.current = undefined;
+    if (created) switchToCreatedApp(created.id, metadata.values);
+  }, [metadata.values, switchToCreatedApp]);
   const currentFolderPath = useMemo(
     () => parseResourceFolderPath(appId),
     [appId],
@@ -595,6 +677,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
   /* Every outcome reaching here saved the application; the panel notifies once this returns. */
   const handleSavePanelSaved = useCallback(
     (result: ResourceSaveResult) => {
+      createdApplicationRef.current = undefined;
       if (result.isCreated && isMetadataFirst) {
         setIsSavePanelOpen(false);
         switchToCreatedApp(result.savedId, metadata.values);
@@ -782,23 +865,28 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
           }
           hasSetupSectionPadding={!isEmbeddedEditorLoaded}
           metadata={
-            <MetadataForm
-              values={metadata.values}
-              errors={metadataErrors}
-              onChange={metadata.setValues}
-              onNameBlur={handleNameBlur}
-              onVersionBlur={handleVersionBlur}
-              isVersionReadOnly={metadataFieldState?.isVersionReadOnly}
-              versionReadOnlyTooltip={t(
-                ResourceSavePanelI18nKeys.VersionReadOnlyTooltip,
+            <div className="flex flex-col gap-6">
+              <MetadataForm
+                values={metadata.values}
+                errors={metadataErrors}
+                onChange={metadata.setValues}
+                onNameBlur={handleNameBlur}
+                onVersionBlur={handleVersionBlur}
+                isVersionReadOnly={metadataFieldState?.isVersionReadOnly}
+                versionReadOnlyTooltip={t(
+                  ResourceSavePanelI18nKeys.VersionReadOnlyTooltip,
+                )}
+                avatarPicker={avatarPicker}
+                availableLocaleOptions={localeOptions}
+                formatLocaleLabel={getLocaleDisplayName}
+                renderDescription={renderRefinableDescription}
+                labels={metadataLabels}
+                focusRequestKey={metadata.submitAttemptCount}
+              />
+              {definition.hasAccess && (
+                <ApplicationAccessSection editor={accessEditor} />
               )}
-              avatarPicker={avatarPicker}
-              availableLocaleOptions={localeOptions}
-              formatLocaleLabel={getLocaleDisplayName}
-              renderDescription={renderRefinableDescription}
-              labels={metadataLabels}
-              focusRequestKey={metadata.submitAttemptCount}
-            />
+            </div>
           }
           setup={
             <Setup

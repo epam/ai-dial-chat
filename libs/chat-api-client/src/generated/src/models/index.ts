@@ -490,11 +490,13 @@ export interface ApplicationDto {
 }
 
 /**
- * Why DIAL Core refused the save. `applicationDependentResourceMissing`: a resource the application depends on is no longer available.
+ * Why DIAL Core refused the save. `applicationDependentResourceMissing`: a resource the application depends on is no longer available. `applicationResourceDependenciesNotAllowed`: only an administrator can change the resource dependencies.
  * @export
  */
 export const ApplicationErrorCode = {
   ApplicationDependentResourceMissing: 'applicationDependentResourceMissing',
+  ApplicationResourceDependenciesNotAllowed:
+    'applicationResourceDependenciesNotAllowed',
 } as const;
 export type ApplicationErrorCode =
   (typeof ApplicationErrorCode)[keyof typeof ApplicationErrorCode];
@@ -524,7 +526,7 @@ export interface ApplicationErrorDto {
    */
   message: string;
   /**
-   * Why DIAL Core refused the save. `applicationDependentResourceMissing`: a resource the application depends on is no longer available.
+   * Why DIAL Core refused the save. `applicationDependentResourceMissing`: a resource the application depends on is no longer available. `applicationResourceDependenciesNotAllowed`: only an administrator can change the resource dependencies.
    * @type {ApplicationErrorCode}
    * @memberof ApplicationErrorDto
    */
@@ -629,6 +631,63 @@ export const ApplicationExternalServiceDtoAuthenticationTypeEnum = {
 export type ApplicationExternalServiceDtoAuthenticationTypeEnum =
   (typeof ApplicationExternalServiceDtoAuthenticationTypeEnum)[keyof typeof ApplicationExternalServiceDtoAuthenticationTypeEnum];
 
+/**
+ *
+ * @export
+ * @interface ApplicationResourceDependenciesDto
+ */
+export interface ApplicationResourceDependenciesDto {
+  /**
+   *
+   * @type {Array<ApplicationResourceDependencyDto>}
+   * @memberof ApplicationResourceDependenciesDto
+   */
+  resourceDependencies: Array<ApplicationResourceDependencyDto>;
+}
+/**
+ *
+ * @export
+ * @interface ApplicationResourceDependencyDto
+ */
+export interface ApplicationResourceDependencyDto {
+  /**
+   * Identity of the entry within the application declaration.
+   * @type {string}
+   * @memberof ApplicationResourceDependencyDto
+   */
+  linkId: string;
+  /**
+   *
+   * @type {ApplicationResourceDependencyTargetDto}
+   * @memberof ApplicationResourceDependencyDto
+   */
+  target: ApplicationResourceDependencyTargetDto;
+  /**
+   *
+   * @type {Array<ResourceDependencyAccess>}
+   * @memberof ApplicationResourceDependencyDto
+   */
+  access: Array<ResourceDependencyAccess>;
+  /**
+   * When true, an unresolvable or unconsented dependency fails the call. Defaults to false.
+   * @type {boolean}
+   * @memberof ApplicationResourceDependencyDto
+   */
+  required?: boolean;
+}
+/**
+ *
+ * @export
+ * @interface ApplicationResourceDependencyTargetDto
+ */
+export interface ApplicationResourceDependencyTargetDto {
+  /**
+   * A DIAL resource URL: `<type>/<bucket>/<path>` or `<type>/{current-user}/<path>`.
+   * @type {string}
+   * @memberof ApplicationResourceDependencyTargetDto
+   */
+  url: string;
+}
 /**
  *
  * @export
@@ -3439,6 +3498,12 @@ export interface CreateApplicationBodyDto {
    * @memberof CreateApplicationBodyDto
    */
   primaryLocale?: string;
+  /**
+   * Resource dependencies the application requests. Omit to send none.
+   * @type {Array<ApplicationResourceDependencyDto>}
+   * @memberof CreateApplicationBodyDto
+   */
+  resourceDependencies?: Array<ApplicationResourceDependencyDto>;
 }
 /**
  *
@@ -8781,6 +8846,18 @@ export interface ResourceDependenciesResultDto {
    */
   dependencies: Array<ResourceDependencyDto>;
 }
+
+/**
+ *
+ * @export
+ */
+export const ResourceDependencyAccess = {
+  Read: 'READ',
+  Write: 'WRITE',
+} as const;
+export type ResourceDependencyAccess =
+  (typeof ResourceDependencyAccess)[keyof typeof ResourceDependencyAccess];
+
 /**
  *
  * @export
@@ -10773,6 +10850,12 @@ export interface UpdateApplicationBodyDto {
    * @memberof UpdateApplicationBodyDto
    */
   primaryLocale?: string;
+  /**
+   * When supplied, replaces the stored resource dependencies (an empty array clears them). Omit to keep the stored list.
+   * @type {Array<ApplicationResourceDependencyDto>}
+   * @memberof UpdateApplicationBodyDto
+   */
+  resourceDependencies?: Array<ApplicationResourceDependencyDto>;
 }
 /**
  *

@@ -1231,6 +1231,70 @@ const { isDestinationUsable, getDisabledReason } = buildFolderGuards({
 });
 ```
 
+### useApplicationAccess
+
+Draft state of an application's **Access** section: which of the user's own resources (`files`, `projects`, `skills`, `prompts`, `conversations`, `applications`, `toolsets`) the application declares in its `resource_dependencies`. Available from the root and `./utils`; it needs no peer beyond `react`.
+
+The host loads the stored list (the `getApplicationResourceDependencies` operation of the generated client) and passes it as `storedList`; the hook never calls DIAL Core. A stored entry is **editable** only when its `target.url` is exactly `<type>/{current-user}/` for an offered content type, it is not `required`, its rights (compared as a set) are Read or Read and Write and allowed for that type, and no earlier entry already claimed the type. Every other entry (a fixed bucket, a path below the bucket root, `required: true`, write only, a type the host does not offer or the lib has no content type for, a second entry for a type, `write` on applications or toolsets) is **preserved**: exposed as plain data in `preserved`, kept out of `entries` and sent back unchanged. A missing `required` means `false`.
+
+| Return value       | Type                                              | Description                                                                                                                                      |
+| ------------------ | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `entries`          | `ApplicationAccessEntry[]`                        | Configured entries `{ contentType, accessLevel }`, at most one per type.                                                                         |
+| `preserved`        | `ApplicationAccessPreservedEntry[]`               | Read-only entries `{ index, linkId, url, access, isRequired }`; the host formats their chips.                                                    |
+| `setEntries`       | `(entries) => void`                               | Replaces the configured entries.                                                                                                                 |
+| `isDirty`          | `boolean`                                         | The merged list differs from the baseline (order-sensitive, rights as a set, `url` byte-exact). It is computed, so reverting a change clears it. |
+| `reset`            | `(nextBaseline?) => void`                         | Discards the draft; a list argument becomes the new baseline, for example the one just saved.                                                    |
+| `toRequestValue()` | `ApplicationResourceDependencyDto[] \| undefined` | `undefined` while the merged list equals the baseline; otherwise the full list, `[]` only for an explicit clear with nothing preserved.          |
+
+The merge keeps every stored position: an edited entry is replaced in place with its stored `linkId`, a removed one is dropped, a new one is appended last as `access-<type>` (numeric suffix on a collision), and a preserved one never moves. Applications and toolsets are never given `write`. The pure functions behind the hook are exported too: `partitionResourceDependencies`, `mergeApplicationAccess`, `areResourceDependenciesEqual`, `buildApplicationAccessLinkId`, `buildApplicationAccessUrl`, `toResourceDependencyAccess`, `getAllowedAccessLevels`, `clampAccessLevel`, `changeApplicationAccessContentType` (resets the level to `Read` when the new type does not allow it), and the data `APPLICATION_ACCESS_CONTENT_TYPES` and `APPLICATION_ACCESS_ALLOWED_LEVELS`, from which a host derives its option list.
+
+```tsx
+import type { ApplicationResourceDependencyDto } from '@epam/ai-dial-chat-api-client';
+import {
+  ApplicationAccessContentType,
+  ApplicationAccessLevel,
+  useApplicationAccess,
+} from '@epam/ai-dial-chat-hooks';
+
+const AccessState = ({
+  storedList,
+  save,
+}: {
+  storedList: ApplicationResourceDependencyDto[];
+  save: (list: ApplicationResourceDependencyDto[]) => Promise<void>;
+}) => {
+  const access = useApplicationAccess({ storedList });
+
+  const onSave = async () => {
+    const list = access.toRequestValue();
+    if (list == null) return;
+    await save(list);
+    access.reset(list);
+  };
+
+  return (
+    <>
+      <button
+        onClick={() =>
+          access.setEntries([
+            ...access.entries,
+            {
+              contentType: ApplicationAccessContentType.Files,
+              accessLevel: ApplicationAccessLevel.Read,
+            },
+          ])
+        }
+      >
+        Add Files
+      </button>
+      <button disabled={!access.isDirty} onClick={onSave}>
+        Save
+      </button>
+    </>
+  );
+};
+```
+
 ### useUsageLimitBanner
 
 Everything the composer usage-limit banner needs except its rendering: fetches the selected deployment's own usage and the caller's account usage, refreshes both once after each generation ends, picks the day/week/month token limit (from the deployment) or cost budget (from the account) closest to its cap, translates the limit and reset sentences, and tracks tab-lifetime dismissal. Spread the returned `banner` onto `UsageLimitBannerView` from `@epam/ai-dial-conversation-input`. Available from the root and from `@epam/ai-dial-chat-hooks/usage-limits`; needs the optional `@epam/ai-dial-conversation-input` peer (it supplies the `UsageLimitBannerSeverity` enum at runtime).

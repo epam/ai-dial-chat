@@ -801,7 +801,7 @@ maps each backend domain to its base path.
 | `model-catalog`       | `models/`              | Deployment-wide model catalog listed with `MODEL_CATALOG_API_KEY`         |
 | `deployments`         | `deployments/`         | Deployment metadata and usage limits                                      |
 | `user`                | `usage-history/`       | Own usage history from DIAL Analytics (`usage/history`)                   |
-| `applications`        | `applications/`        | Application CRUD                                                          |
+| `applications`        | `applications/`        | Application CRUD, folders, versions and resource dependencies             |
 | `application-schemas` | `application-schemas/` | Quick App / custom application schemas                                    |
 | `toolsets`            | `toolsets/`            | Toolsets and their credential state                                       |
 | `skills`              | `skills/`              | Skill CRUD, metadata lookup, and skill file transfer                      |

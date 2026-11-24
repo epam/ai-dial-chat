@@ -201,6 +201,8 @@ export interface ApplicationEditorFormDefinition<TSetup> {
   ) => Promise<unknown>;
   /** Opts the kind into the Save panel for edit-mode Save; absent keeps Save in place. */
   savePanel?: ApplicationSavePanelConfig<TSetup>;
+  /** Whether the editor shows the Access section under Metadata and saves it through its own step; defaults to `false`. */
+  hasAccess?: boolean;
   /** Metadata field state that depends on the mode, e.g. a version that is read-only while editing. */
   getMetadataFieldState?: (
     isEditMode: boolean,

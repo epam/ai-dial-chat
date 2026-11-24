@@ -64,13 +64,16 @@ import type {
   CreateApplicationBodyDto,
   CreatedApplicationDto,
 } from './dto/create-application.dto';
+import type { ApplicationResourceDependenciesDto } from './dto/resource-dependency.dto';
 import type {
   UpdateApplicationBodyDto,
   UpdatedApplicationDto,
 } from './dto/update-application.dto';
 import {
+  fromDialResourceDependencies,
   hoistApplicationFields,
   normalizeStoredApplication,
+  toDialResourceDependencies,
 } from './utils/application-body-mapping';
 import { throwApplicationSaveError } from './utils/application-save-error';
 
@@ -276,6 +279,13 @@ export class ApplicationsService {
       if (body.topics != null && body.topics.length > 0)
         dialBody.descriptionKeywords = body.topics;
       if (endpoint != null) dialBody.endpoint = endpoint;
+      if (
+        body.resourceDependencies != null &&
+        body.resourceDependencies.length > 0
+      )
+        dialBody.resource_dependencies = toDialResourceDependencies(
+          body.resourceDependencies,
+        );
       const effectiveFeatures = body.features ?? features;
       if (effectiveFeatures != null)
         dialBody.features = effectiveFeatures as (typeof dialBody)['features'];
@@ -511,6 +521,17 @@ export class ApplicationsService {
         mergedBody.application_properties = body.applicationProperties;
       }
 
+      /*
+       * An omitted field leaves the echoed stored `resource_dependencies`
+       * untouched, which DIAL Core reads as "unchanged"; a supplied list,
+       * including `[]`, overwrites that same key so no second alias is sent.
+       */
+      if (body.resourceDependencies != null) {
+        mergedBody.resource_dependencies = toDialResourceDependencies(
+          body.resourceDependencies,
+        );
+      }
+
       const saveResponse = await this.dialClient.client.saveCustomApplication(
         bucket,
         path,
@@ -570,6 +591,39 @@ export class ApplicationsService {
     }
 
     return { id: `applications/${bucket}/${path}` };
+  }
+
+  /**
+   * Reads the resource dependencies stored on an application with the caller's
+   * own token. Never cached, so the editor always sees the live list.
+   * @param accessToken - bearer token for DIAL Core
+   * @param applicationName - bare name or full application id
+   */
+  async getApplicationResourceDependencies(
+    accessToken: string,
+    applicationName: string,
+  ): Promise<ApplicationResourceDependenciesDto> {
+    const authHeaders = getBearerAuthHeaders(accessToken);
+    const context = `get resource dependencies of application "${applicationName}"`;
+
+    try {
+      const resource = await this.resolveApplicationResource(
+        authHeaders,
+        applicationName,
+      );
+      const { body } = await this.readApplication(
+        authHeaders,
+        resource,
+        context,
+      );
+      return {
+        resourceDependencies: fromDialResourceDependencies(
+          body.resource_dependencies,
+        ),
+      };
+    } catch (err) {
+      return handleDialFetchError(err, context, this.logger, 0);
+    }
   }
 
   async deleteApplication(

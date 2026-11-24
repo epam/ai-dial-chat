@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { applicationsApi } from '../api-client';
-import { createApplication, getApplications } from '../applications';
+import {
+  createApplication,
+  getApplicationResourceDependencies,
+  getApplications,
+  updateApplicationAccess,
+} from '../applications';
 
 describe('getApplications', () => {
   afterEach(() => {
@@ -40,6 +45,94 @@ describe('createApplication', () => {
         version: '1.0.0',
         createOnly: true,
       },
+    });
+  });
+});
+
+describe('getApplicationResourceDependencies', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('reads the list of the named application through the generated client', async () => {
+    const response = { resourceDependencies: [] };
+    const spy = vi
+      .spyOn(applicationsApi, 'getApplicationResourceDependencies')
+      .mockResolvedValue(response);
+
+    await expect(getApplicationResourceDependencies('my-app')).resolves.toBe(
+      response,
+    );
+
+    expect(spy).toHaveBeenCalledWith({ applicationName: 'my-app' });
+  });
+});
+
+describe('updateApplicationAccess', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('sends the trimmed metadata fields together with the dependency list', async () => {
+    const spy = vi
+      .spyOn(applicationsApi, 'updateApplication')
+      .mockResolvedValue({ id: 'my-app' });
+    const list = [
+      {
+        linkId: 'access-files',
+        target: { url: 'files/{current-user}/' },
+        access: ['READ' as const],
+      },
+    ];
+
+    await updateApplicationAccess(
+      'my-app',
+      {
+        name: ' My App ',
+        description: ' ',
+        iconUrl: '',
+        version: '1.0.0',
+        topics: ['a'],
+        otherLocales: [],
+      },
+      list,
+    );
+
+    expect(spy).toHaveBeenCalledWith({
+      applicationName: 'my-app',
+      updateApplicationBodyDto: {
+        name: 'My App',
+        description: undefined,
+        iconUrl: undefined,
+        version: '1.0.0',
+        topics: ['a'],
+        locales: undefined,
+        primaryLocale: undefined,
+        resourceDependencies: list,
+      },
+    });
+  });
+
+  it('sends an empty list to clear the stored one', async () => {
+    const spy = vi
+      .spyOn(applicationsApi, 'updateApplication')
+      .mockResolvedValue({ id: 'my-app' });
+
+    await updateApplicationAccess(
+      'my-app',
+      {
+        name: 'My App',
+        description: '',
+        iconUrl: '',
+        version: '',
+        topics: [],
+        otherLocales: [],
+      },
+      [],
+    );
+
+    expect(spy.mock.calls[0][0].updateApplicationBodyDto).toMatchObject({
+      resourceDependencies: [],
     });
   });
 });

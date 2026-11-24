@@ -15,6 +15,7 @@
 import * as runtime from '../runtime';
 import type {
   ApplicationErrorDto,
+  ApplicationResourceDependenciesDto,
   ApplicationSchemasResponseDto,
   ApplicationsResponseDto,
   CommitApplicationVersionDto,
@@ -45,6 +46,10 @@ export interface DeleteApplicationRequest {
 export interface ForkApplicationVersionRequest {
   applicationName: string;
   forkApplicationVersionDto: ForkApplicationVersionDto;
+}
+
+export interface GetApplicationResourceDependenciesRequest {
+  applicationName: string;
 }
 
 export interface GetApplicationSchemaRequest {
@@ -326,6 +331,70 @@ export class ApplicationsApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<ResourceIdResponseDto> {
     const response = await this.forkApplicationVersionRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Returns the resource dependencies stored on the application, read from DIAL Core with the caller\'s own token. An application that declares none answers an empty list. Not cached.
+   * Get the resource dependencies of an application
+   */
+  async getApplicationResourceDependenciesRaw(
+    requestParameters: GetApplicationResourceDependenciesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ApplicationResourceDependenciesDto>> {
+    if (requestParameters['applicationName'] == null) {
+      throw new runtime.RequiredError(
+        'applicationName',
+        'Required parameter "applicationName" was null or undefined when calling getApplicationResourceDependencies().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/applications/{applicationName}/resource-dependencies`;
+    urlPath = urlPath.replace(
+      `{${'applicationName'}}`,
+      encodeURIComponent(String(requestParameters['applicationName'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ApplicationResourceDependenciesDto>(
+      response,
+    );
+  }
+
+  /**
+   * Returns the resource dependencies stored on the application, read from DIAL Core with the caller\'s own token. An application that declares none answers an empty list. Not cached.
+   * Get the resource dependencies of an application
+   */
+  async getApplicationResourceDependencies(
+    requestParameters: GetApplicationResourceDependenciesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ApplicationResourceDependenciesDto> {
+    const response = await this.getApplicationResourceDependenciesRaw(
       requestParameters,
       initOverrides,
     );

@@ -20,7 +20,7 @@ export class ApplicationErrorDto {
     enum: ApplicationErrorCode,
     enumName: 'ApplicationErrorCode',
     description:
-      'Why DIAL Core refused the save. `applicationDependentResourceMissing`: a resource the application depends on is no longer available.',
+      'Why DIAL Core refused the save. `applicationDependentResourceMissing`: a resource the application depends on is no longer available. `applicationResourceDependenciesNotAllowed`: only an administrator can change the resource dependencies.',
   })
   code?: ApplicationErrorCode;
 }

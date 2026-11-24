@@ -34,6 +34,7 @@ import {
   CreatedApplicationDto,
 } from './dto/create-application.dto';
 import { GetApplicationDto } from './dto/get-application.dto';
+import { ApplicationResourceDependenciesDto } from './dto/resource-dependency.dto';
 import {
   UpdateApplicationBodyDto,
   UpdatedApplicationDto,
@@ -116,6 +117,49 @@ export class ApplicationsController {
     return this.applicationsService.listApplicationFolders(
       at,
       query.path ?? '',
+    );
+  }
+
+  @Get(':applicationName/resource-dependencies')
+  @ApiOperation({
+    operationId: 'getApplicationResourceDependencies',
+    summary: 'Get the resource dependencies of an application',
+    description:
+      "Returns the resource dependencies stored on the application, read from DIAL Core with the caller's own token. " +
+      'An application that declares none answers an empty list. Not cached.',
+  })
+  @ApiDialCoreErrors()
+  @ApiResponse({
+    status: 200,
+    description: 'The stored resource dependencies',
+    type: ApplicationResourceDependenciesDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invalid application name' })
+  @ApiResponse({
+    status: 401,
+    description: 'Not authenticated — valid session cookie required',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Caller lacks permission to read the application',
+  })
+  @ApiResponse({ status: 404, description: 'Application not found' })
+  @ApiResponse({
+    status: 502,
+    description: 'DIAL Core returned an error response',
+  })
+  @ApiResponse({
+    status: 503,
+    description: 'DIAL Core is unavailable or timed out',
+  })
+  getApplicationResourceDependencies(
+    @Req() req: Request,
+    @Param() params: GetApplicationDto,
+  ): Promise<ApplicationResourceDependenciesDto> {
+    const { at } = req.user as SessionUser;
+    return this.applicationsService.getApplicationResourceDependencies(
+      at,
+      params.applicationName,
     );
   }
 
@@ -318,7 +362,7 @@ export class ApplicationsController {
   @ApiResponse({
     status: 403,
     description:
-      'Caller lacks permission to create applications in their bucket, or, with `code` `applicationDependentResourceMissing`, a resource the application depends on is no longer available',
+      'Caller lacks permission to create applications in their bucket, or, with `code` `applicationDependentResourceMissing`, a resource the application depends on is no longer available, or, with `code` `applicationResourceDependenciesNotAllowed`, only an administrator can change the resource dependencies',
     type: ApplicationErrorDto,
   })
   @ApiResponse({
@@ -373,7 +417,7 @@ export class ApplicationsController {
   @ApiResponse({
     status: 403,
     description:
-      'Caller lacks permission, or, with `code` `applicationDependentResourceMissing`, a resource the application depends on is no longer available',
+      'Caller lacks permission, or, with `code` `applicationDependentResourceMissing`, a resource the application depends on is no longer available, or, with `code` `applicationResourceDependenciesNotAllowed`, only an administrator can change the resource dependencies',
     type: ApplicationErrorDto,
   })
   @ApiResponse({ status: 404, description: 'Application not found' })

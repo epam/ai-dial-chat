@@ -4,6 +4,7 @@ import {
   ConflictException,
   ForbiddenException,
   HttpException,
+  NotFoundException,
   ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -17,6 +18,7 @@ import type { ApplicationsResponseDto } from '../dto/application.dto';
 import type { CreateApplicationBodyDto } from '../dto/create-application.dto';
 import type { UpdateApplicationBodyDto } from '../dto/update-application.dto';
 import { ApplicationErrorCode } from '../types/application-error-code.enum';
+import { ResourceDependencyAccess } from '../types/resource-dependency-access.enum';
 
 const mockApp = { id: 'my-app', object: 'application', display_name: 'My App' };
 const mockList: ApplicationsResponseDto = { data: [mockApp] };
@@ -26,6 +28,9 @@ const okResponse = (data: unknown) =>
 
 const errResponse = (status: number, error: unknown = {}) =>
   ({ error, response: { status } as Response }) as never;
+
+const NOT_ALLOWED_BODY =
+  'User-authored applications may not change resource dependencies (applications.allowUserAuthoredDependencies is disabled)';
 
 const DEPENDENT_RESOURCE_BODY = 'Failed to access application resource';
 
@@ -886,6 +891,86 @@ describe('ApplicationsService', () => {
       expect(response.message).not.toContain('doc.pdf');
     });
 
+    it('sends resourceDependencies to Core as resource_dependencies entries', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockCreateApplicationSdk(service);
+
+      await service.createApplication('u', 't', {
+        ...body,
+        resourceDependencies: [
+          {
+            linkId: 'access-files',
+            target: { url: 'files/{current-user}/' },
+            access: [ResourceDependencyAccess.Read],
+          },
+          {
+            linkId: 'access-prompts',
+            target: { url: 'prompts/{current-user}/' },
+            access: [
+              ResourceDependencyAccess.Read,
+              ResourceDependencyAccess.Write,
+            ],
+            required: true,
+          },
+        ],
+      });
+
+      const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
+      expect(sentBody).toMatchObject({
+        resource_dependencies: [
+          {
+            kind: 'dial.resourceLink',
+            link_id: 'access-files',
+            target: { url: 'files/{current-user}/' },
+            access: ['READ'],
+            required: false,
+          },
+          {
+            kind: 'dial.resourceLink',
+            link_id: 'access-prompts',
+            target: { url: 'prompts/{current-user}/' },
+            access: ['READ', 'WRITE'],
+            required: true,
+          },
+        ],
+      });
+      expect(sentBody).not.toHaveProperty('resourceDependencies');
+    });
+
+    it('sends no resource_dependencies when the list is absent or empty', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockCreateApplicationSdk(service);
+
+      await service.createApplication('u', 't', body);
+      await service.createApplication('u', 't', {
+        ...body,
+        resourceDependencies: [],
+      });
+
+      for (const [, , { body: sentBody }] of saveCustomApplicationSpy.mock
+        .calls) {
+        expect(sentBody).not.toHaveProperty('resource_dependencies');
+      }
+    });
+
+    it('returns the coded 403 when Core refuses user-authored dependencies', async () => {
+      const { service } = makeService();
+      mockCreateApplicationSdk(
+        service,
+        undefined,
+        errResponse(403, NOT_ALLOWED_BODY),
+      );
+
+      const error = await service
+        .createApplication('u', 't', body)
+        .catch((e: unknown) => e);
+
+      expect(error).toBeInstanceOf(ForbiddenException);
+      expect(
+        ((error as ForbiddenException).getResponse() as { code: string }).code,
+      ).toBe(ApplicationErrorCode.ResourceDependenciesNotAllowed);
+    });
+
     it('throws HttpException(429) when PUT returns 429', async () => {
       const { service } = makeService();
       mockCreateApplicationSdk(service, undefined, errResponse(429));
@@ -1378,6 +1463,105 @@ describe('ApplicationsService', () => {
 
       const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
       expect(sentBody).toMatchObject({ iconUrl: 'files/test-bucket/icon.png' });
+    });
+
+    describe('resourceDependencies', () => {
+      const storedList = [
+        {
+          kind: 'dial.resourceLink',
+          link_id: 'admin-policies',
+          target: { url: 'files/public/policies/' },
+          access: ['READ'],
+          required: true,
+        },
+      ];
+      const storedApp = { ...existingApp, resource_dependencies: storedList };
+      const newEntry = {
+        linkId: 'access-files',
+        target: { url: 'files/{current-user}/' },
+        access: [ResourceDependencyAccess.Read],
+      };
+
+      it('echoes the stored list unchanged when the field is omitted', async () => {
+        const { service } = makeService();
+        const { saveCustomApplicationSpy } = mockUpdateApplicationSdk(
+          service,
+          okResponse(storedApp),
+        );
+
+        await service.updateApplication('u', 't', id, updateBody);
+
+        const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
+        expect(sentBody).toMatchObject({ resource_dependencies: storedList });
+      });
+
+      it('clears the list with an empty array under a single key', async () => {
+        const { service } = makeService();
+        const { saveCustomApplicationSpy } = mockUpdateApplicationSdk(
+          service,
+          okResponse(storedApp),
+        );
+
+        await service.updateApplication('u', 't', id, {
+          ...updateBody,
+          resourceDependencies: [],
+        });
+
+        const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
+        expect(sentBody).toMatchObject({ resource_dependencies: [] });
+        expect(sentBody).not.toHaveProperty('resourceDependencies');
+      });
+
+      it('replaces a stored list and sends one key only', async () => {
+        const { service } = makeService();
+        const { saveCustomApplicationSpy } = mockUpdateApplicationSdk(
+          service,
+          okResponse(storedApp),
+        );
+
+        await service.updateApplication('u', 't', id, {
+          ...updateBody,
+          resourceDependencies: [newEntry],
+        });
+
+        const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
+        expect(sentBody).toMatchObject({
+          resource_dependencies: [
+            {
+              kind: 'dial.resourceLink',
+              link_id: 'access-files',
+              target: { url: 'files/{current-user}/' },
+              access: ['READ'],
+              required: false,
+            },
+          ],
+        });
+        expect(
+          Object.keys(sentBody as object).filter((k) => /depend/i.test(k)),
+        ).toEqual(['resource_dependencies']);
+      });
+
+      it('returns the coded 403 when Core refuses the change', async () => {
+        const { service } = makeService();
+        mockUpdateApplicationSdk(
+          service,
+          okResponse(storedApp),
+          errResponse(403, NOT_ALLOWED_BODY),
+        );
+
+        const error = await service
+          .updateApplication('u', 't', id, {
+            ...updateBody,
+            resourceDependencies: [newEntry],
+          })
+          .catch((e: unknown) => e);
+
+        expect(error).toBeInstanceOf(ForbiddenException);
+        expect(
+          ((error as ForbiddenException).getResponse() as { code: string })
+            .code,
+        ).toBe(ApplicationErrorCode.ResourceDependenciesNotAllowed);
+      });
     });
 
     it('preserves application_properties when applicationProperties is explicitly null', async () => {
@@ -2478,6 +2662,110 @@ describe('updateApplication + GET .../details cache interaction (regression)', (
         ),
       ).rejects.toBeInstanceOf(ForbiddenException);
       expect(client(service).saveCustomApplication).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getApplicationResourceDependencies', () => {
+    const mockRead = (service: ApplicationsService, response: never) =>
+      vi
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'getCustomApplication',
+        )
+        .mockResolvedValue(response);
+
+    it('maps the stored list to camelCase entries', async () => {
+      const { service } = makeService();
+      const spy = mockRead(
+        service,
+        okResponse({
+          resource_dependencies: [
+            {
+              kind: 'dial.resourceLink',
+              link_id: 'admin-policies',
+              target: { url: 'files/public/policies/' },
+              access: ['READ', 'WRITE'],
+              required: true,
+            },
+            {
+              kind: 'dial.resourceLink',
+              link_id: 'access-files',
+              target: { url: 'files/{current-user}/' },
+              access: ['READ'],
+            },
+          ],
+        }),
+      );
+
+      const result = await service.getApplicationResourceDependencies(
+        'token',
+        'applications/b1/My%20App__1.0.0',
+      );
+
+      expect(result).toEqual({
+        resourceDependencies: [
+          {
+            linkId: 'admin-policies',
+            target: { url: 'files/public/policies/' },
+            access: ['READ', 'WRITE'],
+            required: true,
+          },
+          {
+            linkId: 'access-files',
+            target: { url: 'files/{current-user}/' },
+            access: ['READ'],
+          },
+        ],
+      });
+      expect(spy).toHaveBeenCalledWith('b1', 'My%20App__1.0.0', {
+        headers: { Authorization: 'Bearer token' },
+      });
+    });
+
+    it('returns an empty list when the application declares none', async () => {
+      const { service } = makeService();
+      mockRead(service, okResponse({ displayName: 'My App' }));
+
+      await expect(
+        service.getApplicationResourceDependencies('token', 'my-app'),
+      ).resolves.toEqual({ resourceDependencies: [] });
+    });
+
+    it('resolves a bare name in the caller bucket and never caches', async () => {
+      const { service, cacheManager } = makeService();
+      const spy = mockRead(service, okResponse({}));
+
+      await service.getApplicationResourceDependencies('token', 'my-app');
+
+      expect(spy.mock.calls[0][0]).toBe('test-bucket');
+      expect(cacheManager.get).not.toHaveBeenCalled();
+      expect(cacheManager.set).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      [401, UnauthorizedException],
+      [403, ForbiddenException],
+      [404, NotFoundException],
+      [502, BadGatewayException],
+    ])('maps a Core %i to the typed exception', async (status, expected) => {
+      const { service } = makeService();
+      mockRead(service, errResponse(status));
+
+      await expect(
+        service.getApplicationResourceDependencies('token', 'my-app'),
+      ).rejects.toBeInstanceOf(expected);
+    });
+
+    it('maps a network error to ServiceUnavailableException', async () => {
+      const { service } = makeService();
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getCustomApplication',
+      ).mockRejectedValue(new Error('fetch failed'));
+
+      await expect(
+        service.getApplicationResourceDependencies('token', 'my-app'),
+      ).rejects.toBeInstanceOf(ServiceUnavailableException);
     });
   });
 

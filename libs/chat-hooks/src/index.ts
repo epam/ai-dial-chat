@@ -323,6 +323,10 @@ export {
 } from './project/project-sharing-client';
 export * from './project/use-project-share-recipients';
 export * from './project/use-project-revoke-access';
+export * from './application-access/application-access';
+export * from './application-access/models';
+export * from './application-access/types';
+export * from './application-access/useApplicationAccess/useApplicationAccess';
 export * from './org-units/types';
 export * from './org-units/models';
 export * from './org-units/useOrgUnits/useOrgUnits';

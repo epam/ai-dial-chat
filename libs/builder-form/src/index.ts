@@ -37,10 +37,26 @@ export { AddAvatar } from './components/AddAvatar/AddAvatar';
 export { AvatarPickerModal } from './components/AvatarPickerModal/AvatarPickerModal';
 export { DeploymentCreationForm } from './components/DeploymentCreationForm/DeploymentCreationForm';
 export { DeploymentLocalesField } from './components/DeploymentLocalesField/DeploymentLocalesField';
+export { AccessField } from './components/AccessField/AccessField';
+export { AccessModal } from './components/AccessModal/AccessModal';
 export { EntityEditor } from './components/EntityEditor/EntityEditor';
 export { MetadataForm } from './components/MetadataForm/MetadataForm';
 export { useMetadataForm } from './hooks/useMetadataForm';
 export { MetadataField } from './models/metadata-field';
+export { AccessLevel } from './models/access';
+export type {
+  AccessContentOption,
+  AccessEntry,
+  AccessReadOnlyChip,
+} from './models/access';
+export type {
+  AccessFieldColors,
+  AccessFieldLabels,
+  AccessFieldProps,
+  AccessModalColors,
+  AccessModalLabels,
+  AccessModalProps,
+} from './models/access-field-props';
 export type {
   EntityEditorLabels,
   EntityEditorProps,
@@ -91,6 +107,7 @@ export {
 } from './utils/validate-deployment-creation-fields';
 export { BUILDER_FORM_CLASS } from './constants/public-class-names';
 export { DEFAULT_METADATA_FORM_LABELS } from './constants/metadata-form';
+export { DEFAULT_ACCESS_FIELD_LABELS } from './constants/access';
 export {
   AVATAR_ALLOWED_MIME_TYPES,
   AVATAR_MAX_FILE_SIZE_BYTES,

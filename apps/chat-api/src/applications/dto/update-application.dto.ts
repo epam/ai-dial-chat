@@ -31,6 +31,10 @@ import {
   STORED_RESOURCE_VERSION_PATTERN,
   STORED_RESOURCE_VERSION_VALIDATION_MESSAGE,
 } from '../../common/validators/resource-version.pattern';
+import {
+  ApplicationResourceDependencyDto,
+  MAX_RESOURCE_DEPENDENCIES,
+} from './resource-dependency.dto';
 
 /*
  * General-step (and, optionally, Settings-step) update body. `type` is
@@ -169,6 +173,19 @@ export class UpdateApplicationBodyDto {
   @IsString()
   @Matches(LOCALE_CODE_PATTERN, { message: LOCALE_CODE_VALIDATION_MESSAGE })
   primaryLocale?: string;
+
+  @ApiPropertyOptional({
+    type: () => [ApplicationResourceDependencyDto],
+    maxItems: MAX_RESOURCE_DEPENDENCIES,
+    description:
+      'When supplied, replaces the stored resource dependencies (an empty array clears them). Omit to keep the stored list.',
+  })
+  @IsArray()
+  @ArrayMaxSize(MAX_RESOURCE_DEPENDENCIES)
+  @ValidateNested({ each: true })
+  @Type(() => ApplicationResourceDependencyDto)
+  @IsOptional()
+  resourceDependencies?: ApplicationResourceDependencyDto[];
 }
 
 export class UpdatedApplicationDto {

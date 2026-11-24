@@ -123,4 +123,5 @@ export const quickAppDefinition =
       isFormStateEmbedded: true,
     },
     getMetadataFieldState: getVersionLockedInEditMode,
+    hasAccess: true,
   });

@@ -1,0 +1,5 @@
+/* The doubled class keeps the chip text colour ahead of the kit tag's own. */
+.chip.chip,
+.chip.chip * {
+  color: var(--af-chip-text, var(--text-secondary, #57647a));
+}
