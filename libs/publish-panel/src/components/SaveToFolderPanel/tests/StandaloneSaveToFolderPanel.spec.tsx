@@ -157,6 +157,35 @@ describe('StandaloneSaveToFolderPanel', () => {
     expect(screen.getByText('Keep version 1.0.0')).toBeTruthy();
   });
 
+  it('sets the heading and note colors as CSS variables on the main view', () => {
+    renderPanel({
+      destinationNote: 'Org note',
+      panelStyles: {
+        colors: { headingText: 'rgb(1, 2, 3)', noteText: 'rgb(4, 5, 6)' },
+      },
+      version: {
+        versionMode: SaveVersionMode.Keep,
+        onVersionModeChange: vi.fn(),
+        currentVersion: '1.0.0',
+        newVersion: '',
+        onNewVersionChange: vi.fn(),
+      },
+    });
+
+    /* The CSS variables sit on an unlabeled wrapper, which has no role or text to query. */
+    const mainView = screen
+      .getByRole('heading', { name: 'Version' })
+      // eslint-disable-next-line testing-library/no-node-access
+      .closest<HTMLElement>('div');
+    expect(mainView?.style.getPropertyValue('--stf-heading-text')).toBe(
+      'rgb(1, 2, 3)',
+    );
+    expect(mainView?.style.getPropertyValue('--stf-note-text')).toBe(
+      'rgb(4, 5, 6)',
+    );
+    expect(screen.getByText('Org note').className).toMatch(/note/);
+  });
+
   it('forwards the folder-name notice and the other folder text to the panel', () => {
     renderPanel({
       panelLabels: {
