@@ -260,7 +260,7 @@ export const useDialFileManagerSections = ({
     file: DialUploadFileItem,
     folderPath: string,
     fileId: string,
-  ): Promise<void> =>
+  ): Promise<boolean> =>
     routedResult(folderPath).onCreateFolder(file, folderPath, fileId);
   const onCreateFolderValidate = (
     name: string,

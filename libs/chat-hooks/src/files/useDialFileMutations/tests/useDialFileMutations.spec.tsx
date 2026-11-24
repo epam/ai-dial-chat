@@ -205,8 +205,9 @@ describe('useDialFileMutations', () => {
         forbiddenSymbolsRegExp: /[:]/,
       });
 
+      let isCreated: boolean | undefined;
       await act(async () => {
-        await result.current.onCreateFolder(
+        isCreated = await result.current.onCreateFolder(
           uploadItem('reports:2026'),
           '/My files/reports:2026',
           'file-1',
@@ -214,6 +215,7 @@ describe('useDialFileMutations', () => {
       });
 
       expect(filesApi.createFolder).not.toHaveBeenCalled();
+      expect(isCreated).toBe(false);
     });
 
     it('does not call createFolder for an empty name', async () => {
@@ -295,13 +297,16 @@ describe('useDialFileMutations', () => {
         folderId: `${BUCKET}:files/${BUCKET}/reports/`,
       });
 
+      let isCreated: boolean | undefined;
       await act(async () => {
-        await result.current.onCreateFolder(
+        isCreated = await result.current.onCreateFolder(
           uploadItem('reports'),
           '/My files/reports',
           'file-4',
         );
       });
+
+      expect(isCreated).toBe(true);
 
       expect(filesApi.createFolder).toHaveBeenCalledWith({
         bucket: BUCKET,
@@ -390,14 +395,16 @@ describe('useDialFileMutations', () => {
       });
       vi.mocked(filesApi.createFolder).mockRejectedValue(new Error('failed'));
 
+      let isCreated: boolean | undefined;
       await act(async () => {
-        await result.current.onCreateFolder(
+        isCreated = await result.current.onCreateFolder(
           uploadItem('reports'),
           '/My files/reports',
           'file-7',
         );
       });
 
+      expect(isCreated).toBe(false);
       expect(onNotification).toHaveBeenCalledWith({
         variant: NotificationVariant.Error,
         reason: FileManagerNotificationReason.FolderCreateFailed,

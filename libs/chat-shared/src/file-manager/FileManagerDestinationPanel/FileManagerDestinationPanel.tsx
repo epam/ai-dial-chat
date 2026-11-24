@@ -213,7 +213,7 @@ export const FileManagerDestinationPanel: FC<
     async (_rootKey: string, parentPath: string[], name: string) => {
       setCreateFolderError(undefined);
       const folderPath = `${toDestinationPath(rootPath, parentPath)}/${name}`;
-      await onCreateFolder(
+      const isCreated = await onCreateFolder(
         {
           fileContent: new File([], FOLDER_PLACEHOLDER_NAME, {
             type: 'text/plain',
@@ -223,6 +223,8 @@ export const FileManagerDestinationPanel: FC<
         folderPath,
         `${folderPath}/${FOLDER_PLACEHOLDER_NAME}`,
       );
+      /* The controller resolves `false` instead of rejecting; reject so the panel neither selects the missing folder nor skips `onCreateFolderError`. */
+      if (!isCreated) throw new Error(`Folder "${name}" was not created`);
     },
     [onCreateFolder, rootPath],
   );

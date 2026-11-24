@@ -301,7 +301,7 @@ describe('FileManagerDestinationPanel', () => {
 
   describe('folder creation', () => {
     it('creates the folder under the full virtual path of its parent', async () => {
-      const onCreateFolder = vi.fn().mockResolvedValue(undefined);
+      const onCreateFolder = vi.fn().mockResolvedValue(true);
       renderPanel(makeRequest(DestinationFolderMode.Copy), { onCreateFolder });
 
       await userEvent.click(
@@ -314,6 +314,24 @@ describe('FileManagerDestinationPanel', () => {
         '/My files/reports/archive/.dial_folder',
       );
       expect(screen.queryByRole('status')).toBeNull();
+    });
+
+    it('rejects when the controller reports the folder was not created', async () => {
+      const onCreateFolder = vi.fn().mockResolvedValue(false);
+      renderPanel(makeRequest(DestinationFolderMode.Copy), { onCreateFolder });
+
+      await expect(
+        lastPanelProps().onCreateFolder('files', ['reports'], 'archive'),
+      ).rejects.toThrow('archive');
+    });
+
+    it('resolves when the controller created the folder', async () => {
+      const onCreateFolder = vi.fn().mockResolvedValue(true);
+      renderPanel(makeRequest(DestinationFolderMode.Copy), { onCreateFolder });
+
+      await expect(
+        lastPanelProps().onCreateFolder('files', ['reports'], 'archive'),
+      ).resolves.toBeUndefined();
     });
 
     it('announces a rejected creation with the default message', () => {

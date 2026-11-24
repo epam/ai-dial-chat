@@ -479,6 +479,13 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
     () => setDestinationRequest(null),
     [],
   );
+  /* The grid only awaits folder creation; the success flag matters to the destination panel. */
+  const handleGridCreateFolder = useCallback(
+    async (...args: Parameters<typeof onCreateFolder>): Promise<void> => {
+      await onCreateFolder(...args);
+    },
+    [onCreateFolder],
+  );
 
   /* The queue confirms first when work is still running, so closing it aborts whatever is left. */
   /* One queue for both kinds: closing it stops and clears uploads and downloads alike. */
@@ -678,7 +685,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
             onUploadFiles={onUploadFiles}
             onUploadArchive={onUploadArchive}
             onValidateUpload={onValidateUpload}
-            onCreateFolder={onCreateFolder}
+            onCreateFolder={handleGridCreateFolder}
             onCreateFolderValidate={onCreateFolderValidate}
             onDownloadFiles={onDownloadFiles}
             onDeleteFiles={onDeleteFiles}
