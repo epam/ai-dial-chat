@@ -10,13 +10,14 @@ export interface SceneTargetBaseline {
   rect: DOMRectReadOnly;
 }
 
-/** Observe selected scene anchors without polling layout during playback; a baseline target keeps its measured rectangle. */
+/** Observe selected scene anchors without polling layout; an optional membership check runs only for external mutations. */
 export const observeSceneTargets = (
   targets: readonly (Element | SceneTargetBaseline)[],
   onChange: () => void,
   ownedRoots: readonly Element[] = [],
+  hasTargetSetChanged?: () => boolean,
 ): (() => void) => {
-  if (!targets.length) return () => undefined;
+  if (!targets.length && !hasTargetSetChanged) return () => undefined;
   const baselines = new Map<Element, DOMRectReadOnly>();
   for (const target of targets) {
     const element = target instanceof Element ? target : target.element;
@@ -66,6 +67,10 @@ export const observeSceneTargets = (
         (record.type !== 'childList' ||
           ![...record.addedNodes, ...record.removedNodes].every(isOwned)),
     );
+    if (external.length && hasTargetSetChanged?.()) {
+      cancel();
+      return;
+    }
     if (
       anchors.some(
         ({ element }) =>

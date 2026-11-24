@@ -3,15 +3,20 @@ import {
   CelebrationAnchorEdge,
   CelebrationAnchorFallback,
   CelebrationPlacementTemplate,
+  SUPPORTED_CELEBRATION_CAPABILITIES,
 } from '@epam/ai-dial-celebrations';
 import type { CelebrationPlacementDto } from '@epam/ai-dial-chat-api-client';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   giftWrappingScene,
   newYearPack,
 } from '../../hooks/celebration/tests/celebration-pack-fixtures';
 import { CelebrationPackTarget } from '../../types/celebration-pack';
-import { toCelebrationPackDescriptor } from '../celebration-pack';
+import {
+  mergeCelebrationLabels,
+  resolveCelebrationPackLabels,
+  toCelebrationPackDescriptor,
+} from '../celebration-pack';
 
 const PLAN = {
   target: CelebrationPackTarget.Known,
@@ -26,6 +31,53 @@ const describeWith = (placement: CelebrationPlacementDto) =>
   );
 
 describe('toCelebrationPackDescriptor', () => {
+  it('omits only Santa on a client that does not support its scene capability', () => {
+    const pack = newYearPack();
+    pack.scenes.push(
+      giftWrappingScene({
+        id: 'santa-history-delivery',
+        labelId: 'santaHistoryDeliveryToastMessage',
+        requiredCapabilities: [
+          'lottie-light-svg-v1',
+          'viewport-stage-v1',
+          'interaction-history-ladder-v1',
+          'static-poster-v1',
+        ],
+        placement: {
+          template: 'viewport-stage-v1',
+          fit: 'contain',
+          align: 'center',
+        },
+        direction: 'none',
+      }),
+    );
+    const currentCapabilities = new Set(SUPPORTED_CELEBRATION_CAPABILITIES);
+    const supports = vi
+      .spyOn(SUPPORTED_CELEBRATION_CAPABILITIES, 'has')
+      .mockImplementation(
+        (capability) =>
+          capability !== 'interaction-history-ladder-v1' &&
+          currentCapabilities.has(capability),
+      );
+    try {
+      const descriptor = toCelebrationPackDescriptor(pack, {
+        ...PLAN,
+        sceneIds: [
+          'snowman-delivery',
+          'bullfinch-couriers',
+          'santa-history-delivery',
+        ],
+      });
+      expect(descriptor?.scenes.map(({ id }) => id)).toEqual([
+        'snowman-delivery',
+        'bullfinch-couriers',
+      ]);
+      expect(descriptor?.event).toBeUndefined();
+    } finally {
+      supports.mockRestore();
+    }
+  });
+
   it('maps a composer-anchor placement to the library placement', () => {
     const descriptor = toCelebrationPackDescriptor(
       newYearPack({ scenes: [giftWrappingScene()] }),
@@ -110,5 +162,54 @@ describe('toCelebrationPackDescriptor', () => {
 
   it('drops a scene whose placement template this client does not know', () => {
     expect(describeWith({ template: 'shelf-anchor-v2' })).toBeUndefined();
+  });
+});
+
+describe('external scene labels', () => {
+  const english = 'Special delivery, with a little help from friends.';
+  const labels = {
+    en: {
+      santaHistoryDeliveryToastMessage: english,
+      toastTitle: 'Happy New Year',
+    },
+    fr: {
+      santaHistoryDeliveryToastMessage:
+        'Livraison spéciale avec un peu d’aide.',
+    },
+    'fr-CA': {
+      santaHistoryDeliveryToastMessage: 'Une livraison spéciale entre amis.',
+    },
+    'fr-BE': { toastTitle: 'Bonne année' },
+  };
+
+  it.each([
+    ['fr-CA', labels['fr-CA'].santaHistoryDeliveryToastMessage],
+    ['fr-BE', labels.fr.santaHistoryDeliveryToastMessage],
+    ['ja-JP', english],
+  ])(
+    'resolves the Santa label for %s with locale fallback',
+    (language, message) => {
+      expect(resolveCelebrationPackLabels(labels, language)).toMatchObject({
+        santaHistoryDeliveryToastMessage: message,
+        toastTitle: language === 'fr-BE' ? 'Bonne année' : 'Happy New Year',
+      });
+    },
+  );
+
+  it('keeps host translations above pack labels while retaining the new Santa label', () => {
+    const merged = mergeCelebrationLabels(
+      { 'new-year': resolveCelebrationPackLabels(labels, 'ja-JP') },
+      {
+        'new-year': {
+          toastTitle: 'Bonne année',
+          giftLabel: 'Ouvrir le cadeau',
+        },
+      },
+    );
+    expect(merged['new-year']).toEqual({
+      santaHistoryDeliveryToastMessage: english,
+      toastTitle: 'Bonne année',
+      giftLabel: 'Ouvrir le cadeau',
+    });
   });
 });
