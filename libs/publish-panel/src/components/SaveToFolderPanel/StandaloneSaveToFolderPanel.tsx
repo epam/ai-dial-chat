@@ -5,7 +5,7 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import { FolderDestinationPanel } from '@epam/ai-dial-react-file-manager';
 import { Input, RadioGroup } from '@epam/ai-dial-ui-kit';
-import { FC, ReactNode, useId } from 'react';
+import { FC, ReactNode, useCallback, useId, useState } from 'react';
 import { DEFAULT_DEPENDENCIES_TITLE } from '../../constants/publish-dependencies';
 import type { StandaloneSaveToFolderPanelProps } from '../../models/save-to-folder-panel';
 import { SaveVersionMode } from '../../types/save-to-folder';
@@ -31,6 +31,7 @@ export const StandaloneSaveToFolderPanel: FC<
   onPendingDestinationChange,
   getDisabledReason,
   onCreateFolder,
+  onCreateFolderError,
   version,
   dependencies,
   dependenciesLabels,
@@ -65,13 +66,41 @@ export const StandaloneSaveToFolderPanel: FC<
     saveAsNewVersionLabel = 'Save as new version',
     newVersionLabel = 'Version',
     newVersionPlaceholder = 'Enter new version',
+    createFolderFailedMessage = 'Failed to create the folder. Please try again.',
     ...destinationLabels
   } = panelLabels;
   const { colors, folderTree, cssVars: extraCssVars } = panelStyles;
   const cssVars = {
-    ...buildCssVars({ '--stf-note-text': colors?.noteText }),
+    ...buildCssVars({
+      '--stf-heading-text': colors?.headingText,
+      '--stf-note-text': colors?.noteText,
+    }),
     ...extraCssVars,
   };
+
+  /* A rejected folder creation is announced through the panel's error slot until the next attempt or pick. */
+  const [createFolderError, setCreateFolderError] = useState<string>();
+  const handleCreateFolder = useCallback(
+    (rootKey: string, parentPath: string[], name: string) => {
+      setCreateFolderError(undefined);
+      return onCreateFolder(rootKey, parentPath, name);
+    },
+    [onCreateFolder],
+  );
+  const handleCreateFolderError = useCallback(
+    (error: unknown) => {
+      setCreateFolderError(createFolderFailedMessage);
+      onCreateFolderError?.(error);
+    },
+    [createFolderFailedMessage, onCreateFolderError],
+  );
+  const handleDestinationChange = useCallback(
+    (next: Parameters<typeof onDestinationChange>[0]) => {
+      setCreateFolderError(undefined);
+      onDestinationChange(next);
+    },
+    [onDestinationChange],
+  );
 
   const newVersionInputId = useId();
   const dependenciesHeadingId = useId();
@@ -194,12 +223,13 @@ export const StandaloneSaveToFolderPanel: FC<
       item={{ title: resource.title, summary }}
       roots={roots}
       destination={destination}
-      onDestinationChange={onDestinationChange}
-      onCreateFolder={onCreateFolder}
+      onDestinationChange={handleDestinationChange}
+      onCreateFolder={handleCreateFolder}
+      onCreateFolderError={handleCreateFolderError}
       getDisabledReason={getDisabledReason}
       mainSections={mainSections}
       isSubmitting={isSubmitting}
-      submitError={submitError}
+      submitError={submitError ?? createFolderError}
       foldersError={foldersError}
       onRetryFolders={onRetryFolders}
       panelLabels={{

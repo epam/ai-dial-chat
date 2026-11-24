@@ -16,7 +16,7 @@ import {
   FileName,
 } from '@epam/ai-dial-ui-kit';
 import { IconFolderShare } from '@tabler/icons-react';
-import { FC, useCallback, useMemo, useState } from 'react';
+import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   findFolder,
   findSectionRoot,
@@ -33,6 +33,9 @@ import { isHiddenPath } from '../path';
 const ROOT_KEY = 'files';
 /* The placeholder file the folder-creation request carries, as the file manager's own panel sends it. */
 const FOLDER_PLACEHOLDER_NAME = '.dial_folder';
+/* English fallback of `createFolderFailedMessage`, like the package's own defaults for the other panel text. */
+const DEFAULT_CREATE_FOLDER_FAILED_MESSAGE =
+  'Failed to create the folder. Please try again.';
 
 /** Props of {@link FileManagerDestinationPanel}. */
 export interface FileManagerDestinationPanelProps {
@@ -134,16 +137,24 @@ export const FileManagerDestinationPanel: FC<
     [onFolderPopupPathChange, rootPath],
   );
 
+  /* The listing keys a folder with or without a trailing slash, so both spellings count as loaded. */
+  const isPathLoaded = useCallback(
+    (virtualPath: string) => {
+      const barePath = toDestinationPath(virtualPath, []);
+      return loadedPaths.has(barePath) || loadedPaths.has(`${barePath}/`);
+    },
+    [loadedPaths],
+  );
+
+  /* The folder the panel opens on is loaded up front, so a Move into it can detect same-name files. */
+  useEffect(() => {
+    loadFolder(destination.path);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only the initial destination loads on mount; later picks load in handleDestinationChange
+  }, []);
+
   const folderItems = useMemo(
-    () =>
-      toDestinationFolderNodes(
-        root?.items,
-        rootSegmentCount,
-        (virtualPath) =>
-          loadedPaths.has(virtualPath) ||
-          loadedPaths.has(toDestinationPath(virtualPath, [])),
-      ),
-    [root, rootSegmentCount, loadedPaths],
+    () => toDestinationFolderNodes(root?.items, rootSegmentCount, isPathLoaded),
+    [root, rootSegmentCount, isPathLoaded],
   );
 
   const loadingPathKeys = useMemo(
@@ -190,8 +201,17 @@ export const FileManagerDestinationPanel: FC<
     ],
   );
 
+  const [createFolderError, setCreateFolderError] = useState<string>();
+  /* A rejection is shown in the panel's assertive error slot and cleared by the next attempt or pick. */
+  const handleCreateFolderError = useCallback(() => {
+    setCreateFolderError(
+      labels.createFolderFailedMessage ?? DEFAULT_CREATE_FOLDER_FAILED_MESSAGE,
+    );
+  }, [labels.createFolderFailedMessage]);
+
   const handleCreateFolder = useCallback(
     async (_rootKey: string, parentPath: string[], name: string) => {
+      setCreateFolderError(undefined);
       const folderPath = `${toDestinationPath(rootPath, parentPath)}/${name}`;
       await onCreateFolder(
         {
@@ -210,6 +230,7 @@ export const FileManagerDestinationPanel: FC<
   /* A pick is the destination in the inline layout, so it also loads that folder for conflict detection. */
   const handleDestinationChange = useCallback(
     (picked: FolderDestination) => {
+      setCreateFolderError(undefined);
       setDestination(picked);
       loadFolder(picked.path);
     },
@@ -219,9 +240,10 @@ export const FileManagerDestinationPanel: FC<
   if (!root) return null;
 
   const destinationPath = toDestinationPath(rootPath, destination.path);
-  const isDestinationLoading = loadingPathKeys.has(
-    toFolderPathKey(destination.path),
-  );
+  /* Confirming with a partial listing would skip the name-conflict check, so wait until the folder is loaded. */
+  const isDestinationLoading =
+    loadingPathKeys.has(toFolderPathKey(destination.path)) ||
+    !isPathLoaded(destinationPath);
   const itemCount = request.items.length;
   const [firstItem] = request.items;
   const isSingleFolder =
@@ -270,10 +292,29 @@ export const FileManagerDestinationPanel: FC<
       onDestinationChange={handleDestinationChange}
       onCreateFolder={handleCreateFolder}
       getDisabledReason={getDisabledReason}
-      labels={{ title }}
+      onCreateFolderError={handleCreateFolderError}
+      submitError={createFolderError}
+      labels={{
+        title,
+        closeAriaLabel: labels.closeAriaLabel,
+        cancelLabel: labels.cancelLabel,
+      }}
       panelLabels={{
         destinationHeading: isMove ? labels.moveHeading : labels.copyHeading,
         createFolderLabel: labels.addFolderLabel,
+        searchPlaceholder: labels.searchPlaceholder,
+        clearSearchAriaLabel: labels.clearSearchAriaLabel,
+        folderEmptyStateLabel: labels.folderEmptyStateLabel,
+        cancelCreatingFolderLabel: labels.cancelCreatingFolderLabel,
+        addSiblingFolderLabel: labels.addSiblingFolderLabel,
+        addChildFolderLabel: labels.addChildFolderLabel,
+        createFolderEmptyNameError: labels.createFolderEmptyNameError,
+        createFolderInvalidNameError: labels.createFolderInvalidNameError,
+        createFolderDuplicateNameError: labels.createFolderDuplicateNameError,
+        createFolderSameAsParentNameError:
+          labels.createFolderSameAsParentNameError,
+        createFolderHiddenNameWarning: labels.createFolderHiddenNameWarning,
+        retryLabel: labels.retryLabel,
       }}
       action={{
         label: isMove ? labels.moveButtonLabel : labels.copyButtonLabel,

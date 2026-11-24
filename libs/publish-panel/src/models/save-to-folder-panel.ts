@@ -53,12 +53,18 @@ export interface SaveToFolderPanelLabels {
   createFolderDuplicateNameError?: string;
   /** Inline error for a new folder named like its parent folder. */
   createFolderSameAsParentNameError?: string;
+  /** Non-blocking notice for a new folder name starting with a dot, which hides the folder. Plain text. */
+  createFolderHiddenNameWarning?: string;
   /** Label of the action that retries a failed folder listing. Defaults to `'Retry'`. */
   retryLabel?: string;
+  /** Error announced when creating a folder fails and the host passes no `submitError`. Defaults to `'Failed to create the folder. Please try again.'`. */
+  createFolderFailedMessage?: string;
 }
 
 /** Color overrides for the sections the save-to-folder panel adds to the main view. */
 export interface SaveToFolderPanelColors {
+  /** Section heading text color. Defaults to `--text-primary`. */
+  headingText?: string;
   /** Text color of `dependenciesNote` and `destinationNote`. Defaults to `--text-secondary`. */
   noteText?: string;
 }
@@ -129,6 +135,8 @@ export interface StandaloneSaveToFolderPanelProps {
     parentPath: string[],
     name: string,
   ) => Promise<void>;
+  /** Called with the rejection when `onCreateFolder` fails, after the panel has announced `panelLabels.createFolderFailedMessage`; the new folder is not selected. */
+  onCreateFolderError?: (error: unknown) => void;
   /** Version choice; omit for an unversioned resource. */
   version?: SaveToFolderVersionProps;
   /** Resources the item refers to that are not in the public bucket, listed in the main view as in `PublishPanel`; informational only, it never blocks Save. The host passes them only when they apply (for example, an Organization destination); the section is hidden while this is empty or omitted. */

@@ -5,10 +5,20 @@ import {
   resolveDialFileBucketAndPath,
   type DialProjectFileIdParts,
 } from '@epam/ai-dial-chat-hooks';
-import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
+import type {
+  DisplayAttachment,
+  FileManagerDestinationPanelTexts,
+} from '@epam/ai-dial-chat-shared';
 import { DestinationFolderMode } from '@epam/ai-dial-react-file-manager';
 import type { TFunction } from 'i18next';
-import { DialFileManagerI18nKeys } from '../constants/translation-keys';
+import {
+  BasicI18nKeys,
+  ButtonsI18nKeys,
+  CatalogI18nKeys,
+  ConversationPublishI18nKeys,
+  DialFileManagerI18nKeys,
+  PublishI18nKeys,
+} from '../constants/translation-keys';
 import { ApiEndpoints } from '../server-api/base';
 
 /**
@@ -212,6 +222,37 @@ const isExternalHttpUrl = (url: string): boolean => {
     return false;
   }
 };
+
+/** Returns the translated search, folder-creation and retry text of the Copy/Move destination panel. */
+export const getDestinationPanelTexts = (
+  t: TFunction,
+): FileManagerDestinationPanelTexts => ({
+  cancelLabel: t(ButtonsI18nKeys.Cancel),
+  closeAriaLabel: t(ButtonsI18nKeys.Close),
+  searchPlaceholder: t(CatalogI18nKeys.PublishFolderSearchPlaceholder),
+  clearSearchAriaLabel: t(BasicI18nKeys.ClearSearch),
+  folderEmptyStateLabel: t(CatalogI18nKeys.PublishFolderEmptyState),
+  cancelCreatingFolderLabel: t(ButtonsI18nKeys.Cancel),
+  addSiblingFolderLabel: t(PublishI18nKeys.AddSiblingFolder),
+  addChildFolderLabel: t(PublishI18nKeys.AddChildFolder),
+  createFolderEmptyNameError: t(
+    ConversationPublishI18nKeys.EmptyFolderNameError,
+  ),
+  createFolderInvalidNameError: t(
+    ConversationPublishI18nKeys.InvalidFolderNameError,
+  ),
+  createFolderDuplicateNameError: t(
+    ConversationPublishI18nKeys.DuplicateFolderNameError,
+  ),
+  createFolderSameAsParentNameError: t(
+    ConversationPublishI18nKeys.SameAsParentFolderNameError,
+  ),
+  createFolderHiddenNameWarning: t(
+    DialFileManagerI18nKeys.RenameHiddenItemWarning,
+  ),
+  retryLabel: t(ButtonsI18nKeys.Retry),
+  createFolderFailedMessage: t(DialFileManagerI18nKeys.FolderCreateError),
+});
 
 /** Returns the title of the Copy/Move destination panel: "Move file", "Move folder" or "Move N items". */
 export const getDestinationPanelTitle = (

@@ -25,8 +25,42 @@ export type RenameValidationMessages = NonNullable<
   DialFileManagerComponentProps['renameValidationMessages']
 >;
 
+/** Secondary text of the Copy/Move destination side panel; an unset field keeps the file manager package's English default. */
+export interface FileManagerDestinationPanelTexts {
+  /** Label of the panel's Cancel button. */
+  cancelLabel?: string;
+  /** Accessible name of the panel's close button. */
+  closeAriaLabel?: string;
+  /** Placeholder and accessible name of the folder search. */
+  searchPlaceholder?: string;
+  /** Accessible name of the search clear button. */
+  clearSearchAriaLabel?: string;
+  /** Message shown when a folder search matches nothing; `{query}` is replaced. */
+  folderEmptyStateLabel?: string;
+  /** Label of the action that cancels folder creation. */
+  cancelCreatingFolderLabel?: string;
+  /** Label of the context-menu action that creates a sibling folder. */
+  addSiblingFolderLabel?: string;
+  /** Label of the context-menu action that creates a child folder. */
+  addChildFolderLabel?: string;
+  /** Inline error for an empty new folder name. */
+  createFolderEmptyNameError?: string;
+  /** Inline error for a new folder name with forbidden characters. */
+  createFolderInvalidNameError?: string;
+  /** Inline error for a new folder name that duplicates a sibling. */
+  createFolderDuplicateNameError?: string;
+  /** Inline error for a new folder named like its parent folder. */
+  createFolderSameAsParentNameError?: string;
+  /** Notice for a new folder name starting with a dot, which hides the folder. */
+  createFolderHiddenNameWarning?: string;
+  /** Label of the action that retries a failed folder listing. */
+  retryLabel?: string;
+  /** Error announced when creating a folder fails. */
+  createFolderFailedMessage?: string;
+}
+
 /** Text of the Copy/Move destination side panel. */
-export interface FileManagerDestinationPanelLabels {
+export interface FileManagerDestinationPanelLabels extends FileManagerDestinationPanelTexts {
   /** Returns the Copy panel title for `count` items; `isFolder` is true for a single folder. */
   getCopyTitle: (count: number, isFolder: boolean) => string;
   /** Returns the Move panel title for `count` items; `isFolder` is true for a single folder. */
@@ -102,6 +136,8 @@ export interface DialFileManagerShellLabels {
   duplicateLabel: string;
   /** Label for the "Add folder" button in the destination picker. */
   addFolderLabel: string;
+  /** Secondary text of the Copy/Move destination panel (search, folder creation, retry); unset fields keep the file manager's English defaults. */
+  destinationPanelTexts?: FileManagerDestinationPanelTexts;
   /** Returns the Copy destination panel title for `count` items; `isFolder` is true for a single folder. */
   getCopyDestinationTitle: (count: number, isFolder: boolean) => string;
   /** Returns the Move destination panel title for `count` items; `isFolder` is true for a single folder. */

@@ -18,6 +18,8 @@ Choosing or expanding a folder SHALL load its contents through `controller.onFol
 
 The panel SHALL use `FolderDestinationLayout.Inline`: one view with the affected items, the "Copy to folder" / "Move to folder" heading, the folder search and the folder tree, and a Cancel / Copy-or-Move footer. There is no separate destination row with a Change action and no Select step; picking a folder in the tree is the destination. Every affected item is listed in the summary row with its file or folder icon (`FileName` from `@epam/ai-dial-ui-kit`), in a scrollable list when there are many.
 
+The panel SHALL load the folder it opens on when it mounts, and the Copy/Move button SHALL stay disabled until the committed destination's contents are loaded, so a confirm never carries a partial listing.
+
 Confirming SHALL call `request.confirm(destinationFolder, destinationItems)` with the loaded items of the destination folder, so name conflicts are detected, and close the panel. Closing without confirming SHALL call `request.cancel()`.
 
 #### Scenario: Copy action opens the panel in copy mode
@@ -64,7 +66,9 @@ Confirming a destination in the panel SHALL run name-conflict resolution and the
 | `movedIntoItselfTooltip` | `movedIntoItselfTooltip` |
 | `addFolderLabel` | `addFolderLabel` |
 
-The shell calls no `useTranslation`; the hosts (`DialFileManagerPage`, `DialFileManagerModal`) resolve every label with `t()` and an enum key. Panel text not listed above (search placeholder, folder-name errors, retry) keeps the package's English default until a label is added.
+The shell calls no `useTranslation`; the hosts (`DialFileManagerPage`, `DialFileManagerModal`) resolve every label with `t()` and an enum key. The remaining panel text arrives as the optional `destinationPanelTexts` (`FileManagerDestinationPanelTexts`) of the shell labels: Cancel, the close name, the folder search and its empty state, the add sibling/child and cancel-creation actions, the four folder-name errors, the hidden-name notice, Retry, and `createFolderFailedMessage`. A field the host leaves unset keeps the package's English default. `apps/chat` builds the object with `getDestinationPanelTexts` (`apps/chat/src/utils/dial-file.ts`), reusing the existing publish-folder and button keys, so the panel is fully translated.
+
+A rejected `onCreateFolder` SHALL be announced in the panel's assertive error slot with `createFolderFailedMessage` (English default `Failed to create the folder. Please try again.`), without selecting the new folder, and the message SHALL clear on the next creation attempt or folder pick.
 
 #### Scenario: Panel shows translated button label
 

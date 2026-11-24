@@ -81,6 +81,7 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
     ...actual,
     FolderDestinationPanel: (props: {
       labels?: { title?: string };
+      panelLabels?: { searchPlaceholder?: string };
       item: { title: string; summary?: ReactNode };
       action: { label: string; isDisabled?: boolean; onClick: () => void };
       onClose: () => void;
@@ -93,6 +94,9 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
       <div role="dialog" aria-label={props.labels?.title}>
         <div>{props.item.summary ?? props.item.title}</div>
         <p aria-label="Destination">{props.destination?.path.join('/')}</p>
+        <p aria-label="Search placeholder">
+          {props.panelLabels?.searchPlaceholder}
+        </p>
         <button
           type="button"
           onClick={() =>
@@ -561,6 +565,7 @@ describe('DialFileManagerShell', () => {
         },
       ],
     };
+    const loadedFolders = new Set(['/My files/', '/My files/reports/']);
     const startRequest = (mode: DestinationFolderMode) => {
       const request = {
         mode,
@@ -621,14 +626,42 @@ describe('DialFileManagerShell', () => {
       expect(screen.getByText('b.txt')).toBeTruthy();
     });
 
+    it('passes the host-translated panel text through to the panel', () => {
+      renderShell({ items: [root] }, new Set(), {
+        labels: {
+          ...baseLabels,
+          destinationPanelTexts: { searchPlaceholder: 'Ordner suchen' },
+        },
+      });
+      startRequest(DestinationFolderMode.Copy);
+      expect(screen.getByLabelText('Search placeholder').textContent).toBe(
+        'Ordner suchen',
+      );
+    });
+
     it('starts Copy on the source folder', () => {
       renderShell({ items: [root] });
       startRequest(DestinationFolderMode.Copy);
       expect(screen.getByLabelText('Destination').textContent).toBe('reports');
     });
 
+    it('loads the folder Move opens on and keeps Move disabled until it is loaded', () => {
+      const onFolderPopupPathChange = vi.fn();
+      renderShell({ items: [root], onFolderPopupPathChange });
+      startRequest(DestinationFolderMode.Move);
+
+      expect(onFolderPopupPathChange).toHaveBeenCalledWith('/My files');
+      expect(
+        (
+          screen.getByRole('button', {
+            name: baseLabels.moveDestinationButton,
+          }) as HTMLButtonElement
+        ).disabled,
+      ).toBe(true);
+    });
+
     it('starts Move on a folder it accepts, not on the disabled source folder', () => {
-      renderShell({ items: [root] });
+      renderShell({ items: [root], loadedPaths: loadedFolders });
       startRequest(DestinationFolderMode.Move);
       expect(screen.getByLabelText('Destination').textContent).toBe('');
       expect(
@@ -656,7 +689,7 @@ describe('DialFileManagerShell', () => {
     });
 
     it('confirms the destination and closes the panel', async () => {
-      renderShell({ items: [root] });
+      renderShell({ items: [root], loadedPaths: loadedFolders });
       const request = startRequest(DestinationFolderMode.Copy);
 
       await userEvent.click(

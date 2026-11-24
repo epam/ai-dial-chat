@@ -451,6 +451,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
     useState<DialDestinationRequest | null>(null);
   const destinationPanelLabels = useMemo(
     () => ({
+      ...labels.destinationPanelTexts,
       getCopyTitle: labels.getCopyDestinationTitle,
       getMoveTitle: labels.getMoveDestinationTitle,
       copyHeading: labels.copyDestinationHeading,
@@ -462,6 +463,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
       movedIntoItselfTooltip: labels.movedIntoItselfTooltip,
     }),
     [
+      labels.destinationPanelTexts,
       labels.getCopyDestinationTitle,
       labels.getMoveDestinationTitle,
       labels.copyDestinationHeading,

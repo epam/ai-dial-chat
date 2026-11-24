@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -22,6 +22,14 @@ interface PanelStubProps {
   roots: unknown[];
   mainSections: ReactNode;
   getDisabledReason?: unknown;
+  onCreateFolder: (
+    rootKey: string,
+    parentPath: string[],
+    name: string,
+  ) => Promise<void>;
+  onCreateFolderError?: (error: unknown) => void;
+  onDestinationChange: (destination: unknown) => void;
+  panelLabels?: Record<string, string | undefined>;
 }
 
 const panelProps = vi.fn();
@@ -72,6 +80,12 @@ const renderPanel = (props: Partial<StandaloneSaveToFolderPanelProps> = {}) =>
       {...props}
     />,
   );
+
+const lastPanelProps = (): PanelStubProps => {
+  const call = panelProps.mock.calls.at(-1);
+  if (!call) throw new Error('The panel stub has not rendered');
+  return call[0];
+};
 
 describe('StandaloneSaveToFolderPanel', () => {
   beforeEach(() => {
@@ -141,5 +155,72 @@ describe('StandaloneSaveToFolderPanel', () => {
     expect(screen.getByText('Org note')).toBeTruthy();
     expect(screen.getByText('Dependencies note')).toBeTruthy();
     expect(screen.getByText('Keep version 1.0.0')).toBeTruthy();
+  });
+
+  it('forwards the folder-name notice and the other folder text to the panel', () => {
+    renderPanel({
+      panelLabels: {
+        createFolderHiddenNameWarning: 'A leading dot hides the folder',
+        retryLabel: 'Again',
+      },
+    });
+    expect(lastPanelProps().panelLabels).toEqual(
+      expect.objectContaining({
+        createFolderHiddenNameWarning: 'A leading dot hides the folder',
+        retryLabel: 'Again',
+      }),
+    );
+    expect(lastPanelProps().panelLabels).not.toHaveProperty(
+      'createFolderFailedMessage',
+    );
+  });
+
+  describe('folder creation failure', () => {
+    const defaultMessage = 'Failed to create the folder. Please try again.';
+
+    it('announces the default message and tells the host', () => {
+      const onCreateFolderError = vi.fn();
+      renderPanel({ onCreateFolderError });
+      const error = new Error('boom');
+
+      act(() => lastPanelProps().onCreateFolderError?.(error));
+
+      expect(screen.getByText(defaultMessage)).toBeTruthy();
+      expect(onCreateFolderError).toHaveBeenCalledWith(error);
+    });
+
+    it('announces the translated message', () => {
+      renderPanel({
+        panelLabels: { createFolderFailedMessage: 'Ordner fehlgeschlagen' },
+      });
+      act(() => lastPanelProps().onCreateFolderError?.(new Error('boom')));
+      expect(screen.getByText('Ordner fehlgeschlagen')).toBeTruthy();
+    });
+
+    it('keeps the save error ahead of the folder error', () => {
+      renderPanel({ submitError: 'Could not save' });
+      act(() => lastPanelProps().onCreateFolderError?.(new Error('boom')));
+      expect(screen.getByText('Could not save')).toBeTruthy();
+      expect(screen.queryByText(defaultMessage)).toBeNull();
+    });
+
+    it('clears the message on the next creation attempt and on the next pick', async () => {
+      const onCreateFolder = vi.fn().mockResolvedValue(undefined);
+      const onDestinationChange = vi.fn();
+      renderPanel({ onCreateFolder, onDestinationChange });
+
+      act(() => lastPanelProps().onCreateFolderError?.(new Error('boom')));
+      await act(async () => {
+        await lastPanelProps().onCreateFolder('personal', [], 'new');
+      });
+      expect(onCreateFolder).toHaveBeenCalledWith('personal', [], 'new');
+      expect(screen.queryByText(defaultMessage)).toBeNull();
+
+      act(() => lastPanelProps().onCreateFolderError?.(new Error('boom')));
+      const next = { rootKey: 'personal', path: ['a'] };
+      act(() => lastPanelProps().onDestinationChange(next));
+      expect(onDestinationChange).toHaveBeenCalledWith(next);
+      expect(screen.queryByText(defaultMessage)).toBeNull();
+    });
   });
 });

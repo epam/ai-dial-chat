@@ -37,7 +37,10 @@ import { useUser } from '../../context/auth/UserContext';
 import { useDialFilePreview } from '../../hooks/files/useDialFilePreview';
 import { useSearchPlaceholderByTab } from '../../hooks/files/useSearchPlaceholderByTab';
 import { useUploadQueueLabels } from '../../hooks/files/useUploadQueueLabels';
-import { getDestinationPanelTitle } from '../../utils/dial-file';
+import {
+  getDestinationPanelTexts,
+  getDestinationPanelTitle,
+} from '../../utils/dial-file';
 
 /*
  * The folders panel sits in the page's card, so it is divided from the grid by
@@ -239,6 +242,7 @@ const DialFileManagerPage: FC = () => {
       moveLabel: t(DialFileManagerI18nKeys.MoveAction),
       duplicateLabel: t(ButtonsI18nKeys.Duplicate),
       addFolderLabel: t(DialFileManagerI18nKeys.FolderPickerAddFolderLabel),
+      destinationPanelTexts: getDestinationPanelTexts(t),
       getCopyDestinationTitle: (count, isFolder) =>
         getDestinationPanelTitle(
           t,

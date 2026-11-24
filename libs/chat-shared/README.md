@@ -45,7 +45,7 @@ Peers:
 - `react` ^19.2.8
 - `react-dom` ^19.2.8 (`NotificationStack` portals into `document.body`)
 - `@epam/ai-dial-ui-kit` ^0.17.0-dev.1
-- `@epam/ai-dial-react-file-manager` 0.5.0-dev.5
+- `@epam/ai-dial-react-file-manager` ^0.5.0-dev.5
 
 Installed for you as dependencies: `ag-grid-community`, `@tabler/icons-react`, `react-markdown`,
 `react-syntax-highlighter`, `remark-breaks`, `remark-gfm`, `remark-math`, `rehype-katex`,
@@ -1556,7 +1556,7 @@ The two components that render the grid — `DialFileManagerShell` and `FileMana
 
 ### DialFileManagerShell
 
-Full-featured file-manager grid (backed by `@epam/ai-dial-react-file-manager`) that binds a `FileManagerController` to the complete set of file-management actions. The shell owns the grid rendering, search, upload progress modal, operation loader modal, and bulk-action toolbar. Tabs, active tab, selection, destination picker, and browser-download callback are explicit host props.
+Full-featured file-manager grid (backed by `@epam/ai-dial-react-file-manager`) that binds a `FileManagerController` to the complete set of file-management actions. The shell owns the grid rendering, search, upload progress modal, operation loader modal, and bulk-action toolbar. Tabs, active tab, selection, and the browser-download callback are explicit host props. Copy and Move open the shell's own end-edge destination panel (`FolderDestinationPanel` from the file manager, rendered by `FileManagerDestinationPanel`) over the section the items come from, so the host supplies no destination picker; the panel's text comes from `DialFileManagerShellLabels`.
 
 ```tsx
 import {
@@ -1582,7 +1582,7 @@ import { DialFileManagerShell } from '@epam/ai-dial-chat-shared/file-manager';
 
 ### FileManagerController
 
-Structural interface consumed by `DialFileManagerShell`. Contains exactly the fields of `UseDialFileManagerResult` that the shell reads. A `UseDialFileManagerResult` (or `UseDialFileManagerSectionsResult`) value is structurally assignable to this interface without a cast. Tabs, active tab, selection, destination picker, and host callbacks are outside this contract.
+Structural interface consumed by `DialFileManagerShell`. Contains exactly the fields of `UseDialFileManagerResult` that the shell reads. A `UseDialFileManagerResult` (or `UseDialFileManagerSectionsResult`) value is structurally assignable to this interface without a cast. Tabs, active tab, selection, and host callbacks are outside this contract.
 
 The optional `sectionTab` is the source tab of the browsed folder when the host shows the combined All tab. The shell gates its per-tab behaviour — the upload-archive toolbar entry, the root empty state — on `sectionTab ?? activeTab`, while `activeTab` stays the tab-strip value and the `treeHeaderByTab` key.
 
@@ -1592,7 +1592,7 @@ import type { FileManagerController } from '@epam/ai-dial-chat-shared';
 
 ### DialFileManagerShellLabels
 
-Pre-translated strings the shell renders as-is. The shell never calls `useTranslation` — every host passes these via its own i18n. `treeHeaderByTab` and `emptyStateByTab` are keyed by every `DialFileManagerTabs` member, `all` included. The optional `searchPlaceholderByTab` sets the search field placeholder for the browsed folder's source tab (`sectionTab ?? activeTab`); a tab without an entry keeps the file manager's default.
+Pre-translated strings the shell renders as-is. The Copy/Move panel reads the required `getCopyDestinationTitle`, `getMoveDestinationTitle`, `copyDestinationHeading`, `moveDestinationHeading`, `copyDestinationButton`, `moveDestinationButton`, `addFolderLabel`, `moveSourceDisabledTooltip` and `movedIntoItselfTooltip`, plus the optional `destinationPanelTexts` (`FileManagerDestinationPanelTexts`): Cancel and close, folder search and its empty state, the add sibling/child and cancel-creation actions, the four folder-name errors, the hidden-name notice, Retry, and `createFolderFailedMessage`, announced when creating a folder fails. A field left unset keeps the file manager package's English default. The shell never calls `useTranslation` — every host passes these via its own i18n. `treeHeaderByTab` and `emptyStateByTab` are keyed by every `DialFileManagerTabs` member, `all` included. The optional `searchPlaceholderByTab` sets the search field placeholder for the browsed folder's source tab (`sectionTab ?? activeTab`); a tab without an entry keeps the file manager's default.
 
 ```ts
 import type { DialFileManagerShellLabels } from '@epam/ai-dial-chat-shared';

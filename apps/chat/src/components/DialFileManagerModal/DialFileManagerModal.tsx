@@ -36,7 +36,10 @@ import { useAppConfig } from '../../context/AppConfigContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useSearchPlaceholderByTab } from '../../hooks/files/useSearchPlaceholderByTab';
 import { useUploadQueueLabels } from '../../hooks/files/useUploadQueueLabels';
-import { getDestinationPanelTitle } from '../../utils/dial-file';
+import {
+  getDestinationPanelTexts,
+  getDestinationPanelTitle,
+} from '../../utils/dial-file';
 import { useDialFileManagerHostOptions } from '../DialFileManagerShell/useDialFileManagerHostOptions';
 import { getFileDeleteConfirmTitle } from '../FileDeleteConfirmContent/file-delete-confirm-title';
 import { useFileUnshareConfirmation } from '../FileUnshareConfirmation/useFileUnshareConfirmation';
@@ -351,6 +354,7 @@ const DialFileManagerModal: FC<Props> = ({
       moveLabel: t(DialFileManagerI18nKeys.MoveAction),
       duplicateLabel: t(ButtonsI18nKeys.Duplicate),
       addFolderLabel: t(DialFileManagerI18nKeys.FolderPickerAddFolderLabel),
+      destinationPanelTexts: getDestinationPanelTexts(t),
       getCopyDestinationTitle: (count, isFolder) =>
         getDestinationPanelTitle(
           t,
