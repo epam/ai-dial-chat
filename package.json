@@ -229,6 +229,9 @@
     },
     "readdir-glob": {
       "minimatch": "^11.0.1"
+    },
+    "jsdom": {
+      "parse5": "^8.1.1"
     }
   },
   "workspaces": [
