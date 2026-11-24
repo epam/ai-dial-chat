@@ -71,6 +71,27 @@ const buildFolderNodes = (
     });
 };
 
+/* Drops every node `isVisible` refuses, together with its subtree; untouched branches keep their identity. */
+const pruneFolderTree = (
+  items: PublishFolderNode[],
+  isVisible: (folderPath: string[]) => boolean,
+): PublishFolderNode[] =>
+  items.reduce<PublishFolderNode[]>((acc, node) => {
+    if (!isVisible(node.path)) return acc;
+    if (!node.children) {
+      acc.push(node);
+      return acc;
+    }
+    const children = pruneFolderTree(node.children, isVisible);
+    acc.push(
+      children.length === node.children.length &&
+        children.every((child, index) => child === node.children?.[index])
+        ? node
+        : { ...node, children },
+    );
+    return acc;
+  }, []);
+
 /** Parameters for {@link usePublishFolders}. */
 export interface UsePublishFoldersParams {
   /** Lists one folder level of the Organization/public files bucket. */
@@ -94,6 +115,13 @@ export interface UsePublishFoldersParams {
    * not loaded) so the placeholder stays the fallback.
    */
   canPublishTo?: (folderPath: string[]) => boolean;
+  /**
+   * Host rule for whether a folder is listed at all. A folder it refuses is
+   * dropped with its whole subtree — also when it comes from
+   * `rememberedFolderKeys` or a folder created in this session — so a hidden
+   * folder never comes back through them. Omit it to list every folder.
+   */
+  isFolderVisible?: (folderPath: string[]) => boolean;
 }
 
 /** Result returned by {@link usePublishFolders}. */
@@ -152,6 +180,7 @@ export const usePublishFolders = ({
   rememberedFolderKeys,
   onRememberedFolderKeysChange,
   canPublishTo,
+  isFolderVisible,
 }: UsePublishFoldersParams): UsePublishFoldersResult => {
   const [cache, setCache] = useState<Map<string, ListFilesItemDto[]>>(
     () => new Map(),
@@ -255,11 +284,19 @@ export const usePublishFolders = ({
     const visibleStoredPaths = storedKeys
       .map(fromFolderPathKey)
       .filter((path) => canPublishTo == null || canPublishTo(path));
-    return mergeFolderPaths(buildFolderNodes(cache, '', []), [
+    const merged = mergeFolderPaths(buildFolderNodes(cache, '', []), [
       ...visibleStoredPaths,
       ...createdFolderKeys.map(fromFolderPathKey),
     ]);
-  }, [cache, rememberedFolderKeys, createdFolderKeys, canPublishTo]);
+    /* After the merge, so a remembered or created path cannot bring a hidden folder back. */
+    return isFolderVisible ? pruneFolderTree(merged, isFolderVisible) : merged;
+  }, [
+    cache,
+    rememberedFolderKeys,
+    createdFolderKeys,
+    canPublishTo,
+    isFolderVisible,
+  ]);
 
   /* Fetches are tracked by API path (`A/B/`); the tree keys folders as `A/B`. */
   const loadingFolderKeys = useMemo(

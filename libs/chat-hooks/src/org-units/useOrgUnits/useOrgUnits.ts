@@ -3,6 +3,7 @@ import {
   canSaveToFolderAt,
   canWriteIntoOrgUnitAt,
   canRequestPublicationAt,
+  isOrgUnitTreeFolder,
   type OrgUnitAccess,
   type OrgUnitNamespace,
 } from '@epam/ai-dial-chat-shared';
@@ -40,6 +41,8 @@ export interface UseOrgUnitsResult {
   hasAdminAccess: boolean;
   /** Whether a publish panel may write straight into the path instead of filing a request: it lies inside an org unit, the user may write the namespace there and may approve publications (`read` and `write` on `publications`, or DIAL admin). `false` until the status is `Ready`. */
   canPublishDirectlyAt: OrgUnitRightCheck;
+  /** Whether a public folder stays listed: it is a unit, lies inside one or is an ancestor of one. `true` until the status is `Ready`, so missing data never hides a folder. */
+  isPublicFolderVisible: (publicPath: string) => boolean;
 }
 
 const NO_UNITS: OrgUnitAccess = { hasAdminAccess: false, units: [] };
@@ -140,6 +143,12 @@ export const useOrgUnits = ({
     [isReady, access],
   );
 
+  const isPublicFolderVisible = useCallback(
+    (publicPath: string): boolean =>
+      !isReady || isOrgUnitTreeFolder(access.units, publicPath),
+    [isReady, access],
+  );
+
   return useMemo(
     () => ({
       status,
@@ -150,6 +159,7 @@ export const useOrgUnits = ({
       canPublishAt,
       canPublishDirectlyAt,
       hasAdminAccess: isReady && access.hasAdminAccess,
+      isPublicFolderVisible,
     }),
     [
       status,
@@ -161,6 +171,7 @@ export const useOrgUnits = ({
       canPublishDirectlyAt,
       isReady,
       access.hasAdminAccess,
+      isPublicFolderVisible,
     ],
   );
 };

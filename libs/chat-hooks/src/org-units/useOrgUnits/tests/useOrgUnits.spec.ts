@@ -378,4 +378,54 @@ describe('useOrgUnits', () => {
       );
     });
   });
+
+  describe('isPublicFolderVisible', () => {
+    it('lists only the org-unit tree once the units are ready', async () => {
+      const listOrgUnits = vi.fn().mockResolvedValue(listResult([ACME]));
+      const { result } = renderHook(() => useOrgUnits({ listOrgUnits }));
+      act(() => result.current.ensureUnits());
+      await waitFor(() =>
+        expect(result.current.status).toBe(OrgUnitsStatus.Ready),
+      );
+
+      expect(result.current.isPublicFolderVisible('Acme')).toBe(true);
+      expect(result.current.isPublicFolderVisible('Acme/Reports')).toBe(true);
+      expect(result.current.isPublicFolderVisible('Shared')).toBe(false);
+    });
+
+    it('follows the units a refresh brings', async () => {
+      const listOrgUnits = vi
+        .fn()
+        .mockResolvedValueOnce(listResult([ACME]))
+        .mockResolvedValueOnce(listResult([ACME, READ_ONLY]));
+      const { result } = renderHook(() => useOrgUnits({ listOrgUnits }));
+      act(() => result.current.ensureUnits());
+      await waitFor(() =>
+        expect(result.current.status).toBe(OrgUnitsStatus.Ready),
+      );
+      expect(result.current.isPublicFolderVisible('Reports')).toBe(false);
+
+      act(() => result.current.refreshUnits());
+
+      await waitFor(() =>
+        expect(result.current.isPublicFolderVisible('Reports')).toBe(true),
+      );
+    });
+
+    it.each<[string, (() => Promise<unknown>) | undefined]>([
+      ['Idle', undefined],
+      ['Loading', () => new Promise<never>(() => undefined)],
+      ['Disabled', () => Promise.resolve({ enabled: false })],
+      ['Error', () => Promise.reject(new Error('boom'))],
+    ])('hides nothing while the status is %s', async (_name, outcome) => {
+      const listOrgUnits = vi.fn(outcome as () => Promise<never>);
+      const { result } = renderHook(() => useOrgUnits({ listOrgUnits }));
+      if (outcome) act(() => result.current.ensureUnits());
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      expect(result.current.isPublicFolderVisible('Shared')).toBe(true);
+    });
+  });
 });

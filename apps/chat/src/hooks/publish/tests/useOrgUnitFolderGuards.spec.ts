@@ -34,6 +34,7 @@ describe('useOrgUnitFolderGuards', () => {
     vi.mocked(useFeatureFlag).mockReturnValue(true);
     vi.mocked(useOrgUnitsContext).mockReturnValue({
       status: OrgUnitsStatus.Ready,
+      isPublicFolderVisible: vi.fn(() => true),
       ensureUnits,
       refreshUnits,
       canSaveAt,

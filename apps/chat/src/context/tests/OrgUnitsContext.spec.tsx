@@ -96,7 +96,52 @@ describe('OrgUnitsContext', () => {
     expect(
       result.current.canPublishAt('Acme', OrgUnitNamespace.Applications),
     ).toBe(true);
+    expect(result.current.isPublicFolderVisible('Shared')).toBe(true);
     expect(listOrgUnits).not.toHaveBeenCalled();
+  });
+
+  it('hides a plain public folder once the units are Ready, and none while the read fails', async () => {
+    vi.mocked(listOrgUnits).mockResolvedValue({
+      enabled: true,
+      hasAdminAccess: false,
+      units: [
+        {
+          id: 'u',
+          name: 'Risk',
+          displayName: 'Risk',
+          path: 'public/Acme/Risk',
+          folder: 'public/Acme/Risk/',
+          permissions: {},
+        },
+      ],
+    });
+    const { result } = renderHook(() => useOrgUnitsContext(), {
+      wrapper: OrgUnitsProvider,
+    });
+    expect(result.current.isPublicFolderVisible('Shared')).toBe(true);
+
+    act(() => result.current.ensureUnits());
+    await waitFor(() =>
+      expect(result.current.status).toBe(OrgUnitsStatus.Ready),
+    );
+
+    expect(result.current.isPublicFolderVisible('Acme')).toBe(true);
+    expect(result.current.isPublicFolderVisible('Acme/Risk/Q1')).toBe(true);
+    expect(result.current.isPublicFolderVisible('Shared')).toBe(false);
+  });
+
+  it('hides nothing when the org-units read fails', async () => {
+    vi.mocked(listOrgUnits).mockRejectedValue(new Error('boom'));
+    const { result } = renderHook(() => useOrgUnitsContext(), {
+      wrapper: OrgUnitsProvider,
+    });
+
+    act(() => result.current.ensureUnits());
+    await waitFor(() =>
+      expect(result.current.status).toBe(OrgUnitsStatus.Error),
+    );
+
+    expect(result.current.isPublicFolderVisible('Shared')).toBe(true);
   });
 
   it('exposes the hook result once the units are Ready, so a read-only unit is not writable', async () => {

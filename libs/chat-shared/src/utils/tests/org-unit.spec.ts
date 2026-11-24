@@ -12,6 +12,7 @@ import {
   canRequestPublicationAt,
   canWriteAt,
   findOwningOrgUnit,
+  isOrgUnitTreeFolder,
   normalizeOrgUnitFolder,
 } from '../org-unit';
 
@@ -362,5 +363,44 @@ describe('findOwningOrgUnit caching', () => {
     expect(findOwningOrgUnit(first, 'Acme/x')).toBeDefined();
     expect(findOwningOrgUnit(second, 'Acme/x')).toBeUndefined();
     expect(findOwningOrgUnit(second, 'Beta/x')).toBeDefined();
+  });
+});
+
+describe('isOrgUnitTreeFolder', () => {
+  const units = [unit('public/Acme/Risk/'), unit('public/Beta/US%20Risk/')];
+
+  it('keeps the public root', () => {
+    expect(isOrgUnitTreeFolder(units, '')).toBe(true);
+    expect(isOrgUnitTreeFolder([], '/')).toBe(true);
+  });
+
+  it('keeps a unit folder and a folder inside it', () => {
+    expect(isOrgUnitTreeFolder(units, 'Acme/Risk')).toBe(true);
+    expect(isOrgUnitTreeFolder(units, 'Acme/Risk/Reports/')).toBe(true);
+  });
+
+  it('keeps an ancestor of a unit folder', () => {
+    expect(isOrgUnitTreeFolder(units, 'Acme')).toBe(true);
+    expect(isOrgUnitTreeFolder(units, 'Beta/')).toBe(true);
+  });
+
+  it('matches a decoded path against an encoded unit folder', () => {
+    expect(isOrgUnitTreeFolder(units, 'Beta/US Risk/Q1')).toBe(true);
+  });
+
+  it('hides a plain sibling folder and its subtree', () => {
+    expect(isOrgUnitTreeFolder(units, 'Shared')).toBe(false);
+    expect(isOrgUnitTreeFolder(units, 'Acme/Other')).toBe(false);
+    expect(isOrgUnitTreeFolder(units, 'Shared/Acme/Risk')).toBe(false);
+  });
+
+  it('respects segment boundaries', () => {
+    expect(isOrgUnitTreeFolder(units, 'Ac')).toBe(false);
+    expect(isOrgUnitTreeFolder(units, 'Acme2')).toBe(false);
+    expect(isOrgUnitTreeFolder(units, 'Acme/Risk2')).toBe(false);
+  });
+
+  it('hides every folder when there are no units', () => {
+    expect(isOrgUnitTreeFolder([], 'Acme')).toBe(false);
   });
 });
