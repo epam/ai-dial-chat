@@ -2,7 +2,7 @@ import {
   OrgUnitNamespace,
   type CatalogEntityType,
 } from '@epam/ai-dial-chat-shared';
-import { PublishDependencyType } from '@epam/ai-dial-publish-panel';
+import type { PublishDependencyType } from '@epam/ai-dial-publish-panel';
 import {
   toPublishEntityType,
   type CatalogPublishEntityType,
@@ -133,6 +133,9 @@ export const toPublishDisabledReason = (
 ): ((destination: { path: string[] }) => string | undefined) | undefined =>
   getDisabledReason && ((destination) => getDisabledReason(destination.path));
 
+/* The enum is only a type here (see below), so the `file` kind is named through its values. */
+const FILE_DEPENDENCY_TYPE: `${PublishDependencyType}` = 'file';
+
 /* Keyed by the enum's values, which are the publish-dependencies API's `type` values: the enum is only a type here so this module, which the lean `./utils` entry carries, takes no runtime dependency on the optional `@epam/ai-dial-publish-panel` peer. */
 const NAMESPACE_BY_DEPENDENCY_TYPE: Record<
   `${PublishDependencyType}`,
@@ -213,14 +216,22 @@ export interface PublishDirectDependency {
 /** Outcome of {@link getPublishDirectAvailability}. */
 export interface PublishDirectAvailability {
   /** Whether the publish may write directly: the entity check holds, no dependency namespace is missing and no folder reference blocks it. */
-  isDirect: boolean;
+  readonly isDirect: boolean;
   /** Dependency namespaces the user may not write in the owning unit; empty unless the entity check holds. */
-  missingNamespaces: OrgUnitNamespace[];
+  readonly missingNamespaces: readonly OrgUnitNamespace[];
   /** The dependency kinds of `missingNamespaces`, for the host to name; same order, same emptiness. */
-  missingTypes: PublishDependencyType[];
+  readonly missingTypes: readonly PublishDependencyType[];
   /** Whether an application refers to a folder of files and the user is not a DIAL admin, so a request is filed; `false` unless the entity check holds. */
-  hasFolderReference: boolean;
+  readonly hasFolderReference: boolean;
 }
+
+/** The outcome when nothing can be written directly and nothing is named: frozen, so it is safe to share. */
+export const NO_DIRECT_AVAILABILITY: PublishDirectAvailability = Object.freeze({
+  isDirect: false,
+  missingNamespaces: Object.freeze([]),
+  missingTypes: Object.freeze([]),
+  hasFolderReference: false,
+});
 
 /** Checks {@link getPublishDirectAvailability} reads, all from `useOrgUnits`. */
 export interface PublishDirectChecks {
@@ -249,8 +260,8 @@ export const hasBlockingFolderReference = (
   !hasAdminAccess &&
   dependencies.some(
     (dependency) =>
-      dependency.type === PublishDependencyType.File &&
-      dependency.isFolder === true,
+      (dependency.type as `${PublishDependencyType}`) ===
+        FILE_DEPENDENCY_TYPE && dependency.isFolder === true,
   );
 
 /**
@@ -275,14 +286,7 @@ export const getPublishDirectAvailability = (
   }: PublishDirectChecks,
 ): PublishDirectAvailability => {
   const path = folderPath.join('/');
-  if (!canPublishDirectlyAt(path, namespace)) {
-    return {
-      isDirect: false,
-      missingNamespaces: [],
-      missingTypes: [],
-      hasFolderReference: false,
-    };
-  }
+  if (!canPublishDirectlyAt(path, namespace)) return NO_DIRECT_AVAILABILITY;
   const missingNamespaces = getDependencyOrgUnitNamespaces(dependencies).filter(
     (dependency) => !canSaveDirectlyAt(path, dependency),
   );
@@ -320,14 +324,7 @@ export const getCatalogPublishDirectAvailability = (
   const entityType = toPublishEntityType(itemType);
   const namespace =
     entityType == null ? undefined : getOrgUnitNamespace(entityType);
-  if (namespace == null) {
-    return {
-      isDirect: false,
-      missingNamespaces: [],
-      missingTypes: [],
-      hasFolderReference: false,
-    };
-  }
+  if (namespace == null) return NO_DIRECT_AVAILABILITY;
   return getPublishDirectAvailability(
     folderPath,
     namespace,

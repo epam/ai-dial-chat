@@ -32,6 +32,7 @@ import {
   CATALOG_TYPE_BY_DEPENDENCY,
   DIAL_TYPE_BY_DEPENDENCY,
   ApplicationPublishPreparationService,
+  createEmptyDependencyPlan,
   type ApplicationDependencyPlan,
 } from './application-publish-preparation.service';
 import { CatalogEntityType } from './dto/catalog-entity-params.dto';
@@ -327,20 +328,16 @@ export class OrgUnitCopyService {
     const entityId = toDialResourceUrl(DialResourceType.Applications, source);
     const headers = getBearerAuthHeaders(accessToken);
     const leaf = targetName;
-    const plan = (await this.preparation.plan(
-      userSub,
-      accessToken,
-      userBucket,
-      entityId,
-      folderPath,
-      leaf,
-      true,
-    )) ?? {
-      dependencies: [],
-      toCopy: [],
-      targets: new Map(),
-      hasFolderReference: false,
-    };
+    const plan =
+      (await this.preparation.plan(
+        userSub,
+        accessToken,
+        userBucket,
+        entityId,
+        folderPath,
+        leaf,
+        true,
+      )) ?? createEmptyDependencyPlan();
     if (
       plan.hasFolderReference &&
       (await this.orgUnitsService.isDialAdmin(userSub, accessToken)) === false

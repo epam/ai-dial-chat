@@ -401,6 +401,24 @@ describe('runResourceSave', () => {
         expect(publish).not.toHaveBeenCalled();
       });
 
+      it('does not read the error body of a failure that is not a 422', async () => {
+        const failure = refusal(
+          OrgUnitCopyErrorCode.FolderReferenceNeedsRequest,
+          403,
+        );
+        const readBody = vi.spyOn(
+          (failure as unknown as { response: Response }).response,
+          'clone',
+        );
+        const adapter = makeDirectAdapter({
+          saveIntoOrgUnit: vi.fn().mockRejectedValue(failure),
+        });
+
+        await runResourceSave(adapter, directChoice(), publish);
+
+        expect(readBody).not.toHaveBeenCalled();
+      });
+
       it('does not treat the code on another status as the refusal', async () => {
         const adapter = refusedAdapter(
           OrgUnitCopyErrorCode.FolderReferenceNeedsRequest,

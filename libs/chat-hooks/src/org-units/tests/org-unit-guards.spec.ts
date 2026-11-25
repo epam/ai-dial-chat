@@ -11,6 +11,7 @@ import {
   getOrgUnitNamespace,
   getCatalogPublishDirectAvailability,
   getPublishDirectAvailability,
+  NO_DIRECT_AVAILABILITY,
   OrgUnitFolderGuardPurpose,
   toPublishDisabledReason,
   type BuildFolderGuardsParams,
@@ -464,6 +465,25 @@ describe('getCatalogPublishDirectAvailability', () => {
         checks,
       ),
     ).toEqual({
+      isDirect: false,
+      missingNamespaces: [],
+      missingTypes: [],
+      hasFolderReference: false,
+    });
+  });
+});
+
+describe('NO_DIRECT_AVAILABILITY', () => {
+  it('is frozen, with frozen lists, so sharing it cannot leak a change', () => {
+    expect(Object.isFrozen(NO_DIRECT_AVAILABILITY)).toBe(true);
+    expect(Object.isFrozen(NO_DIRECT_AVAILABILITY.missingNamespaces)).toBe(
+      true,
+    );
+    expect(Object.isFrozen(NO_DIRECT_AVAILABILITY.missingTypes)).toBe(true);
+  });
+
+  it('says not direct and names nothing', () => {
+    expect(NO_DIRECT_AVAILABILITY).toEqual({
       isDirect: false,
       missingNamespaces: [],
       missingTypes: [],

@@ -14,6 +14,7 @@ import {
   findSchemaDisplayName,
   getOrgUnitNamespace,
   getCatalogPublishDirectAvailability,
+  NO_DIRECT_AVAILABILITY,
   OrgUnitFolderGuardPurpose,
   resolveFavoriteEntityType,
   toPublishDisabledReason,
@@ -512,12 +513,7 @@ const CatalogView: FC<Props> = ({
             dependencies,
             orgUnits,
           )
-        : {
-            isDirect: false,
-            missingNamespaces: [],
-            missingTypes: [],
-            hasFolderReference: false,
-          },
+        : NO_DIRECT_AVAILABILITY,
     [isOrgUnitsEnabled, orgUnits],
   );
 

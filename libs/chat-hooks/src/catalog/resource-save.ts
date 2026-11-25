@@ -4,7 +4,7 @@ import {
   toFolderPathKey,
   type FolderDestination,
 } from '@epam/ai-dial-publish-panel';
-import { getApiErrorDetails } from '../api-error/api-error';
+import { getApiErrorDetails, getApiErrorStatus } from '../api-error/api-error';
 import type { PublishApiClient } from './create-publish-api';
 import type { CatalogPublishEntityType } from './publish';
 import {
@@ -100,10 +100,9 @@ export interface ResourceSaveResult {
  * @param error - the rejection of the adapter's direct write
  */
 const isFolderReferenceRefusal = async (error: unknown): Promise<boolean> => {
-  const { status, code } = await getApiErrorDetails(error);
-  return (
-    status === 422 && code === OrgUnitCopyErrorCode.FolderReferenceNeedsRequest
-  );
+  if (getApiErrorStatus(error) !== 422) return false;
+  const { code } = await getApiErrorDetails(error);
+  return code === OrgUnitCopyErrorCode.FolderReferenceNeedsRequest;
 };
 
 const isSameFolder = (a: string[], b: string[]): boolean =>

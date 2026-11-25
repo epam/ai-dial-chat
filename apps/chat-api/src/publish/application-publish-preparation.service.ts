@@ -87,6 +87,19 @@ const withIcon = (
   return (iconUrl == null ? rest : { ...rest, iconUrl }) as DialApplication;
 };
 
+/**
+ * A plan with nothing to copy or reuse; a new one each call, so no two callers share its `Map`.
+ * @param hasFolderReference - whether the application still refers to a folder of files
+ */
+export const createEmptyDependencyPlan = (
+  hasFolderReference = false,
+): ApplicationDependencyPlan => ({
+  dependencies: [],
+  toCopy: [],
+  targets: new Map(),
+  hasFolderReference,
+});
+
 /** The DIAL Core resource type of each dependency kind that is copied; a `file` has none. */
 export const DIAL_TYPE_BY_DEPENDENCY: Partial<
   Record<ResourceDependencyType, DialResourceType>
@@ -212,12 +225,7 @@ export class ApplicationPublishPreparationService {
     const hasFolderReference = hasFolderDependency(found);
     const dependencies = selectPublishableDependencies(found, bucket);
     if (dependencies.length === 0) {
-      return {
-        dependencies,
-        toCopy: [],
-        targets: new Map(),
-        hasFolderReference,
-      };
+      return createEmptyDependencyPlan(hasFolderReference);
     }
 
     const headers = getBearerAuthHeaders(accessToken);
