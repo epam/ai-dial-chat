@@ -12,6 +12,8 @@ export const NEW_YEAR_LABELS = {
     'A little attention goes a long way. Send "{{phrase}}" in the start-page chat for another secret surprise.',
   elfFireworksToastMessage:
     'Some buttons were made for launching. Send "{{phrase}}" in the start-page chat for a secret surprise.',
+  catBaubleToastMessage:
+    'Every tree needs one more ornament. Send "{{phrase}}" in the start-page chat for a secret surprise.',
   toastTitle: 'Happy New Year!',
   giftLabel: 'New Year gift',
 } satisfies NewYearLabels;

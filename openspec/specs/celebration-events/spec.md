@@ -3,30 +3,37 @@
 ## Purpose
 
 A shared start-page celebration runtime, provided by `@epam/ai-dial-celebrations`, that loads one configured seasonal event, handles decorative scenes and secret phrases, and isolates their lifecycle from ordinary chat.
+
 ## Requirements
+
 ### Requirement: Event modules plug into one shared runtime
 
 CelebrationProvider, exported by `@epam/ai-dial-celebrations`, SHALL own the loaded event module, current scene and previous click selection. Hosts SHALL supply the event registry as loaders keyed by event ID and SHALL pass the active event ID; in DIAL Chat the app-level `CelebrationHost` passes `config.activeEventId` only on the exact start-page route `/` once the user config is ready **and** the effective celebrations preference is on (`useCelebrationPreference().isEnabled` from `apps/chat/src/hooks/celebration/useCelebrationPreference.ts`: the user's stored choice, otherwise the operator default `config.celebrationsEnabledByDefault`, which is `true` unless `UI_EVENT_ENABLED_BY_DEFAULT` turns it off), so the selected compiled module loads only there. Modules SHALL declare an ID, optional icon override, decoration component, scene definitions with per-scene durations and label IDs, click scene IDs, English default labels, and optional secret trigger. Header, Navigation and Composer SHALL contain no event-specific imports or branches. Modules SHALL receive decoration callbacks instead of importing the provider. Loading errors, unknown identifiers and an absent provider SHALL leave ordinary chat usable with no celebration. Stale module completions SHALL NOT activate after the host's reset key or active event ID changes. Context values and expensive scene layouts SHALL be memoized.
 
 #### Scenario: Register a second occasion
+
 - **WHEN** the registry includes New Year, config.activeEventId is new-year and the effective celebrations preference is on
 - **THEN** the same application integration displays the New Year module without Halloween artwork or event-specific caller changes
 
 #### Scenario: A stale module finishes loading
+
 - **WHEN** the selected module finishes loading after the user leaves `/` or selects another event
 - **THEN** its decoration and scenes SHALL remain absent
 
 #### Scenario: The operator default shows the event to a user who never chose
+
 - **GIVEN** config.activeEventId is halloween, config.celebrationsEnabledByDefault is true and nothing is stored under `StorageKey.CelebrationsEnabled`
 - **WHEN** the start page renders
 - **THEN** `CelebrationHost` passes `halloween`
 
 #### Scenario: The operator turned the default off and the user has not opted in
+
 - **GIVEN** config.activeEventId is halloween, config.celebrationsEnabledByDefault is false and the user never turned celebrations on
 - **WHEN** the start page renders
 - **THEN** `CelebrationHost` passes `null`, and no decoration, scene, icon replacement or secret phrase is active
 
 #### Scenario: The user turned celebrations off
+
 - **GIVEN** config.activeEventId is halloween, config.celebrationsEnabledByDefault is true and `'false'` is stored under `StorageKey.CelebrationsEnabled`
 - **WHEN** the start page renders
 - **THEN** `CelebrationHost` passes `null`
@@ -36,10 +43,12 @@ CelebrationProvider, exported by `@epam/ai-dial-celebrations`, SHALL own the loa
 Each activation SHALL replace the current scene. Click selection SHALL exclude the previous click scene if another valid choice exists; a one-scene pool SHALL remain usable and an empty pool SHALL be inert. The active scene SHALL unmount at its own durationMs deadline, and navigation or event changes SHALL immediately cancel it. The provider SHALL render one viewport portal with no pointer events and aria-hidden; rendering failures in decorative components SHALL be isolated from the rest of chat. No persistence, telemetry, new API request or audio SHALL be added for playback.
 
 #### Scenario: Different durations
+
 - **WHEN** a shorter scene replaces a longer scene
 - **THEN** its own deadline determines cleanup and the former scene's timer cannot dismiss a later scene
 
 #### Scenario: Consecutive random activations
+
 - **WHEN** a user activates an event with multiple click scenes twice
 - **THEN** the second scene differs from the first
 
@@ -48,26 +57,32 @@ Each activation SHALL replace the current scene. Click selection SHALL exclude t
 Only the loaded, selected event on `/` SHALL intercept an exact nonempty normalized secret phrase in the start-page composer. Normalization SHALL preserve Unicode letters and numbers and ignore letter case, surrounding whitespace and punctuation. Substrings SHALL NOT match. Events with no secret trigger SHALL send all text normally. Every scene notification for an event with a secret SHALL interpolate its declared hintPhrase; secret triggers SHALL declare a `sceneIds` pool. CelebrationProvider SHALL filter unavailable IDs and choose uniformly among distinct valid IDs, excluding the preceding secret choice when another valid choice exists. It SHALL own this selection history independently of clicks and reset it on navigation or event changes. An empty valid pool SHALL NOT consume messages; a singleton SHALL remain repeatable. Existing conversation routes SHALL continue sending normally.
 
 #### Scenario: A non-Latin phrase
+
 - **WHEN** the configured phrase is written using Cyrillic or Arabic letters and the user sends the same phrase with punctuation or case differences
 - **THEN** matching preserves those letters and triggers the intended scene
 
 #### Scenario: Event has no secret
+
 - **WHEN** an event omits secretTrigger
 - **THEN** no composer text is consumed and notifications receive no secret hint
 
 #### Scenario: Repeated secret phrases
+
 - **WHEN** an exact phrase is sent repeatedly with multiple valid secret scenes
 - **THEN** each message selects a scene other than the previous secret choice, regardless of intervening clicks
 
 #### Scenario: No playable secret scene
+
 - **WHEN** every secret scene reference is unavailable or the pool is empty
 - **THEN** the message is sent normally without a celebration
 
 #### Scenario: Reset after navigation or event change
+
 - **WHEN** the user returns to the start page or selects another event
 - **THEN** the secret selection history is cleared
 
 #### Scenario: A single valid secret scene
+
 - **WHEN** a secret pool contains only one valid scene, with duplicate or unavailable references
 - **THEN** every matching message restarts that scene and its own deadline
 
@@ -79,10 +94,12 @@ The new-year module SHALL provide an existing-slot icon override, a gift trigger
 - `gift-wrapping` (GiftWrapping): two elves gift-wrap the composer until the helper's pull on a loose ribbon winds it around the master instead, who hops away bound in a chest bow.
 - `reindeer-takeoff` (ReindeerTakeoff): two reindeer walk along the composer rim, free a gift ribbon caught on an inert copy of a word from the editor, and take flight leaving a snow trail.
 - `snowman-delivery` (SnowmanDelivery): a pompous snowman sleds on a borrowed starter card to deliver a present to a tree, loses his head in the branches on impact, recovers it and returns the card.
+- `elf-fireworks` (ElfFireworks): an elf fishes the send button onto the composer rim, stomps it to launch fireworks and rides the last rocket away.
+- `cat-bauble` (CatBauble): a cat misses a fir bauble, swats an inert copy of the model selector into the fir, where it hangs as an ornament, and carries it back to its slot (see `new-year-cat-bauble`).
 
 **Pools.**
 
-- The gift click pool (`NEW_YEAR_CLICK_SCENES`) SHALL contain exactly penguin-star and snowman-delivery, and a gift click SHALL pick between the enabled ones at random.
+- The gift click pool (`NEW_YEAR_CLICK_SCENES`) SHALL contain exactly penguin-star, snowman-delivery, elf-fireworks and cat-bauble, and a gift click SHALL pick between the enabled ones at random.
 - The secret pool SHALL contain gift-wrapping and reindeer-takeoff. The secret `happy new year` SHALL select enabled scenes without consecutive repeats, independently of gift clicks.
 
 **Deadlines** SHALL be:
@@ -90,7 +107,9 @@ The new-year module SHALL provide an existing-slot icon override, a gift trigger
 - `PENGUIN_STAR_MS + 2500` (22500 ms);
 - `GIFT_WRAPPING_MS + 2500` (18500 ms);
 - `SNOWMAN_DELIVERY_MS + 2500` (27500 ms);
-- `REINDEER_TAKEOFF_MS + 2500` (25500 ms).
+- `REINDEER_TAKEOFF_MS + 2500` (25500 ms);
+- `ELF_FIREWORKS_MS + 2500` (28100 ms);
+- `CAT_BAUBLE_MS + 2500` (25500 ms).
 
 Snow, confetti and sleigh SHALL NOT be registered, exported as NewYearScene members or offered as stories.
 
@@ -98,13 +117,15 @@ The Halloween bat decorative fallback SHALL retain its generic flying-character 
 
 **Labels.**
 
-- The event's labels SHALL cover the notification title, the gift's accessible name, and the penguin-star, gift-wrapping, snowman-delivery and reindeer-takeoff messages.
-- DIAL Chat SHALL keep supplying them from `newYear.toastTitle`, `giftLabel`, `penguinStarToastMessage`, `giftWrappingToastMessage`, `snowmanDeliveryToastMessage` and `newYear.reindeerTakeoffToastMessage` (`NewYearI18nKeys`).
-- The English defaults for the four story scenes SHALL be:
+- The event's labels SHALL cover the notification title, the gift's accessible name, and the penguin-star, gift-wrapping, snowman-delivery, reindeer-takeoff, elf-fireworks and cat-bauble messages.
+- DIAL Chat SHALL keep supplying them from `newYear.toastTitle`, `giftLabel`, `penguinStarToastMessage`, `giftWrappingToastMessage`, `snowmanDeliveryToastMessage`, `newYear.reindeerTakeoffToastMessage`, `newYear.elfFireworksToastMessage` and `newYear.catBaubleToastMessage` (`NewYearI18nKeys`).
+- The English defaults for the six story scenes SHALL be:
   - penguinStarToastMessage: `Every tree deserves a star. Send "{{phrase}}" in the start-page chat for a secret surprise.`
   - giftWrappingToastMessage: `Some gifts have a mind of their own. Send "{{phrase}}" in the start-page chat for a secret surprise.`
   - snowmanDeliveryToastMessage: `Delivered in one piece, almost. Send "{{phrase}}" in the start-page chat for a secret surprise.`
   - reindeerTakeoffToastMessage: `A little attention goes a long way. Send "{{phrase}}" in the start-page chat for another secret surprise.`
+  - elfFireworksToastMessage: `Some buttons were made for launching. Send "{{phrase}}" in the start-page chat for a secret surprise.`
+  - catBaubleToastMessage: `Every tree needs one more ornament. Send "{{phrase}}" in the start-page chat for a secret surprise.`
 
 **Presentation.**
 
@@ -116,14 +137,14 @@ The Halloween bat decorative fallback SHALL retain its generic flying-character 
 
 #### Scenario: Gift click can select a New Year story scene
 
-- **WHEN** a user activates the New Year gift trigger, the event is enabled and both click scenes are enabled
-- **THEN** exactly one of `penguin-star` or `snowman-delivery` plays until its own deadline
-- **AND** the notification shows that scene's message (`newYear.penguinStarToastMessage` or `newYear.snowmanDeliveryToastMessage`), with the secret phrase interpolated when the event's secret trigger is enabled
+- **WHEN** a user activates the New Year gift trigger, the event is enabled and all click scenes are enabled
+- **THEN** exactly one of `penguin-star`, `snowman-delivery`, `elf-fireworks` or `cat-bauble` plays until its own deadline
+- **AND** the notification shows that scene's message (`newYear.penguinStarToastMessage`, `newYear.snowmanDeliveryToastMessage`, `newYear.elfFireworksToastMessage` or `newYear.catBaubleToastMessage`), with the secret phrase interpolated when the event's secret trigger is enabled
 
 #### Scenario: One click scene disabled
 
-- **WHEN** the host disables `snowman-delivery` for the New Year event
-- **THEN** every gift click plays `penguin-star`, and disabling `penguin-star` instead makes every click play `snowman-delivery`
+- **WHEN** the host disables `cat-bauble` for the New Year event
+- **THEN** gift clicks pick only among `penguin-star`, `snowman-delivery` and `elf-fireworks`, and disabling any other click scene likewise keeps the remaining three
 
 #### Scenario: Reduced-motion New Year
 

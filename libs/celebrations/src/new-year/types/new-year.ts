@@ -10,6 +10,18 @@ export enum NewYearScene {
   ReindeerTakeoff = 'reindeer-takeoff',
   /** An elf fishes the send button onto the composer rim, stomps it to launch fireworks and rides the last rocket away. */
   ElfFireworks = 'elf-fireworks',
+  /** A cat misses a fir bauble, swats the model selector into the fir where it hangs as an ornament, and carries it back to its slot. */
+  CatBauble = 'cat-bauble',
+}
+
+/** What the bauble cat plays with, chosen once from measured geometry. */
+export enum CatBaubleMode {
+  /** An inert copy of the composer's model selector, hooked up onto the rim and hung on the fir. */
+  Selector = 'selector',
+  /** A drawn tangerine on the rim, when no model selector is eligible. */
+  Tangerine = 'tangerine',
+  /** No eligible composer leaves room for the story; only the static still is shown. */
+  Static = 'static',
 }
 
 /** Where the snowman stages his delivery, chosen once from measured geometry. */

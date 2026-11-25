@@ -443,7 +443,7 @@ export const halloweenLabels: Partial<HalloweenLabels> = {
 
 ### NewYearScene
 
-`PenguinStar`, `SnowmanDelivery` and `ElfFireworks` play on a gift click, picked at random.
+`PenguinStar`, `SnowmanDelivery`, `ElfFireworks` and `CatBauble` play on a gift click, picked at random.
 `GiftWrapping` and `ReindeerTakeoff` form the secret pool for `happy new year`,
 selected without consecutive repeats independently of gift clicks. Snow, confetti
 and sleigh scenes are no longer included.
@@ -543,7 +543,7 @@ host.
 Interaction, focus changes, scrolling, viewport or target changes, hidden tabs,
 navigation and motion-preference changes cancel playback and release the player.
 The secret phrase `happy new year` picks the elves or reindeer without
-consecutive repeats; a gift click picks the penguin or the snowman. Hosts can override `giftWrappingToastMessage`
+consecutive repeats; a gift click picks the penguin, the snowman, the fireworks elf or the cat. Hosts can override `giftWrappingToastMessage`
 through the existing New Year labels.
 
 New Year's reindeer takeoff, "Reindeer, Release the Brake!", has a chestnut
@@ -698,6 +698,48 @@ plus an 18-spark finale (4 rockets, 3 × 8 + 12 sparks on mobile) and 220 KB of
 composition data (150 KB on mobile). It uses no external assets, filters, masks,
 gradients or per-frame host measurements; these limits are not a frame-rate
 guarantee.
+
+New Year's cat, "The bauble", stars a grey tabby with a red collar and a gold
+bell. It trots along the composer's upper rim toward a small fir at the rim's
+far end, where one hook hangs empty. Its pupils widen, it wiggles its rear and
+pounces at the lowest bauble, which swings away; it misses, lands forepaws
+first and grooms a paw as if nothing happened. Then it notices the composer's
+model selector, lies on the rim, stretches a foreleg over the edge and flicks
+an inert visual copy of the selector up onto the rim, then swats it. The copy
+slides into the fir's trunk, the fir shakes and leans toward the frozen cat
+(ears flat, tail puffed) and the copy pops onto the empty hook, where it hangs
+like a new ornament. The cat admires it, rears up, takes it in its mouth by the
+same grip near its fir-side end, carries it home, lowers it into its exact
+slot, curls up beside it, stretches and walks off.
+
+The fir stands at the rim end farther from the selector, so the story fits
+wherever the host places it; RTL mirrors the travel and artwork but never the
+copy's text. A selector is borrowed only when it is the first
+`composerModelSelector` element inside the composer: an idle, visible, enabled,
+unexpanded, unfocused, unhovered and untransformed button of 36–140 × 24–44 px
+with at most 40 nodes, short enough to hang clear of the rim and within the
+lying cat's reach (about 44 px below the rim on desktop, 36 px on mobile).
+Otherwise a drawn tangerine plays the same story and nothing is borrowed.
+Without a composer at least 320 px wide (260 px on mobile) with 180 px of
+headroom (150 px on mobile), the scene shows a static cat under the fir with a
+drawn ornament on the hook; reduced motion, unsupported browser APIs and player
+failures show the same still. Mobile keeps the whole story with a smaller cast.
+
+One 23-second native Lottie SVG composition carries the cat, the fir and the
+tangerine; the provider allows 25.5 seconds. The copy is an inert,
+`aria-hidden` snapshot driven by WAAPI keyframes generated from the same plan
+and started on the Lottie clock through the session's `onPlaybackStarted`
+callback; only the original's opacity is animated, from the paw contact until
+the copy is back in its rect, and the original is never clicked, focused or
+reparented. Typing, pointer/focus interaction, scrolling, viewport or target
+changes, hidden tabs, navigation and motion-preference changes stop the scene
+and release its player, copy, listeners, observers and timers. Hosts can
+override `catBaubleToastMessage` through the New Year labels. The scene budgets
+one player, one copy, at most 8 layers, 60 animated properties (48 on mobile),
+1,400 keyframes with 160 per property, 180 KB of composition data (130 KB on
+mobile) and 200 vector groups and shapes. It uses no external assets, filters,
+masks, gradients or per-frame host measurements; these limits are not a
+frame-rate guarantee.
 
 The Halloween portal briefly pulls visual copies of up to two adjacent, visible
 conversation-history rows into its claw, then restores the rows. It never changes

@@ -41,39 +41,35 @@ describe('NewYear', () => {
   });
 
   describe('New Year event contract', () => {
-    it('offers the penguin, the snowman and the fireworks elf on gift clicks and the elves or reindeer for the phrase', () => {
+    const CLICK_SCENES = [
+      NewYearScene.PenguinStar,
+      NewYearScene.SnowmanDelivery,
+      NewYearScene.ElfFireworks,
+      NewYearScene.CatBauble,
+    ];
+
+    it('offers the penguin, the snowman, the fireworks elf and the cat on gift clicks and the elves or reindeer for the phrase', () => {
       expect(newYear.scenes.map(({ id }) => id)).toEqual([
         NewYearScene.PenguinStar,
         NewYearScene.GiftWrapping,
         NewYearScene.SnowmanDelivery,
         NewYearScene.ReindeerTakeoff,
         NewYearScene.ElfFireworks,
+        NewYearScene.CatBauble,
       ]);
-      expect(newYear.clickSceneIds).toEqual([
-        NewYearScene.PenguinStar,
-        NewYearScene.SnowmanDelivery,
-        NewYearScene.ElfFireworks,
-      ]);
+      expect(newYear.clickSceneIds).toEqual(CLICK_SCENES);
       expect(newYear.secretTrigger?.sceneIds).toEqual([
         NewYearScene.GiftWrapping,
         NewYearScene.ReindeerTakeoff,
       ]);
     });
 
-    it.each([
-      [
-        NewYearScene.SnowmanDelivery,
-        [NewYearScene.PenguinStar, NewYearScene.ElfFireworks],
-      ],
-      [
-        NewYearScene.PenguinStar,
-        [NewYearScene.SnowmanDelivery, NewYearScene.ElfFireworks],
-      ],
-      [
-        NewYearScene.ElfFireworks,
-        [NewYearScene.PenguinStar, NewYearScene.SnowmanDelivery],
-      ],
-    ])(
+    it.each(
+      CLICK_SCENES.map((disabled) => [
+        disabled,
+        CLICK_SCENES.filter((scene) => scene !== disabled),
+      ]),
+    )(
       'keeps the other click scenes when the host disables %s',
       (disabled, expected) => {
         const pools = resolveCelebrationPools(newYear, {
