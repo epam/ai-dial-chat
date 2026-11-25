@@ -26,6 +26,7 @@ import { safeDecodeURIComponent } from '../common/utils/uri';
 import { readPublicationDisplayAuthor } from '../common/utils/user-display-name';
 import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
 import { DialClientService } from '../dial/dial-client.service';
+import { FilesListingService } from '../files/listing/files-listing.service';
 import { ApplicationBeingPublishedException } from './application-publish-copy.service';
 import {
   CATALOG_TYPE_BY_DEPENDENCY,
@@ -49,9 +50,11 @@ import {
   toPublicationList,
 } from './publication.util';
 import {
+  PUBLIC_URL_PREFIX,
   getPublicationsListScope,
   getPublicTargetFolder,
   readPublishableApplicationIconUrl,
+  getPublishedApplicationFilesFolderUrl,
   getPublishedIconTargetUrl,
   getPublishedTargetUrl,
   getResourceBucket,
@@ -62,6 +65,7 @@ import {
   resolvePublishTarget,
   stripPublicTargetFolder,
 } from './publish-target.util';
+import { buildPublishedFolderDeleteResources } from './published-folder-delete-resources';
 import type { StatusPublication } from './version-status.util';
 
 /*
@@ -149,6 +153,7 @@ export class PublishService {
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     private readonly adminRoleService: AdminRoleService,
     private readonly applicationPublishPreparation: ApplicationPublishPreparationService,
+    private readonly filesListingService: FilesListingService,
   ) {}
 
   /**
@@ -504,14 +509,15 @@ export class PublishService {
      * folder's own publication. Deriving it is the fallback for a folder
      * whose publication cannot be read.
      */
+    const publishedTargetUrl = await this.findPublishedTargetUrl(
+      accessToken,
+      bucket,
+      entityId,
+      folderPath,
+      version,
+    );
     const targetUrl =
-      (await this.findPublishedTargetUrl(
-        accessToken,
-        bucket,
-        entityId,
-        folderPath,
-        version,
-      )) ??
+      publishedTargetUrl ??
       getPublishedTargetUrl(
         resourceTypePrefix,
         folderPath,
@@ -525,6 +531,26 @@ export class PublishService {
       splitEntityNameAndVersion(sourceUrl);
     const publicationVersion = version || resourceVersion;
     /*
+     * The Publish panel unpublishes through the published copy's own url, which
+     * no publication names as a source, so `publishedTargetUrl` is unset there.
+     * The copy's own folder is then the one to clear, and `canUnpublish` has
+     * already limited the caller to an administrator or that copy's publisher.
+     * From the author's own url the folder is listed only when the caller's
+     * publication confirms it: another author's application in the same folder
+     * can share the name.
+     */
+    const publishedFileResources =
+      entityType === CatalogEntityType.Application &&
+      (publishedTargetUrl != null ||
+        getResourceBucket(sourceUrl) === PUBLIC_URL_PREFIX)
+        ? await this.buildPublishedFileDeleteResources(
+            accessToken,
+            folderPath,
+            entityId,
+            targetUrl,
+          )
+        : [];
+    /*
      * `sourceUrl` is sent even though Core allows it to be omitted for a
      * `DELETE` action: it costs nothing and keeps the DELETE resource shape
      * identical to the ADD one publish sends. `rules` is omitted entirely —
@@ -534,7 +560,10 @@ export class PublishService {
     const requestBody = {
       name: `${entityName} ${publicationVersion}`.trim(),
       targetFolder: publicTargetFolder,
-      resources: [{ action: 'DELETE' as const, sourceUrl, targetUrl }],
+      resources: [
+        { action: 'DELETE' as const, sourceUrl, targetUrl },
+        ...publishedFileResources,
+      ],
       displayAuthor: author,
     };
     let result;
@@ -583,6 +612,43 @@ export class PublishService {
         : new Date().toISOString(),
       requestedBy: readPublicationDisplayAuthor(publication, author),
     };
+  }
+
+  /**
+   * The `DELETE` resources for the files published next to an application, its
+   * icon among them, read from what exists in its published folder
+   * `files/public/{folder}/{published name}/`. Without them a republish of the
+   * same version meets the leftover file and Core refuses it.
+   *
+   * Best-effort: a listing that fails is logged and the application is removed
+   * without its files, as it was before they were removed with it.
+   * @param accessToken - caller's bearer token
+   * @param folderPath - plain folder the application is unpublished from
+   * @param entityId - the application's resource path, for the log line
+   * @param targetUrl - the published application's `targetUrl`
+   */
+  private async buildPublishedFileDeleteResources(
+    accessToken: string,
+    folderPath: string,
+    entityId: string,
+    targetUrl: string,
+  ) {
+    try {
+      return await buildPublishedFolderDeleteResources(
+        this.filesListingService,
+        accessToken,
+        getPublishedApplicationFilesFolderUrl(
+          folderPath,
+          getResourceName(targetUrl),
+        ),
+      );
+    } catch (err) {
+      this.logger.warn(
+        `Could not list the published files of application "${entityId}" in "${folderPath}"; unpublishing it without them`,
+        err instanceof Error ? err.stack : undefined,
+      );
+      return [];
+    }
   }
 
   /**

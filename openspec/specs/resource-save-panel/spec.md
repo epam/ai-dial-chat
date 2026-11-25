@@ -16,9 +16,9 @@ The primary Save (or Create) action of these editors SHALL open the Save panel i
 
 The editor's existing validation, including the creation-permission check in create mode, SHALL run first. When it fails, the panel SHALL NOT open and the existing inline errors SHALL show.
 
-The panel opens when creating a resource, and when editing one the user owns (`isMy` on the loaded deployment, toolset or prompt, an application or toolset created in this session, or a skill in the user's own bucket). For a resource shared with the user, Save keeps saving in place, because moving and forking act on the caller's own bucket.
+The panel opens when creating a resource (except a new Quick App, below), and when editing one the user owns (`isMy` on the loaded deployment, toolset or prompt, an application or toolset created in this session, or a skill in the user's own bucket). For a resource shared with the user, Save keeps saving in place, because moving and forking act on the caller's own bucket.
 
-In create mode the editor passes a `ResourceCreateSaveAdapter` (`createIn(folderPath)`, `libs/chat-hooks/src/catalog/resource-save-adapter.ts`) and the panel offers no Version section; the version comes from the form. A new Quick App, which that Save only starts before its embedded editor is set up, SHALL offer the Personal root only; after the create the page switches to edit mode in place, and later Saves offer both roots.
+In create mode the editor passes a `ResourceCreateSaveAdapter` (`createIn(folderPath)`, `libs/chat-hooks/src/catalog/resource-save-adapter.ts`) and the panel offers no Version section; the version comes from the form. A new Quick App SHALL NOT open the panel on Create: that create only starts the application before its embedded editor is set up, so it is created in the Personal root and the page switches to edit mode in place, showing the embedded editor directly. Its later Saves open the panel with both roots, where it can be moved or published.
 
 State ownership: each editor owns `isOpen` and the adapter it built when the panel opened; `useResourceSavePanel` (`libs/chat-hooks/src/catalog/useResourceSavePanel/useResourceSavePanel.ts`) owns the committed destination, the version mode, the new-version value, the version error and the submitting state.
 
@@ -30,9 +30,9 @@ State ownership: each editor owns `isOpen` and the adapter it built when the pan
 - **WHEN** a user fills a new prompt and clicks Create
 - **THEN** the Save panel opens with no Version section, and no create request is sent until the panel's Save is confirmed
 
-#### Scenario: New Quick App offers Personal folders only
-- **WHEN** a user clicks Create on a new Quick App
-- **THEN** the panel's Change folder view lists only the Personal root, and after the panel's Save the page switches to edit mode for the created application
+#### Scenario: New Quick App opens its editor without the panel
+- **WHEN** a user clicks Create on a new Quick App with a valid form
+- **THEN** the Save panel does not open, the application is created in the Personal root, and the page switches to edit mode with the embedded editor for the created application
 
 #### Scenario: Invalid form keeps the panel closed
 - **WHEN** the user clicks Save while a required metadata field is invalid

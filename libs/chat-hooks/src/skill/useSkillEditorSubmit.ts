@@ -24,14 +24,7 @@ import {
   type SkillTextField,
 } from './skill';
 import type { SkillFileContent } from './skill-file-preview';
-
-/*
- * Phase names collapse the tasks.md-specified `initial`/`dirty` distinction
- * into a single `idle` phase for submit purposes — dirty tracking for
- * navigation guards is handled separately (via the library's
- * `onDirtyChange`), not folded into this enum.
- */
-type SubmitPhase = 'idle' | 'submitting' | 'success' | 'failure';
+import { SkillEditorSubmitPhase } from './types/skill-editor-submit';
 
 /*
  * Fingerprints the in-memory package (form values, supporting-file paths, and
@@ -183,7 +176,7 @@ export interface UseSkillEditorSubmitParams {
 /** Return value of {@link useSkillEditorSubmit}. */
 export interface UseSkillEditorSubmitResult {
   /** Current submit-phase. */
-  phase: SubmitPhase;
+  phase: SkillEditorSubmitPhase;
   /** Inline field validation errors. */
   errors: SkillEditorErrors;
   /** General submit-time error, distinct from a stale-edit `conflict`. */
@@ -235,7 +228,7 @@ export const useSkillEditorSubmit = ({
   const [submitError, setSubmitError] = useState<string | undefined>();
   const [isSubmitErrorRetryable, setIsSubmitErrorRetryable] = useState(false);
   const [conflict, setConflict] = useState<{ message: string } | undefined>();
-  const [phase, setPhase] = useState<SubmitPhase>('idle');
+  const [phase, setPhase] = useState(SkillEditorSubmitPhase.Idle);
   const lastAttemptRef = useRef<LastAttempt | null>(null);
   const lastValuesRef = useRef<SkillEditorValues | null>(null);
 
@@ -331,7 +324,7 @@ export const useSkillEditorSubmit = ({
         ));
       }
 
-      setPhase('submitting');
+      setPhase(SkillEditorSubmitPhase.Submitting);
       lastAttemptRef.current = {
         fingerprint,
         bucket: bucket as string,
@@ -351,7 +344,7 @@ export const useSkillEditorSubmit = ({
         );
         await refetchSkills();
 
-        setPhase('success');
+        setPhase(SkillEditorSubmitPhase.Success);
         onNotify({
           variant: NotificationVariant.Success,
           title: messages.saveSuccessTitle,
@@ -359,7 +352,7 @@ export const useSkillEditorSubmit = ({
         });
         onNavigate(getCreateReturnUrl?.(path) ?? returnUrl);
       } catch (err) {
-        setPhase('failure');
+        setPhase(SkillEditorSubmitPhase.Failure);
         await applyUploadErrorStatus(err);
       }
     },
@@ -400,7 +393,7 @@ export const useSkillEditorSubmit = ({
         filesContentRef.current,
       );
 
-      setPhase('submitting');
+      setPhase(SkillEditorSubmitPhase.Submitting);
       try {
         const result = await client.updateSkill(
           bucket as string,
@@ -413,7 +406,7 @@ export const useSkillEditorSubmit = ({
         etagRef.current = result.etag ?? etag;
         await refetchSkills();
 
-        setPhase('success');
+        setPhase(SkillEditorSubmitPhase.Success);
         onNotify({
           variant: NotificationVariant.Success,
           title: messages.updateSuccessTitle,
@@ -421,7 +414,7 @@ export const useSkillEditorSubmit = ({
         });
         onNavigate(returnUrl);
       } catch (err) {
-        setPhase('failure');
+        setPhase(SkillEditorSubmitPhase.Failure);
         const status = getApiErrorStatus(err);
         if (status === 412) {
           setConflict({ message: messages.conflictMessage });
@@ -625,7 +618,7 @@ export const useSkillEditorSubmit = ({
 
   const handleSubmit = useCallback(
     async (values: SkillEditorValues) => {
-      if (phase === 'submitting' || !bucket) return;
+      if (phase === SkillEditorSubmitPhase.Submitting || !bucket) return;
 
       const nextErrors: SkillEditorErrors = {};
       if (!values.name.trim()) nextErrors.name = messages.required;

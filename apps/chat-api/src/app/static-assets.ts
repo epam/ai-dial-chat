@@ -10,6 +10,11 @@ import {
   CspMode,
   CSP_NONCE_PLACEHOLDER,
 } from '../config/csp';
+import {
+  collectPrecompressedFiles,
+  createPrecompressedAssetMiddleware,
+  setPrecompressedHeaders,
+} from './precompressed-assets';
 
 export const OVERLAY_SANDBOX_ROUTE = '/overlay-sandbox';
 const SPA_RENDER_PATH = '/{*frontendRoute}';
@@ -208,10 +213,15 @@ export const createFrontendMiddleware = async ({
         next();
       }
     });
+    /* After the worker policy, which matches the request's original path. */
+    staticRouter.use(
+      createPrecompressedAssetMiddleware(collectPrecompressedFiles(rootPath)),
+    );
     staticRouter.use(
       express.static(rootPath, {
         index: false,
         setHeaders: (res, filePath) => {
+          setPrecompressedHeaders(res, filePath);
           if (relative(rootPath, filePath).startsWith(`assets${sep}`)) {
             res.setHeader('Cache-Control', HASHED_ASSET_CACHE_CONTROL);
           }

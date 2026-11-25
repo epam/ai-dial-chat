@@ -5,7 +5,9 @@ import {
   ContentSourceKind,
   ContentSourceProvider,
   ContentSourceSort,
+  ContentSourcesRegistryService,
 } from '../content-sources-registry.service';
+import { ContentSourcesUpstreamService } from '../content-sources-upstream.service';
 import { GitLabProvider } from '../providers/gitlab.provider';
 
 const source: ContentSource = {
@@ -24,14 +26,20 @@ const source: ContentSource = {
   feed: {},
   token: 'glpat-tok',
 };
-const ctx = { timeoutMs: 1000 };
+const ctx = {};
 const json = (body: unknown, headers = {}) =>
   new Response(JSON.stringify(body), { status: 200, headers });
 
 describe('GitLabProvider', () => {
   afterEach(() => vi.unstubAllGlobals());
 
-  const provider = new GitLabProvider();
+  const provider = new GitLabProvider(
+    new ContentSourcesUpstreamService({
+      timeoutMs: 1000,
+      upstreamConcurrency: 8,
+      upstreamQueueSize: 64,
+    } as unknown as ContentSourcesRegistryService),
+  );
 
   it('paginates the tree via x-next-page and sends PRIVATE-TOKEN', async () => {
     const fetchMock = vi

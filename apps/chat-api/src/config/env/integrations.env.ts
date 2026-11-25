@@ -6,6 +6,7 @@ import {
   IsString,
   IsUrl,
   Matches,
+  Max,
   Min,
 } from 'class-validator';
 import {
@@ -39,7 +40,7 @@ export class IntegrationsEnv {
   /*
    * Server-only registry of GitHub/GitLab content sources served through
    * GET /api/v1/content-sources/:sourceId (see
-   * openspec/changes/add-content-sources-proxy/design.md). JSON object,
+   * openspec/changes/archive/2026-11-24-add-content-sources-proxy/design.md). JSON object,
    * `{"version":1,"sources":[...]}`. Unset, empty or whitespace-only values
    * mean no sources are configured. Parsed by ContentSourcesRegistryService,
    * not by this schema, so an invalid value fails startup there with a
@@ -71,6 +72,30 @@ export class IntegrationsEnv {
   @IsInt()
   @Min(1000)
   CONTENT_SOURCES_TIMEOUT_MS?: number = 10_000;
+
+  /* Concurrent upstream calls per content-source `baseUrl` + `credentialId`. */
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  @Max(64)
+  CONTENT_SOURCES_UPSTREAM_CONCURRENCY?: number = 8;
+
+  /* Upstream calls that may wait for a slot per pool; 0 refuses at once (429). */
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(0)
+  @Max(1024)
+  CONTENT_SOURCES_UPSTREAM_QUEUE_SIZE?: number = 64;
+
+  /* Concurrent content-source requests per user that start upstream work. */
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  @Max(64)
+  CONTENT_SOURCES_PRINCIPAL_MISS_CONCURRENCY?: number = 8;
 
   @IsInt()
   @Min(1)

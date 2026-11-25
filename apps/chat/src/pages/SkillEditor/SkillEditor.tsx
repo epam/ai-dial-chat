@@ -8,6 +8,7 @@ import {
   isValidSkillRelativePath,
   parseSkillResourceUrl,
   SkillEditorLoadState,
+  SkillEditorSubmitPhase,
   SKILL_FILE_UPLOAD_MAX_BYTES,
   SKILL_MANIFEST_FILE,
   useSkillEditorLoad,
@@ -656,7 +657,7 @@ const SkillEditorPage: FC = () => {
             loadState === SkillEditorLoadState.Forbidden ||
             loadState === SkillEditorLoadState.NotFound
           }
-          isSubmitting={phase === 'submitting'}
+          isSubmitting={phase === SkillEditorSubmitPhase.Submitting}
           errors={errors}
           submitError={submitError}
           onRetrySubmit={isSubmitErrorRetryable ? retrySubmit : undefined}

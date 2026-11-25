@@ -2,6 +2,7 @@ import {
   BadGatewayException,
   BadRequestException,
   INestApplication,
+  Logger,
   NotFoundException,
   ServiceUnavailableException,
   ValidationPipe,
@@ -19,11 +20,11 @@ import { SessionGuard } from '../../auth/session/session.guard';
 import type { SessionUser } from '../../auth/session/session.types';
 import { AUTH_STRATEGIES } from '../../auth/strategies/auth-strategies.token';
 import type { AuthStrategy } from '../../auth/strategies/auth-strategy.interface';
+import { ClientClosedRequestException } from '../../common/exceptions/client-closed-request.exception';
+import { TraceparentErrorFilter } from '../../common/filters/traceparent-error.filter';
 import { SVG_CONTENT_SECURITY_POLICY } from '../../common/utils/svg-content-security-policy';
-import {
-  ContentSourcesAdmissionService,
-  CONTENT_SOURCES_MAX_PRINCIPAL_IN_FLIGHT,
-} from '../content-sources-admission.service';
+import { UpstreamError, UpstreamFailure } from '../content-provider';
+import { ContentSourcesMissLimitException } from '../content-sources-admission.service';
 import {
   contentSourcesCallDuration,
   ContentSourceResult,
@@ -31,6 +32,7 @@ import {
 import { ContentSourcesController } from '../content-sources.controller';
 import {
   ContentSourcesService,
+  toHttpException,
   UpstreamCredentialsException,
 } from '../content-sources.service';
 
@@ -86,7 +88,6 @@ const buildApp = async (overrides: Partial<Record<string, unknown>> = {}) => {
     controllers: [ContentSourcesController],
     providers: [
       { provide: ContentSourcesService, useValue: service },
-      ContentSourcesAdmissionService,
       Reflector,
       {
         provide: ConfigService,
@@ -100,6 +101,8 @@ const buildApp = async (overrides: Partial<Record<string, unknown>> = {}) => {
   const app = moduleRef.createNestApplication();
   app.setGlobalPrefix('api');
   app.enableVersioning({ type: VersioningType.URI });
+  /* The production global filter, which logs every non-HttpException. */
+  app.useGlobalFilters(new TraceparentErrorFilter());
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -184,7 +187,10 @@ describe('ContentSourcesController', () => {
         .set(...AUTH)
         .expect(200);
       expect(res.body).toEqual(DOCUMENT);
-      expect(service.getDocument).toHaveBeenCalledWith('rn', 'docs/1.md');
+      expect(service.getDocument).toHaveBeenCalledWith('rn', 'docs/1.md', {
+        principalKey: 'keycloak:user-1',
+        signal: expect.any(AbortSignal),
+      });
     });
 
     it('returns 400 when path is missing or empty', async () => {
@@ -271,56 +277,127 @@ describe('ContentSourcesController', () => {
     });
   });
 
-  describe('throttling', () => {
-    it('answers 429 without an upstream call past the per-user limit', async () => {
-      const release: (() => void)[] = [];
-      const getDocument = vi.fn(
-        () =>
-          new Promise((resolve) => {
-            release.push(() => resolve(DOCUMENT));
-          }),
-      );
-      ({ app } = await buildApp({ getDocument }));
-      const server = app.getHttpServer();
-      const held = Array.from(
-        { length: CONTENT_SOURCES_MAX_PRINCIPAL_IN_FLIGHT },
-        () =>
-          request(server)
-            .get('/api/v1/content-sources/rn/document?path=a.md')
-            .set(...AUTH)
-            .then((res) => res.status),
-      );
-      await vi.waitFor(() =>
-        expect(getDocument).toHaveBeenCalledTimes(
-          CONTENT_SOURCES_MAX_PRINCIPAL_IN_FLIGHT,
-        ),
+  describe('admission', () => {
+    const resultsOf = (record: { mock: { calls: unknown[][] } }) =>
+      record.mock.calls.map(
+        ([, attributes]) =>
+          (attributes as Record<string, string>)[
+            'dial.chat.content_sources.result'
+          ],
       );
 
-      await request(server)
+    it('answers 20 concurrent requests of one user without a request-level 429', async () => {
+      ({ app } = await buildApp());
+      const server = app.getHttpServer();
+      const statuses = await Promise.all(
+        Array.from({ length: 20 }, () =>
+          request(server)
+            .get('/api/v1/content-sources/rn/asset?path=docs/a.png')
+            .set(...AUTH)
+            .then((res) => res.status),
+        ),
+      );
+      expect(statuses).toEqual(Array(20).fill(200));
+    });
+
+    it('answers 429 for a full upstream queue and records upstream_queue_full', async () => {
+      const record = vi.spyOn(contentSourcesCallDuration, 'record');
+      ({ app } = await buildApp({
+        getAsset: vi
+          .fn()
+          .mockRejectedValue(
+            toHttpException(
+              new UpstreamError(UpstreamFailure.QueueFull, 'full'),
+            ),
+          ),
+      }));
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/content-sources/rn/asset?path=docs/a.png')
+        .set(...AUTH)
+        .expect(429);
+      expect(res.body.message).toBe(
+        'Too many concurrent content-source requests',
+      );
+      expect(resultsOf(record)).toEqual([
+        ContentSourceResult.UpstreamQueueFull,
+      ]);
+      record.mockRestore();
+    });
+
+    it('answers 429 for the miss limit and records admission_rejected', async () => {
+      const record = vi.spyOn(contentSourcesCallDuration, 'record');
+      ({ app } = await buildApp({
+        getDocument: vi
+          .fn()
+          .mockRejectedValue(new ContentSourcesMissLimitException()),
+      }));
+      await request(app.getHttpServer())
         .get('/api/v1/content-sources/rn/document?path=a.md')
         .set(...AUTH)
         .expect(429);
-      expect(getDocument).toHaveBeenCalledTimes(
-        CONTENT_SOURCES_MAX_PRINCIPAL_IN_FLIGHT,
-      );
-
-      release.forEach((done) => done());
-      expect(await Promise.all(held)).toEqual(
-        Array(CONTENT_SOURCES_MAX_PRINCIPAL_IN_FLIGHT).fill(200),
-      );
+      expect(resultsOf(record)).toEqual([
+        ContentSourceResult.AdmissionRejected,
+      ]);
+      record.mockRestore();
     });
 
-    it('releases capacity after failures', async () => {
-      const getDocument = vi
-        .fn()
-        .mockRejectedValue(new BadGatewayException('x'));
+    it('answers 503 for a queue wait timeout', async () => {
+      ({ app } = await buildApp({
+        listSource: vi
+          .fn()
+          .mockRejectedValue(
+            toHttpException(
+              new UpstreamError(
+                UpstreamFailure.Unavailable,
+                'Timed out waiting for upstream capacity',
+              ),
+            ),
+          ),
+      }));
+      await request(app.getHttpServer())
+        .get('/api/v1/content-sources/rn')
+        .set(...AUTH)
+        .expect(503);
+    });
+
+    it('aborts the request signal when the client disconnects, records client_closed and logs no error', async () => {
+      const record = vi.spyOn(contentSourcesCallDuration, 'record');
+      const logError = vi.spyOn(Logger.prototype, 'error');
+      const filterCatch = vi.spyOn(TraceparentErrorFilter.prototype, 'catch');
+      let seen: AbortSignal | undefined;
+      const getDocument = vi.fn(
+        (_id: string, _path: string, { signal }: { signal: AbortSignal }) =>
+          new Promise((_resolve, reject) => {
+            seen = signal;
+            signal.addEventListener('abort', () =>
+              reject(new DOMException('aborted', 'AbortError')),
+            );
+          }),
+      );
       ({ app } = await buildApp({ getDocument }));
-      for (let i = 0; i < CONTENT_SOURCES_MAX_PRINCIPAL_IN_FLIGHT * 2; i++) {
-        await request(app.getHttpServer())
-          .get('/api/v1/content-sources/rn/document?path=a.md')
-          .set(...AUTH)
-          .expect(502);
-      }
+      const pending = request(app.getHttpServer())
+        .get('/api/v1/content-sources/rn/document?path=a.md')
+        .set(...AUTH);
+      const settled = pending.then(
+        () => undefined,
+        () => undefined,
+      );
+      await vi.waitFor(() => expect(getDocument).toHaveBeenCalledOnce());
+
+      pending.abort();
+      await settled;
+      await vi.waitFor(() => expect(seen?.aborted).toBe(true));
+      await vi.waitFor(() =>
+        expect(resultsOf(record)).toEqual([ContentSourceResult.ClientClosed]),
+      );
+      await vi.waitFor(() => expect(filterCatch).toHaveBeenCalledOnce());
+      expect(filterCatch.mock.calls[0][0]).toBeInstanceOf(
+        ClientClosedRequestException,
+      );
+      expect(logError).not.toHaveBeenCalled();
+      record.mockRestore();
+      logError.mockRestore();
+      filterCatch.mockRestore();
     });
   });
   describe('telemetry', () => {

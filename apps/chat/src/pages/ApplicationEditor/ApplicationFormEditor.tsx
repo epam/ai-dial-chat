@@ -15,7 +15,6 @@ import {
   isOwnDialFileId,
   parseResourceFolderPath,
   type ResourceSaveAdapter,
-  type ResourceSaveResult,
 } from '@epam/ai-dial-chat-hooks';
 import {
   CatalogEntityType,
@@ -505,15 +504,18 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
   /*
    * Save of a kind that opts in goes through the Save panel, which picks the
    * folder and may also move, fork or publish the application. A new
-   * application always qualifies; an existing one only when it is the user's
-   * own, because moving and forking act on the caller's bucket, so a shared
-   * application keeps saving in place.
+   * all-at-once application always qualifies. A metadata-first create only
+   * starts the application in the Personal root so its embedded editor can
+   * open, so it skips the panel; its later Saves use it. An existing
+   * application qualifies only when it is the user's own, because moving and
+   * forking act on the caller's bucket, so a shared application keeps saving
+   * in place.
    */
   const isSavePanelFlow =
     definition.savePanel != null &&
-    (!isEditMode || wasCreatedThisSession || deployment?.isMy === true);
-  /* A metadata-first create only starts the application; it is set up, and can be published, once it exists. */
-  const canPublishFromPanel = isEditMode || !isMetadataFirst;
+    (isEditMode
+      ? wasCreatedThisSession || deployment?.isMy === true
+      : !isMetadataFirst);
   const [isSavePanelOpen, setIsSavePanelOpen] = useState(false);
   const savePanelDependencyValues = useMemo(
     () => definition.savePanel?.getDependencyValues?.(setup, context),
@@ -593,30 +595,14 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
   );
 
   /* Every outcome reaching here saved the application; the panel notifies once this returns. */
-  const handleSavePanelSaved = useCallback(
-    (result: ResourceSaveResult) => {
-      if (result.isCreated && isMetadataFirst) {
-        setIsSavePanelOpen(false);
-        switchToCreatedApp(result.savedId, metadata.values);
-        return;
-      }
-      /* Best-effort and not awaited: a full uncached listing can take seconds,
-       * and the catalog picks the saved application up when it lands. */
-      void refetchDeployments().catch(() => undefined);
-      setIsSavePanelOpen(false);
-      allowNextNavigation();
-      navigate(returnUrl);
-    },
-    [
-      allowNextNavigation,
-      isMetadataFirst,
-      metadata.values,
-      navigate,
-      refetchDeployments,
-      returnUrl,
-      switchToCreatedApp,
-    ],
-  );
+  const handleSavePanelSaved = useCallback(() => {
+    /* Best-effort and not awaited: a full uncached listing can take seconds,
+     * and the catalog picks the saved application up when it lands. */
+    void refetchDeployments().catch(() => undefined);
+    setIsSavePanelOpen(false);
+    allowNextNavigation();
+    navigate(returnUrl);
+  }, [allowNextNavigation, navigate, refetchDeployments, returnUrl]);
 
   const proceedWithSave = useCallback(() => {
     if (isSavePanelFlow) {
@@ -866,7 +852,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
             typeLabel={definition.savePanel.getTypeLabel(context)}
             notifiableEntity={notifiableEntity}
             notificationType={notificationType}
-            canPublish={canPublishFromPanel}
+            canPublish
             dependencyValues={savePanelDependencyValues}
             isFormStateEmbedded={definition.savePanel.isFormStateEmbedded}
             hasUploadedIcon={hasUploadedIcon}

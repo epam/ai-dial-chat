@@ -4,6 +4,7 @@ export enum NewYearI18nKeys {
   GiftWrappingToastMessage = 'newYear.giftWrappingToastMessage',
   SnowmanDeliveryToastMessage = 'newYear.snowmanDeliveryToastMessage',
   ElfFireworksToastMessage = 'newYear.elfFireworksToastMessage',
+  CatBaubleToastMessage = 'newYear.catBaubleToastMessage',
   ToastTitle = 'newYear.toastTitle',
   GiftLabel = 'newYear.giftLabel',
 }

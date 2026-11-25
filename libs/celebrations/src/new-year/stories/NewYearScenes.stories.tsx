@@ -238,3 +238,49 @@ export const ElfFireworksInterruption: Story = {
     });
   },
 };
+
+/** The cat misses a bauble, swats the model selector into the fir, where it hangs as an ornament, and carries it home. */
+export const CatBauble: Story = {
+  args: { sceneId: NewYearScene.CatBauble },
+  parameters: { celebrationScene: NewYearScene.CatBauble },
+};
+
+export const CatBaubleMobile: Story = {
+  args: { sceneId: NewYearScene.CatBauble, isMobile: true },
+};
+
+export const CatBaubleRtl: Story = {
+  args: { sceneId: NewYearScene.CatBauble, dir: 'rtl' },
+};
+
+export const CatBaubleReducedMotion: Story = {
+  args: { sceneId: NewYearScene.CatBauble, isReducedMotion: true },
+};
+
+/** Clicking the page while the selector hangs on the fir ends the scene and the original selector is back at once. */
+export const CatBaubleInterruption: Story = {
+  args: { sceneId: NewYearScene.CatBauble },
+  play: async ({ canvasElement }) => {
+    const scene = await waitFor(
+      () => {
+        const found = canvasElement.ownerDocument.querySelector(
+          '[data-new-year-scene="cat-bauble"]',
+        );
+        if (!found) throw new Error('Scene not started');
+        return found;
+      },
+      { timeout: 5000 },
+    );
+    await new Promise((resolve) => setTimeout(resolve, 13000));
+    canvasElement.ownerDocument.body.dispatchEvent(
+      new PointerEvent('pointerdown', { bubbles: true }),
+    );
+    await waitFor(() => {
+      if (scene.isConnected) throw new Error('Scene still running');
+      if (
+        canvasElement.ownerDocument.querySelector('[data-celebration-snapshot]')
+      )
+        throw new Error('A selector copy remains');
+    });
+  },
+};

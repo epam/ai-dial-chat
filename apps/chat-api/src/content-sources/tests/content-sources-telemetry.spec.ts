@@ -1,10 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
-  ContentSourcesAdmissionService,
-  CONTENT_SOURCES_MAX_PRINCIPAL_IN_FLIGHT,
-  CONTENT_SOURCES_MAX_TOTAL_IN_FLIGHT,
-} from '../content-sources-admission.service';
-import {
+  ContentSourceQueueOutcome,
+  contentSourcesUpstreamQueueDuration,
+  recordContentSourceQueueWait,
   resolveContentSourceLabel,
   UNKNOWN_CONTENT_SOURCE,
 } from '../content-sources-telemetry';
@@ -24,24 +22,18 @@ describe('resolveContentSourceLabel', () => {
   });
 });
 
-describe('ContentSourcesAdmissionService', () => {
-  it('enforces the per-principal and global ceilings and frees entries', () => {
-    const admission = new ContentSourcesAdmissionService();
-    for (let i = 0; i < CONTENT_SOURCES_MAX_PRINCIPAL_IN_FLIGHT; i++) {
-      expect(admission.tryAcquire('a')).toBe(true);
-    }
-    expect(admission.tryAcquire('a')).toBe(false);
-    expect(admission.tryAcquire('b')).toBe(true);
-    for (let i = 0; i < CONTENT_SOURCES_MAX_PRINCIPAL_IN_FLIGHT; i++) {
-      admission.release('a');
-    }
-    admission.release('b');
-    expect(admission.totalInFlightCount).toBe(0);
-    expect(admission.trackedPrincipalCount).toBe(0);
-
-    for (let i = 0; i < CONTENT_SOURCES_MAX_TOTAL_IN_FLIGHT; i++) {
-      expect(admission.tryAcquire(`u${i}`)).toBe(true);
-    }
-    expect(admission.tryAcquire('another')).toBe(false);
+describe('recordContentSourceQueueWait', () => {
+  it('labels a queue wait with the source id and outcome only', () => {
+    const record = vi.spyOn(contentSourcesUpstreamQueueDuration, 'record');
+    recordContentSourceQueueWait(
+      'rn',
+      0.25,
+      ContentSourceQueueOutcome.TimedOut,
+    );
+    expect(record).toHaveBeenCalledWith(0.25, {
+      'dial.chat.content_sources.source': 'rn',
+      'dial.chat.content_sources.queue_outcome': 'timed_out',
+    });
+    record.mockRestore();
   });
 });

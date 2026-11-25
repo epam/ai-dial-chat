@@ -12,6 +12,7 @@ import {
   CONTENT_SOURCES_MAX_SOURCES,
   ContentSourcesRegistryService,
 } from './content-sources-registry.service';
+import { ContentSourcesUpstreamService } from './content-sources-upstream.service';
 import { ContentSourcesController } from './content-sources.controller';
 import { ContentSourcesService } from './content-sources.service';
 import { GitHubProvider } from './providers/github.provider';
@@ -62,6 +63,7 @@ export const createContentSourcesCaches = (): ContentSourcesCaches => ({
     ContentSourcesRegistryService,
     ContentSourcesCacheService,
     ContentSourcesAdmissionService,
+    ContentSourcesUpstreamService,
     ContentSourcesService,
     GitHubProvider,
     GitLabProvider,

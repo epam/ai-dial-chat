@@ -8,7 +8,8 @@ import {
   ContentSource,
   ContentSourceDateMode,
 } from '../content-sources-registry.service';
-import { fetchUpstream, parseUpstreamJson } from '../upstream-fetch';
+import { ContentSourcesUpstreamService } from '../content-sources-upstream.service';
+import { parseUpstreamJson } from '../upstream-fetch';
 
 const API_VERSION = '2022-11-28';
 const LIST_MAX_BYTES = 16 * 1024 * 1024;
@@ -29,6 +30,8 @@ const encodePath = (path: string): string =>
 /** GitHub REST adapter. `baseUrl` is the API origin (default api.github.com). */
 @Injectable()
 export class GitHubProvider implements ContentProvider {
+  constructor(private readonly upstream: ContentSourcesUpstreamService) {}
+
   async listDocuments(
     source: ContentSource,
     context: ProviderContext,
@@ -149,18 +152,19 @@ export class GitHubProvider implements ContentProvider {
     maxBytes: number,
     accept: string,
   ) {
-    return fetchUpstream({
-      url,
-      origin: new URL(source.baseUrl).origin,
-      headers: {
-        Accept: accept,
-        'X-GitHub-Api-Version': API_VERSION,
-        'User-Agent': 'ai-dial-chat-content-sources',
-        ...(source.token ? { Authorization: `Bearer ${source.token}` } : {}),
+    return this.upstream.fetch(
+      source,
+      {
+        url,
+        headers: {
+          Accept: accept,
+          'X-GitHub-Api-Version': API_VERSION,
+          'User-Agent': 'ai-dial-chat-content-sources',
+          ...(source.token ? { Authorization: `Bearer ${source.token}` } : {}),
+        },
+        maxBytes,
       },
-      timeoutMs: context.timeoutMs,
-      maxBytes,
-      sourceId: source.id,
-    });
+      context,
+    );
   }
 }

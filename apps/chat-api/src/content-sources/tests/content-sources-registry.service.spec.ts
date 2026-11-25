@@ -157,15 +157,28 @@ describe('parseContentSourcesRegistry', () => {
         credentials,
       ).get(GITHUB.id);
       expect(source?.token).toBe('tok-1');
+      expect(source?.credentialId).toBe('gh');
     });
 
-    it('fails when the credential is missing, without a token in the message', () => {
-      expect(() =>
+    it('omits credentialId for an anonymous source', () => {
+      const source = parseContentSourcesRegistry(config(GITHUB)).get(GITHUB.id);
+      expect(source).not.toHaveProperty('credentialId');
+    });
+
+    it('fails when the credential is missing, without a token or id in the message', () => {
+      let message = '';
+      try {
         parseContentSourcesRegistry(
-          config({ ...GITHUB, credentialId: 'nope' }),
+          config({ ...GITHUB, credentialId: 'nope-id' }),
           credentials,
-        ),
-      ).toThrow(/credentialId references a credential that is not configured/);
+        );
+      } catch (error) {
+        message = (error as Error).message;
+      }
+      expect(message).toMatch(
+        /credentialId references a credential that is not configured/,
+      );
+      expect(message).not.toContain('nope-id');
     });
 
     it('rejects malformed credential JSON and invalid entries', () => {
@@ -185,16 +198,25 @@ describe('ContentSourcesRegistryService', () => {
     const service = create({});
     expect(service.cacheTtlMs).toBe(30 * 60 * 1000);
     expect(service.timeoutMs).toBe(10_000);
+    expect(service.upstreamConcurrency).toBe(8);
+    expect(service.upstreamQueueSize).toBe(64);
+    expect(service.principalMissConcurrency).toBe(8);
     expect(service.get('anything')).toBeUndefined();
   });
 
-  it('honours configured TTL and timeout', () => {
+  it('honours configured TTL, timeout and admission limits', () => {
     const service = create({
       CONTENT_SOURCES_CACHE_TTL_MS: 5000,
       CONTENT_SOURCES_TIMEOUT_MS: 2000,
+      CONTENT_SOURCES_UPSTREAM_CONCURRENCY: 2,
+      CONTENT_SOURCES_UPSTREAM_QUEUE_SIZE: 0,
+      CONTENT_SOURCES_PRINCIPAL_MISS_CONCURRENCY: 3,
     });
     expect(service.cacheTtlMs).toBe(5000);
     expect(service.timeoutMs).toBe(2000);
+    expect(service.upstreamConcurrency).toBe(2);
+    expect(service.upstreamQueueSize).toBe(0);
+    expect(service.principalMissConcurrency).toBe(3);
   });
 
   it('fails construction without leaking secrets', () => {

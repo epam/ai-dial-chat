@@ -7,13 +7,16 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { EnvironmentVariables } from '../config/environment.config';
-import { PUBLIC_BUCKET } from '../constants/dial.constants';
 import {
   buildDialFileResourceUrl,
   toPlainDialPath,
 } from '../files/dial-resource-path.util';
 import { FilesListingService } from '../files/listing/files-listing.service';
 import { getPublishedAttachmentTargetUrl } from '../publish/publish-target.util';
+import {
+  buildPublishedFolderDeleteResources,
+  type PublicationFileResource,
+} from '../publish/published-folder-delete-resources';
 import { ConversationErrorCode } from './types/conversation-error-code.enum';
 import {
   type ConversationAttachmentView,
@@ -24,13 +27,6 @@ import {
 const EXISTENCE_CHECK_CONCURRENCY = 8;
 
 const DEFAULT_PUBLISH_ATTACHMENTS_MAX_FILES = 1000;
-
-/** A `resources` entry for a publication request. */
-export interface PublicationFileResource {
-  action: 'ADD' | 'DELETE';
-  sourceUrl?: string;
-  targetUrl: string;
-}
 
 /**
  * Works out which attachment files of a conversation are published with it
@@ -133,32 +129,19 @@ export class ConversationPublishAttachmentsService {
 
   /**
    * The `DELETE` resources for the files published with a conversation, read
-   * from what actually exists in its published folder: Core fails a `DELETE`
-   * of a target that is gone, so the live listing is the only safe list.
+   * from what actually exists in its published folder.
    * @param accessToken - caller's bearer token
    * @param attachmentsFolderUrl - `files/public/{folder}/{name}/`, from `getPublishedAttachmentsFolderUrl`
    */
-  async buildDeleteResources(
+  buildDeleteResources(
     accessToken: string,
     attachmentsFolderUrl: string,
   ): Promise<PublicationFileResource[]> {
-    let expanded;
-    try {
-      expanded = await this.filesListingService.expandFolderContents(
-        PUBLIC_BUCKET,
-        toPlainDialPath(attachmentsFolderUrl),
-        '',
-        accessToken,
-      );
-    } catch (err) {
-      if (err instanceof NotFoundException) return [];
-      throw err;
-    }
-
-    return expanded.map((file) => ({
-      action: 'DELETE' as const,
-      targetUrl: buildDialFileResourceUrl(PUBLIC_BUCKET, file.path),
-    }));
+    return buildPublishedFolderDeleteResources(
+      this.filesListingService,
+      accessToken,
+      attachmentsFolderUrl,
+    );
   }
 
   private assertWithinLimit(count: number, maxFiles: number): void {
