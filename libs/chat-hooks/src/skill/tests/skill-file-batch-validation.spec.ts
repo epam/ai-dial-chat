@@ -70,6 +70,36 @@ describe('validateSkillFileBatch', () => {
     expect(results[0].error).toContain('Too large');
   });
 
+  it('accepts the configured byte limits exactly and rejects one extra byte', async () => {
+    const maxFileBytes = 10 * 1024 * 1024;
+    const maxTotalBytes = 100 * 1024 * 1024;
+    const context = {
+      ...baseContext,
+      maxFileBytes,
+      maxTotalBytes,
+      existingTotalBytes:
+        maxTotalBytes - maxFileBytes - baseContext.manifestByteLength,
+    };
+    const candidate = buildCandidate('data.bin', new Uint8Array(maxFileBytes));
+    const atLimit = await validateSkillFileBatch([candidate], context);
+    expect(atLimit.results[0].status).toBe(SkillFileValidationStatus.Valid);
+    expect(atLimit.batchErrors).toEqual([]);
+
+    const overTotal = await validateSkillFileBatch([candidate], {
+      ...context,
+      existingTotalBytes: context.existingTotalBytes + 1,
+    });
+    expect(overTotal.batchErrors).toContainEqual({
+      message: messages.totalSizeExceeded,
+    });
+
+    const overFile = await validateSkillFileBatch(
+      [buildCandidate('data.bin', new Blob([candidate.file, 'x']))],
+      context,
+    );
+    expect(overFile.results[0].status).toBe(SkillFileValidationStatus.Invalid);
+  });
+
   it('rejects an invalid or unsafe path', async () => {
     const candidate = buildCandidate('../escape.md');
     const { results } = await validateSkillFileBatch([candidate], baseContext);

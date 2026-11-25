@@ -37,6 +37,10 @@ export interface SkillFileActionsMessages extends SkillFileBatchValidationMessag
 export interface UseSkillFileActionsParams {
   /** Maximum total files including SKILL.md. When omitted, the server checks the count. */
   maxFiles?: number;
+  /** Maximum bytes per file, including the manifest. Defaults to 1 MiB. */
+  maxFileBytes?: number;
+  /** Maximum total bytes, including the manifest. Defaults to 16 MiB. */
+  maxTotalBytes?: number;
   /** The editor's current supporting-file tree. */
   files: SkillFileTreeNode[];
   /** Updates `files`. */
@@ -92,6 +96,8 @@ const FOLDER_PROBE_SEGMENT = 'probe';
  */
 export const useSkillFileActions = ({
   maxFiles,
+  maxFileBytes,
+  maxTotalBytes,
   files,
   setFiles,
   filesContentRef,
@@ -146,6 +152,8 @@ export const useSkillFileActions = ({
       : buildSkillManifest(baseline);
     return {
       maxFiles,
+      maxFileBytes,
+      maxTotalBytes,
       existingPaths,
       existingTotalBytes,
       existingFileBytes,
@@ -157,6 +165,8 @@ export const useSkillFileActions = ({
     };
   }, [
     maxFiles,
+    maxFileBytes,
+    maxTotalBytes,
     files,
     filesContentRef,
     isEditMode,
