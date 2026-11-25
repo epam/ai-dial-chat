@@ -84,7 +84,13 @@ export interface ProjectCreateFormLabels {
   /** Accessible name of a file card's download button; read only when `onContextFileDownload` is set. Defaults to `Download {name}`, e.g. "Download tickets.csv". */
   downloadFileLabel?: (name: string) => string;
   /** Message per client-side file rejection, given the file name; shown as the drop zone's error, one per line. */
-  fileRejections: Record<ContextFileRejection, (name: string) => string>;
+  fileRejections: Record<
+    Exclude<ContextFileRejection, ContextFileRejection.TooManyFiles>,
+    (name: string) => string
+  > &
+    Partial<
+      Record<ContextFileRejection.TooManyFiles, (name: string) => string>
+    >;
   /** Announced after files are added, e.g. "2 files added". */
   filesAddedStatus: (count: number) => string;
   /** Announced after a file is removed, e.g. "tickets.csv removed". */
@@ -159,6 +165,8 @@ export interface ProjectCreateFormProps {
   maxFileBytes: number;
   /** Maximum combined size of the context files, in bytes; a file over it is rejected. */
   maxTotalBytes: number;
+  /** Maximum number of retained and newly added context files. */
+  maxFiles?: number;
   /**
    * Opens the host's file manager and resolves the picked files, or
    * `undefined` when cancelled. The drop zone's file manager link is absent when omitted.

@@ -1921,6 +1921,12 @@ export interface ClientConfigDto {
    */
   skillUploadMaxFiles?: number;
   /**
+   * Maximum number of context files in a project, including retained files on edit.
+   * @type {number}
+   * @memberof ClientConfigDto
+   */
+  projectContextMaxFiles?: number;
+  /**
    * Maximum bytes per skill file, including SKILL.md.
    * @type {number}
    * @memberof ClientConfigDto

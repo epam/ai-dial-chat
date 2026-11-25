@@ -22,6 +22,8 @@ interface Props {
   allowedTypes: string[];
   /** Per-file size limit, in bytes. */
   maxSelectableFileSize: number;
+  maximumAttachmentsAmount?: number;
+  existingAttachmentsAmount: number;
   onAttach: (result: AttachResult) => void;
   onClose: () => void;
 }
@@ -32,6 +34,8 @@ const ProjectFileManagerModal: FC<Props> = ({
   bucket,
   allowedTypes,
   maxSelectableFileSize,
+  maximumAttachmentsAmount,
+  existingAttachmentsAmount,
   onAttach,
   onClose,
 }) => {
@@ -49,6 +53,8 @@ const ProjectFileManagerModal: FC<Props> = ({
         canAttachFolders={false}
         allowedTypes={allowedTypes}
         maxSelectableFileSize={maxSelectableFileSize}
+        maximumAttachmentsAmount={maximumAttachmentsAmount}
+        existingAttachmentsAmount={existingAttachmentsAmount}
         title={t(ProjectsI18nKeys.CreateContextFileManagerTitle)}
         attachLabel={t(DialFileManagerI18nKeys.Attach)}
         emptyTitle={t(DialFileManagerI18nKeys.Empty)}

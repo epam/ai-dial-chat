@@ -13564,6 +13564,12 @@
             "description": "Maximum files per skill, including the root SKILL.md.",
             "example": 100
           },
+          "projectContextMaxFiles": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Maximum number of context files in a project, including retained files on edit.",
+            "example": 100
+          },
           "skillFileUploadMaxBytes": {
             "type": "number",
             "minimum": 1,

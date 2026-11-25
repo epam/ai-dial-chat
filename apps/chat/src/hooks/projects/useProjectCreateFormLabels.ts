@@ -86,6 +86,8 @@ export const useProjectCreateFormLabels = ({
       downloadFileLabel: (name) =>
         t(ProjectsI18nKeys.CreateContextDownload, { name }),
       fileRejections: {
+        [ContextFileRejection.TooManyFiles]: (name) =>
+          `${name}: ${t(ProjectsI18nKeys.CreateErrorTooManyFiles)}`,
         [ContextFileRejection.UnsupportedType]: (name) =>
           t(ProjectsI18nKeys.CreateErrorUnsupportedType, { name }),
         [ContextFileRejection.TooLarge]: (name) =>

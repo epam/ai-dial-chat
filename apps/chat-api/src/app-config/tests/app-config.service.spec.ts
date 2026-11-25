@@ -96,6 +96,20 @@ describe('AppConfigService', () => {
       ).toEqual(origins);
     });
 
+    it('exposes the configured project context limits together', async () => {
+      const { service } = buildResolutionStack({
+        PROJECT_CONTEXT_MAX_FILES: '500',
+        PROJECT_CONTEXT_FILE_MAX_BYTES: '10485760',
+        PROJECT_CONTEXT_TOTAL_MAX_BYTES: '104857600',
+        PROJECT_ARCHIVE_READ_MAX_BYTES: '134217728',
+      });
+      expect((await service.getClientConfig(ctx)).config).toMatchObject({
+        projectContextMaxFiles: 500,
+        projectContextFileMaxBytes: 10_485_760,
+        projectContextTotalMaxBytes: 104_857_600,
+      });
+    });
+
     it('exposes the validated skill upload limits', async () => {
       const { service } = buildResolutionStack({
         SKILL_UPLOAD_MAX_FILES: '500',
@@ -1734,6 +1748,7 @@ describe('AppConfigService', () => {
         'projectContextFileMaxBytes',
         'projectContextTotalMaxBytes',
         'projectContextAllowedExtensions',
+        'projectContextMaxFiles',
         'skillUploadMaxFiles',
         'skillFileUploadMaxBytes',
         'skillUploadMaxTotalBytes',

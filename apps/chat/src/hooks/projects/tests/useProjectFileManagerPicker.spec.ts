@@ -1,4 +1,8 @@
-import type { AttachResult } from '@epam/ai-dial-chat-shared';
+import {
+  AttachmentType,
+  type AttachResult,
+  RequestStatus,
+} from '@epam/ai-dial-chat-shared';
 import {
   DialFileNodeType,
   type DialFile,
@@ -17,6 +21,7 @@ vi.mock('../../../context/NotificationContext');
 
 const mockShowNotification = vi.fn();
 const mockDownloadFile = vi.mocked(filesApi.downloadFile);
+const limits = { maxFileBytes: 5, maxTotalBytes: 8 };
 
 const dialFile = (overrides: Partial<DialFile> = {}): DialFile => ({
   id: 'files/other-bucket/data/tickets.csv',
@@ -44,7 +49,7 @@ describe('useProjectFileManagerPicker', () => {
 
   it('opens the modal when a pick starts', () => {
     const { result } = renderHook(() =>
-      useProjectFileManagerPicker('my-bucket'),
+      useProjectFileManagerPicker('my-bucket', [], limits),
     );
 
     act(() => {
@@ -55,13 +60,9 @@ describe('useProjectFileManagerPicker', () => {
   });
 
   it('resolves with copies of the picked files downloaded from their own bucket', async () => {
-    /* A test-realm Blob, for the jsdom `File` constructor (see the skill picker spec). */
-    mockDownloadFile.mockResolvedValue({
-      ok: true,
-      blob: async () => new Blob(['a,b'], { type: 'text/csv' }),
-    } as unknown as Response);
+    mockDownloadFile.mockResolvedValue(new Response('a,b'));
     const { result } = renderHook(() =>
-      useProjectFileManagerPicker('my-bucket'),
+      useProjectFileManagerPicker('my-bucket', [], limits),
     );
 
     let pick!: ReturnType<typeof result.current.pickFromFileManager>;
@@ -90,9 +91,78 @@ describe('useProjectFileManagerPicker', () => {
     expect(result.current.isOpen).toBe(false);
   });
 
+  it('keeps an over-budget selection open without downloading and accepts an exact-fit retry', async () => {
+    const { result } = renderHook(() =>
+      useProjectFileManagerPicker(
+        'my-bucket',
+        [
+          {
+            id: 'stored',
+            name: 'stored.csv',
+            contentType: 'text/csv',
+            type: AttachmentType.File,
+            status: RequestStatus.Idle,
+            isStored: true,
+            size: 5,
+          },
+        ],
+        limits,
+      ),
+    );
+    let pick!: ReturnType<typeof result.current.pickFromFileManager>;
+    act(() => {
+      pick = result.current.pickFromFileManager();
+    });
+    act(() =>
+      result.current.handleAttach(attach([dialFile({ contentLength: 4 })])),
+    );
+    expect(mockDownloadFile).not.toHaveBeenCalled();
+    expect(result.current.isOpen).toBe(true);
+    mockDownloadFile.mockResolvedValue(new Response('123'));
+    act(() =>
+      result.current.handleAttach(attach([dialFile({ contentLength: 3 })])),
+    );
+    expect((await pick)?.[0].size).toBe(3);
+  });
+
+  it.each([
+    { bodies: ['123456'], error: ProjectsI18nKeys.CreateErrorTooLarge },
+    {
+      bodies: ['1234', '12345'],
+      error: ProjectsI18nKeys.CreateErrorCapacityExceeded,
+    },
+  ])(
+    'checks actual bytes when metadata understates the download',
+    async ({ bodies, error }) => {
+      for (const body of bodies)
+        mockDownloadFile.mockResolvedValueOnce(new Response(body));
+      const { result } = renderHook(() =>
+        useProjectFileManagerPicker('my-bucket', [], limits),
+      );
+      let pick!: ReturnType<typeof result.current.pickFromFileManager>;
+      act(() => {
+        pick = result.current.pickFromFileManager();
+      });
+      act(() =>
+        result.current.handleAttach(
+          attach(
+            bodies.map((_, i) =>
+              dialFile({ name: i + '.csv', contentLength: 1 }),
+            ),
+          ),
+        ),
+      );
+      await expect(pick).resolves.toBeUndefined();
+      expect(mockShowNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ message: error }),
+      );
+      expect(mockDownloadFile.mock.calls[0][2]?.aborted).toBe(true);
+    },
+  );
+
   it('resolves undefined when the modal is closed', async () => {
     const { result } = renderHook(() =>
-      useProjectFileManagerPicker('my-bucket'),
+      useProjectFileManagerPicker('my-bucket', [], limits),
     );
 
     let pick!: ReturnType<typeof result.current.pickFromFileManager>;
@@ -110,7 +180,7 @@ describe('useProjectFileManagerPicker', () => {
       status: 500,
     } as Response);
     const { result } = renderHook(() =>
-      useProjectFileManagerPicker('my-bucket'),
+      useProjectFileManagerPicker('my-bucket', [], limits),
     );
 
     let pick!: ReturnType<typeof result.current.pickFromFileManager>;
@@ -130,7 +200,7 @@ describe('useProjectFileManagerPicker', () => {
 
   it('settles a pending pick on unmount', async () => {
     const { result, unmount } = renderHook(() =>
-      useProjectFileManagerPicker('my-bucket'),
+      useProjectFileManagerPicker('my-bucket', [], limits),
     );
 
     let pick!: ReturnType<typeof result.current.pickFromFileManager>;

@@ -206,6 +206,17 @@ describe('ProjectsCreateService', () => {
       );
     });
 
+    it('accepts 500 context files when configured and excludes the manifest from the count', () => {
+      const names = Array.from({ length: 500 }, (_, i) => `f${i}.csv`);
+      const result = makeService({
+        PROJECT_CONTEXT_MAX_FILES: 500,
+      }).validateAndBuild(
+        { name: 'p', fileNames: JSON.stringify(names) },
+        names.map(() => file(CSV)),
+      );
+      expect(result.fileCount).toBe(500);
+    });
+
     it('rejects more than the maximum number of context files', () => {
       const names = Array.from({ length: 101 }, (_, i) => `f${i}.csv`);
       expectRejection(
