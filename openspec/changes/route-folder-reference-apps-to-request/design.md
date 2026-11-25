@@ -27,7 +27,7 @@ On the client the direct decision already has three places: the Publish panel th
 
 4. **Save continues with the request on the typed code.** In `resource-save.ts` the direct-write failure branch checks the code and runs the same `publish` step as the non-direct branch, so an embedded-editor application (DIAL Loop) ends in "publish requested". Alternative, the client calling the dependencies endpoint after the first save and deciding then, adds a request and a race for no benefit over the backstop. The Publish panel has no such fallback: its dependency list comes from the server, so the refusal can reach it only when that read failed, and then it is shown as an error. A fallback there would also report "saved to folder" for a filed request.
 
-5. **Notes use the existing slots.** The Publish panel's `directUnavailableNote` (a blue information `Notification`) and the Save panel's destination note slot. Two new keys: `catalog.publish.directUnavailableFolder` and `resourceSavePanel.directUnavailableFolder`. Lib strings arrive as props; no lib change beyond the hook inputs.
+5. **Notes use the existing slots.** The Publish panel's `directUnavailableNote` (merged by `PublishPanel` into the admin-approval callout as a continuation of its text, so one blue `Notification` shows) and the Save panel's destination note slot. Two new keys: `catalog.publish.directUnavailableFolder` and `resourceSavePanel.directUnavailableFolder`. Lib strings arrive as props; no lib change beyond the hook inputs.
 
 ## Risks / Trade-offs
 

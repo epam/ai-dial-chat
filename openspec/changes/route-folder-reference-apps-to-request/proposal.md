@@ -9,7 +9,7 @@ Copying the folder ourselves is not safe: the application would have to be writt
 ## What Changes
 
 - An application that refers to a folder of files is written directly into an org-unit folder only by a DIAL admin. For everyone else the Save and Publish panels use the publication request that plain public folders already use.
-- The Publish panel shows its existing blue information note (`directUnavailableNote`) with a new sentence saying a request is sent because the application refers to a folder. The Save panel shows the same note in its existing destination note slot.
+- The Publish panel shows a new short sentence, saying a direct save is not possible because the application uses a folder of files, as a continuation of the text of its existing admin-approval callout (`directUnavailableNote`), so the panel shows one callout. The Save panel shows the same note in its existing destination note slot.
 - Where the panel cannot see the folder reference (an application with an embedded editor, such as DIAL Loop opened in its editor), the server refuses the direct write with a typed error before copying anything, and the Save panel continues with the publication request for the saved application.
 - A DIAL admin and every application without a folder reference keep today's direct write. Applications only: toolsets, prompts and skills are unchanged.
 
@@ -25,6 +25,8 @@ None.
 - `resource-save-panel`: the direct-write rows are not taken for such an application; the typed refusal continues with the publication request.
 - `catalog-publish-flow`: the Publish panel's direct decision includes the folder reference and shows the new note.
 - `org-units-api`: the copy endpoint gains the `422` refusal and its code.
+- `publish-panel-library`: the host's direct-unavailable sentence continues the text of the admin-approval callout in the same block, so the panel shows one callout.
+- `org-units-folder-permissions`: the Save and Publish direct-write rules except a folder-reference application for a user who is not a DIAL admin.
 
 ## Impact
 
