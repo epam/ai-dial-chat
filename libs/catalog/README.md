@@ -327,6 +327,56 @@ navigation (a category tree, etc.).
 />
 ```
 
+#### Replacing the Browse toolbar
+
+The toolbar — heading, search, view toggle, sort and filters — is built in. A
+host that needs a different design passes `renderToolbar`, which renders in its
+place. It receives the same props the built-in `Toolbar` gets (`ToolbarProps`),
+so the host reads values and calls the `on*Change` callbacks while `Catalog`
+keeps owning the state: search, view mode, sort, topic and "My" filters, and
+the results they produce.
+
+The node is placed in the toolbar's own wrapper, above the entity-type tabs.
+Without `renderToolbar` nothing changes.
+
+Because the built-in toolbar is gone, the host takes on what it did:
+
+- attach `searchInputRef` to its search `<input>` — the "Scroll to top" control
+  focuses it;
+- call `onViewModeIntent` when the view toggle is about to be used, so the list
+  view is prepared ahead of the click;
+- lay out its own controls below the phone breakpoint (the built-in
+  browse-settings sheet is part of the replaced toolbar);
+- add `CATALOG_CLASS.toolbar` to its root if it wants to keep that selector.
+
+```tsx
+import { Catalog, type ToolbarProps } from '@epam/ai-dial-catalog';
+
+const renderToolbar = ({
+  query,
+  onQueryChange,
+  searchInputRef,
+  filters,
+  filterValues,
+  onFiltersChange,
+}: ToolbarProps) => (
+  <MyToolbar
+    query={query}
+    onQueryChange={onQueryChange}
+    searchInputRef={searchInputRef}
+    selectedTopics={filters}
+    topicOptions={filterValues}
+    onTopicsChange={onFiltersChange}
+  />
+);
+
+<Catalog
+  items={items}
+  favorites={favoriteItems}
+  renderToolbar={renderToolbar}
+/>;
+```
+
 #### Mobile browse settings
 
 Below 768px (`useIsPhone` from `@epam/ai-dial-chat-shared`)

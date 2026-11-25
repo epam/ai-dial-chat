@@ -338,6 +338,10 @@ export const mapToDeploymentItem = (
         ? raw.max_input_attachments
         : undefined,
     topics,
+    provider:
+      typeof raw.provider === 'string' && raw.provider !== ''
+        ? raw.provider
+        : undefined,
     owner: raw.owner,
     applicationFolder:
       type === DeploymentItemType.Application && raw.id.includes('/')

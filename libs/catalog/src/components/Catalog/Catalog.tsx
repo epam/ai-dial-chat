@@ -19,6 +19,7 @@ import { CatalogItem } from '../../models/catalog-item';
 import type { CatalogProps } from '../../models/catalog-props';
 import type { CatalogItemDetailsFetchResult } from '../../models/item-details-data';
 import type { ListViewHandle } from '../../models/list-props';
+import type { ToolbarProps } from '../../models/toolbar-props';
 import { CatalogSortKey } from '../../types/sort';
 import type { CredentialsLevel } from '../../types/toolset-auth';
 import { CatalogViewMode } from '../../types/view-mode';
@@ -76,6 +77,7 @@ export const Catalog: FC<CatalogProps> = ({
   favorites: favoritesProp,
   titles,
   browseHeaderRenderer,
+  renderToolbar,
   onToggleFavorite,
   isFavoriteVisible,
   columnVisibility,
@@ -697,6 +699,35 @@ export const Catalog: FC<CatalogProps> = ({
     );
   }
 
+  const toolbarProps: ToolbarProps = {
+    totalCount: myAppsFiltered.length,
+    viewMode,
+    onViewModeChange: handleViewModeChange,
+    onViewModeIntent: handleViewModeIntent,
+    sortKey,
+    query,
+    onQueryChange: setQuery,
+    searchInputRef,
+    title: browseTitle,
+    browseHeaderRenderer,
+    searchPlaceholder,
+    gridViewLabel,
+    listViewLabel,
+    viewToggleLabel,
+    sortOptions,
+    onSortChange: handleSortChange,
+    sortLabel,
+    filters,
+    onFiltersChange: handleFiltersChange,
+    filterValues: allFilterValues,
+    isMyAppsActive,
+    onMyAppsChange: handleMyAppsActiveChange,
+    filterFromLabel: titles?.filterFromLabel,
+    filterMyAppsLabel: titles?.filterMyAppsLabel,
+    filterTopicsLabel: titles?.filterTopicsLabel,
+    browseSettingsLabels: titles?.browseSettings,
+  };
+
   return (
     <section
       aria-label={resolvedAriaLabel}
@@ -791,34 +822,11 @@ export const Catalog: FC<CatalogProps> = ({
         )}
 
         <div className="w-full pt-6 desktop:px-4">
-          <Toolbar
-            totalCount={myAppsFiltered.length}
-            viewMode={viewMode}
-            onViewModeChange={handleViewModeChange}
-            onViewModeIntent={handleViewModeIntent}
-            sortKey={sortKey}
-            query={query}
-            onQueryChange={setQuery}
-            searchInputRef={searchInputRef}
-            title={browseTitle}
-            browseHeaderRenderer={browseHeaderRenderer}
-            searchPlaceholder={searchPlaceholder}
-            gridViewLabel={gridViewLabel}
-            listViewLabel={listViewLabel}
-            viewToggleLabel={viewToggleLabel}
-            sortOptions={sortOptions}
-            onSortChange={handleSortChange}
-            sortLabel={sortLabel}
-            filters={filters}
-            onFiltersChange={handleFiltersChange}
-            filterValues={allFilterValues}
-            isMyAppsActive={isMyAppsActive}
-            onMyAppsChange={handleMyAppsActiveChange}
-            filterFromLabel={titles?.filterFromLabel}
-            filterMyAppsLabel={titles?.filterMyAppsLabel}
-            filterTopicsLabel={titles?.filterTopicsLabel}
-            browseSettingsLabels={titles?.browseSettings}
-          />
+          {renderToolbar ? (
+            renderToolbar(toolbarProps)
+          ) : (
+            <Toolbar {...toolbarProps} />
+          )}
         </div>
 
         {/* A lone tab is not a choice — with nothing to switch to, the row is
