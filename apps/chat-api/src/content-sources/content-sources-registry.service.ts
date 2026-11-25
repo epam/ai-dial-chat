@@ -51,6 +51,8 @@ export interface ContentSource {
   readonly sort: ContentSourceSort;
   readonly date: ContentSourceDateMode;
   readonly feed: ContentSourceFeed;
+  /** Validated, non-secret credential id; keys the upstream pool only, never logged. */
+  readonly credentialId?: string;
   readonly token?: string;
 }
 
@@ -63,6 +65,9 @@ export const CONTENT_SOURCES_MAX_ASSET_BYTES = 10 * 1024 * 1024;
 export const CONTENT_SOURCES_MAX_CACHED_ENTRY_BYTES = 512 * 1024;
 export const CONTENT_SOURCES_DEFAULT_CACHE_TTL_MS = 30 * 60 * 1000;
 export const CONTENT_SOURCES_DEFAULT_TIMEOUT_MS = 10_000;
+export const CONTENT_SOURCES_DEFAULT_UPSTREAM_CONCURRENCY = 8;
+export const CONTENT_SOURCES_DEFAULT_UPSTREAM_QUEUE_SIZE = 64;
+export const CONTENT_SOURCES_DEFAULT_PRINCIPAL_MISS_CONCURRENCY = 8;
 export const GITHUB_DEFAULT_BASE_URL = 'https://api.github.com';
 export const DEFAULT_INCLUDE_GLOB = '**/*.md';
 
@@ -325,7 +330,9 @@ const parseSource = (
       ContentSourceDateMode.None,
     ),
     feed: parseFeed(entry.feed, context),
-    ...(token === undefined ? {} : { token }),
+    ...(token === undefined
+      ? {}
+      : { credentialId: entry.credentialId as string, token }),
   };
 };
 
@@ -435,6 +442,12 @@ export class ContentSourcesRegistryService {
   private readonly sources: ReadonlyMap<string, ContentSource>;
   readonly cacheTtlMs: number;
   readonly timeoutMs: number;
+  /** Concurrent upstream calls per `baseUrl` + `credentialId` pool. */
+  readonly upstreamConcurrency: number;
+  /** Upstream calls that may wait for a slot per pool. */
+  readonly upstreamQueueSize: number;
+  /** Concurrent requests per user that start upstream work. */
+  readonly principalMissConcurrency: number;
 
   constructor(configService: ConfigService<EnvironmentVariables>) {
     try {
@@ -459,6 +472,18 @@ export class ContentSourcesRegistryService {
     this.timeoutMs =
       configService.get('CONTENT_SOURCES_TIMEOUT_MS', { infer: true }) ??
       CONTENT_SOURCES_DEFAULT_TIMEOUT_MS;
+    this.upstreamConcurrency =
+      configService.get('CONTENT_SOURCES_UPSTREAM_CONCURRENCY', {
+        infer: true,
+      }) ?? CONTENT_SOURCES_DEFAULT_UPSTREAM_CONCURRENCY;
+    this.upstreamQueueSize =
+      configService.get('CONTENT_SOURCES_UPSTREAM_QUEUE_SIZE', {
+        infer: true,
+      }) ?? CONTENT_SOURCES_DEFAULT_UPSTREAM_QUEUE_SIZE;
+    this.principalMissConcurrency =
+      configService.get('CONTENT_SOURCES_PRINCIPAL_MISS_CONCURRENCY', {
+        infer: true,
+      }) ?? CONTENT_SOURCES_DEFAULT_PRINCIPAL_MISS_CONCURRENCY;
 
     this.logger.log(
       `Content sources registry initialized with ${this.sources.size} source(s)`,

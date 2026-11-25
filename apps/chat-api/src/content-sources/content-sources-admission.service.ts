@@ -1,56 +1,78 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { ContentSourcesRegistryService } from './content-sources-registry.service';
 
-/** Hard ceiling on in-flight content-source requests across the whole process. */
-export const CONTENT_SOURCES_MAX_TOTAL_IN_FLIGHT = 32;
-/** Hard ceiling on in-flight content-source requests for one verified user. */
-export const CONTENT_SOURCES_MAX_PRINCIPAL_IN_FLIGHT = 4;
+export const CONTENT_SOURCES_TOO_MANY_REQUESTS_MESSAGE =
+  'Too many concurrent content-source requests';
+
+/** A 429 because the user already has too many requests doing upstream work. */
+export class ContentSourcesMissLimitException extends HttpException {
+  constructor() {
+    super(
+      CONTENT_SOURCES_TOO_MANY_REQUESTS_MESSAGE,
+      HttpStatus.TOO_MANY_REQUESTS,
+    );
+  }
+}
+
+/** One request's claim on its user's cache-miss allowance. */
+export interface ContentSourcesAdmissionLease {
+  /**
+   * Takes the request's one slot the first time it is called; a no-op after
+   * that and after `release`. Throws `ContentSourcesMissLimitException` when
+   * the user already holds every slot.
+   */
+  ensure(): void;
+  /** Frees the slot if one was taken; idempotent. Call from a `finally`. */
+  release(): void;
+}
 
 /**
- * Local, per-process admission control, modelled on CustomApiAdmissionService.
- * Bounds upstream fan-out and memory, not the hosting provider's own quotas:
- * no queue, no cross-replica coordination. A principal's counter exists only
- * while it has active requests, so storage is bounded by current concurrency.
+ * Per-user fairness for upstream work, local to the process. A request takes
+ * a slot only when it starts a cache load (the loader runs), so fresh hits
+ * and requests that join another request's load never count, and a listing's
+ * nested loads count once. Upstream concurrency itself is bounded by the pool
+ * gates of `ContentSourcesUpstreamService`. A principal's counter exists only
+ * while it holds slots, so storage is bounded by current concurrency.
  */
 @Injectable()
 export class ContentSourcesAdmissionService {
   private readonly logger = new Logger(ContentSourcesAdmissionService.name);
-  private totalInFlight = 0;
-  private readonly principalInFlight = new Map<string, number>();
+  private readonly inFlight = new Map<string, number>();
 
-  /** Reserves one slot, or returns false without reserving when a ceiling is reached. */
-  tryAcquire(principalKey: string): boolean {
-    if (this.totalInFlight >= CONTENT_SOURCES_MAX_TOTAL_IN_FLIGHT) {
-      this.logger.warn('Content sources global in-flight capacity exhausted');
-      return false;
-    }
-    const current = this.principalInFlight.get(principalKey) ?? 0;
-    if (current >= CONTENT_SOURCES_MAX_PRINCIPAL_IN_FLIGHT) {
-      this.logger.warn(
-        'Content sources per-principal in-flight capacity exhausted',
-      );
-      return false;
-    }
-    this.totalInFlight += 1;
-    this.principalInFlight.set(principalKey, current + 1);
-    return true;
-  }
+  constructor(private readonly registry: ContentSourcesRegistryService) {}
 
-  /** Releases a slot acquired by `tryAcquire`; call from a `finally`. */
-  release(principalKey: string): void {
-    this.totalInFlight = Math.max(0, this.totalInFlight - 1);
-    const current = this.principalInFlight.get(principalKey) ?? 0;
-    if (current <= 1) {
-      this.principalInFlight.delete(principalKey);
-    } else {
-      this.principalInFlight.set(principalKey, current - 1);
-    }
-  }
-
-  get totalInFlightCount(): number {
-    return this.totalInFlight;
+  lease(principalKey: string): ContentSourcesAdmissionLease {
+    let isHeld = false;
+    let isReleased = false;
+    return {
+      ensure: () => {
+        if (isHeld || isReleased) return;
+        const current = this.inFlight.get(principalKey) ?? 0;
+        if (current >= this.registry.principalMissConcurrency) {
+          this.logger.warn(
+            'Content sources per-principal cache-miss capacity exhausted',
+          );
+          throw new ContentSourcesMissLimitException();
+        }
+        this.inFlight.set(principalKey, current + 1);
+        isHeld = true;
+      },
+      release: () => {
+        if (isReleased) return;
+        isReleased = true;
+        if (!isHeld) return;
+        isHeld = false;
+        const current = this.inFlight.get(principalKey) ?? 0;
+        if (current <= 1) {
+          this.inFlight.delete(principalKey);
+        } else {
+          this.inFlight.set(principalKey, current - 1);
+        }
+      },
+    };
   }
 
   get trackedPrincipalCount(): number {
-    return this.principalInFlight.size;
+    return this.inFlight.size;
   }
 }

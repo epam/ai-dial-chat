@@ -1,6 +1,8 @@
 import {
   BadGatewayException,
   BadRequestException,
+  HttpException,
+  HttpStatus,
   Injectable,
   Logger,
   NotFoundException,
@@ -8,12 +10,19 @@ import {
 } from '@nestjs/common';
 import {
   ContentProvider,
+  ProviderContext,
   UpstreamError,
   UpstreamFailure,
 } from './content-provider';
 import {
+  CONTENT_SOURCES_TOO_MANY_REQUESTS_MESSAGE,
+  ContentSourcesAdmissionLease,
+  ContentSourcesAdmissionService,
+} from './content-sources-admission.service';
+import {
   ContentSourcesCacheService,
   ContentSourcesCacheStore,
+  LoadOptions,
   mapWithConcurrency,
 } from './content-sources-cache.service';
 import { documentTitle, fileNameTitle } from './content-sources-markdown';
@@ -39,8 +48,8 @@ import {
 import { GitHubProvider } from './providers/github.provider';
 import { GitLabProvider } from './providers/gitlab.provider';
 
-/** Upstream fan-out bound for dates and title reads. */
-export const CONTENT_SOURCES_UPSTREAM_CONCURRENCY = 4;
+/** Per-listing fan-out bound for dates and title reads; each call also takes a pool slot. */
+export const CONTENT_SOURCES_LISTING_CONCURRENCY = 4;
 
 export const ASSET_CONTENT_TYPES: Readonly<Record<string, string>> = {
   png: 'image/png',
@@ -81,12 +90,53 @@ export interface ContentAsset {
 
 type DatedMode = Exclude<ContentSourceDateMode, ContentSourceDateMode.None>;
 
+/** Who asks (for the per-user miss limit) and when the client leaves. */
+export interface ContentSourcesRequest {
+  /** `providerId:sub` of the authenticated user. */
+  readonly principalKey: string;
+  /** Aborted when the client disconnects before the response is sent. */
+  readonly signal?: AbortSignal;
+}
+
+/**
+ * What one load needs: the signal of whoever waits for it (the client, or an
+ * enclosing listing load) and the request's miss-limit lease.
+ */
+interface LoadScope {
+  readonly signal?: AbortSignal;
+  readonly lease: ContentSourcesAdmissionLease;
+  /** Set inside a listing load: its reads are exempt from the queue limit. */
+  readonly isListing?: boolean;
+}
+
+/*
+ * Failures that only mean "this one document's title or date is unknown". A
+ * listing degrades on these; every other failure — credentials, upstream
+ * unavailable, a full queue or wait timeout, the miss limit, cancellation —
+ * aborts it, so a listing never degrades into file names under load.
+ */
+const DEGRADABLE_FAILURES: ReadonlySet<UpstreamFailure> = new Set([
+  UpstreamFailure.NotFound,
+  UpstreamFailure.TooLarge,
+  UpstreamFailure.BadResponse,
+]);
+
 const collator = new Intl.Collator('en', { numeric: true });
 
 /** A 502 whose cause is a rejected credential, so telemetry can tell it apart. */
 export class UpstreamCredentialsException extends BadGatewayException {
   constructor() {
     super('Content source returned an error');
+  }
+}
+
+/** A 429 because the upstream pool's wait queue was full. */
+export class ContentSourcesQueueFullException extends HttpException {
+  constructor() {
+    super(
+      CONTENT_SOURCES_TOO_MANY_REQUESTS_MESSAGE,
+      HttpStatus.TOO_MANY_REQUESTS,
+    );
   }
 }
 
@@ -103,6 +153,8 @@ export const toHttpException = (error: unknown): unknown => {
     case UpstreamFailure.TooLarge:
     case UpstreamFailure.BadResponse:
       return new BadGatewayException('Content source returned an error');
+    case UpstreamFailure.QueueFull:
+      return new ContentSourcesQueueFullException();
   }
 };
 
@@ -113,6 +165,7 @@ export class ContentSourcesService {
   constructor(
     private readonly registry: ContentSourcesRegistryService,
     private readonly cache: ContentSourcesCacheService,
+    private readonly admission: ContentSourcesAdmissionService,
     private readonly github: GitHubProvider,
     private readonly gitlab: GitLabProvider,
   ) {}
@@ -124,13 +177,23 @@ export class ContentSourcesService {
     return source;
   }
 
-  async listSource(sourceId: string): Promise<ContentSourceListing> {
+  async listSource(
+    sourceId: string,
+    request: ContentSourcesRequest,
+  ): Promise<ContentSourceListing> {
     const source = this.resolve(sourceId);
+    const scope = this.scope(request);
     try {
       /* A degraded listing (a title or date fell back) is served, not stored. */
-      const { documents } = await this.cache.getOrLoad(
+      const { documents } = await this.load(
+        scope,
         this.key(source, 'list', source.path),
-        () => this.assembleListing(source),
+        (signal) =>
+          this.assembleListing(source, {
+            signal,
+            lease: scope.lease,
+            isListing: true,
+          }),
         {
           sourceId: source.id,
           store: ContentSourcesCacheStore.Meta,
@@ -153,12 +216,15 @@ export class ContentSourcesService {
       };
     } catch (error) {
       throw toHttpException(error);
+    } finally {
+      scope.lease.release();
     }
   }
 
   async getDocument(
     sourceId: string,
     rawPath: string,
+    request: ContentSourcesRequest,
   ): Promise<ContentDocument> {
     const source = this.resolve(sourceId);
     const path = this.normalize(rawPath);
@@ -166,9 +232,12 @@ export class ContentSourcesService {
       throw new NotFoundException('Document not found in the content source');
     }
 
+    const scope = this.scope(request);
     try {
-      const markdown = (await this.readDocument(source, path)).toString('utf8');
-      const date = await this.documentDate(source, path);
+      const markdown = (await this.readDocument(source, path, scope)).toString(
+        'utf8',
+      );
+      const date = await this.documentDate(source, path, scope);
       return {
         path,
         title: documentTitle(markdown, path),
@@ -178,10 +247,16 @@ export class ContentSourcesService {
       };
     } catch (error) {
       throw toHttpException(error);
+    } finally {
+      scope.lease.release();
     }
   }
 
-  async getAsset(sourceId: string, rawPath: string): Promise<ContentAsset> {
+  async getAsset(
+    sourceId: string,
+    rawPath: string,
+    request: ContentSourcesRequest,
+  ): Promise<ContentAsset> {
     const source = this.resolve(sourceId);
     const path = this.normalize(rawPath);
 
@@ -196,17 +271,17 @@ export class ContentSourcesService {
       throw new NotFoundException('Asset not found in the content source');
     }
 
+    const scope = this.scope(request);
     try {
-      const bytes = await this.cache.getOrLoad(
+      const bytes = await this.load(
+        scope,
         this.key(source, 'asset', path),
-        () =>
+        (signal) =>
           this.provider(source).readFile(
             source,
             path,
             CONTENT_SOURCES_MAX_ASSET_BYTES,
-            {
-              timeoutMs: this.registry.timeoutMs,
-            },
+            this.context(scope, signal),
           ),
         {
           sourceId: source.id,
@@ -218,7 +293,41 @@ export class ContentSourcesService {
       return { bytes, contentType };
     } catch (error) {
       throw toHttpException(error);
+    } finally {
+      scope.lease.release();
     }
+  }
+
+  private scope(request: ContentSourcesRequest): LoadScope {
+    return {
+      signal: request.signal,
+      lease: this.admission.lease(request.principalKey),
+    };
+  }
+
+  /*
+   * Every cache load of a request goes through here. The loader runs only in
+   * the request that starts the load, so only that request takes its miss
+   * slot, and it does so before any upstream call or queue position.
+   */
+  private load<T>(
+    scope: LoadScope,
+    key: string,
+    loader: (signal: AbortSignal) => Promise<T>,
+    options: Omit<LoadOptions<T>, 'signal'>,
+  ): Promise<T> {
+    return this.cache.getOrLoad(
+      key,
+      (signal) => {
+        scope.lease.ensure();
+        return loader(signal);
+      },
+      { ...options, signal: scope.signal },
+    );
+  }
+
+  private context(scope: LoadScope, signal: AbortSignal): ProviderContext {
+    return { signal, isQueueLimitExempt: scope.isListing === true };
   }
 
   private normalize(rawPath: string): string {
@@ -253,10 +362,15 @@ export class ContentSourcesService {
   }
 
   /** Document bytes for a document view; cached when small enough. */
-  private readDocument(source: ContentSource, path: string): Promise<Buffer> {
-    return this.cache.getOrLoad(
+  private readDocument(
+    source: ContentSource,
+    path: string,
+    scope: LoadScope,
+  ): Promise<Buffer> {
+    return this.load(
+      scope,
       this.key(source, 'doc', path),
-      () => this.fetchDocument(source, path),
+      (signal) => this.fetchDocument(source, path, this.context(scope, signal)),
       {
         sourceId: source.id,
         store: ContentSourcesCacheStore.Content,
@@ -266,12 +380,16 @@ export class ContentSourcesService {
     );
   }
 
-  private fetchDocument(source: ContentSource, path: string): Promise<Buffer> {
+  private fetchDocument(
+    source: ContentSource,
+    path: string,
+    context: ProviderContext,
+  ): Promise<Buffer> {
     return this.provider(source).readFile(
       source,
       path,
       CONTENT_SOURCES_MAX_DOCUMENT_BYTES,
-      { timeoutMs: this.registry.timeoutMs },
+      context,
     );
   }
 
@@ -286,18 +404,23 @@ export class ContentSourcesService {
   private async documentDate(
     source: ContentSource,
     path: string,
+    scope: LoadScope,
     onDegraded?: () => void,
   ): Promise<Date | null> {
     const mode = this.datedMode(source);
     if (!mode) return null;
     try {
-      const stamp = await this.cache.getOrLoad(
+      const stamp = await this.load(
+        scope,
         this.key(source, `date-${mode}`, path),
-        async () =>
+        async (signal) =>
           (
-            await this.provider(source).fileDate(source, path, mode, {
-              timeoutMs: this.registry.timeoutMs,
-            })
+            await this.provider(source).fileDate(
+              source,
+              path,
+              mode,
+              this.context(scope, signal),
+            )
           )?.toISOString() ?? null,
         { sourceId: source.id, store: ContentSourcesCacheStore.Meta },
       );
@@ -312,17 +435,17 @@ export class ContentSourcesService {
     }
   }
 
-  /** Credential and availability failures abort a listing; others degrade one entry. */
+  /** Only per-document answers degrade one entry; everything else aborts a listing. */
   private isFatal(error: unknown): boolean {
-    return (
-      !(error instanceof UpstreamError) ||
-      error.failure === UpstreamFailure.Credentials ||
-      error.failure === UpstreamFailure.Unavailable
+    return !(
+      error instanceof UpstreamError && DEGRADABLE_FAILURES.has(error.failure)
     );
   }
 
+  /** `scope.signal` is the listing load's own signal; nested loads wait on it. */
   private async assembleListing(
     source: ContentSource,
+    scope: LoadScope & { readonly signal: AbortSignal },
   ): Promise<{ documents: ContentDocumentSummary[]; isDegraded: boolean }> {
     let isDegraded = false;
     const markDegraded = () => {
@@ -332,9 +455,10 @@ export class ContentSourcesService {
     if (source.kind === ContentSourceKind.File) {
       paths = [source.path];
     } else {
-      const listing = await this.provider(source).listDocuments(source, {
-        timeoutMs: this.registry.timeoutMs,
-      });
+      const listing = await this.provider(source).listDocuments(
+        source,
+        this.context(scope, scope.signal),
+      );
       if (listing.truncated) {
         this.logger.warn(
           `Content source "${source.id}" listing is partial: the upstream truncated the tree`,
@@ -358,11 +482,16 @@ export class ContentSourcesService {
 
     const documents = await mapWithConcurrency(
       paths,
-      CONTENT_SOURCES_UPSTREAM_CONCURRENCY,
+      CONTENT_SOURCES_LISTING_CONCURRENCY,
       async (path): Promise<ContentDocumentSummary & { time: number }> => {
         /* Sequential, so a worker never holds more than one upstream call. */
-        const title = await this.listingTitle(source, path, markDegraded);
-        const date = await this.documentDate(source, path, markDegraded);
+        const title = await this.listingTitle(
+          source,
+          path,
+          scope,
+          markDegraded,
+        );
+        const date = await this.documentDate(source, path, scope, markDegraded);
         return {
           path,
           title,
@@ -391,11 +520,18 @@ export class ContentSourcesService {
   private async listingTitle(
     source: ContentSource,
     path: string,
+    scope: LoadScope & { readonly signal: AbortSignal },
     onDegraded: () => void,
   ): Promise<string> {
     try {
       return documentTitle(
-        (await this.fetchDocument(source, path)).toString('utf8'),
+        (
+          await this.fetchDocument(
+            source,
+            path,
+            this.context(scope, scope.signal),
+          )
+        ).toString('utf8'),
         path,
       );
     } catch (error) {
