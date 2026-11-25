@@ -89,8 +89,9 @@ export interface UsePublishFoldersParams {
   onRememberedFolderKeysChange?: (folderKeys: string[]) => void;
   /**
    * Host rule for whether a destination accepts a publish, replacing the
-   * `Production` placeholder when given. Omit it while the rule is unknown
-   * (feature off, rights not loaded) so the placeholder stays the fallback.
+   * `Production` placeholder when given. Also hides a remembered destination
+   * the rule refuses. Omit it while the rule is unknown (feature off, rights
+   * not loaded) so the placeholder stays the fallback.
    */
   canPublishTo?: (folderPath: string[]) => boolean;
 }
@@ -246,11 +247,15 @@ export const usePublishFolders = ({
     const storedKeys = Array.isArray(rememberedFolderKeys)
       ? rememberedFolderKeys.filter((key) => typeof key === 'string')
       : [];
+    /* Core no longer lists a folder the user lost access to, so a remembered destination the host rule refuses is dropped from the tree instead of lingering as a disabled row. It returns once the rule allows it again. */
+    const visibleStoredPaths = storedKeys
+      .map(fromFolderPathKey)
+      .filter((path) => canPublishTo == null || canPublishTo(path));
     return mergeFolderPaths(buildFolderNodes(cache, '', []), [
-      ...storedKeys.map(fromFolderPathKey),
+      ...visibleStoredPaths,
       ...createdFolderKeys.map(fromFolderPathKey),
     ]);
-  }, [cache, rememberedFolderKeys, createdFolderKeys]);
+  }, [cache, rememberedFolderKeys, createdFolderKeys, canPublishTo]);
 
   /* Fetches are tracked by API path (`A/B/`); the tree keys folders as `A/B`. */
   const loadingFolderKeys = useMemo(

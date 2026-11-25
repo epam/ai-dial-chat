@@ -98,6 +98,7 @@ const PublishProjectPanelContainer: FC<Props> = ({
     purpose: OrgUnitFolderGuardPurpose.Publish,
     namespace: OrgUnitNamespace.Projects,
     isActive: isOpen,
+    shouldRefreshOnOpen: true,
   });
 
   const {

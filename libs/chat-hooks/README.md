@@ -5545,7 +5545,7 @@ already first); a stored value that is not an array of strings is ignored.
 `hasPublishFolderWriteAccess(folderPath)` is `false` for a folder under a
 `Production` segment; it is the fallback `usePublishFolders` returns as
 `hasPublishWriteAccess` until the host passes `canPublishTo` (for example from
-`buildFolderGuards`), which then replaces it. Available from the root and
+`buildFolderGuards`), which then replaces it and also hides a remembered destination the rule refuses. Available from the root and
 `./catalog`.
 
 ```ts

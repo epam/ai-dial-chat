@@ -93,6 +93,7 @@ const PublishConversationPanelContainer: FC<Props> = ({
     purpose: OrgUnitFolderGuardPurpose.Publish,
     namespace: OrgUnitNamespace.Conversations,
     isActive: isOpen,
+    shouldRefreshOnOpen: true,
   });
 
   const {

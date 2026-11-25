@@ -181,6 +181,7 @@ describe('PublishConversationPanelContainer', () => {
       purpose: OrgUnitFolderGuardPurpose.Publish,
       namespace: OrgUnitNamespace.Conversations,
       isActive: true,
+      shouldRefreshOnOpen: true,
     });
     expect(usePublishFolders).toHaveBeenCalledWith({
       canPublishTo: isDestinationUsable,
@@ -194,6 +195,7 @@ describe('PublishConversationPanelContainer', () => {
       purpose: OrgUnitFolderGuardPurpose.Publish,
       namespace: OrgUnitNamespace.Conversations,
       isActive: false,
+      shouldRefreshOnOpen: true,
     });
   });
 

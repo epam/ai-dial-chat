@@ -831,6 +831,7 @@ describe('CatalogView', () => {
       purpose: OrgUnitFolderGuardPurpose.Publish,
       namespace: undefined,
       isActive: false,
+      shouldRefreshOnOpen: true,
       isQuickApp: false,
     });
   });
@@ -881,6 +882,7 @@ describe('CatalogView', () => {
       purpose: OrgUnitFolderGuardPurpose.Publish,
       namespace: undefined,
       isActive: false,
+      shouldRefreshOnOpen: true,
       isQuickApp: false,
     });
     expect(useOrgUnitFolderGuards).not.toHaveBeenCalledWith(
