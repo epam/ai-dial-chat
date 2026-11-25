@@ -153,6 +153,8 @@ export interface ProjectViewProps {
   onContextSearchQueryChange: (query: string) => void;
   /** Called when the user activates the back button. */
   onBack: () => void;
+  /** Host-rendered control at the start of the header, such as a panel toggle; replaces the back button. Defaults to the back button. */
+  headerLeading?: ReactNode;
   /** Called when the user toggles Pin. */
   onTogglePin: () => void;
   /** Called from the Publish action; the action is hidden when omitted. */
