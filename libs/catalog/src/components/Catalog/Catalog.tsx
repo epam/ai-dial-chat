@@ -78,6 +78,8 @@ export const Catalog: FC<CatalogProps> = ({
   titles,
   browseHeaderRenderer,
   renderToolbar,
+  renderCard,
+  cardHeight,
   onToggleFavorite,
   isFavoriteVisible,
   columnVisibility,
@@ -910,6 +912,8 @@ export const Catalog: FC<CatalogProps> = ({
                   featuredChipStyle={catalogStyles?.colors?.featuredChipStyle}
                   markdownLabels={cardMarkdownLabels}
                   activeTab={activeTab as CatalogEntityType}
+                  renderCard={renderCard}
+                  cardHeight={cardHeight}
                 />
               </div>
 

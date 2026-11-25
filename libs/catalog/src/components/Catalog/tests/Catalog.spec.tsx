@@ -18,6 +18,7 @@ import {
   vi,
 } from 'vitest';
 import { CATALOG_CLASS } from '../../../constants/public-class-names';
+import type { CatalogCardRenderProps } from '../../../models/card-props';
 import type { CatalogItem } from '../../../models/catalog-item';
 import type { ToolbarProps } from '../../../models/toolbar-props';
 import { CatalogSortKey } from '../../../types/sort';
@@ -206,28 +207,46 @@ vi.mock('../../CardGrid/CardGrid', () => ({
     onItemClick,
     selectedItemId,
     titles,
+    renderCard,
+    cardHeight,
   }: {
     items: CatalogItem[];
     onItemClick: (item: CatalogItem) => void;
     selectedItemId?: string;
     titles?: { noResultsTitle?: string; noResultsDescription?: string };
+    renderCard?: (props: CatalogCardRenderProps) => React.ReactNode;
+    cardHeight?: number;
   }) => (
     <div role="grid" aria-label="catalog grid">
       {items.length} items
+      {cardHeight != null && <span>{`cardHeight:${cardHeight}`}</span>}
+      {renderCard &&
+        items.map((item) => (
+          <div key={item.id}>
+            {renderCard({
+              item,
+              query: '',
+              isSelected: item.id === selectedItemId,
+              isReadonly: false,
+              onClick: () => onItemClick(item),
+            })}
+          </div>
+        ))}
       {items.length === 0 && (
         <p>
           {titles?.noResultsTitle} {titles?.noResultsDescription}
         </p>
       )}
-      {items.map((item) => (
-        <button
-          key={item.id}
-          onClick={() => onItemClick(item)}
-          aria-pressed={item.id === selectedItemId}
-        >
-          {item.name}
-        </button>
-      ))}
+      {!renderCard &&
+        items.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => onItemClick(item)}
+            aria-pressed={item.id === selectedItemId}
+          >
+            {item.name}
+          </button>
+        ))}
     </div>
   ),
 }));
@@ -1349,6 +1368,60 @@ describe('Catalog', () => {
     render(<Catalog items={[]} favorites={[]} />);
 
     expect(screen.queryByRole('tablist')).toBeNull();
+  });
+
+  describe('renderCard', () => {
+    const cardItems = [makeItem('1', 'Claude'), makeItem('2', 'Gemini')];
+
+    it('renders the supplied card for every listed item in place of the built-in one', () => {
+      render(
+        <Catalog
+          items={cardItems}
+          favorites={[]}
+          renderCard={({ item }) => <span>host-card-{item.name}</span>}
+        />,
+      );
+
+      expect(screen.getByText('host-card-Claude')).toBeTruthy();
+      expect(screen.getByText('host-card-Gemini')).toBeTruthy();
+    });
+
+    it('keeps the built-in cards when renderCard is not passed', () => {
+      render(<Catalog items={cardItems} favorites={[]} />);
+
+      expect(screen.getByRole('button', { name: 'Claude' })).toBeTruthy();
+    });
+
+    it('opens the item details when the supplied card calls onClick', async () => {
+      const user = userEvent.setup();
+      const onCardClick = vi.fn();
+      render(
+        <Catalog
+          items={cardItems}
+          favorites={[]}
+          onCardClick={onCardClick}
+          renderCard={({ item, onClick }) => (
+            <button onClick={onClick}>open-{item.name}</button>
+          )}
+        />,
+      );
+
+      await user.click(screen.getByRole('button', { name: 'open-Gemini' }));
+
+      expect(onCardClick).toHaveBeenCalledWith(cardItems[1]);
+    });
+
+    it('forwards cardHeight to the grid', () => {
+      render(<Catalog items={cardItems} favorites={[]} cardHeight={180} />);
+
+      expect(screen.getByText('cardHeight:180')).toBeTruthy();
+    });
+
+    it('leaves cardHeight unset by default', () => {
+      render(<Catalog items={cardItems} favorites={[]} />);
+
+      expect(screen.queryByText(/cardHeight:/)).toBeNull();
+    });
   });
 
   describe('renderToolbar', () => {

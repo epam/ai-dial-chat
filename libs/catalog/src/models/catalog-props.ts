@@ -15,6 +15,7 @@ import type { ListViewColumnVisibility } from '../components/ListView/columns';
 import type { CatalogSortKey } from '../types/sort';
 import type { CredentialsLevel } from '../types/toolset-auth';
 import type { CatalogViewMode } from '../types/view-mode';
+import type { CatalogCardRenderProps } from './card-props';
 import type { CatalogItem } from './catalog-item';
 import type { CatalogStyles } from './catalog-styles';
 import type {
@@ -195,6 +196,24 @@ export interface CatalogProps {
    * changes.
    */
   renderToolbar?: (props: ToolbarProps) => ReactNode;
+  /**
+   * Draws each card of the Browse grid in place of the built-in `Card`, so a
+   * host can give cards its own design. It is called for every visible cell
+   * with the item, the search query, whether it is selected, the read-only
+   * flag, the active tab and an `onClick` that opens the item as the built-in
+   * card does. The grid keeps owning the cell, its size and the
+   * virtualization: draw within `cardHeight`, and keep this function stable
+   * (memoized), because the rows are memoized on it. It does not affect the
+   * list view or the Favorites strip. When omitted, the built-in cards render
+   * and nothing changes.
+   */
+  renderCard?: (props: CatalogCardRenderProps) => ReactNode;
+  /**
+   * Height in px of each card in the Browse grid; the grid positions and
+   * virtualizes its rows from it. Set it together with `renderCard` to the real
+   * height of the host's cards. Default: 248, the built-in card's height.
+   */
+  cardHeight?: number;
   /** Whether catalog data is loading (reserved for future loading state). */
   isLoading?: boolean;
   /** Error to display if data loading failed (reserved for future error state). */

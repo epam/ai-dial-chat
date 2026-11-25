@@ -1,5 +1,6 @@
 import type { CatalogEntityType } from '@epam/ai-dial-chat-shared';
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
+import type { CatalogCardRenderProps } from './card-props';
 import type { CatalogItem } from './catalog-item';
 import type { CatalogMarkdownLabels } from './item-details-props';
 
@@ -62,4 +63,17 @@ export interface CardGridProps {
    * grid is measured. Default: false.
    */
   isFullWidth?: boolean;
+  /**
+   * Draws each card in place of the built-in `Card`. The grid still owns the
+   * cell, its size and the virtualization, so the result must fit
+   * `cardHeight`. Keep the function stable (memoized): the rows are memoized
+   * on it, and a new function on every render redraws every visible card.
+   */
+  renderCard?: (props: CatalogCardRenderProps) => ReactNode;
+  /**
+   * Height of each card in px. The grid positions and virtualizes its rows from
+   * it, so a host drawing its own cards sets it to their real height. Default:
+   * `CARD_HEIGHT` (248).
+   */
+  cardHeight?: number;
 }

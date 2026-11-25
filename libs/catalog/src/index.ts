@@ -96,6 +96,7 @@ export { Card } from './components/CardGrid/Card';
 export type {
   CardColors,
   CardProps,
+  CatalogCardRenderProps,
   CardStyles,
   CardTypography,
 } from './models/card-props';

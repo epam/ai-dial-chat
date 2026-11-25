@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { useEffect } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { CARD_HEIGHT, CARD_ROW_GAP } from '../../constants/virtual-grid';
 import { useScrollVirtualizer } from '../use-scroll-virtualizer';
 
 const renderProbe = vi.fn();
@@ -12,9 +13,9 @@ let width = 1100;
 let viewportHeight = 600;
 let scrollOffset = 0;
 
-const Probe = () => {
+const Probe = ({ cardHeight }: { cardHeight?: number }) => {
   const { containerRef, columnCount, startRow, endRow, totalHeight } =
-    useScrollVirtualizer(1000);
+    useScrollVirtualizer(1000, { cardHeight });
   useEffect(() => {
     renderProbe();
   });
@@ -78,6 +79,24 @@ describe('useScrollVirtualizer', () => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
     observers.clear();
+  });
+
+  it('sizes every row from the default card height plus the row gap', () => {
+    render(<Probe />);
+
+    const columns = Number(screen.getByLabelText('Columns').textContent);
+    expect(screen.getByLabelText('Height').textContent).toBe(
+      String(Math.ceil(1000 / columns) * (CARD_HEIGHT + CARD_ROW_GAP)),
+    );
+  });
+
+  it('sizes every row from a given card height plus the row gap', () => {
+    render(<Probe cardHeight={180} />);
+
+    const columns = Number(screen.getByLabelText('Columns').textContent);
+    expect(screen.getByLabelText('Height').textContent).toBe(
+      String(Math.ceil(1000 / columns) * (180 + CARD_ROW_GAP)),
+    );
   });
 
   it('preserves the measured layout while hidden and reuses it when shown', () => {
