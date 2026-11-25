@@ -1,7 +1,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: PublishPanel renders a direct destination
-`PublishPanel` SHALL also accept an optional host-supplied `directUnavailableNote?: string` (default none), a finished sentence for when the direct path is unavailable for a reason the host names; the library decides nothing about it. While the admin-approval callout is shown, the sentence SHALL be rendered inside that same callout as a continuation of its text, so the panel shows one callout; when another callout kind (or none) is shown, it SHALL be rendered as an information callout of its own. It SHALL NOT be rendered when `isDirectWrite` is `true`. `PublishPanel` SHALL accept optional `isDirectWrite?: boolean` (default `false`) and, for `true`, SHALL NOT render the author field or the credentials checkbox, SHALL render `labels.directWriteNote` (optional, default none: rendered only when the host supplies it) in the credentials section's place. The panel takes no decision of its own: the host passes the flow's `isDirectWrite`.
+`PublishPanel` SHALL also accept an optional host-supplied `directUnavailableNote?: string` (default none), a finished sentence for when the direct path is unavailable for a reason the host names; the library decides nothing about it. While the admin-approval callout is shown, the sentence SHALL be rendered inside that same callout as a continuation of its text, so the panel shows one callout. When a callout of another kind is shown instead of the admin-approval callout, the sentence SHALL NOT be rendered. It SHALL NOT be rendered when `isDirectWrite` is `true`. `PublishPanel` SHALL accept optional `isDirectWrite?: boolean` (default `false`) and, for `true`, SHALL NOT render the author field or the credentials checkbox, SHALL render `labels.directWriteNote` (optional, default none: rendered only when the host supplies it) in the credentials section's place. The panel takes no decision of its own: the host passes the flow's `isDirectWrite`.
 
 #### Scenario: Direct destination
 - **WHEN** `isDirectWrite` is `true`
@@ -13,7 +13,7 @@
 
 #### Scenario: Another callout takes the place of the approval one
 - **WHEN** the host supplies `directUnavailableNote`, `isDirectWrite` is `false` and a callout of another kind (for example the replace warning) is shown instead of the approval callout
-- **THEN** the sentence is rendered as an information callout of its own
+- **THEN** the sentence is not rendered
 
 #### Scenario: Direct write ignores the note
 - **WHEN** the host supplies `directUnavailableNote` and `isDirectWrite` is `true`

@@ -286,7 +286,7 @@ describe('PublishPanel', () => {
       expect(text.endsWith(NOTE)).toBe(true);
     });
 
-    it('shows the note on its own when another callout takes the place of the approval one', () => {
+    it('hides the note when another callout takes the place of the approval one', () => {
       renderPanel({
         selectedFolderPath: ['Shared', 'Data Science', 'Published models'],
         hasExistingPublicationInFolder: true,
@@ -294,8 +294,7 @@ describe('PublishPanel', () => {
       });
 
       expect(screen.queryByText('Admin approval required')).toBeNull();
-      const note = screen.getByRole('status');
-      expect(within(note).getByText(NOTE)).toBeTruthy();
+      expect(screen.queryByText(NOTE)).toBeNull();
     });
 
     it('renders no note for a direct write', () => {
