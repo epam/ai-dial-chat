@@ -275,6 +275,74 @@ describe('useOrgUnitFolderGuards', () => {
     expect(canCreatePublicFolderIn).toHaveBeenCalledWith('Shared');
   });
 
+  describe('a selected folder the visibility rule hides', () => {
+    const hideShared = () =>
+      vi.mocked(useOrgUnitsContext).mockReturnValue({
+        ...vi.mocked(useOrgUnitsContext)(),
+        isPublicFolderVisible: vi.fn((path: string) => path !== 'Shared'),
+      });
+
+    it('is not usable for Publish and carries the hidden-folder reason', () => {
+      hideShared();
+      const guards = getGuards(
+        OrgUnitFolderGuardPurpose.Publish,
+        OrgUnitNamespace.Prompts,
+      );
+
+      expect(guards.isDestinationUsable?.(['Shared'])).toBe(false);
+      expect(guards.getDisabledReason?.(['Shared'])).toBe(
+        OrgUnitAccessI18nKeys.FolderOutsideOrgUnits,
+      );
+      expect(guards.isDestinationUsable?.(['Acme', 'Q1'])).toBe(true);
+      expect(guards.getDisabledReason?.(['Acme', 'Secret'])).toBe(
+        OrgUnitAccessI18nKeys.NoPublishAccessPrompt,
+      );
+    });
+
+    it('disables the Save destination only on the Organization root', () => {
+      hideShared();
+      const guards = getGuards(
+        OrgUnitFolderGuardPurpose.Save,
+        OrgUnitNamespace.Toolsets,
+      );
+
+      expect(
+        guards.getDisabledReason?.(
+          ['Shared'],
+          SaveDestinationRoot.Organization,
+        ),
+      ).toBe(OrgUnitAccessI18nKeys.FolderOutsideOrgUnits);
+      expect(
+        guards.getDisabledReason?.(['Shared'], SaveDestinationRoot.Personal),
+      ).toBeUndefined();
+    });
+
+    it('keeps the Production placeholder for a visible folder when the rights give no guard', () => {
+      hideShared();
+      const guards = getGuards(OrgUnitFolderGuardPurpose.Publish, undefined);
+
+      expect(guards.isDestinationUsable?.(['Shared'])).toBe(false);
+      expect(guards.isDestinationUsable?.(['Acme', 'Production'])).toBe(false);
+      expect(guards.isDestinationUsable?.(['Acme'])).toBe(true);
+      expect(guards.getDisabledReason?.(['Acme'])).toBeUndefined();
+    });
+
+    it('hides nothing while the units are not Ready', () => {
+      vi.mocked(useOrgUnitsContext).mockReturnValue({
+        ...vi.mocked(useOrgUnitsContext)(),
+        status: OrgUnitsStatus.Loading,
+        isPublicFolderVisible: vi.fn(() => false),
+      });
+      const guards = getGuards(
+        OrgUnitFolderGuardPurpose.Publish,
+        OrgUnitNamespace.Prompts,
+      );
+
+      expect(guards.isDestinationUsable).toBeUndefined();
+      expect(guards.getDisabledReason).toBeUndefined();
+    });
+  });
+
   it('judges only the Organization root of the Save tree', () => {
     const guards = getGuards(
       OrgUnitFolderGuardPurpose.Save,

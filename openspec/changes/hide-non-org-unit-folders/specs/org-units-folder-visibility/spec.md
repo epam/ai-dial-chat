@@ -63,6 +63,21 @@ The `useOrgUnits` / `OrgUnitsContext` answer is the predicate's single source: `
 - **WHEN** the My files tab holds a folder `Shared`
 - **THEN** it is listed whatever the org units are
 
+### Requirement: A selected folder that becomes hidden is not a usable destination
+A user can pick a plain public folder while the units are still loading, and the folder is hidden once they are `Ready`. While `features.orgUnitsEnabled` is on and the units are `Ready`, `useOrgUnitFolderGuards` (`apps/chat/src/hooks/publish/useOrgUnitFolderGuards.ts`) SHALL treat an Organization folder that `isPublicFolderVisible` refuses as unusable:
+- `isDestinationUsable` SHALL return `false` for it. The publish panels receive it as `canPublishTo`, so their `hasPublishWriteAccess` is `false` and they show the no-access state with Publish disabled;
+- `getDisabledReason` SHALL return the translation key `orgUnitAccess.folderOutsideOrgUnits` for it, so the Save panel shows that reason under the committed destination and disables Save.
+
+Visible folders keep their existing guard answers, and a folder under the Personal root is never judged. While the flag is off or the units are not `Ready`, the guards are unchanged.
+
+#### Scenario: Plain folder picked before the units loaded
+- **WHEN** the user picks `Shared/Reports` in the Save panel's Organization root while the units load, and `Shared/` then turns out to lie under no unit
+- **THEN** the panel shows the hidden-folder reason under the destination and Save is disabled
+
+#### Scenario: Publish into a hidden selected folder
+- **WHEN** the selected publish folder is hidden once the units are `Ready`
+- **THEN** the publish panel shows its no-access state and Publish is disabled
+
 ### Requirement: Folder creation never produces a hidden folder
 The Publish and Save panels in `libs/publish-panel` (`PublishPanel`, `StandalonePublishPanel`, `StandaloneSaveToFolderPanel`) SHALL accept an optional `canCreateFolderIn(destination: FolderDestination): boolean` and forward it to the `@epam/ai-dial-react-file-manager` folder tree they render. When it returns `false` for a parent, the tree SHALL NOT offer the trailing "Create new folder" button or the "Add child" item for that parent, nor "Add sibling" for that parent's children.
 

@@ -91,10 +91,11 @@ Recorded as an open question, not decided silently.
 ## Risks / Trade-offs
 
 - **[Flash of plain folders before units load]** → `ensureUnits()` starts as soon as a picker opens. The org-units read is usually cached, and the trees keep their lazy loading indicators.
+- **[A folder picked before the units load is hidden afterwards]** → The tree prunes it, but the selection stays. `useOrgUnitFolderGuards` makes a hidden Organization folder unusable once the units are `Ready`: the publish panels show their no-access state, and the Save panel shows `orgUnitAccess.folderOutsideOrgUnits` and disables Save. The selection is kept rather than cleared, so the user sees why and picks again.
 - **[A unit the user cannot see makes its folder look plain]** → Core decides visibility, so a hidden unit's folder is hidden too. That is intended: the user has no role there. An admin gets every unit.
 - **[Deep link or remembered path into a hidden folder]** → The publish tree prunes remembered paths after the merge. The file manager resets a hidden current path to the section root. Core access is unchanged, because this is not a security control.
 - **[An admin creates a plain folder in the file manager]** → The file manager's "New folder" is not gated by this change, since only DIAL admins can write outside units. An admin who creates a plain folder will not see it in the Organization section. Documented in the spec, and the follow-up lives in Open Questions.
-- **[Branch drift]** → Issue #8825 merged first and replaced `PublishFoldersTree` and `SaveToFolderPanel` with `FolderDestinationPanel` from `@epam/ai-dial-react-file-manager`. The hiding (D1–D3, the file manager) is unaffected, since it prunes the data the panels receive. The creation gate moved into that package as `canCreateFolderIn` (epam/ai-dial-react-file-manager#109); `libs/publish-panel` only forwards it, so this change waits for that release.
+- **[Branch drift]** → Issue #8825 merged first and replaced `PublishFoldersTree` and `SaveToFolderPanel` with `FolderDestinationPanel` from `@epam/ai-dial-react-file-manager`. The hiding (D1–D3, the file manager) is unaffected, since it prunes the data the panels receive. The creation gate moved into that package as `canCreateFolderIn` (epam/ai-dial-react-file-manager#109); `libs/publish-panel` only forwards it; the release is `0.5.0-dev.6`, which this change pins.
 - **[Lib API growth]** → All inputs are optional and default to today's behaviour. READMEs document them, and `npm run validate:docs` checks them.
 
 ## Migration Plan

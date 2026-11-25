@@ -1,4 +1,6 @@
 import {
+  hasPublishFolderWriteAccess,
+  OrgUnitsStatus,
   SaveDestinationRoot,
   useFolderGuards,
   type FolderGuards,
@@ -8,6 +10,7 @@ import type { OrgUnitNamespace } from '@epam/ai-dial-chat-shared';
 import type { FolderDestination } from '@epam/ai-dial-publish-panel';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { OrgUnitAccessI18nKeys } from '../../constants/translation-keys';
 import { useFeatureFlag } from '../../context/AppConfigContext';
 import { useOrgUnitsContext } from '../../context/OrgUnitsContext';
 import { getOrgUnitAccessReasonKey } from '../../utils/org-unit-access';
@@ -65,7 +68,7 @@ export const useOrgUnitFolderGuards = ({
     getReason,
   });
 
-  const { canCreatePublicFolderIn } = orgUnits;
+  const { canCreatePublicFolderIn, isPublicFolderVisible, status } = orgUnits;
   const canCreateFolderIn = useCallback(
     ({ rootKey, path }: FolderDestination): boolean =>
       rootKey === SaveDestinationRoot.Personal ||
@@ -73,8 +76,46 @@ export const useOrgUnitFolderGuards = ({
     [canCreatePublicFolderIn],
   );
 
+  /*
+   * A folder picked before the units loaded can be hidden afterwards while it
+   * stays selected. Once the rule applies, a hidden Organization folder is not
+   * usable and carries its own reason, so neither Publish nor Save writes into
+   * a folder the user can no longer see.
+   */
+  const isHidingActive = isEnabled && status === OrgUnitsStatus.Ready;
+  const hiddenFolderReason = t(OrgUnitAccessI18nKeys.FolderOutsideOrgUnits);
+  const visibilityGuards = useMemo((): Pick<
+    FolderGuards,
+    'isDestinationUsable' | 'getDisabledReason'
+  > => {
+    if (!isHidingActive) {
+      return {
+        isDestinationUsable: guards.isDestinationUsable,
+        getDisabledReason: guards.getDisabledReason,
+      };
+    }
+    const isHidden = (
+      folderPath: string[],
+      root: SaveDestinationRoot = SaveDestinationRoot.Organization,
+    ): boolean =>
+      root === SaveDestinationRoot.Organization &&
+      !isPublicFolderVisible(folderPath.join('/'));
+    const { isDestinationUsable, getDisabledReason } = guards;
+    return {
+      isDestinationUsable: (folderPath, root) =>
+        !isHidden(folderPath, root) &&
+        (isDestinationUsable
+          ? isDestinationUsable(folderPath, root)
+          : hasPublishFolderWriteAccess(folderPath)),
+      getDisabledReason: (folderPath, root) =>
+        isHidden(folderPath, root)
+          ? hiddenFolderReason
+          : getDisabledReason?.(folderPath, root),
+    };
+  }, [guards, isHidingActive, isPublicFolderVisible, hiddenFolderReason]);
+
   return useMemo(
-    () => ({ ...guards, canCreateFolderIn }),
-    [guards, canCreateFolderIn],
+    () => ({ ...guards, ...visibilityGuards, canCreateFolderIn }),
+    [guards, visibilityGuards, canCreateFolderIn],
   );
 };

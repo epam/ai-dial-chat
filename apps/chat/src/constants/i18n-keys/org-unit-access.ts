@@ -15,4 +15,6 @@ export enum OrgUnitAccessI18nKeys {
   NoPublishAccessConversation = 'orgUnitAccess.noPublishAccessConversation',
   NoPublishAccessProject = 'orgUnitAccess.noPublishAccessProject',
   NoWriteAccessDependencies = 'orgUnitAccess.noWriteAccessDependencies',
+  /** A selected Organization folder that the org-unit visibility rule hides once the units load. */
+  FolderOutsideOrgUnits = 'orgUnitAccess.folderOutsideOrgUnits',
 }

@@ -2181,7 +2181,8 @@
     "noPublishAccessSkill": "You have no access to publish your skill to this folder.",
     "noPublishAccessConversation": "You have no access to publish your conversation to this folder.",
     "noPublishAccessProject": "You have no access to publish your project to this folder.",
-    "noWriteAccessDependencies": "You have no access to save the following to this folder, and this application uses them: {{types}}."
+    "noWriteAccessDependencies": "You have no access to save the following to this folder, and this application uses them: {{types}}.",
+    "folderOutsideOrgUnits": "This folder is outside your organization units. Choose another folder."
   },
   "versionHistory": {
     "heading": "Versions history",
