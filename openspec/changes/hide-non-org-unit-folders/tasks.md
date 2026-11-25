@@ -75,20 +75,20 @@ Architecture guard for every slice that touches `libs/*`: the lib receives only 
 
 ## 5. Docs
 
-- [ ] 5.1 Update the lib READMEs for the new public API:
+- [x] 5.1 Update the lib READMEs for the new public API:
   - `libs/chat-shared/README.md`: `isOrgUnitTreeFolder`;
   - `libs/chat-hooks/README.md`: `isPublicFolderVisible` on `useOrgUnits`, `isFolderVisible` on `usePublishFolders`, `isPublicFolderVisible` on `useDialFileManager`;
   - `libs/publish-panel/README.md`: `canCreateFolderIn`;
   - `libs/catalog/README.md`: `canCreatePublishFolderIn`.
 
   Then run `npm run validate:docs`.
-- [ ] 5.2 Update `docs/architecture.md`:
+- [x] 5.2 Update `docs/architecture.md`:
   - the `OrgUnitsContext` row (new `isPublicFolderVisible` answer);
   - the Save-panel/folder-tree paragraph: plain public folders are hidden once rights are `Ready`, and creation is offered only inside units;
   - the file-manager Organization section.
 
   Then run `npm run validate:docs`.
-- [ ] 5.3 Run `npm run validate:specs` and `npm run spec:impact` for the three delta specs.
+- [x] 5.3 Run `npm run validate:specs` and `npm run spec:impact` for the three delta specs. `validate:specs`: 0 errors. `spec:impact` (advisory) lists `publish-panel-library`, `dial-file-system-picker` and `file-manager-shell` among the specs whose cited files changed; the new behaviour is specified by this change's delta specs, which are synced on archive.
 
 ## 6. Close
 

@@ -725,10 +725,18 @@ is `true` for an admin and outside units (Core's folder rules decide there) and
 needs `read` on the owner inside a unit. A unit listed without its parents still
 owns its own folders; missing parents are not guessed.
 
+`isOrgUnitTreeFolder(units, publicPath)` tells whether a public folder belongs
+to the org-unit tree, i.e. stays listed while org units are on: the public root,
+a unit's own folder, a folder inside a unit, or an ancestor of a unit folder at a
+segment boundary (`Acme` when only `Acme/Risk/` is a unit; `Ac` is not). Any
+other public folder, and so its subtree, is a plain folder no unit owns. It
+describes the folder kind, not a right, so admin access is not consulted.
+
 ```ts
 import {
   canWriteAt,
   findOwningOrgUnit,
+  isOrgUnitTreeFolder,
   OrgUnitNamespace,
   type OrgUnitAccess,
 } from '@epam/ai-dial-chat-shared';
@@ -736,6 +744,8 @@ import {
 const access: OrgUnitAccess = { hasAdminAccess: false, units };
 findOwningOrgUnit(access.units, 'Acme/US Risk/Reports'); // the `Acme/US Risk/` unit
 canWriteAt(access, 'Acme/US Risk/Reports', OrgUnitNamespace.Applications);
+isOrgUnitTreeFolder(access.units, 'Acme'); // true: an ancestor of `Acme/US Risk/`
+isOrgUnitTreeFolder(access.units, 'Drafts'); // false: no unit owns or lies under it
 ```
 
 ### NewVersionAlert
