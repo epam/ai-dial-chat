@@ -8,6 +8,7 @@ import {
   mapWithConcurrency,
 } from '../content-sources-cache.service';
 import { ContentSourcesRegistryService } from '../content-sources-registry.service';
+import { contentSourcesStaleServed } from '../content-sources-telemetry';
 
 const TTL = 1000;
 
@@ -131,6 +132,156 @@ describe('ContentSourcesCacheService', () => {
     await service.getOrLoad('k', loader, options);
     await service.getOrLoad('k', loader, options);
     expect(loader).toHaveBeenCalledTimes(2);
+  });
+
+  it.each([
+    ['a full upstream queue', UpstreamFailure.QueueFull],
+    ['a queue wait timeout', UpstreamFailure.Unavailable],
+  ])(
+    'serves the retained stale value when the refresh is refused by %s',
+    async (_, failure) => {
+      const staleServed = vi.spyOn(contentSourcesStaleServed, 'add');
+      const service = create();
+      const loader = vi
+        .fn()
+        .mockResolvedValueOnce('v1')
+        .mockRejectedValueOnce(new UpstreamError(failure, 'no slot'));
+      await service.getOrLoad('k', loader, OPTIONS);
+      vi.advanceTimersByTime(TTL + 1);
+
+      expect(await service.getOrLoad('k', loader, OPTIONS)).toBe('v1');
+      expect(staleServed).toHaveBeenCalledWith(1, {
+        'dial.chat.content_sources.source': 's',
+      });
+      staleServed.mockRestore();
+    },
+  );
+
+  describe('cancellation', () => {
+    /** A loader that stays pending until its signal aborts or it is released. */
+    const pendingLoader = () => {
+      let release!: (value: string) => void;
+      let loadSignal!: AbortSignal;
+      const loader = vi.fn(
+        (signal: AbortSignal) =>
+          new Promise<string>((resolve, reject) => {
+            loadSignal = signal;
+            release = resolve;
+            signal.addEventListener('abort', () =>
+              reject(new UpstreamError(UpstreamFailure.Unavailable, 'aborted')),
+            );
+          }),
+      );
+      return {
+        loader,
+        release: (value: string) => release(value),
+        signal: () => loadSignal,
+      };
+    };
+
+    it('keeps a shared load running when one caller leaves', async () => {
+      const service = create();
+      const load = pendingLoader();
+      const leaving = new AbortController();
+      const first = service.getOrLoad('k', load.loader, {
+        ...OPTIONS,
+        signal: leaving.signal,
+      });
+      const second = service.getOrLoad('k', load.loader, {
+        ...OPTIONS,
+        signal: new AbortController().signal,
+      });
+      await vi.waitFor(() => expect(load.loader).toHaveBeenCalledOnce());
+
+      leaving.abort();
+      await expect(first).rejects.toMatchObject({ name: 'AbortError' });
+      expect(load.signal().aborted).toBe(false);
+
+      load.release('shared');
+      expect(await second).toBe('shared');
+      expect(load.loader).toHaveBeenCalledOnce();
+    });
+
+    it('aborts the load when the last caller leaves and does not cache it', async () => {
+      const staleServed = vi.spyOn(contentSourcesStaleServed, 'add');
+      const service = create();
+      const fresh = vi.fn().mockResolvedValueOnce('v1');
+      await service.getOrLoad('k', fresh, OPTIONS);
+      vi.advanceTimersByTime(TTL + 1);
+
+      const load = pendingLoader();
+      const callers = [new AbortController(), new AbortController()];
+      const calls = callers.map((controller) =>
+        service.getOrLoad('k', load.loader, {
+          ...OPTIONS,
+          signal: controller.signal,
+        }),
+      );
+      await vi.waitFor(() => expect(load.loader).toHaveBeenCalledOnce());
+      callers.forEach((controller) => controller.abort());
+
+      for (const call of calls) {
+        await expect(call).rejects.toMatchObject({ name: 'AbortError' });
+      }
+      expect(load.signal().aborted).toBe(true);
+      /* The aborted refresh was neither served stale nor counted. */
+      expect(staleServed).not.toHaveBeenCalled();
+
+      const next = vi.fn().mockResolvedValue('v2');
+      expect(await service.getOrLoad('k', next, OPTIONS)).toBe('v2');
+      expect(next).toHaveBeenCalledOnce();
+      staleServed.mockRestore();
+    });
+
+    it('does not store a value that arrives after every caller left', async () => {
+      const service = create();
+      let release!: (value: string) => void;
+      const loader = vi.fn(
+        () => new Promise<string>((resolve) => (release = resolve)),
+      );
+      const caller = new AbortController();
+      const call = service.getOrLoad('k', loader, {
+        ...OPTIONS,
+        signal: caller.signal,
+      });
+      await vi.waitFor(() => expect(loader).toHaveBeenCalledOnce());
+      caller.abort();
+      await expect(call).rejects.toMatchObject({ name: 'AbortError' });
+      release('late');
+      await Promise.resolve();
+
+      const next = vi.fn().mockResolvedValue('reloaded');
+      expect(await service.getOrLoad('k', next, OPTIONS)).toBe('reloaded');
+    });
+
+    it('starts a new load for a caller arriving after a cancellation', async () => {
+      const service = create();
+      const load = pendingLoader();
+      const caller = new AbortController();
+      const cancelled = service.getOrLoad('k', load.loader, {
+        ...OPTIONS,
+        signal: caller.signal,
+      });
+      await vi.waitFor(() => expect(load.loader).toHaveBeenCalledOnce());
+      caller.abort();
+      await expect(cancelled).rejects.toMatchObject({ name: 'AbortError' });
+
+      const next = vi.fn().mockResolvedValue('new');
+      expect(await service.getOrLoad('k', next, OPTIONS)).toBe('new');
+      expect(next).toHaveBeenCalledOnce();
+    });
+
+    it('refuses an already aborted caller without loading', async () => {
+      const service = create();
+      const loader = vi.fn();
+      await expect(
+        service.getOrLoad('k', loader, {
+          ...OPTIONS,
+          signal: AbortSignal.abort(),
+        }),
+      ).rejects.toMatchObject({ name: 'AbortError' });
+      expect(loader).not.toHaveBeenCalled();
+    });
   });
 });
 

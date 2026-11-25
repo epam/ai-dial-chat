@@ -1,5 +1,6 @@
 import type { CatalogEntityType } from '@epam/ai-dial-chat-shared';
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
+import type { CatalogCardRenderProps } from './card-props';
 import type { CatalogItem } from './catalog-item';
 import type { CatalogMarkdownLabels } from './item-details-props';
 
@@ -37,4 +38,8 @@ export interface CardRowData {
   markdownLabels?: CatalogMarkdownLabels;
   /** Active Browse tab; an item listed under it is labeled with that type instead of `item.type`. */
   activeTab?: CatalogEntityType;
+  /** Draws each card in place of the built-in `Card`; see `CardGridProps.renderCard`. */
+  renderCard?: (props: CatalogCardRenderProps) => ReactNode;
+  /** Height of each card in px; the row also holds the row gap. Default: `CARD_HEIGHT`. */
+  cardHeight?: number;
 }

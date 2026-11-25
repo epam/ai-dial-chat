@@ -111,6 +111,11 @@ The page maps outcomes as follows:
 - **`413 project-too-large`** (the stored `PROJECT.md` is over the BFF's manifest limit): `showErrorNotification` with `projects.edit.toast.tooLarge`, and the draft is kept.
 - **`428`, `403`, and anything else:** `showErrorNotification` with `projects.edit.toast.error`, and the draft is kept.
 
+#### Scenario: Over-long instructions cannot be saved
+
+- **WHEN** the user pastes instructions longer than 32000 characters
+- **THEN** the form shows the inline Instructions error and disables Save (see `project-create-ui`, "Instructions are limited to 32000 characters"), `updateProject` is not called, and no "Could not save the project" notification appears
+
 #### Scenario: Save without rename
 
 - **WHEN** the user edits the instructions and saves

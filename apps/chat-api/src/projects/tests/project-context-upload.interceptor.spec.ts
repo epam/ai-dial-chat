@@ -10,7 +10,6 @@ import { ConfigService } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import { afterEach, describe, expect, it } from 'vitest';
-import { PROJECT_CONTEXT_MAX_FILES } from '../constants/project-context.constants';
 import { ProjectContextUploadInterceptor } from '../project-context-upload.interceptor';
 
 @Controller()
@@ -26,26 +25,26 @@ class TestController {
 
 @Module({
   controllers: [TestController],
-  providers: [
-    ProjectContextUploadInterceptor,
-    {
-      provide: ConfigService,
-      useValue: {
-        get: (key: string) =>
-          key === 'PROJECT_CONTEXT_FILE_MAX_BYTES' ? 8 : undefined,
-      },
-    },
-  ],
+  providers: [ProjectContextUploadInterceptor, ConfigService],
 })
 class TestModule {}
 
 describe('ProjectContextUploadInterceptor', () => {
   let app: INestApplication;
 
-  const createApp = async () => {
+  const createApp = async (maxFiles = 2) => {
     const moduleRef = await Test.createTestingModule({
       imports: [TestModule],
-    }).compile();
+    })
+      .overrideProvider(ConfigService)
+      .useValue(
+        new ConfigService({
+          PROJECT_CONTEXT_MAX_FILES: maxFiles,
+          PROJECT_CONTEXT_FILE_MAX_BYTES: 8,
+          PROJECT_CONTEXT_TOTAL_MAX_BYTES: 11,
+        }),
+      )
+      .compile();
     app = moduleRef.createNestApplication();
     await app.init();
     return app;
@@ -78,6 +77,28 @@ describe('ProjectContextUploadInterceptor', () => {
     expect(res.body).toEqual({ sizes: [] });
   });
 
+  it.each(['fileNames', 'removedFileNames'])(
+    'parses a full %s list above 1 MiB',
+    async (field) => {
+      const maxFiles = 4096;
+      await createApp(maxFiles);
+      const names = Array.from(
+        { length: maxFiles },
+        (_, index) => String(index).padStart(251, 'x') + '.csv',
+      );
+      const list = JSON.stringify(names);
+      expect(Buffer.byteLength(list)).toBeGreaterThan(1024 * 1024);
+      await request(app.getHttpServer())
+        .post('/upload')
+        .field(field, list)
+        .expect(201);
+      await request(app.getHttpServer())
+        .post('/upload')
+        .field(field, list + ' ')
+        .expect(400);
+    },
+  );
+
   it('rejects a part over the per-file limit with a typed 413', async () => {
     await createApp();
 
@@ -92,11 +113,21 @@ describe('ProjectContextUploadInterceptor', () => {
     });
   });
 
+  it('rejects files that together exceed the request byte budget', async () => {
+    await createApp();
+    const res = await request(app.getHttpServer())
+      .post('/upload')
+      .attach('files', Buffer.alloc(6), 'a.csv')
+      .attach('files', Buffer.alloc(6), 'b.csv')
+      .expect(413);
+    expect(res.body.code).toBe('capacity-exceeded');
+  });
+
   it('rejects more parts than the count limit with a typed 400', async () => {
     await createApp();
 
     let req = request(app.getHttpServer()).post('/upload');
-    for (let i = 0; i <= PROJECT_CONTEXT_MAX_FILES; i += 1) {
+    for (let i = 0; i < 3; i += 1) {
       req = req.attach('files', Buffer.from('x'), `f${i}.csv`);
     }
     const res = await req.expect(400);

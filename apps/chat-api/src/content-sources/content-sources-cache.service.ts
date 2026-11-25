@@ -1,6 +1,10 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import type { Cache } from 'cache-manager';
-import { UpstreamError, UpstreamFailure } from './content-provider';
+import {
+  abortReason,
+  UpstreamError,
+  UpstreamFailure,
+} from './content-provider';
 import { ContentSourcesRegistryService } from './content-sources-registry.service';
 import { recordContentSourceStaleServed } from './content-sources-telemetry';
 
@@ -37,6 +41,21 @@ export interface LoadOptions<T> {
   readonly store: ContentSourcesCacheStore;
   /** Return false to skip storing a loaded value (for example a large asset). */
   readonly cacheable?: (value: T) => boolean;
+  /**
+   * This caller's ownership of the load: aborting it rejects only this call,
+   * and cancels the shared load once no caller waits for it any more.
+   */
+  readonly signal?: AbortSignal;
+}
+
+/**
+ * One coalesced load. It owns its abort controller, so one caller leaving
+ * cannot abort work another caller still needs; the last one leaving does.
+ */
+interface Flight<T> {
+  promise: Promise<T>;
+  readonly controller: AbortController;
+  consumers: number;
 }
 
 /**
@@ -47,11 +66,16 @@ export interface LoadOptions<T> {
  * refreshes; concurrent callers for the same key share that one refresh. If
  * the refresh fails, the stale value is served — except when the upstream
  * says the content is gone (404), which is an answer, not an outage.
+ *
+ * Single-flight is consumer-owned, as in `ConversationTitleCacheService`: a
+ * load is cancelled (its queued upstream call leaves the queue, a running one
+ * is aborted) when every caller waiting for it has aborted. A cancelled load
+ * is never stored, never served stale and never counted as stale-served.
  */
 @Injectable()
 export class ContentSourcesCacheService {
   private readonly logger = new Logger(ContentSourcesCacheService.name);
-  private readonly inFlight = new Map<string, Promise<unknown>>();
+  private readonly inFlight = new Map<string, Flight<unknown>>();
 
   constructor(
     @Inject(CONTENT_SOURCES_CACHE)
@@ -59,38 +83,101 @@ export class ContentSourcesCacheService {
     private readonly registry: ContentSourcesRegistryService,
   ) {}
 
+  /**
+   * Returns the fresh cached value, or joins / starts the one load for `key`.
+   * `loader` runs only in the caller that starts the load and receives the
+   * load's own signal, which aborts once no caller waits for it.
+   */
   async getOrLoad<T>(
     key: string,
-    loader: () => Promise<T>,
+    loader: (signal: AbortSignal) => Promise<T>,
     options: LoadOptions<T>,
   ): Promise<T> {
+    if (options.signal?.aborted) throw abortReason(options.signal);
     const cache = this.caches[options.store];
     const entry = await cache.get<CacheEntry<T>>(key);
     if (entry && Date.now() - entry.storedAt < this.registry.cacheTtlMs) {
       return entry.value;
     }
 
-    const pending = this.inFlight.get(key) as Promise<T> | undefined;
-    if (pending) return pending;
-
-    const refresh = this.refresh(cache, key, loader, options, entry);
-    this.inFlight.set(key, refresh);
-    try {
-      return await refresh;
-    } finally {
-      this.inFlight.delete(key);
+    let flight = this.inFlight.get(key) as Flight<T> | undefined;
+    if (!flight || flight.controller.signal.aborted) {
+      flight = this.start(cache, key, loader, options, entry);
     }
+    return this.consume(key, flight, options.signal);
+  }
+
+  private start<T>(
+    cache: Cache,
+    key: string,
+    loader: (signal: AbortSignal) => Promise<T>,
+    options: LoadOptions<T>,
+    stale: CacheEntry<T> | undefined | null,
+  ): Flight<T> {
+    const controller = new AbortController();
+    const flight: Flight<T> = {
+      controller,
+      consumers: 0,
+      promise: Promise.resolve() as Promise<T>,
+    };
+    flight.promise = (async () => {
+      try {
+        return await this.refresh(
+          cache,
+          key,
+          loader,
+          options,
+          stale,
+          controller.signal,
+        );
+      } finally {
+        if (this.inFlight.get(key) === flight) this.inFlight.delete(key);
+      }
+    })();
+    this.inFlight.set(key, flight);
+    return flight;
+  }
+
+  private consume<T>(
+    key: string,
+    flight: Flight<T>,
+    signal?: AbortSignal,
+  ): Promise<T> {
+    flight.consumers++;
+    return new Promise<T>((resolve, reject) => {
+      const onAbort = () => {
+        reject(abortReason(signal as AbortSignal));
+        if (--flight.consumers === 0) {
+          flight.controller.abort();
+          /* A later caller starts a new load instead of joining a cancelled one. */
+          if (this.inFlight.get(key) === flight) this.inFlight.delete(key);
+        }
+      };
+      signal?.addEventListener('abort', onAbort, { once: true });
+      flight.promise.then(
+        (value) => {
+          signal?.removeEventListener('abort', onAbort);
+          resolve(value);
+        },
+        (error: unknown) => {
+          signal?.removeEventListener('abort', onAbort);
+          reject(error);
+        },
+      );
+    });
   }
 
   private async refresh<T>(
     cache: Cache,
     key: string,
-    loader: () => Promise<T>,
+    loader: (signal: AbortSignal) => Promise<T>,
     options: LoadOptions<T>,
     stale: CacheEntry<T> | undefined | null,
+    signal: AbortSignal,
   ): Promise<T> {
     try {
-      const value = await loader();
+      const value = await loader(signal);
+      if (signal.aborted) throw abortReason(signal);
       if (options.cacheable?.(value) ?? true) {
         await cache.set(
           key,
@@ -100,6 +187,8 @@ export class ContentSourcesCacheService {
       }
       return value;
     } catch (error) {
+      /* Nobody waits for a cancelled load: no stale fallback, no counter. */
+      if (signal.aborted) throw error;
       if (
         stale &&
         !(

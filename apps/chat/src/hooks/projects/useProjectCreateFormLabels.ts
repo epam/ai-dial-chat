@@ -9,6 +9,7 @@ import { Trans, useTranslation } from 'react-i18next';
 import {
   BasicI18nKeys,
   ButtonsI18nKeys,
+  EditorI18nKeys,
   ProjectsI18nKeys,
 } from '../../constants/translation-keys';
 import { useTextRefinementLabels } from '../useTextRefinementLabels';
@@ -62,6 +63,8 @@ export const useProjectCreateFormLabels = ({
       instructionsPlaceholder: t(
         ProjectsI18nKeys.CreateInstructionsPlaceholder,
       ),
+      instructionsTooLongError: (count) =>
+        t(EditorI18nKeys.FieldTooLong, { count }),
       editorLoadingAriaLabel: t(BasicI18nKeys.Loading),
       contextLabel: t(ProjectsI18nKeys.CreateContextLabel),
       dropZoneLabel: ({ fromDevice, fileManager }) =>
@@ -86,6 +89,8 @@ export const useProjectCreateFormLabels = ({
       downloadFileLabel: (name) =>
         t(ProjectsI18nKeys.CreateContextDownload, { name }),
       fileRejections: {
+        [ContextFileRejection.TooManyFiles]: (name) =>
+          `${name}: ${t(ProjectsI18nKeys.CreateErrorTooManyFiles)}`,
         [ContextFileRejection.UnsupportedType]: (name) =>
           t(ProjectsI18nKeys.CreateErrorUnsupportedType, { name }),
         [ContextFileRejection.TooLarge]: (name) =>

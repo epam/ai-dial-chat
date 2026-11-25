@@ -201,21 +201,28 @@ export const readPublishableApplicationIconUrl = async (
 };
 
 /**
- * The published icon's path: `files/public/{folderPath}/{targetResourceName}/{iconName}`.
- * Nesting it under the app's own versioned target name keeps two apps (or two
- * versions of one app) whose icons share a file name, e.g. `icon.png`, from
- * colliding in the same Organization folder.
+ * The folder holding an application's published files, its icon among them:
+ * `files/public/{folderPath}/{targetResourceName}/`, trailing-slashed. Nesting
+ * under the app's own versioned target name keeps two apps (or two versions of
+ * one app) whose icons share a file name, e.g. `icon.png`, from colliding in
+ * the same Organization folder. Publish writes the icon here and unpublish
+ * lists it to remove what was published.
+ * @param folderPath - plain publish target folder
+ * @param targetResourceName - last segment of the published application's `targetUrl`
  */
+export const getPublishedApplicationFilesFolderUrl = (
+  folderPath: string,
+  targetResourceName: string,
+): string =>
+  `${getPublishedTargetUrl('files', folderPath, targetResourceName)}/`;
+
+/** The published icon's path: `{@link getPublishedApplicationFilesFolderUrl}{iconName}`. */
 export const getPublishedIconTargetUrl = (
   folderPath: string,
   targetResourceName: string,
   iconUrl: string,
 ): string =>
-  getPublishedTargetUrl(
-    'files',
-    folderPath,
-    `${targetResourceName}/${getResourceName(iconUrl)}`,
-  );
+  `${getPublishedApplicationFilesFolderUrl(folderPath, targetResourceName)}${getResourceName(iconUrl)}`;
 
 const CONVERSATION_RESOURCE_PREFIX = 'conversations/';
 

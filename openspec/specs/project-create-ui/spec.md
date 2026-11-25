@@ -242,6 +242,32 @@ The field is wrapped in `TextRefinementField` and driven by `useTextRefinement` 
 - **WHEN** `onRefineInstructions` is not supplied
 - **THEN** Instructions shows no Refine with AI action
 
+### Requirement: Instructions are limited to 32000 characters
+
+`ProjectCreateForm` SHALL reject Instructions longer than `PROJECT_INSTRUCTIONS_MAX_LENGTH` (32000 Unicode code points, the limit the BFF enforces in `CreateProjectDto`; exported with `isProjectInstructionsTooLong` from `libs/projects/src/utils/project-instructions.ts`). The check runs as the user types, so it serves `ProjectCreatePage` and `ProjectEditPage` alike:
+
+- the `MarkdownEditor` gets `invalid`, which draws the error border and sets `aria-invalid`, and `ariaDescribedBy` pointing at the error;
+- an `ErrorText` under the editor shows `labels.instructionsTooLongError(32000)` (default `Use 32000 characters or fewer.`); the app fills it with `t(EditorI18nKeys.FieldTooLong, { count })`, the same "Use {{count}} characters or fewer." copy the Skill and Scheduled task forms use, so no key is added;
+- the submit button is disabled, and `onSubmit` is not called, so an over-long project is never sent and the "Could not save the project" toast (`projects.edit.toast.error`) is not reached for this cause;
+- the error and the border clear as soon as the text is back within the limit.
+
+Text of exactly 32000 code points is accepted. A refined text is checked like typed text.
+
+#### Scenario: Over-long instructions block the save
+
+- **WHEN** the Instructions hold 32001 characters
+- **THEN** the editor is drawn invalid, "Use 32000 characters or fewer." is shown under it, and the submit button is disabled
+
+#### Scenario: Instructions at the limit are accepted
+
+- **WHEN** the Instructions hold exactly 32000 characters and the name is valid
+- **THEN** no error is shown and the submit button is enabled
+
+#### Scenario: Shortening clears the error
+
+- **WHEN** the user deletes text until the Instructions are within the limit
+- **THEN** the error and the invalid border disappear and submit is enabled again
+
 ### Requirement: Context files are added from the device or the file manager
 
 The Context section SHALL render:
@@ -251,11 +277,12 @@ The Context section SHALL render:
 
 The Context header carries only the `labels.contextLabel` heading: there is no Add menu and no capacity meter.
 
-Files from every source go through `checkContextFiles(incoming, contextFiles, { allowedExtensions, maxFileBytes, maxTotalBytes })`. The helper returns `{ accepted: Attachment[]; rejected: { name: string; reason: ContextFileRejection }[] }`. The members of `ContextFileRejection` are `UnsupportedType = 'unsupported-type'`, `TooLarge = 'too-large'`, `CapacityExceeded = 'capacity-exceeded'`, `Duplicate = 'duplicate'` and `InvalidName = 'invalid-name'`. The helper rejects:
+Files from every source go through `checkContextFiles(incoming, contextFiles, { allowedExtensions, maxFiles, maxFileBytes, maxTotalBytes })`. The helper returns `{ accepted: Attachment[]; rejected: { name: string; reason: ContextFileRejection }[] }`. The members of `ContextFileRejection` are `TooManyFiles = 'too-many-files'`, `UnsupportedType = 'unsupported-type'`, `TooLarge = 'too-large'`, `CapacityExceeded = 'capacity-exceeded'`, `Duplicate = 'duplicate'` and `InvalidName = 'invalid-name'`. The helper rejects:
 
 - an extension that is not in `allowedExtensions`;
 - a file over `maxFileBytes`;
 - a file that would push the running total over `maxTotalBytes`;
+- a file that would exceed the optional `maxFiles` count from client config, including retained files and accepted additions;
 - a name already present in `contextFiles` or earlier in the same batch;
 - a name that fails `validateProjectName`.
 
@@ -264,6 +291,7 @@ Accepted files are appended through `onContextFilesChange`. Each rejection, `lab
 `useProjectFileManagerPicker` (`apps/chat/src/hooks/projects/useProjectFileManagerPicker.ts`) is the app-level adapter over the shared `useSkillFileSystemPicker<File>` from `@epam/ai-dial-chat-hooks/skill-editor`:
 
 - It opens `DialFileManagerModal` with `canAttachFolders={false}`, `allowedTypes` derived from the allowed extensions, and `maxSelectableFileSize={maxFileBytes}`.
+- The picker checks the configured count including retained and staged files, and compares known selection sizes with the remaining byte budget before downloading. An over-budget selection stays open so the user can adjust it. Parallel downloads enforce the per-file and remaining total limits on actual bytes, including files with missing or stale metadata.
 - It downloads each picked file, which copies it into the project; the download receives the picker's abort signal, so a cancelled pick aborts its requests.
 - It resolves the files as `File[]`, in selection order, folders ignored. A download failure shows `projects.create.toast.fileManagerError` and resolves `undefined`; closing the modal or leaving the page while a pick is pending resolves it as cancelled.
 

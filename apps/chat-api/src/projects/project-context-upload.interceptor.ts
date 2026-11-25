@@ -9,10 +9,12 @@ import { ConfigService } from '@nestjs/config';
 import type { Request, Response } from 'express';
 import multer, { memoryStorage, MulterError } from 'multer';
 import type { Observable } from 'rxjs';
+import { DIAL_ENTITY_NAME_MAX_BYTES } from '../common/validators/dial-entity-name.validator';
 import type { EnvironmentVariables } from '../config/environment.config';
 import {
   DEFAULT_PROJECT_CONTEXT_FILE_MAX_BYTES,
-  PROJECT_CONTEXT_MAX_FILES,
+  DEFAULT_PROJECT_CONTEXT_MAX_FILES,
+  DEFAULT_PROJECT_CONTEXT_TOTAL_MAX_BYTES,
 } from './constants/project-context.constants';
 import { ProjectCreateErrorCode } from './types/project-create-error-code.enum';
 import {
@@ -26,6 +28,31 @@ export const PROJECT_CONTEXT_FILES_FIELD = 'files';
 /* `name`, `description`, `instructions`, `fileNames`, with headroom for the
  * ValidationPipe to name an unknown field instead of Multer cutting it off. */
 const MAX_TEXT_FIELDS = 16;
+const DEFAULT_FIELD_MAX_BYTES = 1024 * 1024;
+
+/** Stops retaining file parts once their combined size exceeds this request's budget. */
+const createContextStorage = (maxTotalBytes: number): multer.StorageEngine => {
+  const memory = memoryStorage();
+  let totalBytes = 0;
+  return {
+    _removeFile: memory._removeFile.bind(memory),
+    _handleFile(req, file, callback) {
+      memory._handleFile(req, file, (error, info) => {
+        if (error || !info) return callback(error, info);
+        totalBytes += info.size ?? 0;
+        if (totalBytes > maxTotalBytes) {
+          return callback(
+            projectPayloadTooLarge(
+              ProjectCreateErrorCode.CapacityExceeded,
+              `Context files exceed the limit of ${maxTotalBytes} bytes`,
+            ),
+          );
+        }
+        callback(null, info);
+      });
+    },
+  };
+};
 
 /**
  * Parses the multipart body of `POST /api/v1/projects` into memory, scoped
@@ -56,20 +83,32 @@ export class ProjectContextUploadInterceptor implements NestInterceptor {
       this.configService.get<number>('PROJECT_CONTEXT_FILE_MAX_BYTES') ??
       DEFAULT_PROJECT_CONTEXT_FILE_MAX_BYTES;
 
+    const maxFiles =
+      this.configService.get<number>('PROJECT_CONTEXT_MAX_FILES') ??
+      DEFAULT_PROJECT_CONTEXT_MAX_FILES;
+    const maxTotalBytes =
+      this.configService.get<number>('PROJECT_CONTEXT_TOTAL_MAX_BYTES') ??
+      DEFAULT_PROJECT_CONTEXT_TOTAL_MAX_BYTES;
+
     return new Promise((resolve, reject) => {
       multer({
-        storage: memoryStorage(),
+        storage: createContextStorage(maxTotalBytes),
         limits: {
+          /* Compact JSON: valid names need no escaping, plus quotes, commas and brackets. */
+          fieldSize: Math.max(
+            DEFAULT_FIELD_MAX_BYTES,
+            1 + maxFiles * (DIAL_ENTITY_NAME_MAX_BYTES + 3),
+          ),
           fileSize: maxFileBytes,
-          files: PROJECT_CONTEXT_MAX_FILES,
+          files: maxFiles,
           fields: MAX_TEXT_FIELDS,
         },
-      }).array(PROJECT_CONTEXT_FILES_FIELD, PROJECT_CONTEXT_MAX_FILES)(
+      }).array(PROJECT_CONTEXT_FILES_FIELD, maxFiles)(
         request,
         response,
         (error: unknown) => {
           if (error != null) {
-            reject(this.mapMulterError(error, maxFileBytes));
+            reject(this.mapMulterError(error, maxFileBytes, maxFiles));
             return;
           }
           resolve();
@@ -78,7 +117,11 @@ export class ProjectContextUploadInterceptor implements NestInterceptor {
     });
   }
 
-  private mapMulterError(error: unknown, maxFileBytes: number): unknown {
+  private mapMulterError(
+    error: unknown,
+    maxFileBytes: number,
+    maxFiles: number,
+  ): unknown {
     if (!(error instanceof MulterError)) return error;
 
     switch (error.code) {
@@ -88,21 +131,21 @@ export class ProjectContextUploadInterceptor implements NestInterceptor {
           `A context file exceeds the per-file limit of ${maxFileBytes} bytes`,
         );
       case 'LIMIT_FILE_COUNT':
-        return this.tooManyFiles();
+        return this.tooManyFiles(maxFiles);
       case 'LIMIT_UNEXPECTED_FILE':
         /* `array()` reports a part over its max count this way too. */
         return error.field === PROJECT_CONTEXT_FILES_FIELD
-          ? this.tooManyFiles()
+          ? this.tooManyFiles(maxFiles)
           : new BadRequestException('Unexpected file field');
       default:
         return new BadRequestException(error.message);
     }
   }
 
-  private tooManyFiles() {
+  private tooManyFiles(maxFiles: number) {
     return projectBadRequest(
       ProjectCreateErrorCode.TooManyFiles,
-      `A project may have at most ${PROJECT_CONTEXT_MAX_FILES} context files`,
+      `A project may have at most ${maxFiles} context files`,
     );
   }
 }

@@ -23,6 +23,10 @@ export enum EntityOperation {
   Duplicated = 'duplicated',
   Deleted = 'deleted',
   Downloaded = 'downloaded',
+  /** Added to the chat panel's pinned projects. */
+  Pinned = 'pinned',
+  /** Removed from the chat panel's pinned projects. */
+  Unpinned = 'unpinned',
   PublishRequested = 'publishRequested',
   /**
    * Removal of a published copy was submitted for admin approval. Named

@@ -127,7 +127,10 @@ const ENV_VAR_NAMES = [
   'CONTENT_SOURCES_CACHE_TTL_MS',
   'CONTENT_SOURCES_CONFIG',
   'CONTENT_SOURCES_CREDENTIALS',
+  'CONTENT_SOURCES_PRINCIPAL_MISS_CONCURRENCY',
   'CONTENT_SOURCES_TIMEOUT_MS',
+  'CONTENT_SOURCES_UPSTREAM_CONCURRENCY',
+  'CONTENT_SOURCES_UPSTREAM_QUEUE_SIZE',
   'CONVERSATION_BODY_SIZE_LIMIT_BYTES',
   'CONVERSATION_NAMING_SYSTEM_PROMPT',
   'CORS_ORIGIN',
@@ -179,8 +182,10 @@ const ENV_VAR_NAMES = [
   'PORT',
   'PROJECTS_ENABLED',
   'PROJECTS_ENABLED_ROLES',
+  'PROJECT_ARCHIVE_READ_MAX_BYTES',
   'PROJECT_CONTEXT_ALLOWED_EXTENSIONS',
   'PROJECT_CONTEXT_FILE_MAX_BYTES',
+  'PROJECT_CONTEXT_MAX_FILES',
   'PROJECT_CONTEXT_TOTAL_MAX_BYTES',
   'PUBLISH_ATTACHMENTS_MAX_FILES',
   'RESPONSES_API_ENABLED',
@@ -297,6 +302,31 @@ describe('EnvironmentVariables composition', () => {
       validate({ ...validBaseConfig, FILE_TRANSFER_TIMEOUT_MS: 'abc' }),
     ).toThrow(
       'Environment validation failed:\nFILE_TRANSFER_TIMEOUT_MS must not be less than 1000, FILE_TRANSFER_TIMEOUT_MS must be an integer number',
+    );
+  });
+
+  it('defaults and bounds the content-sources admission limits', () => {
+    const config = validate(validBaseConfig);
+    expect(config.CONTENT_SOURCES_UPSTREAM_CONCURRENCY).toBe(8);
+    expect(config.CONTENT_SOURCES_UPSTREAM_QUEUE_SIZE).toBe(64);
+    expect(config.CONTENT_SOURCES_PRINCIPAL_MISS_CONCURRENCY).toBe(8);
+    expect(
+      validate({ ...validBaseConfig, CONTENT_SOURCES_UPSTREAM_QUEUE_SIZE: '0' })
+        .CONTENT_SOURCES_UPSTREAM_QUEUE_SIZE,
+    ).toBe(0);
+    expect(() =>
+      validate({
+        ...validBaseConfig,
+        CONTENT_SOURCES_UPSTREAM_CONCURRENCY: '0',
+      }),
+    ).toThrow('CONTENT_SOURCES_UPSTREAM_CONCURRENCY must not be less than 1');
+    expect(() =>
+      validate({
+        ...validBaseConfig,
+        CONTENT_SOURCES_PRINCIPAL_MISS_CONCURRENCY: '65',
+      }),
+    ).toThrow(
+      'CONTENT_SOURCES_PRINCIPAL_MISS_CONCURRENCY must not be greater than 64',
     );
   });
 });

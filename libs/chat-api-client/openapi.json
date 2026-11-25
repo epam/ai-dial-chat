@@ -13564,6 +13564,22 @@
             "description": "Maximum files per skill, including the root SKILL.md.",
             "example": 100
           },
+          "projectContextMaxFiles": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Maximum number of context files in a project, including retained files on edit.",
+            "example": 100
+          },
+          "skillFileUploadMaxBytes": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Maximum bytes per skill file, including SKILL.md."
+          },
+          "skillUploadMaxTotalBytes": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Maximum total bytes per skill, including SKILL.md."
+          },
           "activeEventId": {
             "type": "string",
             "description": "Active start-page celebration module ID selected by UI_EVENT. Null when UI_EVENT is absent or none. Event IDs are open-ended; clients ignore IDs not present in their local registry.",
@@ -14705,6 +14721,10 @@
             "items": {
               "type": "string"
             }
+          },
+          "provider": {
+            "type": "string",
+            "description": "Provider of the model as DIAL Core reports it (e.g. \"aws\"); undefined when DIAL Core sends none"
           },
           "maxInputAttachments": {
             "type": "number",

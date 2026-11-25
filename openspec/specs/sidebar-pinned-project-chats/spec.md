@@ -264,7 +264,7 @@ The adapter SHALL build `getActions` for project rows and See all rows (the same
 
 | Item | Shown | Behaviour |
 | --- | --- | --- |
-| Unpin (`ButtonsI18nKeys.Unpin`) | always | `setPinnedProject(id, false)`. A rejection shows `ProjectsI18nKeys.ActionsUnpinError` through `showErrorNotification`. |
+| Unpin (`ButtonsI18nKeys.Unpin`) | always | `setPinnedProject(id, false)`. A rejection shows `ProjectsI18nKeys.ActionsUnpinError` through `showErrorNotification`; success raises the "Unpinned from chat panel" notification of `entity-operation-notifications` naming the project. |
 | Edit (`ButtonsI18nKeys.Edit`) | `project.canEdit` | opens `getProjectEditRoute(id)` through `onOpenRoute` |
 | Publish (`ButtonsI18nKeys.Publish`) | `project.canManage` | opens `PublishProjectPanelContainer` for the project, returning focus to the row's ⋮ trigger on close |
 | Share (`ButtonsI18nKeys.Share`) | `project.canManage` | opens `ProjectShareOverlay` for the project |

@@ -117,3 +117,18 @@ When labels are omitted, the mapper SHALL preserve its existing behavior: no roo
 
 - **WHEN** a library caller maps a toolset with a plain ID without supplying `folderLabels`
 - **THEN** its folder remains empty rather than containing a hardcoded root label
+
+### Requirement: Deployment provider is carried into the catalog item
+
+The library mapper `mapDeploymentToCatalogItem` (`libs/chat-hooks/src/catalog/map-deployment-to-catalog-item.ts`) SHALL set `CatalogItem.provider` from `DeploymentItemDto.provider` without transforming it, and SHALL leave it unset when the deployment has none. The app wrapper (`apps/chat/src/utils/map-deployment-to-catalog-item.ts`) SHALL NOT alter it. The list item's provider comes from `deployments-api`; the details panel's provider remains `modelDetails.provider`.
+
+#### Scenario: Deployment with a provider
+
+- **WHEN** the mapper receives a deployment with `provider: "aws"`
+- **THEN** the catalog item has `provider: "aws"`
+
+#### Scenario: Deployment without a provider
+
+- **WHEN** the mapper receives a deployment with no `provider`
+- **THEN** the catalog item has no `provider`
+

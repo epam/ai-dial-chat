@@ -737,6 +737,15 @@ describe('validate', () => {
       ).toThrow(/PROJECT_CONTEXT_ALLOWED_EXTENSIONS/);
     });
 
+    it.each(['PROJECT_CONTEXT_MAX_FILES', 'PROJECT_ARCHIVE_READ_MAX_BYTES'])(
+      'rejects invalid %s at startup',
+      (key) => {
+        for (const value of ['0', '-1', '1.5', 'invalid']) {
+          expect(() => validate({ ...baseConfig, [key]: value })).toThrow(key);
+        }
+      },
+    );
+
     it('accepts custom byte limits', () => {
       const config = validate({
         ...baseConfig,

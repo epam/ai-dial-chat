@@ -2,6 +2,7 @@ import { createHash } from 'crypto';
 import { mkdir, mkdtemp, rm, writeFile } from 'fs/promises';
 import { tmpdir } from 'os';
 import { join } from 'path';
+import { brotliCompressSync, gzipSync } from 'zlib';
 import {
   Controller,
   Get,
@@ -434,6 +435,129 @@ describe('static assets serving', () => {
     expect(response.headers['content-security-policy']).not.toContain(
       "'sha256-",
     );
+  });
+
+  describe('precompressed assets', () => {
+    const SCRIPT = `console.log(${JSON.stringify('x'.repeat(2048))});`;
+
+    const writeVariants = async (
+      name: string,
+      body: string,
+      encodings: string[],
+    ) => {
+      await writeFile(join(staticRoot, 'assets', name), body);
+      if (encodings.includes('br')) {
+        await writeFile(
+          join(staticRoot, 'assets', `${name}.br`),
+          brotliCompressSync(body),
+        );
+      }
+      if (encodings.includes('gz')) {
+        await writeFile(
+          join(staticRoot, 'assets', `${name}.gz`),
+          gzipSync(body),
+        );
+      }
+      /* The variants are listed when the middleware is created. */
+      await app.close();
+      app = await createStaticTestApp(staticRoot, overlaySandboxRoot);
+    };
+
+    it('serves the Brotli variant with the original type and cache policy', async () => {
+      await writeVariants('index-abc.js', SCRIPT, ['br', 'gz']);
+
+      const response = await request(app.getHttpServer())
+        .get('/assets/index-abc.js')
+        .set('Accept-Encoding', 'gzip, deflate, br')
+        .expect(200);
+
+      expect(response.headers['content-encoding']).toBe('br');
+      expect(response.headers['content-type']).toContain('javascript');
+      expect(response.headers['cache-control']).toBe(
+        HASHED_ASSET_CACHE_CONTROL,
+      );
+      expect(response.headers['vary']).toContain('Accept-Encoding');
+      expect(Number(response.headers['content-length'])).toBeLessThan(
+        SCRIPT.length / 5,
+      );
+      expect(response.text).toBe(SCRIPT);
+    });
+
+    it('serves the gzip variant to a client without Brotli', async () => {
+      await writeVariants('index-abc.js', SCRIPT, ['br', 'gz']);
+
+      const response = await request(app.getHttpServer())
+        .get('/assets/index-abc.js')
+        .set('Accept-Encoding', 'gzip')
+        .expect(200);
+
+      expect(response.headers['content-encoding']).toBe('gzip');
+      expect(response.text).toBe(SCRIPT);
+    });
+
+    it('serves the original to a client that accepts no encoding', async () => {
+      await writeVariants('index-abc.js', SCRIPT, ['br', 'gz']);
+
+      const response = await request(app.getHttpServer())
+        .get('/assets/index-abc.js')
+        .set('Accept-Encoding', 'identity')
+        .expect(200);
+
+      expect(response.headers['content-encoding']).toBeUndefined();
+      expect(response.headers['vary']).toContain('Accept-Encoding');
+      expect(response.text).toBe(SCRIPT);
+    });
+
+    it('respects a coding the client refuses with q=0', async () => {
+      await writeVariants('index-abc.css', 'a{}'.repeat(600), ['br', 'gz']);
+
+      const response = await request(app.getHttpServer())
+        .get('/assets/index-abc.css')
+        .set('Accept-Encoding', 'br;q=0, gzip')
+        .expect(200);
+
+      expect(response.headers['content-encoding']).toBe('gzip');
+      expect(response.headers['content-type']).toContain('text/css');
+    });
+
+    it('serves a file without variants as it is', async () => {
+      await writeVariants('index-abc.js', SCRIPT, ['br']);
+
+      const response = await request(app.getHttpServer())
+        .get('/assets/app.js')
+        .set('Accept-Encoding', 'gzip, br')
+        .expect(200);
+
+      expect(response.headers['content-encoding']).toBeUndefined();
+      expect(response.headers['vary'] ?? '').not.toContain('Accept-Encoding');
+      expect(response.text).toBe('console.log("app");');
+    });
+
+    it('keeps the PDF worker policy on its precompressed variant', async () => {
+      await writeVariants('pdf.worker.min-abc123.mjs', SCRIPT, ['br']);
+
+      const response = await request(app.getHttpServer())
+        .get('/assets/pdf.worker.min-abc123.mjs')
+        .set('Accept-Encoding', 'br')
+        .expect(200);
+
+      expect(response.headers['content-encoding']).toBe('br');
+      expect(response.headers['content-security-policy']).toContain(
+        "'wasm-unsafe-eval'",
+      );
+    });
+
+    it('answers HEAD with the variant headers and no body', async () => {
+      await writeVariants('index-abc.js', SCRIPT, ['br']);
+
+      const response = await request(app.getHttpServer())
+        .head('/assets/index-abc.js')
+        .set('Accept-Encoding', 'br')
+        .expect(200);
+
+      expect(response.headers['content-encoding']).toBe('br');
+      expect(response.headers['content-type']).toContain('javascript');
+    });
   });
 
   it('limits WASM to chat HTML and the bundled PDF worker', async () => {

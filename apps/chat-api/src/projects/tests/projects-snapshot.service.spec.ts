@@ -4,12 +4,13 @@ import {
   NotFoundException,
   PayloadTooLargeException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import archiver from 'archiver';
 import { describe, expect, it, vi } from 'vitest';
 import type { DialClientService } from '../../dial/dial-client.service';
 import {
   PROJECT_ARCHIVE_READ_CONCURRENCY,
-  PROJECT_ARCHIVE_READ_MAX_BYTES,
+  DEFAULT_PROJECT_ARCHIVE_READ_MAX_BYTES,
 } from '../constants/project-context.constants';
 import { ProjectsSnapshotService } from '../snapshot/projects-snapshot.service';
 import { buildProjectManifest } from '../utils/project-manifest.util';
@@ -55,11 +56,17 @@ const archiveResponse = (
   },
 });
 
-const makeService = (result: unknown) => {
+const makeService = (
+  result: unknown,
+  maxBytes = DEFAULT_PROJECT_ARCHIVE_READ_MAX_BYTES,
+) => {
   const downloadProjectFolder = vi.fn(async () => result);
-  const service = new ProjectsSnapshotService({
-    client: { downloadProjectFolder },
-  } as unknown as DialClientService);
+  const service = new ProjectsSnapshotService(
+    {
+      client: { downloadProjectFolder },
+    } as unknown as DialClientService,
+    new ConfigService({ PROJECT_ARCHIVE_READ_MAX_BYTES: maxBytes }),
+  );
   return { service, downloadProjectFolder };
 };
 
@@ -278,13 +285,20 @@ describe('ProjectsSnapshotService', () => {
     await expect(read(service)).rejects.toBeInstanceOf(BadGatewayException);
   });
 
+  it('accepts a ZIP exactly at the configured archive budget', async () => {
+    const zip = await buildZip({ 'PROJECT.md': 'x' });
+    const { service } = makeService(archiveResponse(zip), zip.length);
+    await expect(read(service)).resolves.toMatchObject({ etag: '"e1"' });
+  });
+
   it('refuses an archive whose declared length exceeds the read limit', async () => {
     const zip = await buildZip({ 'PROJECT.md': 'x' });
     const { service } = makeService(
       archiveResponse(zip, {
         etag: '"e1"',
-        'content-length': String(PROJECT_ARCHIVE_READ_MAX_BYTES + 1),
+        'content-length': String(zip.length),
       }),
+      zip.length - 1,
     );
 
     const error = await read(service).catch((err: unknown) => err);
@@ -296,7 +310,8 @@ describe('ProjectsSnapshotService', () => {
   });
 
   it('stops buffering once the streamed bytes exceed the read limit', async () => {
-    const chunk = new Uint8Array(16 * 1_048_576);
+    const maxBytes = 1024;
+    const chunk = new Uint8Array(256);
     let sent = 0;
     const body = new ReadableStream<Uint8Array>({
       pull(controller) {
@@ -304,17 +319,18 @@ describe('ProjectsSnapshotService', () => {
         controller.enqueue(chunk);
       },
     });
-    const { service } = makeService({
-      error: undefined,
-      response: { status: 200, body, headers: new Headers({ etag: '"e1"' }) },
-    });
+    const { service } = makeService(
+      {
+        error: undefined,
+        response: { status: 200, body, headers: new Headers({ etag: '"e1"' }) },
+      },
+      maxBytes,
+    );
 
     await expect(read(service)).rejects.toBeInstanceOf(
       PayloadTooLargeException,
     );
-    expect(sent).toBeLessThanOrEqual(
-      PROJECT_ARCHIVE_READ_MAX_BYTES + chunk.byteLength * 2,
-    );
+    expect(sent).toBeLessThanOrEqual(maxBytes + chunk.byteLength * 2);
   });
 
   it('rejects an archive with a traversal entry name', async () => {
@@ -417,9 +433,12 @@ describe('ProjectsSnapshotService concurrency', () => {
           gates.push(() => resolve(archiveResponse(zip)));
         }),
     );
-    const service = new ProjectsSnapshotService({
-      client: { downloadProjectFolder },
-    } as unknown as DialClientService);
+    const service = new ProjectsSnapshotService(
+      {
+        client: { downloadProjectFolder },
+      } as unknown as DialClientService,
+      new ConfigService(),
+    );
     return { service, downloadProjectFolder, gates };
   };
 

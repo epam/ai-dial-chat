@@ -8,6 +8,7 @@ import {
   isValidSkillRelativePath,
   parseSkillResourceUrl,
   SkillEditorLoadState,
+  SkillEditorSubmitPhase,
   SKILL_FILE_UPLOAD_MAX_BYTES,
   SKILL_MANIFEST_FILE,
   useSkillEditorLoad,
@@ -143,6 +144,8 @@ const SkillEditorPage: FC = () => {
   );
   const refinementLabels = useTextRefinementLabels();
   const { config } = useAppConfig();
+  const maxFileBytes =
+    config.skillFileUploadMaxBytes ?? SKILL_FILE_UPLOAD_MAX_BYTES;
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useUser();
@@ -331,6 +334,8 @@ const SkillEditorPage: FC = () => {
     contentRevisions,
   } = useSkillFileActions({
     maxFiles: config.skillUploadMaxFiles,
+    maxFileBytes,
+    maxTotalBytes: config.skillUploadMaxTotalBytes,
     files,
     setFiles,
     filesContentRef,
@@ -579,7 +584,7 @@ const SkillEditorPage: FC = () => {
       dropOverlayTitle: t(SkillEditorI18nKeys.DropOverlayTitle),
       dropOverlaySubtitle: t(SkillEditorI18nKeys.DropOverlaySubtitle),
       uploadDropZoneDescription: t(DialFileManagerI18nKeys.MaxSizeOnly, {
-        maxSize: formatFileSize(SKILL_FILE_UPLOAD_MAX_BYTES),
+        maxSize: formatFileSize(maxFileBytes),
       }),
       uploadArchiveDropZoneDescription: t(
         SkillEditorI18nKeys.UploadArchiveFormats,
@@ -598,7 +603,7 @@ const SkillEditorPage: FC = () => {
       createFolderCloseAriaLabel: t(ButtonsI18nKeys.Close),
       createFolderConfirmLabel: t(ButtonsI18nKeys.Create),
     };
-  }, [t, isEditMode, loadState, refinementLabels]);
+  }, [t, isEditMode, loadState, refinementLabels, maxFileBytes]);
 
   if (!bucket) {
     return (
@@ -652,7 +657,7 @@ const SkillEditorPage: FC = () => {
             loadState === SkillEditorLoadState.Forbidden ||
             loadState === SkillEditorLoadState.NotFound
           }
-          isSubmitting={phase === 'submitting'}
+          isSubmitting={phase === SkillEditorSubmitPhase.Submitting}
           errors={errors}
           submitError={submitError}
           onRetrySubmit={isSubmitErrorRetryable ? retrySubmit : undefined}

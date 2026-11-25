@@ -2001,6 +2001,10 @@
       "deleted": "Project \"{{name}}\" is not available anymore.",
       "downloadedTitle": "Project downloaded successfully",
       "downloaded": "Project \"{{name}}\" is saved on your device.",
+      "pinnedTitle": "Pinned to chat panel",
+      "pinned": "\"{{name}}\" has been pinned to chat panel",
+      "unpinnedTitle": "Unpinned from chat panel",
+      "unpinned": "\"{{name}}\" has been unpinned from chat panel",
       "publishRequestedTitle": "Project publish requested",
       "publishRequested": "Publish request for project \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it.",
       "unpublishRequestedTitle": "Project unpublish requested",
@@ -2081,6 +2085,7 @@
     "giftWrappingToastMessage": "Some gifts have a mind of their own. Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
     "snowmanDeliveryToastMessage": "Delivered in one piece, almost. Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
     "elfFireworksToastMessage": "Some buttons were made for launching. Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
+    "catBaubleToastMessage": "Every tree needs one more ornament. Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
     "toastTitle": "Happy New Year!",
     "giftLabel": "New Year gift"
   },

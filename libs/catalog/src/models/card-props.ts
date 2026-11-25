@@ -51,6 +51,25 @@ export interface CardStyles {
   typography?: CardTypography;
 }
 
+/** What `Catalog`'s `renderCard` receives for one cell of the card grid. */
+export interface CatalogCardRenderProps {
+  /** The catalog item to draw. */
+  item: CatalogItem;
+  /** Active search query, for highlighting matches. */
+  query: string;
+  /** Whether this item is the one marked as selected in the grid. */
+  isSelected: boolean;
+  /** Whether the grid is read-only (no favorites, no management actions). */
+  isReadonly: boolean;
+  /** Active Browse tab; an item listed under it is labeled with that type. */
+  activeTab?: CatalogEntityType;
+  /**
+   * Opens the item the way a click on the built-in card does. Absent when the
+   * grid has no click handler.
+   */
+  onClick?: () => void;
+}
+
 /** Props for `Card`. */
 export interface CardProps {
   /** The catalog item to display. */

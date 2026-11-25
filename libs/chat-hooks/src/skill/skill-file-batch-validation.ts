@@ -58,6 +58,10 @@ export interface SkillFileBatchValidationMessages {
 export interface SkillFileBatchValidationContext {
   /** Maximum total files including SKILL.md. When omitted, the server checks the count. */
   maxFiles?: number;
+  /** Maximum bytes per file, including the manifest. Defaults to 1 MiB. */
+  maxFileBytes?: number;
+  /** Maximum total bytes, including the manifest. Defaults to 16 MiB. */
+  maxTotalBytes?: number;
   /** Paths already present in the editor's supporting-file tree. */
   existingPaths: string[];
   /** Sum of the bytes already held for existing supporting files. */
@@ -101,6 +105,8 @@ export const validateSkillFileBatch = async (
     existingFileBytes,
     existingFolderPaths,
     manifestByteLength,
+    maxFileBytes = SKILL_FILE_UPLOAD_MAX_BYTES,
+    maxTotalBytes = SKILL_UPLOAD_MAX_TOTAL_BYTES,
     messages,
   } = context;
   const results: SkillFileValidationResult[] = [];
@@ -141,10 +147,8 @@ export const validateSkillFileBatch = async (
     } else if (path === SKILL_MANIFEST_FILE) {
       kind = SkillFileCandidateKind.Manifest;
       manifestCandidateCount += 1;
-      if (file.size > SKILL_FILE_UPLOAD_MAX_BYTES) {
-        error = messages.fileTooLarge(
-          formatFileSize(SKILL_FILE_UPLOAD_MAX_BYTES),
-        );
+      if (file.size > maxFileBytes) {
+        error = messages.fileTooLarge(formatFileSize(maxFileBytes));
       } else {
         try {
           const text = await file.text();
@@ -185,10 +189,8 @@ export const validateSkillFileBatch = async (
       (pathOccurrences.get(path) ?? 0) > 1
     ) {
       error = messages.pathDuplicate;
-    } else if (file.size > SKILL_FILE_UPLOAD_MAX_BYTES) {
-      error = messages.fileTooLarge(
-        formatFileSize(SKILL_FILE_UPLOAD_MAX_BYTES),
-      );
+    } else if (file.size > maxFileBytes) {
+      error = messages.fileTooLarge(formatFileSize(maxFileBytes));
     }
 
     if (!error && kind === SkillFileCandidateKind.SupportingFile) {
@@ -226,7 +228,7 @@ export const validateSkillFileBatch = async (
     replacedExistingBytes +
     stagedSupportingBytes +
     manifestFileSize;
-  if (projectedTotalBytes > SKILL_UPLOAD_MAX_TOTAL_BYTES) {
+  if (projectedTotalBytes > maxTotalBytes) {
     batchErrors.push({ message: messages.totalSizeExceeded });
   }
 

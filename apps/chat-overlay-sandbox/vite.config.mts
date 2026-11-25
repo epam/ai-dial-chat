@@ -7,6 +7,7 @@ import {
   CSP_NONCE_PLACEHOLDER,
   trustedStyleNoncePlugin,
 } from '../../tools/vite/csp-nonce.mjs';
+import { precompressAssetsPlugin } from '../../tools/vite/precompress-assets.mjs';
 import { nxReadySignal } from '@nx/vite/plugins/nx-ready-signal.plugin';
 
 const OVERLAY_SANDBOX_BASE_PATH = '/overlay-sandbox/';
@@ -24,7 +25,13 @@ export default defineConfig(({ command }) => ({
     port: 4300,
     host: 'localhost',
   },
-  plugins: [trustedStyleNoncePlugin(), tailwindcss(), react(), nxReadySignal()],
+  plugins: [
+    trustedStyleNoncePlugin(),
+    precompressAssetsPlugin(),
+    tailwindcss(),
+    react(),
+    nxReadySignal(),
+  ],
   resolve: {
     alias: {
       '@epam/ai-dial-chat-overlay': path.resolve(

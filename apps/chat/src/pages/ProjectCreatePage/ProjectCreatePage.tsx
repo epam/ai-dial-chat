@@ -58,6 +58,7 @@ const ProjectCreatePage: FC = () => {
 
   const {
     projectContextAllowedExtensions: allowedExtensions,
+    projectContextMaxFiles: maxFiles,
     projectContextFileMaxBytes: maxFileBytes,
     projectContextTotalMaxBytes: maxTotalBytes,
   } = config;
@@ -105,7 +106,10 @@ const ProjectCreatePage: FC = () => {
   });
 
   const { create, isSubmitting } = useCreateProject(projectsClient);
-  const picker = useProjectFileManagerPicker(user?.bucket);
+  const picker = useProjectFileManagerPicker(user?.bucket, contextFiles, {
+    maxFileBytes,
+    maxTotalBytes,
+  });
   const labels = useProjectCreateFormLabels({
     allowedExtensions,
     maxFileBytes,
@@ -186,6 +190,7 @@ const ProjectCreatePage: FC = () => {
         onContextFileDownload={handleContextFileDownload}
         selectedContextFileId={selectedContextFileId}
         allowedExtensions={allowedExtensions}
+        maxFiles={maxFiles}
         maxFileBytes={maxFileBytes}
         maxTotalBytes={maxTotalBytes}
         onPickFromFileManager={
@@ -205,6 +210,8 @@ const ProjectCreatePage: FC = () => {
           bucket={user.bucket}
           allowedTypes={allowedMimeTypes}
           maxSelectableFileSize={maxFileBytes}
+          maximumAttachmentsAmount={maxFiles}
+          existingAttachmentsAmount={contextFiles.length}
           onAttach={picker.handleAttach}
           onClose={picker.handleClose}
         />

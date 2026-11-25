@@ -276,7 +276,7 @@ The **New project** buttons are specified separately, in "Projects page offers N
 #### Scenario: Pinning from the list
 
 - **WHEN** the Projects page passes `onTogglePin`, and the user activates the pin toggle of an unpinned card
-- **THEN** `onTogglePin(id, true)` is called, the project does not open, and the app pins it through `UserConfigContext` `setPinnedProject`; a failure rolls the pin back and shows the `projects.actions.pinError` notification (`projects.actions.unpinError` when unpinning)
+- **THEN** `onTogglePin(id, true)` is called, the project does not open, and the app pins it through `UserConfigContext` `setPinnedProject`; a failure rolls the pin back and shows the `projects.actions.pinError` notification (`projects.actions.unpinError` when unpinning); after a successful pin or unpin it raises the project pin success notification of `entity-operation-notifications` ("Pinned to chat panel" / "Unpinned from chat panel" naming the project)
 
 #### Scenario: A live update reads as now
 

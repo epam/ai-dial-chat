@@ -15,6 +15,7 @@ import type { ListViewColumnVisibility } from '../components/ListView/columns';
 import type { CatalogSortKey } from '../types/sort';
 import type { CredentialsLevel } from '../types/toolset-auth';
 import type { CatalogViewMode } from '../types/view-mode';
+import type { CatalogCardRenderProps } from './card-props';
 import type { CatalogItem } from './catalog-item';
 import type { CatalogStyles } from './catalog-styles';
 import type {
@@ -23,7 +24,7 @@ import type {
   CatalogItemDetailsFetchResult,
 } from './item-details-data';
 import type { ItemDetailsTexts } from './item-details-props';
-import type { BrowseSettingsSheetLabels } from './toolbar-props';
+import type { BrowseSettingsSheetLabels, ToolbarProps } from './toolbar-props';
 
 /**
  * Live search/filter/tab state passed to `CatalogProps.renderEmptyState` when
@@ -177,6 +178,42 @@ export interface CatalogProps {
    * is not rendered alongside it — include it in the supplied node if needed.
    */
   browseHeaderRenderer?: ReactNode;
+  /**
+   * Renders the Browse toolbar (heading, search, view toggle, sort and
+   * filters) in place of the built-in one, so a host can give it its own
+   * design. It is called on every render with the props the built-in
+   * `Toolbar` would receive; `Catalog` keeps owning the state behind them
+   * (query, view mode, sort, topic and "My" filters), so the host only reads
+   * values and calls the `on*Change` callbacks.
+   *
+   * The result is placed inside the same wrapper as the built-in toolbar,
+   * above the entity-type tabs. The host takes over what `Toolbar` normally
+   * provides: attach `searchInputRef` to its search `<input>` (the
+   * "Scroll to top" control focuses it), call `onViewModeIntent` when the
+   * view toggle is about to be used, choose its own layout below the phone
+   * breakpoint, and add `CATALOG_CLASS.toolbar` if it wants to keep that
+   * public selector. When omitted, the built-in toolbar renders and nothing
+   * changes.
+   */
+  renderToolbar?: (props: ToolbarProps) => ReactNode;
+  /**
+   * Draws each card of the Browse grid in place of the built-in `Card`, so a
+   * host can give cards its own design. It is called for every visible cell
+   * with the item, the search query, whether it is selected, the read-only
+   * flag, the active tab and an `onClick` that opens the item as the built-in
+   * card does. The grid keeps owning the cell, its size and the
+   * virtualization: draw within `cardHeight`, and keep this function stable
+   * (memoized), because the rows are memoized on it. It does not affect the
+   * list view or the Favorites strip. When omitted, the built-in cards render
+   * and nothing changes.
+   */
+  renderCard?: (props: CatalogCardRenderProps) => ReactNode;
+  /**
+   * Height in px of each card in the Browse grid; the grid positions and
+   * virtualizes its rows from it. Set it together with `renderCard` to the real
+   * height of the host's cards. Default: 248, the built-in card's height.
+   */
+  cardHeight?: number;
   /** Whether catalog data is loading (reserved for future loading state). */
   isLoading?: boolean;
   /** Error to display if data loading failed (reserved for future error state). */

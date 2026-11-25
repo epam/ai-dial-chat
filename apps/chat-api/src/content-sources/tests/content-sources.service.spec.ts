@@ -5,12 +5,17 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { createCache } from 'cache-manager';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   ContentProvider,
+  ProviderContext,
   UpstreamError,
   UpstreamFailure,
 } from '../content-provider';
+import {
+  ContentSourcesAdmissionService,
+  ContentSourcesMissLimitException,
+} from '../content-sources-admission.service';
 import {
   ContentSourcesCacheService,
   ContentSourcesCaches,
@@ -23,10 +28,18 @@ import {
   ContentSourceSort,
   ContentSourcesRegistryService,
 } from '../content-sources-registry.service';
+import { contentSourcesStaleServed } from '../content-sources-telemetry';
 import { createContentSourcesCaches } from '../content-sources.module';
-import { ContentSourcesService } from '../content-sources.service';
+import {
+  ContentSourcesQueueFullException,
+  ContentSourcesRequest,
+  ContentSourcesService,
+} from '../content-sources.service';
 import { GitHubProvider } from '../providers/github.provider';
 import { GitLabProvider } from '../providers/gitlab.provider';
+
+const MISS_LIMIT = 8;
+const REQUEST: ContentSourcesRequest = { principalKey: 'keycloak:user-1' };
 
 const base: ContentSource = {
   id: 'rn',
@@ -64,14 +77,17 @@ const build = (
     get: (id: string) => (id === source.id ? source : undefined),
     cacheTtlMs: 60_000,
     timeoutMs: 1000,
+    principalMissConcurrency: MISS_LIMIT,
   } as unknown as ContentSourcesRegistryService;
+  const admission = new ContentSourcesAdmissionService(registry);
   const service = new ContentSourcesService(
     registry,
     new ContentSourcesCacheService(caches, registry),
+    admission,
     github as unknown as GitHubProvider,
     {} as GitLabProvider,
   );
-  return { service, github };
+  return { service, github, admission };
 };
 
 const files = (...names: string[]) => ({
@@ -82,7 +98,7 @@ const files = (...names: string[]) => ({
 describe('ContentSourcesService', () => {
   it('404s an unknown source', async () => {
     const { service } = build(base);
-    await expect(service.listSource('nope')).rejects.toBeInstanceOf(
+    await expect(service.listSource('nope', REQUEST)).rejects.toBeInstanceOf(
       NotFoundException,
     );
   });
@@ -100,7 +116,7 @@ describe('ContentSourcesService', () => {
           ),
         readFile,
       });
-      const listing = await service.listSource('rn');
+      const listing = await service.listSource('rn', REQUEST);
       expect(listing.documents.map((d) => d.path)).toEqual([
         'docs/releases/10.0.md',
         'docs/releases/9.0.md',
@@ -131,7 +147,7 @@ describe('ContentSourcesService', () => {
         },
       );
       expect(
-        (await service.listSource('rn')).documents.map((d) => d.path),
+        (await service.listSource('rn', REQUEST)).documents.map((d) => d.path),
       ).toEqual([
         'docs/releases/1.md',
         'docs/releases/2.md',
@@ -161,7 +177,7 @@ describe('ContentSourcesService', () => {
           fileDate,
         },
       );
-      const listing = await service.listSource('rn');
+      const listing = await service.listSource('rn', REQUEST);
       expect(listing.documents.map((d) => d.path)).toEqual([
         'docs/releases/c.md',
         'docs/releases/a.md',
@@ -175,7 +191,7 @@ describe('ContentSourcesService', () => {
       const { service, github } = build(base, {
         listDocuments: vi.fn().mockResolvedValue(files('a.md')),
       });
-      await service.listSource('rn');
+      await service.listSource('rn', REQUEST);
       expect(github.fileDate).not.toHaveBeenCalled();
     });
 
@@ -200,7 +216,7 @@ describe('ContentSourcesService', () => {
           fileDate,
         },
       );
-      await service.listSource('rn');
+      await service.listSource('rn', REQUEST);
       expect(fileDate).toHaveBeenCalledTimes(20);
       expect(peak).toBeLessThanOrEqual(4);
     });
@@ -213,7 +229,9 @@ describe('ContentSourcesService', () => {
             files(...Array.from({ length: 250 }, (_, i) => `${i}.md`)),
           ),
       });
-      expect((await service.listSource('rn')).documents).toHaveLength(200);
+      expect((await service.listSource('rn', REQUEST)).documents).toHaveLength(
+        200,
+      );
     });
 
     it('lists a file source as one document', async () => {
@@ -222,7 +240,7 @@ describe('ContentSourcesService', () => {
         kind: ContentSourceKind.File,
         path: 'docs/guide.md',
       });
-      const listing = await service.listSource('rn');
+      const listing = await service.listSource('rn', REQUEST);
       expect(listing.documents.map((d) => d.path)).toEqual(['docs/guide.md']);
     });
 
@@ -235,7 +253,9 @@ describe('ContentSourcesService', () => {
             new UpstreamError(UpstreamFailure.TooLarge, 'big'),
           ),
       });
-      expect((await service.listSource('rn')).documents[0].title).toBe('a');
+      expect((await service.listSource('rn', REQUEST)).documents[0].title).toBe(
+        'a',
+      );
     });
 
     it('fails the listing on a credential problem', async () => {
@@ -246,7 +266,7 @@ describe('ContentSourcesService', () => {
             new UpstreamError(UpstreamFailure.Credentials, 'no'),
           ),
       });
-      await expect(service.listSource('rn')).rejects.toBeInstanceOf(
+      await expect(service.listSource('rn', REQUEST)).rejects.toBeInstanceOf(
         BadGatewayException,
       );
     });
@@ -254,8 +274,8 @@ describe('ContentSourcesService', () => {
     it('caches the assembled listing', async () => {
       const listDocuments = vi.fn().mockResolvedValue(files('a.md'));
       const { service } = build(base, { listDocuments });
-      await service.listSource('rn');
-      await service.listSource('rn');
+      await service.listSource('rn', REQUEST);
+      await service.listSource('rn', REQUEST);
       expect(listDocuments).toHaveBeenCalledTimes(1);
     });
   });
@@ -270,7 +290,11 @@ describe('ContentSourcesService', () => {
           fileDate: vi.fn().mockResolvedValue(new Date('2025-02-02T00:00:00Z')),
         },
       );
-      const doc = await service.getDocument('rn', 'docs/releases/./1.0.md');
+      const doc = await service.getDocument(
+        'rn',
+        'docs/releases/./1.0.md',
+        REQUEST,
+      );
       expect(doc).toEqual({
         path: 'docs/releases/1.0.md',
         title: 'Hello',
@@ -285,9 +309,9 @@ describe('ContentSourcesService', () => {
       '400s the path %p without an upstream call',
       async (path) => {
         const { service, github } = build(base);
-        await expect(service.getDocument('rn', path)).rejects.toBeInstanceOf(
-          BadRequestException,
-        );
+        await expect(
+          service.getDocument('rn', path, REQUEST),
+        ).rejects.toBeInstanceOf(BadRequestException);
         expect(github.readFile).not.toHaveBeenCalled();
       },
     );
@@ -299,9 +323,9 @@ describe('ContentSourcesService', () => {
       'docs/releases-x/a.md',
     ])('404s %p outside the root or include', async (path) => {
       const { service, github } = build(base);
-      await expect(service.getDocument('rn', path)).rejects.toBeInstanceOf(
-        NotFoundException,
-      );
+      await expect(
+        service.getDocument('rn', path, REQUEST),
+      ).rejects.toBeInstanceOf(NotFoundException);
       expect(github.readFile).not.toHaveBeenCalled();
     });
 
@@ -312,10 +336,10 @@ describe('ContentSourcesService', () => {
         path: 'docs/guide.md',
       });
       await expect(
-        service.getDocument('rn', 'docs/other.md'),
+        service.getDocument('rn', 'docs/other.md', REQUEST),
       ).rejects.toBeInstanceOf(NotFoundException);
       await expect(
-        service.getDocument('rn', 'docs/guide.md'),
+        service.getDocument('rn', 'docs/guide.md', REQUEST),
       ).resolves.toBeDefined();
     });
 
@@ -330,7 +354,7 @@ describe('ContentSourcesService', () => {
         readFile: vi.fn().mockRejectedValue(new UpstreamError(failure, 'x')),
       });
       await expect(
-        service.getDocument('rn', 'docs/releases/a.md'),
+        service.getDocument('rn', 'docs/releases/a.md', REQUEST),
       ).rejects.toBeInstanceOf(expected);
     });
   });
@@ -345,7 +369,7 @@ describe('ContentSourcesService', () => {
       const { service } = build(base, {
         readFile: vi.fn().mockResolvedValue(Buffer.from('bytes')),
       });
-      expect((await service.getAsset('rn', path)).contentType).toBe(
+      expect((await service.getAsset('rn', path, REQUEST)).contentType).toBe(
         contentType,
       );
     });
@@ -353,24 +377,24 @@ describe('ContentSourcesService', () => {
     it('400s a disallowed extension', async () => {
       const { service, github } = build(base);
       await expect(
-        service.getAsset('rn', 'docs/a.html'),
+        service.getAsset('rn', 'docs/a.html', REQUEST),
       ).rejects.toBeInstanceOf(BadRequestException);
-      await expect(service.getAsset('rn', 'docs/noext')).rejects.toBeInstanceOf(
-        BadRequestException,
-      );
+      await expect(
+        service.getAsset('rn', 'docs/noext', REQUEST),
+      ).rejects.toBeInstanceOf(BadRequestException);
       expect(github.readFile).not.toHaveBeenCalled();
     });
 
     it('404s outside assetsPath, and normalizes ../ spellings first', async () => {
       const { service, github } = build(base);
       await expect(
-        service.getAsset('rn', 'secret/a.png'),
+        service.getAsset('rn', 'secret/a.png', REQUEST),
       ).rejects.toBeInstanceOf(NotFoundException);
       await expect(
-        service.getAsset('rn', 'docs/releases/../../secret/a.png'),
+        service.getAsset('rn', 'docs/releases/../../secret/a.png', REQUEST),
       ).rejects.toBeInstanceOf(NotFoundException);
       await expect(
-        service.getAsset('rn', 'docs/releases/../img/a.png'),
+        service.getAsset('rn', 'docs/releases/../img/a.png', REQUEST),
       ).resolves.toBeDefined();
       expect(github.readFile.mock.calls[0][1]).toBe('docs/img/a.png');
     });
@@ -378,16 +402,16 @@ describe('ContentSourcesService', () => {
     it('does not cache an asset above 512 KiB', async () => {
       const readFile = vi.fn().mockResolvedValue(Buffer.alloc(512 * 1024 + 1));
       const { service } = build(base, { readFile });
-      await service.getAsset('rn', 'docs/big.png');
-      await service.getAsset('rn', 'docs/big.png');
+      await service.getAsset('rn', 'docs/big.png', REQUEST);
+      await service.getAsset('rn', 'docs/big.png', REQUEST);
       expect(readFile).toHaveBeenCalledTimes(2);
     });
 
     it('caches a small asset', async () => {
       const readFile = vi.fn().mockResolvedValue(Buffer.from('small'));
       const { service } = build(base, { readFile });
-      await service.getAsset('rn', 'docs/s.png');
-      await service.getAsset('rn', 'docs/./s.png');
+      await service.getAsset('rn', 'docs/s.png', REQUEST);
+      await service.getAsset('rn', 'docs/./s.png', REQUEST);
       expect(readFile).toHaveBeenCalledTimes(1);
     });
   });
@@ -398,9 +422,11 @@ describe('ContentSourcesService', () => {
         listDocuments: vi.fn().mockResolvedValue(files('100%.md', 'a%20b.md')),
         readFile,
       });
-      const listing = await service.listSource('rn');
+      const listing = await service.listSource('rn', REQUEST);
       for (const { path } of listing.documents) {
-        await expect(service.getDocument('rn', path)).resolves.toMatchObject({
+        await expect(
+          service.getDocument('rn', path, REQUEST),
+        ).resolves.toMatchObject({
           path,
         });
       }
@@ -424,12 +450,12 @@ describe('ContentSourcesService', () => {
         { listDocuments: vi.fn().mockResolvedValue(files(...names)), fileDate },
         createContentSourcesCaches(),
       );
-      await service.listSource('rn');
+      await service.listSource('rn', REQUEST);
       const datesAfterListing = fileDate.mock.calls.length;
       expect(datesAfterListing).toBe(200);
 
       for (const name of names) {
-        await service.getDocument('rn', `docs/releases/${name}`);
+        await service.getDocument('rn', `docs/releases/${name}`, REQUEST);
       }
       expect(fileDate).toHaveBeenCalledTimes(datesAfterListing);
     });
@@ -444,11 +470,11 @@ describe('ContentSourcesService', () => {
         },
         createContentSourcesCaches(),
       );
-      await service.listSource('rn');
+      await service.listSource('rn', REQUEST);
       expect(readFile).toHaveBeenCalledTimes(1);
-      await service.getDocument('rn', 'docs/releases/a.md');
+      await service.getDocument('rn', 'docs/releases/a.md', REQUEST);
       expect(readFile).toHaveBeenCalledTimes(2);
-      await service.getDocument('rn', 'docs/releases/a.md');
+      await service.getDocument('rn', 'docs/releases/a.md', REQUEST);
       expect(readFile).toHaveBeenCalledTimes(2);
     });
 
@@ -457,8 +483,8 @@ describe('ContentSourcesService', () => {
         .fn()
         .mockResolvedValue(Buffer.alloc(512 * 1024 + 1, 'a'));
       const { service } = build(base, { readFile });
-      await service.getDocument('rn', 'docs/releases/big.md');
-      await service.getDocument('rn', 'docs/releases/big.md');
+      await service.getDocument('rn', 'docs/releases/big.md', REQUEST);
+      await service.getDocument('rn', 'docs/releases/big.md', REQUEST);
       expect(readFile).toHaveBeenCalledTimes(2);
     });
 
@@ -476,15 +502,15 @@ describe('ContentSourcesService', () => {
         { listDocuments, fileDate },
       );
 
-      const degraded = await service.listSource('rn');
+      const degraded = await service.listSource('rn', REQUEST);
       expect(degraded.documents[0].date).toBeNull();
 
       isFailing = false;
-      const recovered = await service.listSource('rn');
+      const recovered = await service.listSource('rn', REQUEST);
       expect(recovered.documents[0].date).toBe('2025-01-01T00:00:00.000Z');
       expect(listDocuments).toHaveBeenCalledTimes(2);
 
-      await service.listSource('rn');
+      await service.listSource('rn', REQUEST);
       expect(listDocuments).toHaveBeenCalledTimes(2);
     });
 
@@ -500,9 +526,216 @@ describe('ContentSourcesService', () => {
         listDocuments: vi.fn().mockResolvedValue(files('a.md')),
         readFile,
       });
-      expect((await service.listSource('rn')).documents[0].title).toBe('a');
+      expect((await service.listSource('rn', REQUEST)).documents[0].title).toBe(
+        'a',
+      );
       isFailing = false;
-      expect((await service.listSource('rn')).documents[0].title).toBe('Real');
+      expect((await service.listSource('rn', REQUEST)).documents[0].title).toBe(
+        'Real',
+      );
+    });
+  });
+
+  describe('upstream admission', () => {
+    /** A readFile that stays pending per call until released or aborted. */
+    const heldReads = () => {
+      const pending: {
+        path: string;
+        signal?: AbortSignal;
+        release: () => void;
+      }[] = [];
+      const readFile = vi.fn(
+        (
+          _source: ContentSource,
+          path: string,
+          _maxBytes: number,
+          context: ProviderContext,
+        ) =>
+          new Promise<Buffer>((resolve, reject) => {
+            pending.push({
+              path,
+              signal: context.signal,
+              release: () => resolve(Buffer.from(`bytes:${path}`)),
+            });
+            context.signal?.addEventListener('abort', () =>
+              reject(new UpstreamError(UpstreamFailure.Unavailable, 'aborted')),
+            );
+          }),
+      );
+      return { pending, readFile };
+    };
+
+    const holdMisses = (
+      service: ContentSourcesService,
+      count: number,
+      request: ContentSourcesRequest = REQUEST,
+    ) =>
+      Array.from({ length: count }, (_, index) =>
+        service.getAsset('rn', `docs/held-${index}.png`, request),
+      );
+
+    afterEach(() => vi.useRealTimers());
+
+    it('fails a listing instead of degrading when a title read is refused by a full queue', async () => {
+      const { service } = build(base, {
+        listDocuments: vi.fn().mockResolvedValue(files('a.md')),
+        readFile: vi
+          .fn()
+          .mockRejectedValue(
+            new UpstreamError(UpstreamFailure.QueueFull, 'full'),
+          ),
+      });
+      await expect(service.listSource('rn', REQUEST)).rejects.toBeInstanceOf(
+        ContentSourcesQueueFullException,
+      );
+    });
+
+    it('cancels the pending reads of a listing every caller left', async () => {
+      const { pending, readFile } = heldReads();
+      const { service } = build(base, {
+        listDocuments: vi.fn().mockResolvedValue(files('a.md', 'b.md')),
+        readFile,
+      });
+      const client = new AbortController();
+      const listing = service.listSource('rn', {
+        ...REQUEST,
+        signal: client.signal,
+      });
+      await vi.waitFor(() => expect(pending).toHaveLength(2));
+
+      client.abort();
+      await expect(listing).rejects.toMatchObject({ name: 'AbortError' });
+      expect(pending.every((call) => call.signal?.aborted)).toBe(true);
+    });
+
+    it('answers 429 without a provider call once the user reaches the miss limit', async () => {
+      const { pending, readFile } = heldReads();
+      const { service, admission } = build(base, { readFile });
+      const held = holdMisses(service, MISS_LIMIT);
+      await vi.waitFor(() => expect(pending).toHaveLength(MISS_LIMIT));
+
+      await expect(
+        service.getAsset('rn', 'docs/one-more.png', REQUEST),
+      ).rejects.toBeInstanceOf(ContentSourcesMissLimitException);
+      expect(readFile).toHaveBeenCalledTimes(MISS_LIMIT);
+
+      /* Another user is unaffected. */
+      const other = service.getAsset('rn', 'docs/other.png', {
+        principalKey: 'keycloak:user-2',
+      });
+      await vi.waitFor(() => expect(pending).toHaveLength(MISS_LIMIT + 1));
+
+      pending.forEach((call) => call.release());
+      await Promise.all([...held, other]);
+      expect(admission.trackedPrincipalCount).toBe(0);
+    });
+
+    it('serves a fresh cached asset while the user is at the miss limit', async () => {
+      const { pending, readFile } = heldReads();
+      const { service } = build(base, { readFile });
+      const warm = service.getAsset('rn', 'docs/hit.png', REQUEST);
+      await vi.waitFor(() => expect(pending).toHaveLength(1));
+      pending[0].release();
+      await warm;
+
+      const held = holdMisses(service, MISS_LIMIT);
+      await vi.waitFor(() => expect(pending).toHaveLength(MISS_LIMIT + 1));
+      await expect(
+        service.getAsset('rn', 'docs/hit.png', REQUEST),
+      ).resolves.toMatchObject({ bytes: Buffer.from('bytes:docs/hit.png') });
+
+      pending.forEach((call) => call.release());
+      await Promise.all(held);
+    });
+
+    it('does not count a request that joins an in-flight load', async () => {
+      const { pending, readFile } = heldReads();
+      const { service } = build(base, { readFile });
+      const held = holdMisses(service, MISS_LIMIT);
+      await vi.waitFor(() => expect(pending).toHaveLength(MISS_LIMIT));
+
+      const joiner = service.getAsset('rn', 'docs/held-0.png', REQUEST);
+      pending.forEach((call) => call.release());
+      await expect(joiner).resolves.toMatchObject({
+        bytes: Buffer.from('bytes:docs/held-0.png'),
+      });
+      await Promise.all(held);
+      expect(readFile).toHaveBeenCalledTimes(MISS_LIMIT);
+    });
+
+    it('serves an expired entry stale when its refresh hits the miss limit', async () => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      const staleServed = vi.spyOn(contentSourcesStaleServed, 'add');
+      const { pending, readFile } = heldReads();
+      const { service } = build(base, { readFile });
+      const warm = service.getAsset('rn', 'docs/s.png', REQUEST);
+      await vi.waitFor(() => expect(pending).toHaveLength(1));
+      pending[0].release();
+      await warm;
+      vi.advanceTimersByTime(60_001);
+
+      const held = holdMisses(service, MISS_LIMIT);
+      await vi.waitFor(() => expect(pending).toHaveLength(MISS_LIMIT + 1));
+      await expect(
+        service.getAsset('rn', 'docs/s.png', REQUEST),
+      ).resolves.toMatchObject({ bytes: Buffer.from('bytes:docs/s.png') });
+      expect(readFile).toHaveBeenCalledTimes(MISS_LIMIT + 1);
+      expect(staleServed).toHaveBeenCalledWith(1, {
+        'dial.chat.content_sources.source': 'rn',
+      });
+
+      pending.forEach((call) => call.release());
+      await Promise.all(held);
+      staleServed.mockRestore();
+    });
+
+    it("counts a listing's nested loads once", async () => {
+      const { pending, readFile } = heldReads();
+      const fileDate = vi.fn().mockResolvedValue(null);
+      const { service } = build(
+        { ...base, date: ContentSourceDateMode.Updated },
+        {
+          listDocuments: vi
+            .fn()
+            .mockResolvedValue(
+              files(...Array.from({ length: 20 }, (_, i) => `${i}.md`)),
+            ),
+          readFile,
+          fileDate,
+        },
+      );
+      const listing = service.listSource('rn', REQUEST);
+      await vi.waitFor(() => expect(pending).toHaveLength(4));
+
+      /* The listing holds one slot, so exactly MISS_LIMIT - 1 more fit. */
+      const held = holdMisses(service, MISS_LIMIT - 1);
+      await vi.waitFor(() => expect(pending).toHaveLength(4 + MISS_LIMIT - 1));
+      await expect(
+        service.getAsset('rn', 'docs/one-more.png', REQUEST),
+      ).rejects.toBeInstanceOf(ContentSourcesMissLimitException);
+
+      /*
+       * Finish the listing while the user stays at the limit: its date loads
+       * reuse the listing's slot, so the listing still succeeds.
+       */
+      let isDone = false;
+      const result = listing.finally(() => {
+        isDone = true;
+      });
+      while (!isDone) {
+        for (const call of pending.filter((entry) =>
+          entry.path.startsWith('docs/releases/'),
+        )) {
+          pending.splice(pending.indexOf(call), 1);
+          call.release();
+        }
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      }
+      expect((await result).documents).toHaveLength(20);
+      expect(fileDate).toHaveBeenCalledTimes(20);
+
+      pending.forEach((call) => call.release());
+      await Promise.all(held);
     });
   });
 });

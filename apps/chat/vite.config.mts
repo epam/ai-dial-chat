@@ -9,6 +9,7 @@ import {
   trustedStyleNoncePlugin,
 } from '../../tools/vite/csp-nonce.mjs';
 import { inlinePublicScriptPlugin } from '../../tools/vite/inline-public-script.mjs';
+import { precompressAssetsPlugin } from '../../tools/vite/precompress-assets.mjs';
 import { nxReadySignal } from '@nx/vite/plugins/nx-ready-signal.plugin';
 
 export default defineConfig(() => ({
@@ -34,6 +35,8 @@ export default defineConfig(() => ({
     // Inlines the synchronous theme-paint script into the `index.html` head; see the plugin's doc.
     inlinePublicScriptPlugin('theme-init.js'),
     inlinePublicScriptPlugin('boot-prefetch.js'),
+    // Writes `.br`/`.gz` copies of the built assets for chat-api to serve.
+    precompressAssetsPlugin(),
     tailwindcss(),
     react(),
     svgr(),
@@ -346,10 +349,14 @@ export default defineConfig(() => ({
              * so a cold load fetched ~157 module-preloads and 11 render-blocking
              * CSS files of 84 B–2.8 KB each. `$initial` keeps lazy-only code
              * out. Third-party code changes rarely, so it stays cacheable
-             * across deploys on its own.
+             * across deploys on its own. `priority` wins over the groups above
+             * for initial modules: ag-grid in its own chunk imported React from
+             * `vendor` while `vendor` imported it, and crashed on load with
+             * "n is not a function".
              */
             {
               name: 'vendor',
+              priority: 1,
               tags: ['$initial'],
               test: /[\\/]node_modules[\\/].*\.m?js$/,
             },
@@ -363,6 +370,7 @@ export default defineConfig(() => ({
              */
             {
               name: 'app-shell',
+              priority: 1,
               tags: ['$initial'],
               test: (id) =>
                 !/[\\/]src[\\/]main\.tsx$/.test(id) &&

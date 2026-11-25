@@ -1,6 +1,10 @@
 import { DESKTOP_BREAKPOINT_PX } from '@epam/ai-dial-chat-shared';
 import { type RefObject, useEffect, useRef, useState } from 'react';
-import { CARD_ROW_HEIGHT, CONTENT_MAX_WIDTH } from '../constants/virtual-grid';
+import {
+  CARD_HEIGHT,
+  CARD_ROW_GAP,
+  CONTENT_MAX_WIDTH,
+} from '../constants/virtual-grid';
 import { getColumnCount } from './card-grid';
 import { getScrollParent } from './scroll-window';
 
@@ -36,6 +40,8 @@ export interface ScrollVirtualizerOptions {
    * gets. Defaults to `false`.
    */
   isFullWidth?: boolean;
+  /** Height of one card in px; a row is this plus the row gap. Defaults to `CARD_HEIGHT`. */
+  cardHeight?: number;
 }
 
 /**
@@ -44,8 +50,13 @@ export interface ScrollVirtualizerOptions {
  */
 export const useScrollVirtualizer = (
   itemCount: number,
-  { overscan = 3, isFullWidth = false }: ScrollVirtualizerOptions = {},
+  {
+    overscan = 3,
+    isFullWidth = false,
+    cardHeight = CARD_HEIGHT,
+  }: ScrollVirtualizerOptions = {},
 ): ScrollVirtualizerResult => {
+  const rowHeight = cardHeight + CARD_ROW_GAP;
   const containerRef = useRef<HTMLDivElement>(null);
 
   const [state, setState] = useState<VirtualizerState>(() => {
@@ -75,7 +86,7 @@ export const useScrollVirtualizer = (
      */
     const viewportRows =
       typeof window !== 'undefined'
-        ? Math.ceil(window.innerHeight / CARD_ROW_HEIGHT)
+        ? Math.ceil(window.innerHeight / rowHeight)
         : 4;
     return {
       startRow: 0,
@@ -108,9 +119,9 @@ export const useScrollVirtualizer = (
 
       // Pixels of the container that have scrolled above the viewport top.
       const scrolledPast = Math.max(0, scrollElRect.top - containerRect.top);
-      const firstVisibleRow = Math.floor(scrolledPast / CARD_ROW_HEIGHT);
+      const firstVisibleRow = Math.floor(scrolledPast / rowHeight);
       const lastVisibleRow = Math.floor(
-        (scrolledPast + viewportHeight - 1) / CARD_ROW_HEIGHT,
+        (scrolledPast + viewportHeight - 1) / rowHeight,
       );
       /*
        * Overscan each edge from the visible rows. Deriving the end from the
@@ -139,7 +150,7 @@ export const useScrollVirtualizer = (
       scrollEl.removeEventListener('scroll', update);
       ro.disconnect();
     };
-  }, [itemCount, overscan]);
+  }, [itemCount, overscan, rowHeight]);
 
   const rowCount = Math.ceil(itemCount / state.columnCount);
 
@@ -149,6 +160,6 @@ export const useScrollVirtualizer = (
     endRow: state.endRow,
     columnCount: state.columnCount,
     rowCount,
-    totalHeight: rowCount * CARD_ROW_HEIGHT,
+    totalHeight: rowCount * rowHeight,
   };
 };

@@ -6,7 +6,9 @@ import {
   ContentSourceKind,
   ContentSourceProvider,
   ContentSourceSort,
+  ContentSourcesRegistryService,
 } from '../content-sources-registry.service';
+import { ContentSourcesUpstreamService } from '../content-sources-upstream.service';
 import { GitHubProvider } from '../providers/github.provider';
 
 const source: ContentSource = {
@@ -25,14 +27,20 @@ const source: ContentSource = {
   feed: {},
   token: 'ghp_tok',
 };
-const ctx = { timeoutMs: 1000 };
+const ctx = {};
 const json = (body: unknown, headers = {}) =>
   new Response(JSON.stringify(body), { status: 200, headers });
 
 describe('GitHubProvider', () => {
   afterEach(() => vi.unstubAllGlobals());
 
-  const provider = new GitHubProvider();
+  const provider = new GitHubProvider(
+    new ContentSourcesUpstreamService({
+      timeoutMs: 1000,
+      upstreamConcurrency: 8,
+      upstreamQueueSize: 64,
+    } as unknown as ContentSourcesRegistryService),
+  );
 
   it('lists blobs under the subtree with full paths and sends Bearer auth', async () => {
     const fetchMock = vi.fn().mockResolvedValue(

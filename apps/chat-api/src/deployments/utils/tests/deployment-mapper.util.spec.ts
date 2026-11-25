@@ -103,6 +103,51 @@ describe('mapToDeploymentItem isHidden', () => {
   });
 });
 
+describe('mapToDeploymentItem provider', () => {
+  const map = (overrides: Partial<RawDeploymentDto>) =>
+    mapToDeploymentItem(raw(overrides), new Set(), new Set());
+
+  it('passes the top-level provider through as sent by DIAL Core', () => {
+    const rawModel = raw({ object: 'model' }) as Record<string, unknown>;
+    rawModel.provider = 'aws';
+
+    const item = mapToDeploymentItem(
+      rawModel as RawDeploymentDto,
+      new Set(),
+      new Set(),
+    );
+
+    expect(item?.provider).toBe('aws');
+  });
+
+  it('leaves provider undefined when DIAL Core sends none', () => {
+    expect(map({ object: 'model' })?.provider).toBeUndefined();
+  });
+
+  it('leaves provider undefined for an empty or non-string value', () => {
+    const empty = { ...raw({}), provider: '' } as RawDeploymentDto;
+    const numeric = { ...raw({}), provider: 7 } as unknown as RawDeploymentDto;
+
+    expect(mapToDeploymentItem(empty, new Set(), new Set())?.provider).toBe(
+      undefined,
+    );
+    expect(mapToDeploymentItem(numeric, new Set(), new Set())?.provider).toBe(
+      undefined,
+    );
+  });
+
+  it('ignores a provider placed inside interface_configs', () => {
+    const rawModel = {
+      ...raw({ object: 'model' }),
+      interface_configs: { openaiChatCompletions: { provider: 'nested' } },
+    } as unknown as RawDeploymentDto;
+
+    expect(
+      mapToDeploymentItem(rawModel, new Set(), new Set())?.provider,
+    ).toBeUndefined();
+  });
+});
+
 describe('mapToDeploymentItem viewerUrl', () => {
   const map = (overrides: Partial<RawDeploymentDto>) =>
     mapToDeploymentItem(raw(overrides), new Set(), new Set());

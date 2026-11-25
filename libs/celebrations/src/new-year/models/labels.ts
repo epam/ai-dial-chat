@@ -10,6 +10,8 @@ export interface NewYearLabels {
   reindeerTakeoffToastMessage?: string;
   /** Notification message of the elf fireworks scene. */
   elfFireworksToastMessage?: string;
+  /** Notification message of the cat and bauble scene. */
+  catBaubleToastMessage?: string;
   /** Title of every scene notification. */
   toastTitle: string;
   /** Accessible name of the gift trigger. */

@@ -6,7 +6,7 @@ import {
   DEFAULT_PROJECT_CONTEXT_ALLOWED_EXTENSIONS,
   DEFAULT_PROJECT_CONTEXT_FILE_MAX_BYTES,
   DEFAULT_PROJECT_CONTEXT_TOTAL_MAX_BYTES,
-  PROJECT_CONTEXT_MAX_FILES,
+  DEFAULT_PROJECT_CONTEXT_MAX_FILES,
 } from '../constants/project-context.constants';
 import { ProjectCreateErrorCode } from '../types/project-create-error-code.enum';
 import {
@@ -133,10 +133,13 @@ export class ProjectsCreateService {
 
   /** Rejects a context set with more than `PROJECT_CONTEXT_MAX_FILES` files (`400 too-many-files`). */
   assertWithinFileCount(count: number): void {
-    if (count > PROJECT_CONTEXT_MAX_FILES) {
+    const maxFiles =
+      this.configService.get<number>('PROJECT_CONTEXT_MAX_FILES') ??
+      DEFAULT_PROJECT_CONTEXT_MAX_FILES;
+    if (count > maxFiles) {
       throw projectBadRequest(
         ProjectCreateErrorCode.TooManyFiles,
-        `A project may have at most ${PROJECT_CONTEXT_MAX_FILES} context files`,
+        `A project may have at most ${maxFiles} context files`,
       );
     }
   }

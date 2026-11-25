@@ -47,10 +47,11 @@ const overlaps = (
 const horizontalGap = (first: DOMRect, second: DOMRect) =>
   Math.max(0, first.left - second.right, second.left - first.right);
 
-/** Returns nearby borrowable buttons and landing supports without copying or changing live UI; `composerElement`, when given, is the only composer considered. */
+/** Returns nearby borrowable buttons and landing supports without changing live UI. An optional eligibility predicate filters buttons before pair selection; supports keep their ordinary rules. */
 export const findBorrowTargets = (
   anchors: CelebrationAnchors,
   composerElement?: HTMLElement,
+  isEligible?: (target: CelebrationSnapshotTarget) => boolean,
 ): BorrowTargets => {
   const { composer: composerClass, starterList: starterListClass } = anchors;
   const { clientWidth: width, clientHeight: height } = document.documentElement;
@@ -179,7 +180,8 @@ export const findBorrowTargets = (
       rect.width > 300 ||
       rect.height > 96 ||
       rect.width * rect.height > 24000 ||
-      element.getElementsByTagName('*').length > BORROW_BUTTON_NODE_LIMIT
+      element.getElementsByTagName('*').length > BORROW_BUTTON_NODE_LIMIT ||
+      (isEligible && !isEligible(target))
     )
       continue;
     candidates.push({

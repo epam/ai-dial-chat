@@ -51,6 +51,7 @@
     "publish:lib:test": "node --test tools/publish-lib-package-json.spec.mjs",
     "lib:tailwind-utilities:test": "node --test tools/vite-lib-tailwind-utilities.spec.mjs",
     "vite:inline-script:test": "node --test tools/vite-inline-public-script.spec.mjs",
+    "vite:precompress:test": "node --test tools/vite-precompress-assets.spec.mjs",
     "publish:lib:coherent-release-test": "node --test tools/coherent-release-install.spec.mjs",
     "validate:agent-docs": "node scripts/validate-agent-docs.mjs",
     "validate:agent-docs:test": "node --test scripts/validate-agent-docs.spec.mjs",
@@ -143,7 +144,7 @@
   },
   "dependencies": {
     "@epam/ai-dial-react-file-manager": "0.5.0-dev.5",
-    "@epam/ai-dial-react-pdf-highlighter": "0.3.3",
+    "@epam/ai-dial-react-pdf-highlighter": "0.4.0",
     "@epam/ai-dial-ui-kit": "^0.17.0",
     "@epam/pdf-highlighter-kit": "^0.0.23",
     "@fontsource-variable/inter": "5.3.0",

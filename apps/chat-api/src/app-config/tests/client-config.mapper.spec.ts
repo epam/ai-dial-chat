@@ -19,7 +19,10 @@ const SERVICE_ASSEMBLED_FIELDS = [
   'catalogCreationPermissions',
   'modelCatalogAvailable',
   'themesBaseUrl',
+  'projectContextMaxFiles',
   'skillUploadMaxFiles',
+  'skillFileUploadMaxBytes',
+  'skillUploadMaxTotalBytes',
 ];
 
 /* The DTO's Swagger-declared fields, stored by @ApiProperty as `:<name>`. */

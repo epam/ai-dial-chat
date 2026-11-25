@@ -171,7 +171,7 @@ An entry the ZIP reader itself refuses — while enumerating the central directo
 
 ### Requirement: Decompressed-content limits are enforced incrementally, not from ZIP metadata
 
-The system SHALL enforce the existing Skill content limits — up to `SKILL_UPLOAD_MAX_FILES` files including `SKILL.md` (100 by default), maximum 1 MiB per file, maximum 16 MiB total uncompressed content — against bytes actually produced while decompressing each entry, aborting the read as soon as a limit is exceeded. The system SHALL NOT rely on a ZIP entry's declared uncompressed-size metadata alone to make this determination.
+The system SHALL enforce the existing Skill content limits — up to `SKILL_UPLOAD_MAX_FILES` files including `SKILL.md` (100 by default), up to `SKILL_FILE_UPLOAD_MAX_BYTES` per file (default 1 MiB) and `SKILL_UPLOAD_MAX_TOTAL_BYTES` across all uncompressed files (default 16 MiB) — against bytes actually produced while decompressing each entry, aborting the read as soon as a limit is exceeded. The system SHALL NOT rely on a ZIP entry's declared uncompressed-size metadata alone to make this determination.
 
 The system SHALL additionally enforce a separate, configurable compressed-ingress limit (`SKILL_ARCHIVE_UPLOAD_MAX_BYTES`) on the archive file as received, before extraction begins.
 
@@ -184,11 +184,11 @@ The system SHALL additionally enforce a separate, configurable compressed-ingres
 - **THEN** the response is `400 Bad Request`
 
 #### Scenario: A single oversized file is rejected during decompression
-- **WHEN** decompressing one entry produces more than 1 MiB of content, regardless of the entry's declared compressed or uncompressed size
+- **WHEN** decompressing one entry produces more than `SKILL_FILE_UPLOAD_MAX_BYTES` bytes of content, regardless of the entry's declared compressed or uncompressed size
 - **THEN** decompression of that entry is aborted and the response is `413 Payload Too Large`
 
 #### Scenario: Total uncompressed content above the limit is rejected during decompression
-- **WHEN** the running total of decompressed bytes across all entries exceeds 16 MiB
+- **WHEN** the running total of decompressed bytes across all entries exceeds `SKILL_UPLOAD_MAX_TOTAL_BYTES`
 - **THEN** extraction is aborted and the response is `413 Payload Too Large`
 
 ### Requirement: Manifest content validation

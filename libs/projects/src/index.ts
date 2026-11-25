@@ -82,6 +82,10 @@ export {
   PROJECT_NAME_MAX_BYTES,
   validateProjectName,
 } from './utils/project-name';
+export {
+  PROJECT_INSTRUCTIONS_MAX_LENGTH,
+  isProjectInstructionsTooLong,
+} from './utils/project-instructions';
 
 export { ProjectRevokeAccessConfirmation } from './components/ProjectRevokeAccessConfirmation/ProjectRevokeAccessConfirmation';
 export type {

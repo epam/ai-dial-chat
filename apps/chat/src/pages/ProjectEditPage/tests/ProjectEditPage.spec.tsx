@@ -52,9 +52,10 @@ vi.mock('../../../server-api/projects.api', () => ({
   getProject: vi.fn(),
   updateProject: vi.fn(),
 }));
+const fileManagerModal = vi.hoisted(() => vi.fn((_props: object) => null));
 vi.mock(
   '../../../components/ProjectFileManagerModal/ProjectFileManagerModal',
-  () => ({ default: () => null }),
+  () => ({ default: fileManagerModal }),
 );
 vi.mock('../../../hooks/attachment/useAttachmentCanvasResolvers', async () => {
   const { previewCanvasResolvers: stub } =
@@ -192,6 +193,7 @@ const READY_CONFIG = {
   config: {
     aiTextRefinementAvailable: false,
     projectContextAllowedExtensions: ['csv', 'pdf', 'xlsx'],
+    projectContextMaxFiles: 500,
     projectContextFileMaxBytes: 1_048_576,
     projectContextTotalMaxBytes: 10_485_760,
   },
@@ -256,6 +258,10 @@ describe('ProjectEditPage', () => {
       'tickets.csv',
       'survey.xlsx',
     ]);
+    expect(fileManagerModal.mock.lastCall?.[0]).toMatchObject({
+      maximumAttachmentsAmount: 500,
+      existingAttachmentsAmount: 2,
+    });
   });
 
   it('sends the project to its view page when it cannot be edited', async () => {

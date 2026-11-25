@@ -51,6 +51,10 @@ import {
   checkContextFiles,
   type RejectedContextFile,
 } from '../../utils/context-files';
+import {
+  PROJECT_INSTRUCTIONS_MAX_LENGTH,
+  isProjectInstructionsTooLong,
+} from '../../utils/project-instructions';
 import { validateProjectName } from '../../utils/project-name';
 import styles from './ProjectCreateForm.module.scss';
 
@@ -62,6 +66,8 @@ const MarkdownEditor = lazy(async () => {
 const DEFAULT_OPEN_FILE_LABEL = (name: string): string => `Preview ${name}`;
 const DEFAULT_DOWNLOAD_FILE_LABEL = (name: string): string =>
   `Download ${name}`;
+const DEFAULT_INSTRUCTIONS_TOO_LONG_ERROR = (maxLength: number): string =>
+  `Use ${maxLength} characters or fewer.`;
 const DEFAULT_NAME_READ_ONLY_HINT =
   "The project name can't be changed after creation";
 
@@ -76,6 +82,7 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
   onContextFileDownload,
   selectedContextFileId,
   allowedExtensions,
+  maxFiles,
   maxFileBytes,
   maxTotalBytes,
   onPickFromFileManager,
@@ -95,6 +102,7 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
   const nameValidationErrorId = useId();
   const nameHintId = useId();
   const instructionsId = useId();
+  const instructionsErrorId = useId();
   const contextLabelId = useId();
   const nameInputRef = useRef<HTMLInputElement>(null);
   const instructionsCapRef = useAvailableHeightCap<HTMLDivElement>();
@@ -120,8 +128,20 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
       : undefined);
   /* A host name error clears when the name is edited, which a read-only name cannot be, so it must not block Create there. */
   const hasHostNameError = !isNameReadOnly && Boolean(errors.name);
+  const isInstructionsTooLong = isProjectInstructionsTooLong(
+    values.instructions,
+  );
+  const instructionsError = isInstructionsTooLong
+    ? (labels.instructionsTooLongError ?? DEFAULT_INSTRUCTIONS_TOO_LONG_ERROR)(
+        PROJECT_INSTRUCTIONS_MAX_LENGTH,
+      )
+    : undefined;
   const isCreateDisabled =
-    nameCheck != null || hasHostNameError || isSubmitting || isRefining;
+    nameCheck != null ||
+    hasHostNameError ||
+    isInstructionsTooLong ||
+    isSubmitting ||
+    isRefining;
   /* A host error lives in the always-mounted alert; inline validation has its own, non-announcing element. */
   let nameErrorDescribedBy: string | undefined;
   if (errors.name) nameErrorDescribedBy = nameErrorId;
@@ -141,10 +161,14 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
     [allowedExtensions],
   );
 
+  const rejectionMessage = ({ name, reason }: RejectedContextFile) =>
+    labels.fileRejections[reason]?.(name) ?? `${name}: too many context files`;
+
   const addFiles = (incoming: File[]) => {
     if (incoming.length === 0) return;
     const { accepted, rejected } = checkContextFiles(incoming, contextFiles, {
       allowedExtensions,
+      maxFiles,
       maxFileBytes,
       maxTotalBytes,
     });
@@ -155,9 +179,7 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
     setStatusMessage(
       [
         accepted.length > 0 ? labels.filesAddedStatus(accepted.length) : '',
-        ...rejected.map(({ name, reason }) =>
-          labels.fileRejections[reason](name),
-        ),
+        ...rejected.map(rejectionMessage),
       ]
         .filter(Boolean)
         .join(' '),
@@ -212,12 +234,7 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
   const refinementLabels = labels.refinement;
   const contextError = errors.context;
   /* The kit drop zone draws its error in the error color, below the area, and links it to the file input. */
-  const dropZoneError = [
-    ...rejections.map(({ name, reason }) =>
-      labels.fileRejections[reason](name),
-    ),
-    contextError,
-  ]
+  const dropZoneError = [...rejections.map(rejectionMessage), contextError]
     .filter(Boolean)
     .join('\n');
   const dropZoneLabel = labels.dropZoneLabel({
@@ -369,9 +386,20 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
                     height={176}
                     theme={markdownEditorTheme}
                     placeholder={labels.instructionsPlaceholder}
+                    invalid={isInstructionsTooLong}
+                    ariaDescribedBy={
+                      isInstructionsTooLong ? instructionsErrorId : undefined
+                    }
                   />
                 </Suspense>
               </div>
+              {instructionsError && (
+                <ErrorText
+                  id={instructionsErrorId}
+                  className={helperClassName}
+                  text={instructionsError}
+                />
+              )}
             </div>
           </TextRefinementField>
 

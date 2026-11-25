@@ -63,6 +63,7 @@ const makeService = () => {
     cacheManager as never,
     { isAdmin: vi.fn().mockReturnValue(false) } as unknown as AdminRoleService,
     preparation as never,
+    {} as never,
   );
   return { service, dialClient, cacheManager, preparation };
 };
@@ -1883,6 +1884,7 @@ describe('PublishService, publishing an application with its dependencies', () =
       cacheManager as never,
       { isAdmin: vi.fn() } as unknown as AdminRoleService,
       preparation,
+      {} as never,
     );
     const publish = (version?: string, publishCredentials?: boolean) =>
       service.publish(

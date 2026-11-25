@@ -49,9 +49,10 @@ vi.mock('../../../server-api/projects.api', () => ({
 vi.mock('../../../server-api/text-refinement.api', () => ({
   refineText: vi.fn(),
 }));
+const fileManagerModal = vi.hoisted(() => vi.fn((_props: object) => null));
 vi.mock(
   '../../../components/ProjectFileManagerModal/ProjectFileManagerModal',
-  () => ({ default: () => null }),
+  () => ({ default: fileManagerModal }),
 );
 vi.mock('../../../hooks/attachment/useAttachmentCanvasResolvers', async () => {
   const { previewCanvasResolvers: stub } =
@@ -155,6 +156,7 @@ const READY_CONFIG = {
   config: {
     aiTextRefinementAvailable: true,
     projectContextAllowedExtensions: ['csv', 'pdf', 'xlsx'],
+    projectContextMaxFiles: 500,
     projectContextFileMaxBytes: 1_048_576,
     projectContextTotalMaxBytes: 10_485_760,
   },
@@ -207,6 +209,10 @@ describe('ProjectCreatePage', () => {
       maxTotalBytes: 10_485_760,
     });
     expect(formProps.current?.onPickFromFileManager).toBeTypeOf('function');
+    expect(fileManagerModal.mock.lastCall?.[0]).toMatchObject({
+      maximumAttachmentsAmount: 500,
+      existingAttachmentsAmount: 0,
+    });
   });
 
   it('refines the instructions with the project purpose', async () => {

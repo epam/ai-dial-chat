@@ -1,5 +1,7 @@
 /** Why {@link checkContextFiles} rejected a context file. */
 export enum ContextFileRejection {
+  /** Adding the file would exceed the configured count. */
+  TooManyFiles = 'too-many-files',
   /** The extension is not in the allowed list. */
   UnsupportedType = 'unsupported-type',
   /** The file is larger than the per-file limit. */

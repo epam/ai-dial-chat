@@ -18,7 +18,9 @@ import {
   vi,
 } from 'vitest';
 import { CATALOG_CLASS } from '../../../constants/public-class-names';
+import type { CatalogCardRenderProps } from '../../../models/card-props';
 import type { CatalogItem } from '../../../models/catalog-item';
+import type { ToolbarProps } from '../../../models/toolbar-props';
 import { CatalogSortKey } from '../../../types/sort';
 import {
   CredentialStatus,
@@ -205,28 +207,46 @@ vi.mock('../../CardGrid/CardGrid', () => ({
     onItemClick,
     selectedItemId,
     titles,
+    renderCard,
+    cardHeight,
   }: {
     items: CatalogItem[];
     onItemClick: (item: CatalogItem) => void;
     selectedItemId?: string;
     titles?: { noResultsTitle?: string; noResultsDescription?: string };
+    renderCard?: (props: CatalogCardRenderProps) => React.ReactNode;
+    cardHeight?: number;
   }) => (
     <div role="grid" aria-label="catalog grid">
       {items.length} items
+      {cardHeight != null && <span>{`cardHeight:${cardHeight}`}</span>}
+      {renderCard &&
+        items.map((item) => (
+          <div key={item.id}>
+            {renderCard({
+              item,
+              query: '',
+              isSelected: item.id === selectedItemId,
+              isReadonly: false,
+              onClick: () => onItemClick(item),
+            })}
+          </div>
+        ))}
       {items.length === 0 && (
         <p>
           {titles?.noResultsTitle} {titles?.noResultsDescription}
         </p>
       )}
-      {items.map((item) => (
-        <button
-          key={item.id}
-          onClick={() => onItemClick(item)}
-          aria-pressed={item.id === selectedItemId}
-        >
-          {item.name}
-        </button>
-      ))}
+      {!renderCard &&
+        items.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => onItemClick(item)}
+            aria-pressed={item.id === selectedItemId}
+          >
+            {item.name}
+          </button>
+        ))}
     </div>
   ),
 }));
@@ -1348,6 +1368,182 @@ describe('Catalog', () => {
     render(<Catalog items={[]} favorites={[]} />);
 
     expect(screen.queryByRole('tablist')).toBeNull();
+  });
+
+  describe('renderCard', () => {
+    const cardItems = [makeItem('1', 'Claude'), makeItem('2', 'Gemini')];
+
+    it('renders the supplied card for every listed item in place of the built-in one', () => {
+      render(
+        <Catalog
+          items={cardItems}
+          favorites={[]}
+          renderCard={({ item }) => <span>host-card-{item.name}</span>}
+        />,
+      );
+
+      expect(screen.getByText('host-card-Claude')).toBeTruthy();
+      expect(screen.getByText('host-card-Gemini')).toBeTruthy();
+    });
+
+    it('keeps the built-in cards when renderCard is not passed', () => {
+      render(<Catalog items={cardItems} favorites={[]} />);
+
+      expect(screen.getByRole('button', { name: 'Claude' })).toBeTruthy();
+    });
+
+    it('opens the item details when the supplied card calls onClick', async () => {
+      const user = userEvent.setup();
+      const onCardClick = vi.fn();
+      render(
+        <Catalog
+          items={cardItems}
+          favorites={[]}
+          onCardClick={onCardClick}
+          renderCard={({ item, onClick }) => (
+            <button onClick={onClick}>open-{item.name}</button>
+          )}
+        />,
+      );
+
+      await user.click(screen.getByRole('button', { name: 'open-Gemini' }));
+
+      expect(onCardClick).toHaveBeenCalledWith(cardItems[1]);
+    });
+
+    it('forwards cardHeight to the grid', () => {
+      render(<Catalog items={cardItems} favorites={[]} cardHeight={180} />);
+
+      expect(screen.getByText('cardHeight:180')).toBeTruthy();
+    });
+
+    it('leaves cardHeight unset by default', () => {
+      render(<Catalog items={cardItems} favorites={[]} />);
+
+      expect(screen.queryByText(/cardHeight:/)).toBeNull();
+    });
+  });
+
+  describe('renderToolbar', () => {
+    const toolbarItems = [
+      makeItem('1', 'Claude', { topics: ['Free'] }),
+      makeItem('2', 'Gemini', { topics: ['Paid'] }),
+    ];
+
+    it('renders the built-in toolbar when renderToolbar is not passed', () => {
+      render(<Catalog items={toolbarItems} favorites={[]} />);
+
+      expect(screen.getByPlaceholderText('search')).toBeTruthy();
+    });
+
+    it('renders the supplied node in place of the built-in toolbar', () => {
+      render(
+        <Catalog
+          items={toolbarItems}
+          favorites={[]}
+          renderToolbar={() => <div>Host toolbar</div>}
+        />,
+      );
+
+      expect(screen.getByText('Host toolbar')).toBeTruthy();
+      expect(screen.queryByPlaceholderText('search')).toBeNull();
+    });
+
+    it('hands the slot the toolbar props, with totalCount following the listing', () => {
+      const renderToolbar = vi.fn(
+        ({ totalCount, filterValues }: ToolbarProps) => (
+          <span>{`count:${totalCount} topics:${[...(filterValues ?? [])].sort().join(',')}`}</span>
+        ),
+      );
+      render(
+        <Catalog
+          items={toolbarItems}
+          favorites={[]}
+          renderToolbar={renderToolbar}
+        />,
+      );
+
+      expect(screen.getByText('count:2 topics:Free,Paid')).toBeTruthy();
+    });
+
+    it('lets the slot drive the search query', async () => {
+      const user = userEvent.setup();
+      render(
+        <Catalog
+          items={toolbarItems}
+          favorites={[]}
+          renderToolbar={({ query, onQueryChange }) => (
+            <input
+              aria-label="host search"
+              value={query}
+              onChange={(e) => onQueryChange(e.target.value)}
+            />
+          )}
+        />,
+      );
+
+      await user.type(screen.getByLabelText('host search'), 'Gem');
+
+      const grid = screen.getByRole('grid', { name: 'catalog grid' });
+      expect(grid.textContent).toContain('1 items');
+    });
+
+    it('lets the slot drive the topic filter', async () => {
+      const user = userEvent.setup();
+      render(
+        <Catalog
+          items={toolbarItems}
+          favorites={[]}
+          renderToolbar={({ filters, onFiltersChange }) => (
+            <button
+              onClick={() =>
+                onFiltersChange?.(new Set([...(filters ?? []), 'Paid']))
+              }
+            >
+              Host filter
+            </button>
+          )}
+        />,
+      );
+
+      await user.click(screen.getByText('Host filter'));
+
+      const grid = screen.getByRole('grid', { name: 'catalog grid' });
+      expect(grid.textContent).toContain('1 items');
+    });
+
+    it('passes the search input ref so scroll-to-top can focus the host input', () => {
+      render(
+        <Catalog
+          items={toolbarItems}
+          favorites={[]}
+          renderToolbar={({ searchInputRef }) => (
+            <input aria-label="host search" ref={searchInputRef} />
+          )}
+        />,
+      );
+
+      expect(screen.getByLabelText('host search')).toBeTruthy();
+    });
+
+    it('re-renders the slot with the new view mode after the slot changes it', async () => {
+      const user = userEvent.setup();
+      render(
+        <Catalog
+          items={toolbarItems}
+          favorites={[]}
+          renderToolbar={({ viewMode, onViewModeChange }) => (
+            <button onClick={() => onViewModeChange(CatalogViewMode.Cards)}>
+              {`mode:${viewMode}`}
+            </button>
+          )}
+        />,
+      );
+
+      await user.click(screen.getByText(`mode:${CatalogViewMode.Grid}`));
+
+      expect(screen.getByText(`mode:${CatalogViewMode.Cards}`)).toBeTruthy();
+    });
   });
 
   it('renders the default empty state (CardGrid) when renderEmptyState is not passed', () => {

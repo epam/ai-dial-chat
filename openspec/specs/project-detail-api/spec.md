@@ -77,9 +77,9 @@ Every Core call sends `getBearerAuthHeaders(accessToken)` and goes through `Dial
 
 **ETag.** The snapshot's `etag` is the response's `ETag` header. A response without `ETag` is an invalid upstream response, `502`.
 
-**Size cap.** `PROJECT_ARCHIVE_READ_MAX_BYTES` is a module constant of 64 MiB, Core's default per-project total. When the response's `Content-Length`, or the running byte count while buffering, exceeds it, the read is aborted and the BFF answers `413` with `code: 'project-too-large'`. `validate` (`apps/chat-api/src/config/validation.ts`) fails boot when `PROJECT_CONTEXT_TOTAL_MAX_BYTES` exceeds `PROJECT_ARCHIVE_READ_MAX_BYTES` minus `PROJECT_MANIFEST_MAX_BYTES` (63 MiB), so a project filled to capacity stays readable and editable.
+**Size cap.** `PROJECT_ARCHIVE_READ_MAX_BYTES` is an environment setting that defaults to 64 MiB, Core's default per-project total. When the response's `Content-Length`, or the running byte count while buffering, exceeds it, the read is aborted and the BFF answers `413` with `code: 'project-too-large'`. `validate` (`apps/chat-api/src/config/validation.ts`) fails boot when `PROJECT_CONTEXT_TOTAL_MAX_BYTES` exceeds `PROJECT_ARCHIVE_READ_MAX_BYTES` minus `PROJECT_MANIFEST_MAX_BYTES` (63 MiB of context at the default archive budget).
 
-**Concurrency.** At most `PROJECT_ARCHIVE_READ_CONCURRENCY` (4, in `apps/chat-api/src/projects/constants/project-context.constants.ts`) snapshot reads download and parse an archive at once per BFF process, bounding the archive bytes buffered at a time to 4 × `PROJECT_ARCHIVE_READ_MAX_BYTES`. A further read waits for a free slot; its abort signal (deadline or client disconnect) ends the wait without a Core call. Downloads stream and are not limited.
+**Concurrency.** At most `PROJECT_ARCHIVE_READ_CONCURRENCY` (4, in `apps/chat-api/src/projects/constants/project-context.constants.ts`) snapshot reads download and parse an archive at once per BFF process. Edits can retain the archive after the read slot is released while they rebuild the outgoing project. A further read waits for a free slot; its abort signal (deadline or client disconnect) ends the wait without a Core call. Downloads stream and are not limited.
 
 **Parsing.** The buffered archive is opened with `yauzl.fromBufferPromise` (`lazyEntries: true`):
 
@@ -103,7 +103,7 @@ Every Core call sends `getBearerAuthHeaders(accessToken)` and goes through `Dial
 
 #### Scenario: Oversized archive is refused before buffering
 
-- **WHEN** Core answers with `Content-Length` greater than 64 MiB
+- **WHEN** Core answers with `Content-Length` greater than the configured archive budget
 - **THEN** the stream is cancelled, and the response is `413` with `code: 'project-too-large'`
 
 #### Scenario: Traversal entry name makes the archive invalid

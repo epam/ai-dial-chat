@@ -1,5 +1,5 @@
 import { type CSSProperties, type FC, memo } from 'react';
-import { CARD_ROW_HEIGHT } from '../../constants/virtual-grid';
+import { CARD_HEIGHT, CARD_ROW_GAP } from '../../constants/virtual-grid';
 import type { CardRowData } from '../../models/card-row-data';
 import { Card } from './Card';
 
@@ -33,13 +33,16 @@ export const CardRowRenderer: FC<CardRowRendererProps> = memo(
     featuredChipStyle,
     markdownLabels,
     activeTab,
+    renderCard,
+    cardHeight = CARD_HEIGHT,
   }) => {
+    const rowHeight = cardHeight + CARD_ROW_GAP;
     const start = rowIndex * columnCount;
     const rowItems = items.slice(start, start + columnCount);
 
     const style: CSSProperties = {
-      top: rowIndex * CARD_ROW_HEIGHT,
-      height: CARD_ROW_HEIGHT,
+      top: rowIndex * rowHeight,
+      height: rowHeight,
     };
 
     return (
@@ -51,29 +54,39 @@ export const CardRowRenderer: FC<CardRowRendererProps> = memo(
               key={item?.id ?? `spacer-${colIndex}`}
               className="h-full min-w-0 flex-1"
             >
-              {item && (
-                <Card
-                  item={item}
-                  query={query}
-                  initialIsStarred={item.isStarred}
-                  onToggle={onToggleFavorite}
-                  isFavoriteVisible={isFavoriteVisible}
-                  onClick={onItemClick}
-                  featuredLabel={featuredLabel}
-                  addToFavoritesAriaLabel={addToFavoritesAriaLabel}
-                  removeFromFavoritesAriaLabel={removeFromFavoritesAriaLabel}
-                  isSelected={item.id === selectedItemId}
-                  className="h-full"
-                  credentialsBadgeLoggedOutLabel={
-                    credentialsBadgeLoggedOutLabel
-                  }
-                  noFolderLabel={noFolderLabel}
-                  isReadonly={isReadonly}
-                  styles={{ colors: { featuredChipStyle } }}
-                  markdownLabels={markdownLabels}
-                  activeTab={activeTab}
-                />
-              )}
+              {item &&
+                (renderCard ? (
+                  renderCard({
+                    item,
+                    query,
+                    isSelected: item.id === selectedItemId,
+                    isReadonly: isReadonly ?? false,
+                    activeTab,
+                    onClick: onItemClick ? () => onItemClick(item) : undefined,
+                  })
+                ) : (
+                  <Card
+                    item={item}
+                    query={query}
+                    initialIsStarred={item.isStarred}
+                    onToggle={onToggleFavorite}
+                    isFavoriteVisible={isFavoriteVisible}
+                    onClick={onItemClick}
+                    featuredLabel={featuredLabel}
+                    addToFavoritesAriaLabel={addToFavoritesAriaLabel}
+                    removeFromFavoritesAriaLabel={removeFromFavoritesAriaLabel}
+                    isSelected={item.id === selectedItemId}
+                    className="h-full"
+                    credentialsBadgeLoggedOutLabel={
+                      credentialsBadgeLoggedOutLabel
+                    }
+                    noFolderLabel={noFolderLabel}
+                    isReadonly={isReadonly}
+                    styles={{ colors: { featuredChipStyle } }}
+                    markdownLabels={markdownLabels}
+                    activeTab={activeTab}
+                  />
+                ))}
             </div>
           );
         })}

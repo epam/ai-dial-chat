@@ -574,6 +574,15 @@ The `ClientConfigResponseDto` response DTO SHALL declare this field with Swagger
 - **WHEN** chat-api starts with `SKILL_UPLOAD_MAX_FILES=500` and the editor requests client configuration
 - **THEN** the response contains the number `500` in `config.skillUploadMaxFiles`
 
+### Requirement: client-config exposes skill upload byte limits
+
+The endpoint SHALL expose the validated byte limits `SKILL_FILE_UPLOAD_MAX_BYTES` and `SKILL_UPLOAD_MAX_TOTAL_BYTES` as `config.skillFileUploadMaxBytes` and `config.skillUploadMaxTotalBytes`. Both limits are inclusive and include the root manifest.
+
+#### Scenario: Operator raises skill upload sizes
+
+- **WHEN** the per-file limit is 10485760 and the total is 104857600
+- **THEN** the client configuration carries both numbers in bytes
+
 ### Requirement: client-config exposes maxAttachmentFileSizeBytes
 
 `GET /api/v1/client-config` SHALL include an additional `visibility='client'` key under `config`: `maxAttachmentFileSizeBytes: number` (sourced from `EnvironmentVariables.FILE_UPLOAD_MAX_BYTES` via the `attachments.maxFileSizeBytes` registry entry, default `536870912`) — added to the same cached response `client-config-endpoint` already returns, with no change to the endpoint's existing path, query parameters, authorization (none required), or cache key/TTL.
@@ -1062,3 +1071,12 @@ A response to either identifier SHALL be identical and SHALL carry `"appId": "ai
 
 - **WHEN** the mapped instance returns a snapshot whose `appId` is `chat-ui`
 - **THEN** the snapshot is rejected with `identity_mismatch` and the previous snapshot, if any, is kept
+
+### Requirement: Client config publishes the project context count
+
+`GET /api/v1/client-config` SHALL return the positive integer `config.projectContextMaxFiles` from `PROJECT_CONTEXT_MAX_FILES`. The normal generated `getClientConfig` method exposes the optional field for compatibility with older servers. Chat passes the resolved count to the create and edit forms.
+
+#### Scenario: Configured count reaches the editor
+
+- **WHEN** chat-api starts with `PROJECT_CONTEXT_MAX_FILES=500`
+- **THEN** client config reports `projectContextMaxFiles: 500`.

@@ -288,6 +288,20 @@ export const giftWrappingPlacement: CelebrationComposerAnchorPlacement = {
 };
 ```
 
+#### Authored small button props (`interaction-button-props-v1`)
+
+The [Snow Circus preview](src/stories/SnowCircus.stories.tsx) uses this opt-in capability with `composer-anchor-v1` and `direction: 'none'`. A penguin turns borrowed buttons into snowballs, juggles, plays with a snowman, and returns the buttons. Native JSON/SVG is maintained in Themes under `authoring/snow-circus`; the Storybook fixtures are byte-identical verification copies, not runtime generators. The scene is an addition to the New Year `happy new year` secret pool only when the host admits `new-year/snow-circus` and selects a pack containing it.
+
+One identity root null, `bp-stage`, carries all art. One or two static `bp-reference:N` nulls specify button centers. `bp-weight:N` opacity tracks blend measured center offsets into the stage, keeping character contact and copies together; weights total at most 100. Direct-child `bp-prop:N` nulls declare position/opacity tracks. These metadata tracks share at most 128 ordered linear keys, start at zero and end at the composition out point. `bp:entry:N` and `bp:restore:N` markers require a prop at its reference with weight 100. Copies remain invisible outside their borrowing/fade windows. Optional `bp-drawn:N` layers supply snow clumps when targets are absent; the adapter removes them only for copied targets.
+
+The adapter scans through the existing bounded button discovery and restricts copies to two on desktop, one on mobile, 40 total nodes each, and 20–64 by 20–56 CSS pixels. Focused, disabled, expanded, editable, clipped or transformed/animated targets are excluded. Contact offsets over 400 native horizontal units or 140 vertical units use drawn props. It prepares a private asset copy once, creates no poses and performs no per-frame DOM reads. Copied text never mirrors. The real controls keep their layout, draft and selection; input, pointer/focus, scroll, viewport/target changes, hidden tabs and unmount cancel playback and restore originals. Each prop returns on its own authored clock; reduced motion uses the finite poster without snapshots or a player.
+
+Optional paired identity nulls `bp-bounds:min` and `bp-bounds:max` declare the conservative artwork envelope during contact motion. Both have static finite position corners inside the composition and zero opacity; incomplete, inverted or out-of-stage bounds reject the source. Without them the adapter uses the whole composition rectangle. Button eligibility runs before pair selection and requires that zero displacement and each available prop-slot translation keep the envelope inside the viewport. Nonnegative linear contact weights totaling at most 100 make every blend safe too. Unsafe targets use drawn snow; if even the unshifted envelope cannot fit, the scene uses its poster. This adds no per-frame measurements.
+
+Snow Circus lasts 26 seconds, uses two characters and one player, and caps each variant at 48 layers, 2500 keys, 160 paths/1000 vertices, 500 generated SVG nodes and 512 KiB JSON. Its poster is at most 30 KiB. The actual source is smaller; browser and artistic evidence are separate. Run `npm exec -- nx run @epam/ai-dial-celebrations:test-snow-circus-browser` for the production-player matrix and full mobile profile; outputs are in `tmp/snow-circus/browser`.
+
+The prepared standard `new-year-default@1.5.1` pack adds Snow Circus to all five scenes from Themes `development` pack `1.4.0`, preserving Santa and the polar bears. Its catalog selects the new version. After compatible runtime/assets are released, append `new-year/snow-circus` to the existing `UI_EVENT_EXTERNAL_SCENES` (or managed `ui.celebrationDelivery.externalScenes`) allowlist, retain `UI_EVENT=new-year` and `UI_EVENT_DELIVERY_MODE=prefer-external`, change `UI_EVENT_DELIVERY_REVISION`, redeploy and reload clients. Preserve other admitted scenes/events. Snow Circus and Santa are secret-only: `happy new year` randomly chooses among the four secret scenes. Ordinary gift clicks choose among the other five scenes. There is no per-pack override in host policy. Rollback removes only the new allowlist entry or restores retained catalog version `1.4.0` with a new catalog revision. Local preparation does not establish remote publication or deployment.
+
 #### Following conversation rows (`interaction-history-ladder-v1`)
 
 This capability uses `viewport-stage-v1`, `direction: 'none'` and no second interaction. The adapter maps authored stations into viewport coordinates once; the player does not apply a second contain/cover fit. It mirrors native artwork from the host's logical side and keeps copied DOM text upright.
@@ -368,7 +382,7 @@ export const Trigger = ({ onActivate }: { onActivate: () => void }) => (
 
 ## Capabilities
 
-`SUPPORTED_CELEBRATION_CAPABILITIES` is the read-only set of capability ids this release implements: `lottie-light-svg-v1`, `viewport-stage-v1`, `composer-anchor-v1`, `interaction-composer-outline-v1`, `interaction-cat-borrow-v1`, `interaction-copy-track-v1`, `interaction-composer-carry-v1`, `interaction-history-ladder-v1`, `static-poster-v1` and `static-trigger-v1`. Any other `interaction-*` id is unsupported. A host keeps only scenes whose `requiredCapabilities` are all in the set:
+`SUPPORTED_CELEBRATION_CAPABILITIES` is the read-only set of capability ids this release implements: `lottie-light-svg-v1`, `viewport-stage-v1`, `composer-anchor-v1`, `interaction-composer-outline-v1`, `interaction-cat-borrow-v1`, `interaction-copy-track-v1`, `interaction-button-props-v1`, `interaction-composer-carry-v1`, `interaction-history-ladder-v1`, `static-poster-v1` and `static-trigger-v1`. Any other `interaction-*` id is unsupported. A host keeps only scenes whose `requiredCapabilities` are all in the set:
 
 ```ts
 import {
@@ -429,7 +443,7 @@ export const halloweenLabels: Partial<HalloweenLabels> = {
 
 ### NewYearScene
 
-`PenguinStar`, `SnowmanDelivery` and `ElfFireworks` play on a gift click, picked at random.
+`PenguinStar`, `SnowmanDelivery`, `ElfFireworks` and `CatBauble` play on a gift click, picked at random.
 `GiftWrapping` and `ReindeerTakeoff` form the secret pool for `happy new year`,
 selected without consecutive repeats independently of gift clicks. Snow, confetti
 and sleigh scenes are no longer included.
@@ -529,7 +543,7 @@ host.
 Interaction, focus changes, scrolling, viewport or target changes, hidden tabs,
 navigation and motion-preference changes cancel playback and release the player.
 The secret phrase `happy new year` picks the elves or reindeer without
-consecutive repeats; a gift click picks the penguin or the snowman. Hosts can override `giftWrappingToastMessage`
+consecutive repeats; a gift click picks the penguin, the snowman, the fireworks elf or the cat. Hosts can override `giftWrappingToastMessage`
 through the existing New Year labels.
 
 New Year's reindeer takeoff, "Reindeer, Release the Brake!", has a chestnut
@@ -684,6 +698,48 @@ plus an 18-spark finale (4 rockets, 3 × 8 + 12 sparks on mobile) and 220 KB of
 composition data (150 KB on mobile). It uses no external assets, filters, masks,
 gradients or per-frame host measurements; these limits are not a frame-rate
 guarantee.
+
+New Year's cat, "The bauble", stars a grey tabby with a red collar and a gold
+bell. It trots along the composer's upper rim toward a small fir at the rim's
+far end, where one hook hangs empty. Its pupils widen, it wiggles its rear and
+pounces at the lowest bauble, which swings away; it misses, lands forepaws
+first and grooms a paw as if nothing happened. Then it notices the composer's
+model selector, lies on the rim, stretches a foreleg over the edge and flicks
+an inert visual copy of the selector up onto the rim, then swats it. The copy
+slides into the fir's trunk, the fir shakes and leans toward the frozen cat
+(ears flat, tail puffed) and the copy pops onto the empty hook, where it hangs
+like a new ornament. The cat admires it, rears up, takes it in its mouth by the
+same grip near its fir-side end, carries it home, lowers it into its exact
+slot, curls up beside it, stretches and walks off.
+
+The fir stands at the rim end farther from the selector, so the story fits
+wherever the host places it; RTL mirrors the travel and artwork but never the
+copy's text. A selector is borrowed only when it is the first
+`composerModelSelector` element inside the composer: an idle, visible, enabled,
+unexpanded, unfocused, unhovered and untransformed button of 36–140 × 24–44 px
+with at most 40 nodes, short enough to hang clear of the rim and within the
+lying cat's reach (about 44 px below the rim on desktop, 36 px on mobile).
+Otherwise a drawn tangerine plays the same story and nothing is borrowed.
+Without a composer at least 320 px wide (260 px on mobile) with 180 px of
+headroom (150 px on mobile), the scene shows a static cat under the fir with a
+drawn ornament on the hook; reduced motion, unsupported browser APIs and player
+failures show the same still. Mobile keeps the whole story with a smaller cast.
+
+One 23-second native Lottie SVG composition carries the cat, the fir and the
+tangerine; the provider allows 25.5 seconds. The copy is an inert,
+`aria-hidden` snapshot driven by WAAPI keyframes generated from the same plan
+and started on the Lottie clock through the session's `onPlaybackStarted`
+callback; only the original's opacity is animated, from the paw contact until
+the copy is back in its rect, and the original is never clicked, focused or
+reparented. Typing, pointer/focus interaction, scrolling, viewport or target
+changes, hidden tabs, navigation and motion-preference changes stop the scene
+and release its player, copy, listeners, observers and timers. Hosts can
+override `catBaubleToastMessage` through the New Year labels. The scene budgets
+one player, one copy, at most 8 layers, 60 animated properties (48 on mobile),
+1,400 keyframes with 160 per property, 180 KB of composition data (130 KB on
+mobile) and 200 vector groups and shapes. It uses no external assets, filters,
+masks, gradients or per-frame host measurements; these limits are not a
+frame-rate guarantee.
 
 The Halloween portal briefly pulls visual copies of up to two adjacent, visible
 conversation-history rows into its claw, then restores the rows. It never changes
