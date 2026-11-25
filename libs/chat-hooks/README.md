@@ -5674,7 +5674,13 @@ An Organization destination takes a direct write instead of a publish request
 when `choice.isDirectWrite` is `true` and the adapter has `saveIntoOrgUnit`
 (`ResourceOrgUnitWriter`): the steps before it are the Organization rows, then
 `saveIntoOrgUnit(savedId, folderPath)` replaces `publish`, and the result's
-`isWrittenToOrgUnit` is `true`. `useResourceSavePanel` sets `isDirectWrite`
+`isWrittenToOrgUnit` is `true`. When that direct write fails with the server's `422` code
+`folderReferenceNeedsRequest` (`OrgUnitCopyErrorCode` of the generated client, read through
+`getApiErrorDetails`; the application refers to a folder of files and the user is not a DIAL
+admin), the save continues with `publish` for the saved id instead, the result's `isPublished` is
+`true` and `isWrittenToOrgUnit` stays `false`; a failed `publish` then gives
+`SavedButPublishFailed`, and any other direct-write failure stays
+`SavedButOrgUnitWriteFailed`. `useResourceSavePanel` sets `isDirectWrite`
 from its optional `canSaveDirectlyTo(folderPath)` parameter (for example from
 `buildFolderGuards`), only for the Organization root. Without the parameter every
 Organization destination keeps the publish rows. The optional

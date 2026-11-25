@@ -8,6 +8,7 @@ import {
   getOrgUnitNamespace,
   mapResourceDependencyDto,
   OrgUnitFolderGuardPurpose,
+  OrgUnitsStatus,
   ResourceNameConflictKind,
   ResourceSaveVersionError,
   useResourceSavePanel,
@@ -199,7 +200,13 @@ const ResourceSavePanelContainer: FC<Props> = ({
   );
 
   const isOrgUnitsEnabled = useFeatureFlag('orgUnitsEnabled');
-  const { status: orgUnitsStatus, canSaveDirectlyAt } = useOrgUnitsContext();
+  const {
+    status: orgUnitsStatus,
+    canSaveDirectlyAt,
+    hasAdminAccess,
+  } = useOrgUnitsContext();
+  const isFolderReferenceRuleOn =
+    isOrgUnitsEnabled && orgUnitsStatus === OrgUnitsStatus.Ready;
   const getMissingNamespaces = useCallback(
     (folderPath: string[], namespaces: OrgUnitNamespace[]) =>
       getMissingDirectWriteNamespaces(
@@ -262,6 +269,8 @@ const ResourceSavePanelContainer: FC<Props> = ({
     getMissingNamespaces,
     getMissingNamespacesReason,
     getTargetTakenReason,
+    hasAdminAccess: isFolderReferenceRuleOn ? hasAdminAccess : undefined,
+    folderReferenceNote: t(ResourceSavePanelI18nKeys.DirectUnavailableFolder),
     dependenciesNote: isFormStateEmbedded
       ? t(ResourceSavePanelI18nKeys.DependenciesEmbeddedNote)
       : undefined,

@@ -541,6 +541,92 @@ describe('CatalogView — direct publish', () => {
     });
   });
 
+  describe('a folder of files the application refers to', () => {
+    const folderDependency = {
+      id: 'files/b1/App__1.0/',
+      name: 'App__1.0',
+      type: PublishDependencyType.File,
+      isFolder: true,
+      location: '',
+    } as PublishDependency;
+    const APPROVER_UNIT = unit('Delivery', {
+      applications: ['read', 'write'],
+      toolsets: ['read', 'write'],
+      publications: ['read', 'write'],
+    });
+
+    it('files a request for a user who is not a DIAL admin and says why in the note', () => {
+      setRights([APPROVER_UNIT]);
+      render(<CatalogView />);
+
+      expect(
+        captured.current.canPublishDirectlyTo?.(
+          application,
+          ['Delivery'],
+          [folderDependency],
+        ),
+      ).toBe(false);
+      expect(
+        captured.current.getPublishDirectUnavailableNote?.(
+          application,
+          ['Delivery'],
+          [folderDependency],
+        ),
+      ).toBe(CatalogI18nKeys.PublishDirectUnavailableFolder);
+    });
+
+    it('shows the folder note, not the dependency-types note, when both apply', () => {
+      setRights([
+        unit('Delivery', {
+          applications: ['read', 'write'],
+          publications: ['read', 'write'],
+        }),
+      ]);
+      render(<CatalogView />);
+
+      expect(
+        captured.current.getPublishDirectUnavailableNote?.(
+          application,
+          ['Delivery'],
+          [toolsetDependency, folderDependency],
+        ),
+      ).toBe(CatalogI18nKeys.PublishDirectUnavailableFolder);
+    });
+
+    it('keeps the direct write and shows no note for a DIAL admin', () => {
+      setRights([APPROVER_UNIT], true);
+      render(<CatalogView />);
+
+      expect(
+        captured.current.canPublishDirectlyTo?.(
+          application,
+          ['Delivery'],
+          [folderDependency],
+        ),
+      ).toBe(true);
+      expect(
+        captured.current.getPublishDirectUnavailableNote?.(
+          application,
+          ['Delivery'],
+          [folderDependency],
+        ),
+      ).toBeUndefined();
+    });
+
+    it('shows no note when the user could not publish there directly anyway', () => {
+      setRights([unit('Delivery', { applications: ['read', 'write'] })]);
+      render(<CatalogView />);
+
+      expect(
+        captured.current.getPublishDirectUnavailableNote?.(
+          application,
+          ['Delivery'],
+          [folderDependency],
+        ),
+      ).toBeUndefined();
+    });
+  });
+
   it('supplies the credentials note as a translated label', () => {
     render(<CatalogView />);
 
