@@ -19,6 +19,7 @@ import {
 } from 'vitest';
 import { CATALOG_CLASS } from '../../../constants/public-class-names';
 import type { CatalogItem } from '../../../models/catalog-item';
+import type { ToolbarProps } from '../../../models/toolbar-props';
 import { CatalogSortKey } from '../../../types/sort';
 import {
   CredentialStatus,
@@ -1348,6 +1349,128 @@ describe('Catalog', () => {
     render(<Catalog items={[]} favorites={[]} />);
 
     expect(screen.queryByRole('tablist')).toBeNull();
+  });
+
+  describe('renderToolbar', () => {
+    const toolbarItems = [
+      makeItem('1', 'Claude', { topics: ['Free'] }),
+      makeItem('2', 'Gemini', { topics: ['Paid'] }),
+    ];
+
+    it('renders the built-in toolbar when renderToolbar is not passed', () => {
+      render(<Catalog items={toolbarItems} favorites={[]} />);
+
+      expect(screen.getByPlaceholderText('search')).toBeTruthy();
+    });
+
+    it('renders the supplied node in place of the built-in toolbar', () => {
+      render(
+        <Catalog
+          items={toolbarItems}
+          favorites={[]}
+          renderToolbar={() => <div>Host toolbar</div>}
+        />,
+      );
+
+      expect(screen.getByText('Host toolbar')).toBeTruthy();
+      expect(screen.queryByPlaceholderText('search')).toBeNull();
+    });
+
+    it('hands the slot the toolbar props, with totalCount following the listing', () => {
+      const renderToolbar = vi.fn(
+        ({ totalCount, filterValues }: ToolbarProps) => (
+          <span>{`count:${totalCount} topics:${[...(filterValues ?? [])].sort().join(',')}`}</span>
+        ),
+      );
+      render(
+        <Catalog
+          items={toolbarItems}
+          favorites={[]}
+          renderToolbar={renderToolbar}
+        />,
+      );
+
+      expect(screen.getByText('count:2 topics:Free,Paid')).toBeTruthy();
+    });
+
+    it('lets the slot drive the search query', async () => {
+      const user = userEvent.setup();
+      render(
+        <Catalog
+          items={toolbarItems}
+          favorites={[]}
+          renderToolbar={({ query, onQueryChange }) => (
+            <input
+              aria-label="host search"
+              value={query}
+              onChange={(e) => onQueryChange(e.target.value)}
+            />
+          )}
+        />,
+      );
+
+      await user.type(screen.getByLabelText('host search'), 'Gem');
+
+      const grid = screen.getByRole('grid', { name: 'catalog grid' });
+      expect(grid.textContent).toContain('1 items');
+    });
+
+    it('lets the slot drive the topic filter', async () => {
+      const user = userEvent.setup();
+      render(
+        <Catalog
+          items={toolbarItems}
+          favorites={[]}
+          renderToolbar={({ filters, onFiltersChange }) => (
+            <button
+              onClick={() =>
+                onFiltersChange?.(new Set([...(filters ?? []), 'Paid']))
+              }
+            >
+              Host filter
+            </button>
+          )}
+        />,
+      );
+
+      await user.click(screen.getByText('Host filter'));
+
+      const grid = screen.getByRole('grid', { name: 'catalog grid' });
+      expect(grid.textContent).toContain('1 items');
+    });
+
+    it('passes the search input ref so scroll-to-top can focus the host input', () => {
+      render(
+        <Catalog
+          items={toolbarItems}
+          favorites={[]}
+          renderToolbar={({ searchInputRef }) => (
+            <input aria-label="host search" ref={searchInputRef} />
+          )}
+        />,
+      );
+
+      expect(screen.getByLabelText('host search')).toBeTruthy();
+    });
+
+    it('re-renders the slot with the new view mode after the slot changes it', async () => {
+      const user = userEvent.setup();
+      render(
+        <Catalog
+          items={toolbarItems}
+          favorites={[]}
+          renderToolbar={({ viewMode, onViewModeChange }) => (
+            <button onClick={() => onViewModeChange(CatalogViewMode.Cards)}>
+              {`mode:${viewMode}`}
+            </button>
+          )}
+        />,
+      );
+
+      await user.click(screen.getByText(`mode:${CatalogViewMode.Grid}`));
+
+      expect(screen.getByText(`mode:${CatalogViewMode.Cards}`)).toBeTruthy();
+    });
   });
 
   it('renders the default empty state (CardGrid) when renderEmptyState is not passed', () => {
