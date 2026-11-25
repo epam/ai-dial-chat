@@ -14573,9 +14573,45 @@
           "tools": {
             "type": "boolean",
             "description": "Whether the deployment supports tools/functions in chat completion requests"
+          },
+          "parallelToolCalls": {
+            "type": "boolean",
+            "description": "Whether parallel tool calls are enabled; DIAL Core defaults it to true, so it means something only for a model with tools"
+          },
+          "cache": {
+            "type": "boolean",
+            "description": "Whether the deployment supports prompt caching"
+          },
+          "autoCaching": {
+            "type": "boolean",
+            "description": "Whether the deployment caches prompts automatically"
+          },
+          "reasoningEfforts": {
+            "description": "Reasoning efforts the deployment accepts, as DIAL Core sends them; absent when it sends none",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": ["systemPrompt", "temperature"]
+      },
+      "DeploymentModelKindsDto": {
+        "type": "object",
+        "properties": {
+          "chatCompletion": {
+            "type": "boolean",
+            "description": "Whether the model is configured for chat completion"
+          },
+          "completion": {
+            "type": "boolean",
+            "description": "Whether the model is configured for text completion"
+          },
+          "embeddings": {
+            "type": "boolean",
+            "description": "Whether the model is configured for embeddings"
+          }
+        }
       },
       "ConversationStarterDto": {
         "type": "object",
@@ -14725,6 +14761,14 @@
           "provider": {
             "type": "string",
             "description": "Provider of the model as DIAL Core reports it (e.g. \"aws\"); undefined when DIAL Core sends none"
+          },
+          "modelKinds": {
+            "description": "The model type DIAL Core configures (chat completion, completion, embeddings), from `capabilities`; says whether the model takes text input. Absent when DIAL Core sends none of the three.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DeploymentModelKindsDto"
+              }
+            ]
           },
           "maxInputAttachments": {
             "type": "number",

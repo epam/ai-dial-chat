@@ -84,6 +84,46 @@ export class DeploymentFeaturesDto {
       'Whether the deployment supports tools/functions in chat completion requests',
   })
   tools?: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      'Whether parallel tool calls are enabled; DIAL Core defaults it to true, so it means something only for a model with tools',
+  })
+  parallelToolCalls?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Whether the deployment supports prompt caching',
+  })
+  cache?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Whether the deployment caches prompts automatically',
+  })
+  autoCaching?: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      'Reasoning efforts the deployment accepts, as DIAL Core sends them; absent when it sends none',
+    type: [String],
+  })
+  reasoningEfforts?: string[];
+}
+
+export class DeploymentModelKindsDto {
+  @ApiPropertyOptional({
+    description: 'Whether the model is configured for chat completion',
+  })
+  chatCompletion?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Whether the model is configured for text completion',
+  })
+  completion?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Whether the model is configured for embeddings',
+  })
+  embeddings?: boolean;
 }
 
 export class DeploymentItemDto {
@@ -186,6 +226,13 @@ export class DeploymentItemDto {
       'Provider of the model as DIAL Core reports it (e.g. "aws"); undefined when DIAL Core sends none',
   })
   provider?: string;
+
+  @ApiPropertyOptional({
+    type: DeploymentModelKindsDto,
+    description:
+      'The model type DIAL Core configures (chat completion, completion, embeddings), from `capabilities`; says whether the model takes text input. Absent when DIAL Core sends none of the three.',
+  })
+  modelKinds?: DeploymentModelKindsDto;
 
   @ApiPropertyOptional({
     description:

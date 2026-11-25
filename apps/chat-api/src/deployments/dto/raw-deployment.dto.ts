@@ -7,6 +7,18 @@ export interface RawDeploymentFeaturesDto {
   chat_completion?: boolean;
   skills_supported?: boolean;
   tools?: boolean;
+  /** Core defaults it to true, so it means something only for a model with tools. */
+  parallel_tool_calls?: boolean;
+  cache?: boolean;
+  auto_caching?: boolean;
+  reasoning_efforts?: string[];
+}
+
+/** The configured model type DIAL Core reports under a model's `capabilities`. */
+export interface RawDeploymentModelKindsDto {
+  chat_completion?: boolean;
+  completion?: boolean;
+  embeddings?: boolean;
 }
 
 export interface RawDeploymentDto {
@@ -33,6 +45,8 @@ export interface RawDeploymentDto {
    * optional and unrelated to `interface_configs`, which never carries it.
    */
   provider?: string;
+  /** A model's configured type (chat, completion, embeddings); other keys are ignored. */
+  capabilities?: RawDeploymentModelKindsDto;
   application_properties?: Record<string, unknown>;
   features?: RawDeploymentFeaturesDto;
   /**

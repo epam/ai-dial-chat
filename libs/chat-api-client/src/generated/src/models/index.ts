@@ -4610,6 +4610,30 @@ export interface DeploymentFeaturesDto {
    * @memberof DeploymentFeaturesDto
    */
   tools?: boolean;
+  /**
+   * Whether parallel tool calls are enabled; DIAL Core defaults it to true, so it means something only for a model with tools
+   * @type {boolean}
+   * @memberof DeploymentFeaturesDto
+   */
+  parallelToolCalls?: boolean;
+  /**
+   * Whether the deployment supports prompt caching
+   * @type {boolean}
+   * @memberof DeploymentFeaturesDto
+   */
+  cache?: boolean;
+  /**
+   * Whether the deployment caches prompts automatically
+   * @type {boolean}
+   * @memberof DeploymentFeaturesDto
+   */
+  autoCaching?: boolean;
+  /**
+   * Reasoning efforts the deployment accepts, as DIAL Core sends them; absent when it sends none
+   * @type {Array<string>}
+   * @memberof DeploymentFeaturesDto
+   */
+  reasoningEfforts?: Array<string>;
 }
 /**
  *
@@ -4725,6 +4749,12 @@ export interface DeploymentItemDto {
    * @memberof DeploymentItemDto
    */
   provider?: string;
+  /**
+   * The model type DIAL Core configures (chat completion, completion, embeddings), from `capabilities`; says whether the model takes text input. Absent when DIAL Core sends none of the three.
+   * @type {DeploymentModelKindsDto}
+   * @memberof DeploymentItemDto
+   */
+  modelKinds?: DeploymentModelKindsDto;
   /**
    * Maximum number of attachments allowed per message; undefined when not specified by DIAL Core
    * @type {number}
@@ -4870,6 +4900,31 @@ export interface DeploymentLimitsResponseDto {
    * @memberof DeploymentLimitsResponseDto
    */
   monthCostStats?: LimitStatsDto;
+}
+/**
+ *
+ * @export
+ * @interface DeploymentModelKindsDto
+ */
+export interface DeploymentModelKindsDto {
+  /**
+   * Whether the model is configured for chat completion
+   * @type {boolean}
+   * @memberof DeploymentModelKindsDto
+   */
+  chatCompletion?: boolean;
+  /**
+   * Whether the model is configured for text completion
+   * @type {boolean}
+   * @memberof DeploymentModelKindsDto
+   */
+  completion?: boolean;
+  /**
+   * Whether the model is configured for embeddings
+   * @type {boolean}
+   * @memberof DeploymentModelKindsDto
+   */
+  embeddings?: boolean;
 }
 /**
  *

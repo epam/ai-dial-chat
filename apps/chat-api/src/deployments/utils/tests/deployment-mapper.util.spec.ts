@@ -103,6 +103,101 @@ describe('mapToDeploymentItem isHidden', () => {
   });
 });
 
+describe('mapToDeploymentItem model flags', () => {
+  const map = (extra: Record<string, unknown>) =>
+    mapToDeploymentItem(
+      { id: 'gpt-4o', object: 'model', ...extra } as RawDeploymentDto,
+      new Set(),
+      new Set(),
+    );
+
+  it('forwards parallel tool calls, caching and auto caching as sent', () => {
+    const item = map({
+      features: {
+        tools: true,
+        parallel_tool_calls: false,
+        cache: true,
+        auto_caching: false,
+      },
+    });
+
+    expect(item?.features).toMatchObject({
+      tools: true,
+      parallelToolCalls: false,
+      cache: true,
+      autoCaching: false,
+    });
+  });
+
+  it('leaves the flags out when Core sends none', () => {
+    const item = map({ features: { tools: true } });
+
+    expect(item?.features).not.toHaveProperty('parallelToolCalls');
+    expect(item?.features).not.toHaveProperty('cache');
+    expect(item?.features).not.toHaveProperty('autoCaching');
+    expect(item?.features).not.toHaveProperty('reasoningEfforts');
+  });
+
+  it('forwards the reasoning efforts that are strings', () => {
+    const item = map({
+      features: { reasoning_efforts: ['low', 'high', 3, null] },
+    });
+
+    expect(item?.features?.reasoningEfforts).toEqual(['low', 'high']);
+  });
+
+  it('leaves reasoning efforts out for an empty or malformed list', () => {
+    expect(
+      map({ features: { reasoning_efforts: [] } })?.features,
+    ).not.toHaveProperty('reasoningEfforts');
+    expect(
+      map({ features: { reasoning_efforts: 'high' } })?.features,
+    ).not.toHaveProperty('reasoningEfforts');
+  });
+
+  it('ignores non-boolean flag values', () => {
+    const item = map({
+      features: { parallel_tool_calls: 'yes', cache: 1, auto_caching: null },
+    });
+
+    expect(item?.features).not.toHaveProperty('parallelToolCalls');
+    expect(item?.features).not.toHaveProperty('cache');
+    expect(item?.features).not.toHaveProperty('autoCaching');
+  });
+
+  it('forwards the model kinds from capabilities', () => {
+    const item = map({
+      capabilities: {
+        chat_completion: true,
+        completion: false,
+        embeddings: true,
+        fine_tune: true,
+        scale_types: ['standard'],
+      },
+    });
+
+    expect(item?.modelKinds).toStrictEqual({
+      chatCompletion: true,
+      completion: false,
+      embeddings: true,
+    });
+  });
+
+  it('keeps only the kinds Core sent as booleans', () => {
+    expect(
+      map({ capabilities: { embeddings: true, completion: 'x' } })?.modelKinds,
+    ).toStrictEqual({ embeddings: true });
+  });
+
+  it('leaves the model kinds out when capabilities are missing or malformed', () => {
+    expect(map({})?.modelKinds).toBeUndefined();
+    expect(map({ capabilities: 'embeddings' })?.modelKinds).toBeUndefined();
+    expect(
+      map({ capabilities: { fine_tune: true } })?.modelKinds,
+    ).toBeUndefined();
+  });
+});
+
 describe('mapToDeploymentItem provider', () => {
   const map = (overrides: Partial<RawDeploymentDto>) =>
     mapToDeploymentItem(raw(overrides), new Set(), new Set());

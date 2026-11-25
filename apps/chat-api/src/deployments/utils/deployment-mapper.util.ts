@@ -5,8 +5,9 @@ import type {
   ModelCatalogPropertiesDto,
   ToolsetAuthSettingsDto,
 } from '../dto/deployment-details.dto';
-import { DeploymentItemType } from '../dto/deployment-item.dto';
-import type {
+import {
+  DeploymentItemType,
+  type DeploymentModelKindsDto,
   ConversationStartersDto,
   DeploymentItemDto,
 } from '../dto/deployment-item.dto';
@@ -162,6 +163,29 @@ export const redactApplicationFunctionEnv = (raw: unknown): unknown => {
  * the typed SDK shape.
  */
 /**
+ * The configured model type from Core's `capabilities`: only the three kinds
+ * the catalog reads, each only when Core sent a boolean. Undefined when none is
+ * present, so a model without them carries no `modelKinds` at all.
+ */
+const mapModelKinds = (
+  capabilities: unknown,
+): DeploymentModelKindsDto | undefined => {
+  if (!isRecord(capabilities)) return undefined;
+  const kinds: DeploymentModelKindsDto = {
+    ...(typeof capabilities.chat_completion === 'boolean' && {
+      chatCompletion: capabilities.chat_completion,
+    }),
+    ...(typeof capabilities.completion === 'boolean' && {
+      completion: capabilities.completion,
+    }),
+    ...(typeof capabilities.embeddings === 'boolean' && {
+      embeddings: capabilities.embeddings,
+    }),
+  };
+  return Object.keys(kinds).length > 0 ? kinds : undefined;
+};
+
+/**
  * Allow-lists `catalog_properties` (schema-driven, identical shape across
  * model/application/toolset DIAL Core responses) to the four recognized
  * string fields shown in the catalog Overview panel. Unknown keys and
@@ -257,6 +281,11 @@ export const mapToDeploymentItem = (
   }
 
   const topics = raw.description_keywords || [];
+  const reasoningEfforts = Array.isArray(raw.features?.reasoning_efforts)
+    ? raw.features.reasoning_efforts.filter(
+        (effort): effort is string => typeof effort === 'string',
+      )
+    : [];
   /*
    * DIAL Core reports MCP support inconsistently depending on the endpoint
    * and deployment: the details endpoints set `features.mcp` (boolean), some
@@ -331,6 +360,16 @@ export const mapToDeploymentItem = (
             ...(raw.features?.tools === true && {
               tools: true,
             }),
+            ...(typeof raw.features?.parallel_tool_calls === 'boolean' && {
+              parallelToolCalls: raw.features.parallel_tool_calls,
+            }),
+            ...(typeof raw.features?.cache === 'boolean' && {
+              cache: raw.features.cache,
+            }),
+            ...(typeof raw.features?.auto_caching === 'boolean' && {
+              autoCaching: raw.features.auto_caching,
+            }),
+            ...(reasoningEfforts.length > 0 && { reasoningEfforts }),
           }
         : undefined,
     maxInputAttachments:
@@ -338,6 +377,7 @@ export const mapToDeploymentItem = (
         ? raw.max_input_attachments
         : undefined,
     topics,
+    modelKinds: mapModelKinds(raw.capabilities),
     provider:
       typeof raw.provider === 'string' && raw.provider !== ''
         ? raw.provider

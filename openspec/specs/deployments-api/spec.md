@@ -134,6 +134,7 @@ The endpoint:
 - `displayVersion?: string`, `createdAt?: number`, `updatedAt?: number` — `display_version`, `created_at`, `updated_at` from DIAL Core
 - `topics?: string[]` — `description_keywords` from DIAL Core, defaulting to `[]`
 - `provider?: string` — the provider DIAL Core reports at the top level of the item (e.g. `aws`), forwarded as sent; absent when Core sends none (see "DeploymentItemDto exposes the provider")
+- `modelKinds?: DeploymentModelKindsDto` — the configured model type from DIAL Core's `capabilities`, `{ chatCompletion?, completion?, embeddings? }`, each key only when Core sent a boolean; absent when Core sends none of the three. Other `capabilities` keys (`fine_tune`, `inference`, `scale_types`) are not forwarded (see "DeploymentItemDto exposes the model flags")
 - `applicationTypeSchemaId?: string` — `application_type_schema_id`, set only for `type === 'application'` items
 - `maxInputAttachments?: number` — `max_input_attachments` when it is a number
 - `applicationFolder?: string` — parent directory path of the application derived from `id` (everything before the last `/`); set only for `type === 'application'` items whose `id` contains a `/`; absent for root-level applications and all non-application types
@@ -496,3 +497,40 @@ Generated-client impact: `libs/chat-api-client/openapi.json` and the generated `
 
 - **WHEN** DIAL Core returns a model with no top-level `provider` and `interface_configs: { openaiChatCompletions: { provider: "nested" } }`
 - **THEN** the mapped item has no `provider`
+
+---
+
+### Requirement: DeploymentItemDto exposes the model flags
+
+`DeploymentFeaturesDto` (`apps/chat-api/src/deployments/dto/deployment-item.dto.ts`) SHALL carry four more optional properties, read by `mapToDeploymentItem` (`apps/chat-api/src/deployments/utils/deployment-mapper.util.ts`) from DIAL Core's `features` and declared on `RawDeploymentFeaturesDto` (`apps/chat-api/src/deployments/dto/raw-deployment.dto.ts`): `parallelToolCalls?: boolean` (`parallel_tool_calls`), `cache?: boolean` (`cache`), `autoCaching?: boolean` (`auto_caching`) and `reasoningEfforts?: string[]` (`reasoning_efforts`). A boolean flag SHALL be forwarded as sent, `false` included, because Core defaults `parallel_tool_calls` to true and a consumer needs to see an explicit `false`; a value that is not a boolean SHALL leave the property absent. `reasoningEfforts` SHALL keep only the string entries and SHALL be absent when none remain. These properties ride on the existing `features` object, so `features` is present under the existing rule (Core sent `features`, or the item is MCP-capable).
+
+`DeploymentItemDto` SHALL carry an optional `modelKinds?: DeploymentModelKindsDto` with optional booleans `chatCompletion`, `completion` and `embeddings`, read from DIAL Core's `capabilities` (`chat_completion`, `completion`, `embeddings`) and declared on `RawDeploymentDto` as `capabilities`. Each key SHALL be present only when Core sent a boolean for it; `modelKinds` SHALL be absent when `capabilities` is missing, is not an object, or holds none of the three. No other `capabilities` key is forwarded.
+
+Clients derive display values from these fields themselves; the BFF applies no rule beyond forwarding. The endpoint shape is otherwise unchanged, error codes, the cache key and the TTL are unchanged, and the fields ride on the existing deployments listing cache.
+
+Generated-client impact: `libs/chat-api-client/openapi.json` and the generated `DeploymentFeaturesDto` and `DeploymentItemDto` models gain the optional properties, and a `DeploymentModelKindsDto` model is added; regenerated with `npm run openapi`.
+
+#### Scenario: Flags are forwarded as sent
+
+- **WHEN** DIAL Core returns a model with `features: { tools: true, parallel_tool_calls: false, cache: true, auto_caching: false }`
+- **THEN** the mapped `features` carries `tools: true`, `parallelToolCalls: false`, `cache: true` and `autoCaching: false`
+
+#### Scenario: Missing or malformed flags are left out
+
+- **WHEN** a model's `features` has no such flags, or holds non-boolean values for them
+- **THEN** the mapped `features` has no `parallelToolCalls`, `cache` or `autoCaching`
+
+#### Scenario: Reasoning efforts keep their strings
+
+- **WHEN** a model's `features.reasoning_efforts` is `["low", "high", 3]`
+- **THEN** the mapped `features.reasoningEfforts` is `["low", "high"]`, and an empty or non-array value leaves it absent
+
+#### Scenario: Model kinds come from capabilities
+
+- **WHEN** DIAL Core returns `capabilities: { chat_completion: true, completion: false, embeddings: true, fine_tune: true }`
+- **THEN** the mapped item has `modelKinds: { chatCompletion: true, completion: false, embeddings: true }` and nothing about `fine_tune`
+
+#### Scenario: No model kinds
+
+- **WHEN** a model has no `capabilities`, a non-object `capabilities`, or none of the three kinds
+- **THEN** the mapped item has no `modelKinds`
