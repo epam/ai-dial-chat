@@ -510,6 +510,16 @@ import { validateProjectName } from '@epam/ai-dial-projects';
 validateProjectName('Q4/launch'); // ProjectNameError.InvalidCharacters
 ```
 
+### isProjectInstructionsTooLong
+
+Returns whether Instructions exceed `PROJECT_INSTRUCTIONS_MAX_LENGTH` (32000 Unicode code points, the BFF limit). `ProjectCreateForm` uses it to mark the editor invalid, show `labels.instructionsTooLongError` (default `Use 32000 characters or fewer.`) and disable submit.
+
+```ts
+import { isProjectInstructionsTooLong } from '@epam/ai-dial-projects';
+
+isProjectInstructionsTooLong('a'.repeat(32001)); // true
+```
+
 ### checkContextFiles
 
 Splits incoming `File`s into staged `Attachment`s to append and `{ name, reason }` rejections, against the files already present — stored or newly added: an allowed extension, the per-file limit, the running total, a unique name and a valid name. `getContextFilesSize` sums the bytes of every context file (a stored file's `size`, an added file's `File.size`), `isStoredContextFile` tells a `StoredProjectContextFile` from an added `Attachment`, and `filterContextFileItems` keeps the files whose name contains a trimmed query.

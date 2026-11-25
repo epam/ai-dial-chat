@@ -242,6 +242,32 @@ The field is wrapped in `TextRefinementField` and driven by `useTextRefinement` 
 - **WHEN** `onRefineInstructions` is not supplied
 - **THEN** Instructions shows no Refine with AI action
 
+### Requirement: Instructions are limited to 32000 characters
+
+`ProjectCreateForm` SHALL reject Instructions longer than `PROJECT_INSTRUCTIONS_MAX_LENGTH` (32000 Unicode code points, the limit the BFF enforces in `CreateProjectDto`; exported with `isProjectInstructionsTooLong` from `libs/projects/src/utils/project-instructions.ts`). The check runs as the user types, so it serves `ProjectCreatePage` and `ProjectEditPage` alike:
+
+- the `MarkdownEditor` gets `invalid`, which draws the error border and sets `aria-invalid`, and `ariaDescribedBy` pointing at the error;
+- an `ErrorText` under the editor shows `labels.instructionsTooLongError(32000)` (default `Use 32000 characters or fewer.`); the app fills it with `t(EditorI18nKeys.FieldTooLong, { count })`, the same "Use {{count}} characters or fewer." copy the Skill and Scheduled task forms use, so no key is added;
+- the submit button is disabled, and `onSubmit` is not called, so an over-long project is never sent and the "Could not save the project" toast (`projects.edit.toast.error`) is not reached for this cause;
+- the error and the border clear as soon as the text is back within the limit.
+
+Text of exactly 32000 code points is accepted. A refined text is checked like typed text.
+
+#### Scenario: Over-long instructions block the save
+
+- **WHEN** the Instructions hold 32001 characters
+- **THEN** the editor is drawn invalid, "Use 32000 characters or fewer." is shown under it, and the submit button is disabled
+
+#### Scenario: Instructions at the limit are accepted
+
+- **WHEN** the Instructions hold exactly 32000 characters and the name is valid
+- **THEN** no error is shown and the submit button is enabled
+
+#### Scenario: Shortening clears the error
+
+- **WHEN** the user deletes text until the Instructions are within the limit
+- **THEN** the error and the invalid border disappear and submit is enabled again
+
 ### Requirement: Context files are added from the device or the file manager
 
 The Context section SHALL render:

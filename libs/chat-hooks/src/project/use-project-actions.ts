@@ -27,6 +27,8 @@ export interface ProjectActionsHandlers {
   saveFile: (response: Response, fileName: string) => Promise<string>;
   /** Called after the archive was saved, with the saved file name. */
   onArchiveDownloaded?: (savedName: string) => void;
+  /** Called after the pin state was persisted, with the project and its new state. */
+  onPinChanged?: (project: ProjectDetailsDto, isPinned: boolean) => void;
   /** Called after the project was deleted; the host updates pins and navigates away. */
   onDeleted: (project: ProjectDetailsDto) => void;
   /** Called with a failed action and its trace id; the host shows the message. */
@@ -56,6 +58,7 @@ export const useProjectActions = (
     setPinned,
     saveFile,
     onArchiveDownloaded,
+    onPinChanged,
     onDeleted,
     onError,
     onReload,
@@ -92,6 +95,7 @@ export const useProjectActions = (
     setIsPinPending(true);
     try {
       await setPinned(project.id, !isPinned);
+      onPinChanged?.(project, !isPinned);
     } catch (err) {
       await reportError(
         err,
@@ -100,7 +104,7 @@ export const useProjectActions = (
     } finally {
       setIsPinPending(false);
     }
-  }, [project, isPinned, setPinned, reportError]);
+  }, [project, isPinned, setPinned, onPinChanged, reportError]);
 
   const downloadArchive = useCallback(async () => {
     if (project == null) return;

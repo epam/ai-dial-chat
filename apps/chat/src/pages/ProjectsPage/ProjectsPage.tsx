@@ -31,6 +31,11 @@ import {
   projectsClient,
   subscribeProjectListChanged,
 } from '../../hooks/projects/projects-client';
+import { useOperationNotification } from '../../hooks/useOperationNotification';
+import {
+  EntityOperation,
+  NotifiableEntity,
+} from '../../types/entity-notification';
 import { ROUTES } from '../../types/routes';
 import { UserConfigStatus } from '../../types/user-config-status';
 import NotFoundPage from '../NotFound/NotFound';
@@ -46,6 +51,7 @@ const ProjectsPage: FC = () => {
   useEffect(() => subscribeProjectListChanged(() => void refresh()), [refresh]);
   const { pinnedProjectIds, setPinnedProject } = useUserConfig();
   const { showErrorNotification } = useNotification();
+  const { notifyOperationSuccess } = useOperationNotification();
   const projectItems = useMemo(() => {
     const pinned = new Set(pinnedProjectIds);
     return projects.map((project) =>
@@ -69,6 +75,14 @@ const ProjectsPage: FC = () => {
     async (id: string, isPinned: boolean) => {
       try {
         await setPinnedProject(id, isPinned);
+        const name = projects.find((project) => project.id === id)?.name;
+        if (name != null) {
+          notifyOperationSuccess(
+            NotifiableEntity.Project,
+            isPinned ? EntityOperation.Pinned : EntityOperation.Unpinned,
+            { name },
+          );
+        }
       } catch (err) {
         const { traceId } = await getApiErrorDetails(err);
         showErrorNotification({
@@ -81,7 +95,13 @@ const ProjectsPage: FC = () => {
         });
       }
     },
-    [setPinnedProject, showErrorNotification, t],
+    [
+      notifyOperationSuccess,
+      projects,
+      setPinnedProject,
+      showErrorNotification,
+      t,
+    ],
   );
 
   const [searchQuery, setSearchQuery] = useState('');

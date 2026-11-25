@@ -73,6 +73,15 @@ export const useProjectActions = (
       ),
     [notifyOperationSuccess],
   );
+  const handlePinChanged = useCallback(
+    (pinned: ProjectDetailsDto, isPinned: boolean) =>
+      notifyOperationSuccess(
+        NotifiableEntity.Project,
+        isPinned ? EntityOperation.Pinned : EntityOperation.Unpinned,
+        { name: pinned.name },
+      ),
+    [notifyOperationSuccess],
+  );
   const handleDeleted = useCallback(
     (deleted: ProjectDetailsDto) => {
       notifyOperationSuccess(
@@ -102,6 +111,7 @@ export const useProjectActions = (
     setPinned: setPinnedProject,
     saveFile: triggerBrowserDownload,
     onArchiveDownloaded: handleArchiveDownloaded,
+    onPinChanged: handlePinChanged,
     onDeleted: handleDeleted,
     onError: handleError,
     onReload,

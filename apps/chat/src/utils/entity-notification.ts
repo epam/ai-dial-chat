@@ -257,6 +257,14 @@ export const ENTITY_OPERATION_NOTIFICATIONS = {
       titleKey: EntityNotificationsI18nKeys.ProjectDownloadedTitle,
       messageKey: EntityNotificationsI18nKeys.ProjectDownloaded,
     },
+    [EntityOperation.Pinned]: {
+      titleKey: EntityNotificationsI18nKeys.ProjectPinnedTitle,
+      messageKey: EntityNotificationsI18nKeys.ProjectPinned,
+    },
+    [EntityOperation.Unpinned]: {
+      titleKey: EntityNotificationsI18nKeys.ProjectUnpinnedTitle,
+      messageKey: EntityNotificationsI18nKeys.ProjectUnpinned,
+    },
     [EntityOperation.PublishRequested]: {
       titleKey: EntityNotificationsI18nKeys.ProjectPublishRequestedTitle,
       messageKey: EntityNotificationsI18nKeys.ProjectPublishRequested,

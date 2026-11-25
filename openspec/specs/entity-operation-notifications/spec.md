@@ -236,6 +236,32 @@ Because `NotificationProvider` and `NotificationContainer` are mounted above `Ro
 - **WHEN** an operation success notification is shown
 - **THEN** it renders through the existing `Notification` component with no `Request ID` row and no change to placement, stacking, or timing
 
+### Requirement: Pinning and unpinning a project confirms itself
+
+Pinning a project to the chat panel and unpinning it SHALL each raise one success notification, whichever surface performed it: the project card toggle on `ProjectsPage`, the Pin / Unpin button on `ProjectViewPage` (through `useProjectActions`), and the Unpin item of a pinned project's sidebar ⋮ menu (`usePinnedProjectsPanel`). The pair is declared as `EntityOperation.Pinned` and `EntityOperation.Unpinned` for `NotifiableEntity.Project` in `ENTITY_OPERATION_NOTIFICATIONS`, so call sites pass intent through `notifyOperationSuccess` and choose no wording.
+
+| Operation | Title (`entityNotifications.project.pinnedTitle` / `unpinnedTitle`) | Body (`entityNotifications.project.pinned` / `unpinned`) |
+|---|---|---|
+| Pinned | "Pinned to chat panel" | `"{{name}}" has been pinned to chat panel` |
+| Unpinned | "Unpinned from chat panel" | `"{{name}}" has been unpinned from chat panel` |
+
+`{{name}}` is the project's name. The notification is raised only after the pin state was persisted. A failed pin or unpin keeps its existing error notification (`projects.actions.pinError` / `projects.actions.unpinError`) and raises no success notification. The shared hook `useProjectActions` in `libs/chat-hooks` reports a persisted change through its optional `onPinChanged(project, isPinned)` handler; the app adapter turns it into the notification.
+
+#### Scenario: Pinning from the project view confirms
+
+- **WHEN** the user pins the project "Customer Support Quality" from `ProjectViewPage`
+- **THEN** a success notification titled "Pinned to chat panel" with the text `"Customer Support Quality" has been pinned to chat panel` is shown
+
+#### Scenario: Unpinning from the sidebar confirms
+
+- **WHEN** the user chooses Unpin in a pinned project's sidebar menu and the request succeeds
+- **THEN** a success notification titled "Unpinned from chat panel" naming the project is shown
+
+#### Scenario: A failed pin raises only the error
+
+- **WHEN** persisting the pin fails
+- **THEN** the `projects.actions.pinError` error notification is shown and no "Pinned to chat panel" notification is raised
+
 ### Requirement: i18n keys
 
 All new strings SHALL live in one `entityNotifications` namespace in `apps/chat/src/i18n/locales/en.json`, with a matching `EntityNotificationsI18nKeys` string enum in `apps/chat/src/constants/translation-keys.ts` (raw key literals passed to `t()` are forbidden). Keys are named `entityNotifications.<entity>.<operation>Title` and `entityNotifications.<entity>.<operation>`, e.g.:
