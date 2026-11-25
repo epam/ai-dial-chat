@@ -1,5 +1,7 @@
 /** Which adapter owns a pack preparation's companion payload. */
 export enum PackSceneCompanionKind {
+  /** Small reversible buttons on authored contact tracks. */
+  ButtonProps = 'button-props',
   /** The borrowed copies of an `interaction-cat-borrow-v1` scene. */
   CatBorrow = 'cat-borrow',
   /** The copy and watched host of an `interaction-copy-track-v1` scene. */

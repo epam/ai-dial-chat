@@ -220,6 +220,71 @@ describe('addCelebrationScenes', () => {
     vi.restoreAllMocks();
   });
 
+  it('plays Snow Circus only from happy new year alongside Santa', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.99);
+    const onNotify = vi.fn();
+    const additions = [
+      couriers,
+      ...['santa-history-delivery', 'polar-bears-workshop', 'snow-circus'].map(
+        (id): CelebrationScene => ({
+          id,
+          labelId: id,
+          durationMs: 26000,
+          Component: () => null,
+        }),
+      ),
+    ];
+    const event = addCelebrationScenes(newYearEvent, additions, {
+      'snow-circus': 'Snow Circus from the secret pool',
+    });
+    expect(event.clickSceneIds).toEqual([
+      ...newYearEvent.clickSceneIds,
+      'bullfinch-couriers',
+      'polar-bears-workshop',
+    ]);
+    expect(event.secretTrigger?.sceneIds).toEqual([
+      ...newYearEvent.secretTrigger!.sceneIds,
+      'santa-history-delivery',
+      'snow-circus',
+    ]);
+    const SecretTrigger = () => {
+      const { consumeSecretPhrase } = useCelebration();
+      return (
+        <button onClick={() => consumeSecretPhrase('happy new year')}>
+          Send phrase
+        </button>
+      );
+    };
+    render(
+      <CelebrationProvider
+        events={{ 'new-year': async () => event }}
+        activeEventId="new-year"
+        onNotify={onNotify}
+      >
+        <CelebrationDecor />
+        <SecretTrigger />
+      </CelebrationProvider>,
+    );
+    await userEvent.click(
+      await screen.findByRole('button', {
+        name: newYearEvent.labels.giftLabel,
+      }),
+    );
+    expect(onNotify).not.toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'Snow Circus from the secret pool' }),
+    );
+    onNotify.mockClear();
+    await userEvent.click(screen.getByRole('button', { name: 'Send phrase' }));
+    await waitFor(() =>
+      expect(onNotify).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          message: 'Snow Circus from the secret pool',
+        }),
+      ),
+    );
+    vi.restoreAllMocks();
+  });
+
   it('plays Santa only from happy new year and dismisses it on a host policy reset', async () => {
     const random = vi.spyOn(Math, 'random').mockReturnValue(0.99);
     const onNotify = vi.fn();
@@ -251,7 +316,7 @@ describe('addCelebrationScenes', () => {
         ...newYearEvent.secretTrigger!.sceneIds,
         'santa-history-delivery',
       ],
-      externalSceneIds: ['santa-history-delivery'],
+      externalSceneIds: ['santa-history-delivery', 'snow-circus'],
     });
     const SecretTrigger = () => {
       const { consumeSecretPhrase } = useCelebration();

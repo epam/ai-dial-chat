@@ -1,4 +1,5 @@
 import { SUPPORTED_CELEBRATION_CAPABILITIES } from '../constants/celebration-capabilities';
+import type { ButtonPropsPreparation } from '../models/button-props';
 import type { CatBorrowPreparation } from '../models/cat-borrow';
 import type {
   CelebrationComposerAnchorPlacement,
@@ -44,6 +45,7 @@ export interface PackScenePreparation {
 
 /** An adapter's payload on a pack preparation, tagged with its kind. */
 export type PackSceneCompanion =
+  | ({ kind: PackSceneCompanionKind.ButtonProps } & ButtonPropsPreparation)
   | ({ kind: PackSceneCompanionKind.CatBorrow } & CatBorrowPreparation)
   | ({ kind: PackSceneCompanionKind.CopyTrack } & CopyTrackPreparation)
   | ({ kind: PackSceneCompanionKind.ComposerCarry } & ComposerCarryPreparation)
@@ -90,12 +92,15 @@ export const isCelebrationSceneSupported = (
   const isCopyTrack = requiresCopyTrack(scene);
   const isComposerCarry = requiresComposerCarry(scene);
   const isHistoryLadder = requiresHistoryLadder(scene);
+  const isButtonProps = scene.requiredCapabilities.includes(
+    CelebrationCapability.InteractionButtonPropsV1,
+  );
   return (
     scene.renderer === CelebrationCapability.LottieLightSvgV1 &&
     (isAnchored || template === CelebrationPlacementTemplate.ViewportStageV1) &&
     (isAnchored || interactions.length === 0 || isHistoryLadder) &&
     interactions.length <= 1 &&
-    (!(isCatBorrow || isCopyTrack || isComposerCarry) ||
+    (!(isCatBorrow || isCopyTrack || isComposerCarry || isButtonProps) ||
       scene.direction === CelebrationDirectionMode.None) &&
     (!isHistoryLadder ||
       (!isAnchored &&
