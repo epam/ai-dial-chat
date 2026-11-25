@@ -288,6 +288,20 @@ export const giftWrappingPlacement: CelebrationComposerAnchorPlacement = {
 };
 ```
 
+#### Authored small button props (`interaction-button-props-v1`)
+
+The [Snow Circus preview](src/stories/SnowCircus.stories.tsx) uses this opt-in capability with `composer-anchor-v1` and `direction: 'none'`. A penguin turns borrowed buttons into snowballs, juggles, plays with a snowman, and returns the buttons. Native JSON/SVG is maintained in Themes under `authoring/snow-circus`; the Storybook fixtures are byte-identical verification copies, not runtime generators. The scene is an addition to the New Year `happy new year` secret pool only when the host admits `new-year/snow-circus` and selects a pack containing it.
+
+One identity root null, `bp-stage`, carries all art. One or two static `bp-reference:N` nulls specify button centers. `bp-weight:N` opacity tracks blend measured center offsets into the stage, keeping character contact and copies together; weights total at most 100. Direct-child `bp-prop:N` nulls declare position/opacity tracks. These metadata tracks share at most 128 ordered linear keys, start at zero and end at the composition out point. `bp:entry:N` and `bp:restore:N` markers require a prop at its reference with weight 100. Copies remain invisible outside their borrowing/fade windows. Optional `bp-drawn:N` layers supply snow clumps when targets are absent; the adapter removes them only for copied targets.
+
+The adapter scans through the existing bounded button discovery and restricts copies to two on desktop, one on mobile, 40 total nodes each, and 20–64 by 20–56 CSS pixels. Focused, disabled, expanded, editable, clipped or transformed/animated targets are excluded. Contact offsets over 400 native horizontal units or 140 vertical units use drawn props. It prepares a private asset copy once, creates no poses and performs no per-frame DOM reads. Copied text never mirrors. The real controls keep their layout, draft and selection; input, pointer/focus, scroll, viewport/target changes, hidden tabs and unmount cancel playback and restore originals. Each prop returns on its own authored clock; reduced motion uses the finite poster without snapshots or a player.
+
+Optional paired identity nulls `bp-bounds:min` and `bp-bounds:max` declare the conservative artwork envelope during contact motion. Both have static finite position corners inside the composition and zero opacity; incomplete, inverted or out-of-stage bounds reject the source. Without them the adapter uses the whole composition rectangle. Button eligibility runs before pair selection and requires that zero displacement and each available prop-slot translation keep the envelope inside the viewport. Nonnegative linear contact weights totaling at most 100 make every blend safe too. Unsafe targets use drawn snow; if even the unshifted envelope cannot fit, the scene uses its poster. This adds no per-frame measurements.
+
+Snow Circus lasts 26 seconds, uses two characters and one player, and caps each variant at 48 layers, 2500 keys, 160 paths/1000 vertices, 500 generated SVG nodes and 512 KiB JSON. Its poster is at most 30 KiB. The actual source is smaller; browser and artistic evidence are separate. Run `npm exec -- nx run @epam/ai-dial-celebrations:test-snow-circus-browser` for the production-player matrix and full mobile profile; outputs are in `tmp/snow-circus/browser`.
+
+The prepared standard `new-year-default@1.5.1` pack adds Snow Circus to all five scenes from Themes `development` pack `1.4.0`, preserving Santa and the polar bears. Its catalog selects the new version. After compatible runtime/assets are released, append `new-year/snow-circus` to the existing `UI_EVENT_EXTERNAL_SCENES` (or managed `ui.celebrationDelivery.externalScenes`) allowlist, retain `UI_EVENT=new-year` and `UI_EVENT_DELIVERY_MODE=prefer-external`, change `UI_EVENT_DELIVERY_REVISION`, redeploy and reload clients. Preserve other admitted scenes/events. Snow Circus and Santa are secret-only: `happy new year` randomly chooses among the four secret scenes. Ordinary gift clicks choose among the other five scenes. There is no per-pack override in host policy. Rollback removes only the new allowlist entry or restores retained catalog version `1.4.0` with a new catalog revision. Local preparation does not establish remote publication or deployment.
+
 #### Following conversation rows (`interaction-history-ladder-v1`)
 
 This capability uses `viewport-stage-v1`, `direction: 'none'` and no second interaction. The adapter maps authored stations into viewport coordinates once; the player does not apply a second contain/cover fit. It mirrors native artwork from the host's logical side and keeps copied DOM text upright.
@@ -368,7 +382,7 @@ export const Trigger = ({ onActivate }: { onActivate: () => void }) => (
 
 ## Capabilities
 
-`SUPPORTED_CELEBRATION_CAPABILITIES` is the read-only set of capability ids this release implements: `lottie-light-svg-v1`, `viewport-stage-v1`, `composer-anchor-v1`, `interaction-composer-outline-v1`, `interaction-cat-borrow-v1`, `interaction-copy-track-v1`, `interaction-composer-carry-v1`, `interaction-history-ladder-v1`, `static-poster-v1` and `static-trigger-v1`. Any other `interaction-*` id is unsupported. A host keeps only scenes whose `requiredCapabilities` are all in the set:
+`SUPPORTED_CELEBRATION_CAPABILITIES` is the read-only set of capability ids this release implements: `lottie-light-svg-v1`, `viewport-stage-v1`, `composer-anchor-v1`, `interaction-composer-outline-v1`, `interaction-cat-borrow-v1`, `interaction-copy-track-v1`, `interaction-button-props-v1`, `interaction-composer-carry-v1`, `interaction-history-ladder-v1`, `static-poster-v1` and `static-trigger-v1`. Any other `interaction-*` id is unsupported. A host keeps only scenes whose `requiredCapabilities` are all in the set:
 
 ```ts
 import {

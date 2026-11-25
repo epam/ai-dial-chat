@@ -37,6 +37,6 @@ export const newYearEvent: CelebrationEvent = {
     phrases: [NEW_YEAR_SECRET_PHRASE],
     hintPhrase: NEW_YEAR_SECRET_PHRASE,
     sceneIds: [NewYearScene.GiftWrapping, NewYearScene.ReindeerTakeoff],
-    externalSceneIds: ['santa-history-delivery'],
+    externalSceneIds: ['santa-history-delivery', 'snow-circus'],
   },
 };

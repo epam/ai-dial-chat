@@ -9,7 +9,15 @@ import type {
   LottieAnimationContext,
   LottiePlaybackStartContext,
 } from '../models/lottie-scene';
-import { CelebrationPlacementTemplate } from '../types/celebration-pack';
+import {
+  CelebrationCapability,
+  CelebrationPlacementTemplate,
+} from '../types/celebration-pack';
+import {
+  prepareButtonPropsScene,
+  onButtonPropsAnimationCreated,
+  onButtonPropsPlaybackStarted,
+} from './button-props-adapter';
 import {
   onCatBorrowAnimationCreated,
   onCatBorrowPlaybackStarted,
@@ -163,6 +171,23 @@ const COMPOSER_CARRY_ADAPTER: PackSceneAdapter = {
   onPlaybackStarted: onComposerCarryPlaybackStarted,
 };
 
+const BUTTON_PROPS_ADAPTER: PackSceneAdapter = {
+  watchedAnchors: ['composer', 'starterList', 'welcomeRegion'],
+  isAvailable: () => hasObservers() && hasWebAnimations(),
+  prepare: (data, placement, { anchors, isMobile }) =>
+    prepareButtonPropsScene(
+      data,
+      composerPlacement(placement),
+      anchors,
+      isMobile,
+    ),
+  onAnimationCreated: (context) => {
+    watchAnchor(context);
+    onButtonPropsAnimationCreated(context);
+  },
+  onPlaybackStarted: onButtonPropsPlaybackStarted,
+};
+
 const HISTORY_LADDER_ADAPTER: PackSceneAdapter = {
   watchedAnchors: [
     'historyContainer',
@@ -189,6 +214,12 @@ export const resolvePackSceneAdapter = (
   )
     return undefined;
   if (requiresCatBorrow(scene)) return CAT_BORROW_ADAPTER;
+  if (
+    scene.requiredCapabilities.includes(
+      CelebrationCapability.InteractionButtonPropsV1,
+    )
+  )
+    return BUTTON_PROPS_ADAPTER;
   if (requiresCopyTrack(scene)) return COPY_TRACK_ADAPTER;
   if (requiresComposerCarry(scene)) return COMPOSER_CARRY_ADAPTER;
   return anchoredAdapter(requiresComposerOutline(scene));

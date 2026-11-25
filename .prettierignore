@@ -31,3 +31,7 @@ libs/celebrations/src/stories/fixtures/copy-track-snowman.desktop.lottie.json
 libs/celebrations/src/stories/fixtures/copy-track-snowman.mobile.lottie.json
 libs/celebrations/src/stories/fixtures/copy-track-snowman.poster.svg
 libs/celebrations/src/stories/fixtures/copy-track-word-probe.lottie.json
+# Native Themes Snow Circus sources; fixture tests pin the source bytes.
+libs/celebrations/src/stories/fixtures/snow-circus.desktop.lottie.json
+libs/celebrations/src/stories/fixtures/snow-circus.mobile.lottie.json
+libs/celebrations/src/stories/fixtures/snow-circus.poster.svg
