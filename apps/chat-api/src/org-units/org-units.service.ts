@@ -108,6 +108,31 @@ export class OrgUnitsService {
     );
   }
 
+  /**
+   * Whether the caller is a DIAL admin, from the same cached listing the unit
+   * rights come from. Answers `undefined` (unknown, DIAL Core decides) when org
+   * units are off or the caller's rights cannot be read.
+   * @param userSub - caller's session subject
+   * @param accessToken - caller's bearer token
+   */
+  async isDialAdmin(
+    userSub: string,
+    accessToken: string,
+  ): Promise<boolean | undefined> {
+    let rights: OrgUnitsResponseDto;
+    try {
+      rights = await this.listOrgUnits(userSub, accessToken);
+    } catch (err) {
+      this.logger.warn(
+        `Skipping the DIAL admin check, rights could not be read: ${
+          err instanceof Error ? err.message : 'unknown error'
+        }`,
+      );
+      return undefined;
+    }
+    return rights.enabled ? rights.hasAdminAccess : undefined;
+  }
+
   private toDto(item: CoreOrgUnitItem): OrgUnitDto[] {
     const { id, name, displayName, path, folder, permissions } = item;
     if (!id || !name || !path || !folder) {

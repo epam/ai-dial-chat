@@ -19,7 +19,10 @@ import {
   type ApplicationPublishCopy,
 } from './application-publish-copy.service';
 import { PublishDependenciesService } from './dependencies/publish-dependencies.service';
-import { selectPublishableDependencies } from './dependencies/publish-dependency.util';
+import {
+  hasFolderDependency,
+  selectPublishableDependencies,
+} from './dependencies/publish-dependency.util';
 import { replaceSchemaResources } from './dependencies/schema-resource-collector.util';
 import { CatalogEntityType } from './dto/catalog-entity-params.dto';
 import {
@@ -63,6 +66,8 @@ export interface ApplicationDependencyPlan {
   toCopy: PlannedDependency[];
   /** Dependency id to target url, for every dependency in `dependencies`. */
   targets: Map<string, string>;
+  /** Whether the application refers to a folder of files, which is never in `dependencies`. */
+  hasFolderReference: boolean;
 }
 
 /**
@@ -204,9 +209,15 @@ export class ApplicationPublishPreparationService {
           CatalogEntityType.Application,
           entityId,
         ));
+    const hasFolderReference = hasFolderDependency(found);
     const dependencies = selectPublishableDependencies(found, bucket);
     if (dependencies.length === 0) {
-      return { dependencies, toCopy: [], targets: new Map() };
+      return {
+        dependencies,
+        toCopy: [],
+        targets: new Map(),
+        hasFolderReference,
+      };
     }
 
     const headers = getBearerAuthHeaders(accessToken);
@@ -234,7 +245,7 @@ export class ApplicationPublishPreparationService {
         targetUrl,
       });
     });
-    return { dependencies, toCopy, targets };
+    return { dependencies, toCopy, targets, hasFolderReference };
   }
 
   /**

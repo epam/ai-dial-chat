@@ -36,6 +36,14 @@ const FOREIGN = dependency(
   'prompts/other-bucket/Greeting',
 );
 const FILE = dependency(ResourceDependencyType.File, `files/${BUCKET}/a.txt`);
+const FOLDER = dependency(
+  ResourceDependencyType.File,
+  `files/${BUCKET}/Helper__1.0.0/`,
+);
+const FOREIGN_FOLDER = dependency(
+  ResourceDependencyType.File,
+  'files/other-bucket/Shared/',
+);
 
 const SKILL_TARGET = `skills/public/Teams/.Helper__1.0.0.deps/${BUCKET}/Plan`;
 const PROMPT_TARGET = `prompts/public/Teams/.Helper__1.0.0.deps/${BUCKET}/Greeting`;
@@ -118,7 +126,34 @@ describe('ApplicationPublishPreparationService', () => {
         dependencies: [],
         toCopy: [],
         targets: new Map(),
+        hasFolderReference: false,
       });
+    });
+
+    it('reports a folder reference even when no other dependency is publishable', async () => {
+      const { service } = makeService([FOLDER]);
+
+      const plan = await service.plan(...prepareArgs, 'Helper__1.0.0');
+
+      expect(plan?.hasFolderReference).toBe(true);
+      expect(plan?.dependencies).toEqual([]);
+    });
+
+    it('reports a folder reference next to publishable dependencies and in another bucket', async () => {
+      const { service } = makeService([SKILL, FOREIGN_FOLDER]);
+
+      const plan = await service.plan(...prepareArgs, 'Helper__1.0.0');
+
+      expect(plan?.hasFolderReference).toBe(true);
+      expect(plan?.dependencies).toEqual([SKILL]);
+    });
+
+    it('does not report a plain file reference as a folder', async () => {
+      const { service } = makeService([SKILL, FILE]);
+
+      const plan = await service.plan(...prepareArgs, 'Helper__1.0.0');
+
+      expect(plan?.hasFolderReference).toBe(false);
     });
 
     it("returns undefined for another user's application without reading anything", async () => {

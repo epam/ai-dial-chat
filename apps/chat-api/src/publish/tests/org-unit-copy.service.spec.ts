@@ -4,6 +4,7 @@ import {
   ConflictException,
   ForbiddenException,
   NotFoundException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ApplicationsService } from '../../applications/applications.service';
@@ -12,6 +13,7 @@ import type { OrgUnitsService } from '../../org-units/org-units.service';
 import type { ToolsetsListingService } from '../../toolsets/listing/toolsets-listing.service';
 import type { ApplicationPublishPreparationService } from '../application-publish-preparation.service';
 import { CatalogEntityType } from '../dto/catalog-entity-params.dto';
+import { OrgUnitCopyErrorCode } from '../dto/org-unit-copy-error.dto';
 import { OrgUnitCopyService } from '../org-unit-copy.service';
 
 const ENTITY_ID = 'applications/b1/agent__1.0.0';
@@ -75,6 +77,7 @@ const makeService = () => {
   };
   const orgUnitsService = {
     findMissingWriteNamespaces: vi.fn().mockResolvedValue([]),
+    isDialAdmin: vi.fn().mockResolvedValue(false),
   };
   const service = new OrgUnitCopyService(
     dialClient,
@@ -905,5 +908,123 @@ describe('OrgUnitCopyService', () => {
 
       await expect(run(made.service)).resolves.toEqual({ id: APP_TARGET });
     });
+  });
+});
+
+describe('OrgUnitCopyService folder reference', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  const withFolderReference = (
+    made: ReturnType<typeof makeService>,
+    plan: Record<string, unknown> = {},
+  ) =>
+    made.preparation.plan.mockResolvedValue({
+      dependencies: [],
+      toCopy: [],
+      targets: new Map(),
+      hasFolderReference: true,
+      ...plan,
+    });
+  const refusalOf = async (promise: Promise<unknown>) => {
+    const rejection = await promise.then(
+      () => undefined,
+      (error: unknown) => error,
+    );
+    return rejection as UnprocessableEntityException;
+  };
+
+  it('refuses a folder-reference application for a caller who is not a DIAL admin, copying nothing', async () => {
+    const made = makeService();
+    withFolderReference(made);
+
+    const refusal = await refusalOf(copy(made.service));
+
+    expect(refusal).toBeInstanceOf(UnprocessableEntityException);
+    expect(refusal.getResponse()).toMatchObject({
+      statusCode: 422,
+      code: OrgUnitCopyErrorCode.FolderReferenceNeedsRequest,
+    });
+    expect(made.orgUnitsService.isDialAdmin).toHaveBeenCalledWith(
+      'user1',
+      'token',
+    );
+    expect(made.copyResource).not.toHaveBeenCalled();
+    expect(made.preparation.stage).not.toHaveBeenCalled();
+    expect(made.getCustomApplication).not.toHaveBeenCalled();
+    expect(
+      made.orgUnitsService.findMissingWriteNamespaces,
+    ).not.toHaveBeenCalled();
+  });
+
+  it('refuses before the single copy of an application whose only reference is the folder', async () => {
+    const made = makeService();
+    withFolderReference(made);
+
+    await expect(copy(made.service)).rejects.toBeInstanceOf(
+      UnprocessableEntityException,
+    );
+
+    expect(made.copyResource).not.toHaveBeenCalled();
+  });
+
+  it('refuses before a taken-name or rights answer', async () => {
+    const made = makeService();
+    withFolderReference(made, {
+      dependencies: [{ type: 'skill', id: 'skills/b1/Plan' }],
+    });
+    made.getApplicationMetadata.mockResolvedValue({
+      response: { status: 200 },
+    });
+    made.orgUnitsService.findMissingWriteNamespaces.mockResolvedValue([
+      'skills',
+    ]);
+
+    await expect(copy(made.service)).rejects.toBeInstanceOf(
+      UnprocessableEntityException,
+    );
+  });
+
+  it('lets a DIAL admin write a folder-reference application as before', async () => {
+    const made = makeService();
+    withFolderReference(made);
+    made.orgUnitsService.isDialAdmin.mockResolvedValue(true);
+
+    await expect(copy(made.service)).resolves.toEqual({
+      id: 'applications/public/Acme/agent__1.0.0',
+    });
+
+    expect(made.copyResource).toHaveBeenCalledTimes(1);
+  });
+
+  it('leaves the answer to DIAL Core when the rights cannot be read or org units are off', async () => {
+    const made = makeService();
+    withFolderReference(made);
+    made.orgUnitsService.isDialAdmin.mockResolvedValue(undefined);
+
+    await expect(copy(made.service)).resolves.toEqual({
+      id: 'applications/public/Acme/agent__1.0.0',
+    });
+
+    expect(made.copyResource).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not ask for admin rights when the application refers to no folder', async () => {
+    const made = makeService();
+
+    await copy(made.service);
+
+    expect(made.orgUnitsService.isDialAdmin).not.toHaveBeenCalled();
+  });
+
+  it('does not apply to other entity types', async () => {
+    const made = makeService();
+    withFolderReference(made);
+
+    await copy(made.service, { folderPath: 'Acme' }, CatalogEntityType.Toolset);
+
+    expect(made.preparation.plan).not.toHaveBeenCalled();
+    expect(made.orgUnitsService.isDialAdmin).not.toHaveBeenCalled();
   });
 });

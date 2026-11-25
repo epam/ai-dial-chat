@@ -36,6 +36,7 @@ import {
 } from './application-publish-preparation.service';
 import { CatalogEntityType } from './dto/catalog-entity-params.dto';
 import type { CopyCatalogEntityToOrgUnitDto } from './dto/copy-catalog-entity-to-org-unit.dto';
+import { createFolderReferenceNeedsRequest } from './dto/org-unit-copy-error.dto';
 import { createTargetExistsConflict } from './dto/publish-conflict.dto';
 import {
   getPublishedIconTargetUrl,
@@ -237,6 +238,7 @@ export class OrgUnitCopyService {
    * @throws {BadRequestException} When the entity type has no org-unit copy, or `entityId` is not a full id where one is required
    * @throws {ForbiddenException} When the entity is not in the caller's own bucket or Core refuses the write
    * @throws {ConflictException} When the target already exists, or Core refuses the copy as a conflict
+   * @throws {UnprocessableEntityException} When an application refers to a folder of files and the caller is not a DIAL admin
    */
   async copyIntoOrgUnit(
     userSub: string,
@@ -314,6 +316,7 @@ export class OrgUnitCopyService {
    * @param params - the caller, the own source and the destination of the application
    * @returns the dependencies this call copied, for cache clearing
    * @throws {ForbiddenException} When the caller may not write a namespace the write needs
+   * @throws {UnprocessableEntityException} `folderReferenceNeedsRequest` when the application refers to a folder of files and the caller is not a DIAL admin
    */
   private async copyApplication(
     params: CopyApplicationParams,
@@ -332,7 +335,18 @@ export class OrgUnitCopyService {
       folderPath,
       leaf,
       true,
-    )) ?? { dependencies: [], toCopy: [], targets: new Map() };
+    )) ?? {
+      dependencies: [],
+      toCopy: [],
+      targets: new Map(),
+      hasFolderReference: false,
+    };
+    if (
+      plan.hasFolderReference &&
+      (await this.orgUnitsService.isDialAdmin(userSub, accessToken)) === false
+    ) {
+      throw createFolderReferenceNeedsRequest();
+    }
     const iconUrl = await readPublishableApplicationIconUrl(
       this.dialClient.client,
       accessToken,
