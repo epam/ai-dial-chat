@@ -3,20 +3,12 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { lookup } from 'mime-types';
 import { Public } from '../common/decorators/public.decorator';
+import { SVG_CONTENT_SECURITY_POLICY } from '../common/utils/svg-content-security-policy';
 import { ThemeConfigResponseDto } from '../openapi/openapi-response.dto';
 import { GetThemeIconDto } from './dto/get-theme-icon.dto';
 import { ThemeService } from './theme.service';
 
 const SVG_MIME_TYPE = 'image/svg+xml';
-
-/*
- * An SVG is an active document: opened directly from this origin it could run
- * embedded scripts. This policy is scoped to the icon response itself, so it
- * holds even when the global CSP runs in report-only mode, and it does not
- * affect rendering through <img>, CSS background-image, or <link rel="icon">.
- */
-const SVG_CONTENT_SECURITY_POLICY =
-  "default-src 'none'; style-src 'unsafe-inline'; sandbox";
 
 /**
  * Controller for theme-related endpoints.

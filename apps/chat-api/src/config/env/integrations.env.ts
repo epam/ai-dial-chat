@@ -35,6 +35,42 @@ export class IntegrationsEnv {
   CUSTOM_CORE_API_CONFIG?: string;
 
   /*
+   * Server-only registry of GitHub/GitLab content sources served through
+   * GET /api/v1/content-sources/:sourceId (see
+   * openspec/changes/add-content-sources-proxy/design.md). JSON object,
+   * `{"version":1,"sources":[...]}`. Unset, empty or whitespace-only values
+   * mean no sources are configured. Parsed by ContentSourcesRegistryService,
+   * not by this schema, so an invalid value fails startup there with a
+   * field-identifying message. Never exposed through client-config,
+   * CUSTOM_CLIENT_VARIABLES or browser build variables.
+   */
+  @IsOptional()
+  @IsString()
+  CONTENT_SOURCES_CONFIG?: string;
+
+  /*
+   * Secret JSON map `{"<credentialId>":"<token>"}` referenced by a source's
+   * `credentialId`. Server-only; never logged, never sent to the browser.
+   */
+  @IsOptional()
+  @IsString()
+  CONTENT_SOURCES_CREDENTIALS?: string;
+
+  /* How long a fetched content-source document, listing or date stays fresh. */
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1000)
+  CONTENT_SOURCES_CACHE_TTL_MS?: number = 30 * 60 * 1000;
+
+  /* Deadline of each upstream GitHub/GitLab request. */
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1000)
+  CONTENT_SOURCES_TIMEOUT_MS?: number = 10_000;
+
+  /*
    * Project context limits, enforced by `POST /api/v1/projects` and
    * published to the browser as `projects.*` client config. Keep them at or
    * below DIAL Core's `complexResource.types.projects` limits (built-in:

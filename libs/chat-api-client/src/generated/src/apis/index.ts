@@ -6,6 +6,7 @@ export * from './AuthApi';
 export * from './CelebrationsApi';
 export * from './ChatApi';
 export * from './ClientChannelApi';
+export * from './ContentSourcesApi';
 export * from './ConversationsApi';
 export * from './CustomApiApi';
 export * from './DeploymentsApi';

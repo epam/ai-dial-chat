@@ -8,6 +8,7 @@ src/apis/AuthApi.ts
 src/apis/CelebrationsApi.ts
 src/apis/ChatApi.ts
 src/apis/ClientChannelApi.ts
+src/apis/ContentSourcesApi.ts
 src/apis/ConversationsApi.ts
 src/apis/CustomApiApi.ts
 src/apis/DeploymentsApi.ts
