@@ -71,7 +71,7 @@ Architecture guard for every slice that touches `libs/*`: the lib receives only 
   - Verification: `npm run test:file -- libs/chat-hooks/src/files/useDialFileListing/tests/useDialFileListing.spec.tsx`, `npm run test:file -- libs/chat-hooks/src/files/useDialFileManager/tests/useDialFileManager.spec.tsx`
 - [x] 4.2 `apps/chat/src/components/DialFileManagerShell/useDialFileManagerHostOptions.ts`: add `isPublicFolderVisible` from `useOrgUnitsContext()` to the host options (`DialFileManagerHostOptions` pick), and call `ensureUnits()` in an effect. `DialFileManagerPage` and `DialFileManagerModal` both read these options. Add a case to `apps/chat/src/components/DialFileManagerShell/tests/DialFileManagerShell.spec.tsx` or a new `tests/useDialFileManagerHostOptions.spec.ts`: a plain Organization folder is not rendered once units are `Ready`, and is rendered while they load.
   - Verification: `npm run test:file --` the touched spec file(s)
-- [ ] 4.3 Slice check: `npm run verify:changed`. Done in the worktree: typecheck and lint for chat-hooks, `tsc` and eslint for the app, and the chat-hooks `src/files` tests (638 passed). The app's test run was skipped at the user's request, because the shared `node_modules` made vitest mocks fail intermittently, including on untouched specs.
+- [x] 4.3 Slice check. Done in the worktree: typecheck and lint for chat-hooks, `tsc` and eslint for the app, and the chat-hooks `src/files` tests. The app specs first skipped here (shared `node_modules` made vitest mocks flaky) were run later from a worktree whose `@epam/*` links point at its own libs: the touched `apps/chat` specs pass (21 files, 429 tests).
 
 ## 5. Docs
 
@@ -92,9 +92,11 @@ Architecture guard for every slice that touches `libs/*`: the lib receives only 
 
 ## 6. Close
 
-- [ ] 6.1 `npm run build:quiet` (lib public APIs changed in four libs).
-- [ ] 6.2 Five-axis review (`code-review-and-quality`).
-- [ ] 6.3 `npm run verify:full` once.
+- [x] 6.1 `npm run build:quiet` (lib public APIs changed in four libs). Run in the worktree with `NX_WORKSPACE_ROOT_PATH` set to it: 75 `nx affected` build tasks succeeded.
+- [x] 6.2 Five-axis review (`code-review-and-quality`): approve with comments. Fixed: a folder picked before the units loaded stayed usable after the tree hid it (see 6.4); the design wording about the file-manager release. Accepted as is: `pruneFolderTree` and `pruneHiddenFolders` repeat the pruning on two node types; a unit whose folder is the bucket root would hide every plain folder, which Core does not return.
+- [x] 6.3 `npm run verify:full` once, in the worktree (with `apps/chat-api/node_modules` linked, which holds that app's own `https-proxy-agent`): typecheck, lint and format pass; tests pass in 87 of 88 projects. The one failure, `chat-api` `files.controller.spec.ts` ("sends an early DIAL Core rejection with Connection: close", `ECONNRESET`), is a network-timing test this change does not touch and passes on three reruns.
+- [x] 6.4 Review fix: `useOrgUnitFolderGuards` makes a hidden Organization folder unusable (`isDestinationUsable` `false`) and gives it the reason `orgUnitAccess.folderOutsideOrgUnits` once the units are `Ready`. New key in `OrgUnitAccessI18nKeys` and `en.json`; cases in `apps/chat/src/hooks/publish/tests/useOrgUnitFolderGuards.spec.ts`; the Save container specs now use an ancestor-of-a-unit folder for the "outside every unit" flow and assert the reason for a plain folder.
+  - Verification: the touched `apps/chat` specs (43 files, 1015 tests), `tsc` on the app tsconfigs, eslint on the changed files.
 
 ## Follow-ups (out of scope, record only)
 
