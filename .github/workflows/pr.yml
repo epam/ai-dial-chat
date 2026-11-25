@@ -256,6 +256,11 @@ jobs:
       - name: Inline head script unit tests
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: npm run vite:inline-script:test
+      # The build step that writes .br/.gz copies of the frontend assets,
+      # which chat-api serves precompressed; no build needed.
+      - name: Precompressed assets unit tests
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npm run vite:precompress:test
       # The type:* module-boundary constraints in eslint.config.mjs reject the
       # imports they are meant to reject; no build needed.
       - name: Module boundary rule tests

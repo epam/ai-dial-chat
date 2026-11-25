@@ -553,7 +553,13 @@ Configured at startup:
   Vite names after a hash of their content, are served
   `public, max-age=31536000, immutable`, so a warm reload reuses them without a
   revalidation request each; other static files keep Express's default
-  revalidation.
+  revalidation. The `chat` and `chat-overlay-sandbox` builds write Brotli
+  (quality 11) and gzip (level 9) copies next to every text asset of 1 KB and
+  more (`tools/vite/precompress-assets.mjs`). chat-api lists those `.br`/`.gz`
+  files at startup and sends the variant the request's `Accept-Encoding`
+  allows, with the original `Content-Type` and `Vary: Accept-Encoding`
+  (`app/precompressed-assets.ts`); `index.html`, which carries a fresh nonce,
+  stays uncompressed. A build without the copies is served as is.
 - Global prefix: `api`
 - Global in-memory cache: an explicit Keyv memory adapter with a 100-entry LRU limit and periodic expiration cleanup; see [backend caching behavior](../apps/chat-api/README.md#performance).
 - OpenTelemetry SDK bootstrap (`telemetry/otel-sdk.ts`, imported first, before `reflect-metadata`)
