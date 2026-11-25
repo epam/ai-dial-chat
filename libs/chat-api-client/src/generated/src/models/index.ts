@@ -4714,6 +4714,12 @@ export interface DeploymentItemDto {
    */
   topics?: Array<string>;
   /**
+   * Provider of the model as DIAL Core reports it (e.g. "aws"); undefined when DIAL Core sends none
+   * @type {string}
+   * @memberof DeploymentItemDto
+   */
+  provider?: string;
+  /**
    * Maximum number of attachments allowed per message; undefined when not specified by DIAL Core
    * @type {number}
    * @memberof DeploymentItemDto

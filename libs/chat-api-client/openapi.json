@@ -14716,6 +14716,10 @@
               "type": "string"
             }
           },
+          "provider": {
+            "type": "string",
+            "description": "Provider of the model as DIAL Core reports it (e.g. \"aws\"); undefined when DIAL Core sends none"
+          },
           "maxInputAttachments": {
             "type": "number",
             "description": "Maximum number of attachments allowed per message; undefined when not specified by DIAL Core"

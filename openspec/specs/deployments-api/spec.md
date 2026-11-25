@@ -133,6 +133,7 @@ The endpoint:
 - `isHidden?: boolean` — `true` when any of `topics` is in the `HIDDEN_ENTITY_TAGS` env list
 - `displayVersion?: string`, `createdAt?: number`, `updatedAt?: number` — `display_version`, `created_at`, `updated_at` from DIAL Core
 - `topics?: string[]` — `description_keywords` from DIAL Core, defaulting to `[]`
+- `provider?: string` — the provider DIAL Core reports at the top level of the item (e.g. `aws`), forwarded as sent; absent when Core sends none (see "DeploymentItemDto exposes the provider")
 - `applicationTypeSchemaId?: string` — `application_type_schema_id`, set only for `type === 'application'` items
 - `maxInputAttachments?: number` — `max_input_attachments` when it is a number
 - `applicationFolder?: string` — parent directory path of the application derived from `id` (everything before the last `/`); set only for `type === 'application'` items whose `id` contains a `/`; absent for root-level applications and all non-application types
@@ -465,3 +466,33 @@ Generated-client impact: `libs/chat-api-client/openapi.json` and the generated `
 
 - **WHEN** an application has no `viewer_url`, or it is an empty string
 - **THEN** the mapped item has no `viewerUrl`
+
+---
+
+### Requirement: DeploymentItemDto exposes the provider
+
+`DeploymentItemDto` (`apps/chat-api/src/deployments/dto/deployment-item.dto.ts`) SHALL carry an optional `provider?: string` (`@ApiPropertyOptional`). `RawDeploymentDto` (`apps/chat-api/src/deployments/dto/raw-deployment.dto.ts`) SHALL declare DIAL Core's top-level `provider?: string`, and `mapToDeploymentItem` (`apps/chat-api/src/deployments/utils/deployment-mapper.util.ts`) SHALL set `provider` from it when it is a non-empty string, as sent: no trimming, no case folding, no default, and no branching on the item type. A missing, empty or non-string value SHALL leave `provider` absent. Only the top-level field is read: a `provider` inside any `interface_configs` entry SHALL be ignored, because DIAL Core never puts it there.
+
+DIAL Core fills `provider` per model, so an item without one is normal and clients SHALL NOT treat it as an error. The endpoint shape is otherwise unchanged: `GET /api/v1/deployments` (operationId `listDeployments`) returns the same list, now with `provider` on the items that have one. Error codes, the cache key and the TTL are unchanged: the field rides on the existing deployments listing cache. `deployment-details-api` still returns the model's provider in `modelDetails.provider`; the list field does not replace it.
+
+Generated-client impact: `libs/chat-api-client/openapi.json` and the generated `DeploymentItemDto` model gain `provider?: string`; regenerated with `npm run openapi`.
+
+#### Scenario: Model with a provider
+
+- **WHEN** DIAL Core returns a model with `provider: "aws"`
+- **THEN** the mapped item has `provider: "aws"`
+
+#### Scenario: Value is forwarded as sent
+
+- **WHEN** DIAL Core returns models with `provider: "AWS"` and `provider: "aws"`
+- **THEN** the mapped items carry `"AWS"` and `"aws"` unchanged
+
+#### Scenario: No provider
+
+- **WHEN** DIAL Core returns a model with no `provider`, an empty string, or a non-string value
+- **THEN** the mapped item has no `provider`
+
+#### Scenario: Provider inside interface_configs is ignored
+
+- **WHEN** DIAL Core returns a model with no top-level `provider` and `interface_configs: { openaiChatCompletions: { provider: "nested" } }`
+- **THEN** the mapped item has no `provider`

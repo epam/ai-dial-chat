@@ -28,6 +28,11 @@ export interface RawDeploymentDto {
   max_input_attachments?: number;
   description_keywords?: string[];
   owner?: string;
+  /**
+   * Provider DIAL Core reports at the top level of a model (e.g. `aws`). It is
+   * optional and unrelated to `interface_configs`, which never carries it.
+   */
+  provider?: string;
   application_properties?: Record<string, unknown>;
   features?: RawDeploymentFeaturesDto;
   /**

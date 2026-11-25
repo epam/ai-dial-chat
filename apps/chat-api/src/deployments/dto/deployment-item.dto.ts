@@ -183,6 +183,12 @@ export class DeploymentItemDto {
 
   @ApiPropertyOptional({
     description:
+      'Provider of the model as DIAL Core reports it (e.g. "aws"); undefined when DIAL Core sends none',
+  })
+  provider?: string;
+
+  @ApiPropertyOptional({
+    description:
       'Maximum number of attachments allowed per message; undefined when not specified by DIAL Core',
   })
   maxInputAttachments?: number;

@@ -285,6 +285,7 @@ export const mapDeploymentToCatalogItem = (
     isFeatured: deployment.isFeatured ?? false,
     isHidden: deployment.isHidden ?? false,
     topics: deployment.topics ?? [],
+    provider: deployment.provider,
     isUserFavorite: favoriteIds.has(deployment.id),
     isStarred: favoriteIds.has(deployment.id),
     isMyApp: deployment.isMy ?? false,
