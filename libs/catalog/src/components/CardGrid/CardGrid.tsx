@@ -30,6 +30,8 @@ export const CardGrid: FC<CardGridProps> = memo(
     featuredChipStyle,
     markdownLabels,
     activeTab,
+    renderCard,
+    cardHeight = CARD_HEIGHT,
   }) => {
     const noResultsTitle = titles?.noResultsTitle ?? 'No results';
     const featuredLabel = titles?.featuredLabel ?? 'Featured';
@@ -43,7 +45,7 @@ export const CardGrid: FC<CardGridProps> = memo(
     const noFolderLabel = titles?.noFolderLabel ?? 'No folder';
 
     const { containerRef, startRow, endRow, columnCount, totalHeight } =
-      useScrollVirtualizer(items.length, { isFullWidth });
+      useScrollVirtualizer(items.length, { isFullWidth, cardHeight });
 
     const rowData = useMemo<CardRowData>(
       () => ({
@@ -63,6 +65,8 @@ export const CardGrid: FC<CardGridProps> = memo(
         featuredChipStyle,
         markdownLabels,
         activeTab,
+        renderCard,
+        cardHeight,
       }),
       [
         items,
@@ -81,6 +85,8 @@ export const CardGrid: FC<CardGridProps> = memo(
         featuredChipStyle,
         markdownLabels,
         activeTab,
+        renderCard,
+        cardHeight,
       ],
     );
 
@@ -102,7 +108,7 @@ export const CardGrid: FC<CardGridProps> = memo(
                 'rounded-md border p-3',
                 styles.skeletonCard,
               )}
-              style={{ height: CARD_HEIGHT }}
+              style={{ height: cardHeight }}
             >
               <Skeleton
                 avatar={{ size: 48, shape: SkeletonAvatarShape.Square }}

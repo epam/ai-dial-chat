@@ -377,6 +377,40 @@ const renderToolbar = ({
 />;
 ```
 
+#### Replacing the Browse cards
+
+The cards of the Browse grid are built in. A host that needs a different card
+design passes `renderCard`, which draws each card in its place, together with
+`cardHeight`. It is called for every visible cell with the item, the search
+`query`, `isSelected`, `isReadonly`, the `activeTab` and an `onClick` that opens
+the item as the built-in card does (absent when the grid has no click handler).
+
+The grid keeps owning the cell, its size and the virtualization, so:
+
+- set `cardHeight` (px, default 248, the built-in card's height) to the real
+  height of the host's cards. The grid positions and virtualizes its rows from
+  it; a card taller than `cardHeight` overlaps the next row;
+- keep `renderCard` stable (`useCallback`): the rows are memoized on it, and a
+  new function on every render redraws every visible card;
+- the list view and the Favorites strip are not affected.
+
+Without `renderCard` the built-in cards render and nothing changes.
+
+```tsx
+import { Catalog, type CatalogCardRenderProps } from '@epam/ai-dial-catalog';
+
+const renderCard = ({ item, onClick }: CatalogCardRenderProps) => (
+  <MyCard item={item} onClick={onClick} />
+);
+
+<Catalog
+  items={items}
+  favorites={favoriteItems}
+  renderCard={renderCard}
+  cardHeight={180}
+/>;
+```
+
 #### Mobile browse settings
 
 Below 768px (`useIsPhone` from `@epam/ai-dial-chat-shared`)
