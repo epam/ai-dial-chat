@@ -53,19 +53,34 @@ export const CatBaubleStill: FC = () => (
           strokeWidth="6.2"
           strokeLinecap="round"
         />
-        <ellipse cx="0" cy="-26" rx="27" ry="14" fill={P.fur} />
+        <ellipse cx="0" cy="-27" rx="26" ry="15.5" fill={P.fur} />
         <ellipse cx="20" cy="-23" rx="7" ry="9" fill={P.white} stroke="none" />
-        <rect x="12" y="-26" width="7.5" height="26" rx="3.6" fill={P.fur} />
-        <rect x="21" y="-26" width="7.5" height="26" rx="3.6" fill={P.fur} />
+        <rect x="11" y="-26" width="9.5" height="26" rx="4.7" fill={P.fur} />
+        <rect x="21" y="-26" width="9.5" height="26" rx="4.7" fill={P.fur} />
         <g transform="rotate(-18 22 -36)">
-          <path d="M19 -55L22 -70L29 -59Z" fill={P.fur} />
-          <path d="M32 -60L41 -68L41 -54Z" fill={P.fur} />
-          <ellipse cx="31" cy="-50" rx="13.5" ry="11.5" fill={P.fur} />
+          <path d="M18 -57L21 -73L29 -62Z" fill={P.fur} />
+          <path d="M33 -63L42 -71L43 -56Z" fill={P.fur} />
+          <ellipse cx="31" cy="-51" rx="15.5" ry="13.5" fill={P.fur} />
           <ellipse cx="38" cy="-44" rx="5.5" ry="3.8" fill={P.white} />
-          <ellipse cx="28" cy="-51" rx="3" ry="3.5" fill={P.eye} />
-          <ellipse cx="36" cy="-51.5" rx="3" ry="3.5" fill={P.eye} />
-          <ellipse cx="28.4" cy="-51" rx="1.2" ry="2.5" fill={P.pupil} />
-          <ellipse cx="36.4" cy="-51.5" rx="1.2" ry="2.5" fill={P.pupil} />
+          <ellipse
+            cx="29.5"
+            cy="-44.5"
+            rx="2.75"
+            ry="1.4"
+            fill={P.blush}
+            stroke="none"
+          />
+          <path
+            d="M36.6 -43.4Q37.2 -42.2 38.2 -43.4Q39.2 -42.2 40 -43.4"
+            fill="none"
+            strokeWidth="0.7"
+          />
+          <ellipse cx="26.5" cy="-51.5" rx="3.75" ry="4" fill={P.eye} />
+          <ellipse cx="36.5" cy="-52" rx="3.75" ry="4" fill={P.eye} />
+          <ellipse cx="27.1" cy="-51.5" rx="2.2" ry="2.7" fill={P.pupil} />
+          <ellipse cx="37.1" cy="-52" rx="2.2" ry="2.7" fill={P.pupil} />
+          <circle cx="26.1" cy="-53.2" r="1" fill={P.white} stroke="none" />
+          <circle cx="36.1" cy="-53.7" r="1" fill={P.white} stroke="none" />
         </g>
         <path d="M17 -38L27 -33" stroke={P.collar} strokeWidth="3" />
         <circle cx="25" cy="-30" r="3" fill={P.bell} strokeWidth="0.8" />

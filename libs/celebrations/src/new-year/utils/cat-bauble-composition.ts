@@ -408,7 +408,7 @@ export const buildCatBaubleComposition = (
   blink(1.4);
   headTilt.set(B.enterEnd, 0).set(B.lookUp, -16).set(B.crouch, -10);
   setHeld(pupils, B.lookUp - 0.1, 100);
-  pupils.set(B.lookUp + 0.15, 230, EASE_OUT).set(B.landBack, 230);
+  pupils.set(B.lookUp + 0.15, 125, EASE_OUT).set(B.landBack, 125);
   pupils.set(B.groom, 100);
   squash
     .set(B.crouch - 0.05, [100, 100])
@@ -470,7 +470,7 @@ export const buildCatBaubleComposition = (
     .set(B.lookBack, 100)
     .set(B.lookBack + 0.1, 88)
     .set(B.lookBack + 0.25, 100);
-  setHeld(pupils, B.lookBack + 0.05, 180);
+  setHeld(pupils, B.lookBack + 0.05, 115);
   flip(B.turnBack, -toward as 1 | -1);
   const isTangerine = !selector;
   /* Lying pose: shoulder above the selector, leg straight down; or, with a
@@ -568,7 +568,7 @@ export const buildCatBaubleComposition = (
     .set(B.hung + 0.12, 150, EASE_OUT)
     .set(B.firStill, 150)
     .set(B.firStill + 0.3, 100);
-  setHeld(pupils, B.hung + 0.05, 240);
+  setHeld(pupils, B.hung + 0.05, 130);
   pupils.set(B.firStill + 0.3, 100);
   squash.set(B.hung + 0.1, [100, 100]).set(B.hung + 0.25, [106, 84], EASE_OUT);
   squash.set(B.firStill, [106, 84]).set(B.firStill + 0.25, [100, 100]);
@@ -917,13 +917,13 @@ export const buildCatBaubleComposition = (
     art,
     'pupil-0',
     's',
-    toLottie(pupils, ([k]) => [k, 100]),
+    toLottie(pupils, ([k]) => [k, k]),
   );
   joint(
     art,
     'pupil-1',
     's',
-    toLottie(pupils, ([k]) => [k, 100]),
+    toLottie(pupils, ([k]) => [k, k]),
   );
   joint(art, 'hind-near', 'r', toLottie(legHind));
   joint(art, 'fore-far', 'r', toLottie(legForeFar));

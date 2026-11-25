@@ -19,6 +19,7 @@ export const CAT_BAUBLE_PALETTE = {
   eye: '#e9a227',
   pupil: '#1d1f26',
   pink: '#e8949c',
+  blush: '#f3b3ba',
   collar: '#c8323c',
   bell: '#f2c14e',
   fir: '#2f7d4f',
@@ -103,9 +104,9 @@ const leg = (
     name,
     [
       ...(hasWhitePaw
-        ? [group('paw', [ellipse([x, -1.5], [9, 5])], { fill: P.white })]
+        ? [group('paw', [ellipse([x, -1.5], [10.5, 5.5])], { fill: P.white })]
         : []),
-      group('shin', [rect([x, y + 10], [7.5, 21], 3.6)], {
+      group('shin', [rect([x, y + 10], [9.5, 21], 4.7)], {
         fill: fur,
         stroke: ink,
         width: 1.2,
@@ -123,13 +124,13 @@ export const reachingLegArt = (): SnowmanShape => {
     [
       group(
         'paw',
-        [ellipse([0, -1.5], [9.5, 5.5])],
+        [ellipse([0, -1.5], [11, 6])],
         { fill: P.white, stroke: ink, width: 1 },
         { ...identity(), p: { a: 0, k: [x, y + CAT_RIG.leg] } },
       ),
       group(
         'shin',
-        [rect([x, y + 10], [7.5, 21], 3.6)],
+        [rect([x, y + 10], [9.5, 21], 4.7)],
         { fill: P.fur, stroke: ink, width: 1.2 },
         identity([x, y]),
       ),
@@ -140,8 +141,8 @@ export const reachingLegArt = (): SnowmanShape => {
 };
 
 const EYES: Point[] = [
-  [29, -44],
-  [37, -44.5],
+  [27.5, -44.5],
+  [37.5, -45],
 ];
 
 /** The head, with named groups for the ears, eyes and pupils. */
@@ -184,21 +185,46 @@ const headArt = (): SnowmanShape =>
         ],
         { fill: P.pink, stroke: ink, width: 0.6 },
       ),
+      group(
+        'mouth',
+        [
+          path(
+            [
+              [40.6, -37.4],
+              [41.8, -36.2],
+              [42.8, -37.4],
+              [43.8, -36.2],
+              [45, -37.4],
+            ],
+            false,
+            0.2,
+          ),
+        ],
+        { stroke: ink, width: 0.7 },
+      ),
       group('muzzle', [ellipse([39.5, -36.5], [11, 7.5])], { fill: P.white }),
+      group('blush', [ellipse([30.5, -37.6], [5.5, 2.8])], { fill: P.blush }),
       group(
         'eyes',
         [
           ...EYES.map(([x, y], index) =>
             group(
               `pupil-${index}`,
-              [ellipse([x + 0.6, y], [2.4, 5])],
-              { fill: P.pupil },
+              [
+                group('catchlight', [ellipse([x - 0.5, y - 1.7], [2, 2])], {
+                  fill: P.white,
+                }),
+                group('pupil', [ellipse([x + 0.6, y], [4.4, 5.4])], {
+                  fill: P.pupil,
+                }),
+              ],
+              {},
               identity([x + 0.6, y]),
             ),
           ),
           group(
             'irises',
-            EYES.map((at) => ellipse(at, [6, 7])),
+            EYES.map((at) => ellipse(at, [7.5, 8])),
             { fill: P.eye, stroke: ink, width: 0.8 },
           ),
         ],
@@ -229,7 +255,7 @@ const headArt = (): SnowmanShape =>
         ],
         { fill: P.stripe },
       ),
-      group('skull', [ellipse([32, -43], [27, 23])], {
+      group('skull', [ellipse([32, -44], [31, 27])], {
         fill: P.fur,
         stroke: ink,
         width: 1.3,
@@ -242,18 +268,18 @@ const headArt = (): SnowmanShape =>
             [
               path(
                 [
-                  [24.5, -51],
-                  [25.5, -59],
-                  [29.5, -53],
+                  [24, -54],
+                  [24.5, -62],
+                  [29, -56],
                 ],
                 true,
                 0.05,
               ),
               path(
                 [
-                  [35, -53.5],
-                  [39.5, -59.5],
-                  [39.5, -51],
+                  [35.5, -56.5],
+                  [40.5, -62.5],
+                  [40, -54],
                 ],
                 true,
                 0.05,
@@ -266,18 +292,18 @@ const headArt = (): SnowmanShape =>
             [
               path(
                 [
-                  [21.5, -49],
-                  [24, -63],
-                  [31.5, -53],
+                  [20.5, -52],
+                  [23, -66],
+                  [31, -56],
                 ],
                 true,
                 0.06,
               ),
               path(
                 [
-                  [33, -54],
-                  [41.5, -62.5],
-                  [42, -48],
+                  [33.5, -57],
+                  [42.5, -65.5],
+                  [43, -51],
                 ],
                 true,
                 0.06,
@@ -379,7 +405,7 @@ export const catArt = (): SnowmanShape =>
       ],
       { fill: P.furShade },
     ),
-    group('body', [ellipse([0, -28], [60, 27])], {
+    group('body', [ellipse([0, -29], [56, 31])], {
       fill: P.fur,
       stroke: ink,
       width: 1.3,

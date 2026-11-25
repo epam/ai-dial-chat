@@ -42,12 +42,12 @@ The selector's along position `selA` decides the stage. The fir stands at the fa
 
 The cat faces +x, with its origin on the ground between its feet. It is a few broad flat shapes with no gradients, about 74 native units tall when standing:
 
-- **Body:** an ellipse at about (0, −27), 60 × 28 units, with a white chest patch and three broad tabby stripe shapes.
+- **Body:** an ellipse at about (0, −29), 56 × 31 units, with a white chest patch and three broad tabby stripe shapes. The proportions are deliberately cartoon-cute: a big round head, short chunky legs and a compact body. The first, longer body with thin legs and a small head read as unsettling.
 - **Head:** a group pivoting at the neck (24, −38), containing:
   - the ear groups, which rotate to point forward or lie flat;
   - the eyes, whose scale-y blinks;
-  - the pupils, whose scale widens for anticipation;
-  - a muzzle and a mouth point.
+  - round pupils with a white catchlight, whose uniform scale widens for anticipation; vertical slit pupils read as a predatory stare and are avoided;
+  - a muzzle with a small "ω" mouth, a cheek blush and a mouth point.
 - **Tail:** a group pivoting at (−28, −30), whose rotation and scale give the swish and the puff.
 - **Legs:** four legs pivoting at the hips and shoulders. The near foreleg also has a stretch channel, its scale-y, for the reach down to the selector.
 - **Bell:** a group on the collar, rotating with lag.
