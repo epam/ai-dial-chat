@@ -116,6 +116,30 @@ describe('usePublishFolders', () => {
     ).toContain('Archive');
   });
 
+  it('hides a remembered destination the host rule refuses and shows it again once allowed', async () => {
+    const rememberedFolderKeys = ['Org/Archive', 'Org/Shared'];
+    const { result, rerender } = renderHook(
+      (props: Partial<UsePublishFoldersParams>) =>
+        usePublishFolders({ listPublicFiles, rememberedFolderKeys, ...props }),
+      {
+        initialProps: {
+          canPublishTo: (path: string[]) => path.join('/') !== 'Org/Archive',
+        },
+      },
+    );
+    await waitFor(() => expect(result.current.folderItems).toHaveLength(1));
+
+    expect(
+      result.current.folderItems[0].children?.map((child) => child.name),
+    ).toEqual(['Shared']);
+
+    rerender({ canPublishTo: () => true });
+
+    expect(
+      result.current.folderItems[0].children?.map((child) => child.name),
+    ).toContain('Archive');
+  });
+
   it('reports a newly used destination through the change callback', async () => {
     const onRememberedFolderKeysChange = vi.fn();
     const { result } = render({

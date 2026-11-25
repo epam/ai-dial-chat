@@ -176,6 +176,7 @@ describe('PublishProjectPanelContainer', () => {
       purpose: OrgUnitFolderGuardPurpose.Publish,
       namespace: OrgUnitNamespace.Projects,
       isActive: true,
+      shouldRefreshOnOpen: true,
     });
     expect(usePublishFolders).toHaveBeenCalledWith({
       canPublishTo: isDestinationUsable,
@@ -197,6 +198,7 @@ describe('PublishProjectPanelContainer', () => {
       purpose: OrgUnitFolderGuardPurpose.Publish,
       namespace: OrgUnitNamespace.Projects,
       isActive: false,
+      shouldRefreshOnOpen: true,
     });
   });
 

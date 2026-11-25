@@ -127,7 +127,17 @@ The path is a decoded public-relative path, as the file manager and the publish 
 - **THEN** its own folder still owns paths inside it; the missing parents are not guessed (a known limitation, Core stays the authority)
 
 ### Requirement: Publish write access comes from the unit rights when they are known
-`usePublishFolders` in `libs/chat-hooks/src/catalog/usePublishFolders/usePublishFolders.ts` SHALL keep the existing `Production` placeholder (`hasPublishFolderWriteAccess`) as the fallback and SHALL take an optional host callback `canPublishTo(folderPath: string[]) => boolean`; when a callback is given it replaces the placeholder, otherwise the placeholder applies. The app containers pass the callback, built from `useOrgUnitsContext().canPublishAt` and the resource type's namespace, only when `features.orgUnitsEnabled` is on and the status is `Ready`; otherwise they pass none. With the flag off, behaviour is exactly as today.
+`usePublishFolders` in `libs/chat-hooks/src/catalog/usePublishFolders/usePublishFolders.ts` SHALL keep the existing `Production` placeholder (`hasPublishFolderWriteAccess`) as the fallback and SHALL take an optional host callback `canPublishTo(folderPath: string[]) => boolean`; when a callback is given it replaces the placeholder, otherwise the placeholder applies. The app containers pass the callback, built from `useOrgUnitsContext().canPublishAt` and the resource type's namespace, only when `features.orgUnitsEnabled` is on and the status is `Ready`; otherwise they pass none. With the flag off, behaviour is exactly as today. Each publish panel (`PublishConversationPanelContainer`, `PublishProjectPanelContainer`, `CatalogView`) SHALL pass `shouldRefreshOnOpen: true` to `useOrgUnitFolderGuards`, so already loaded rights are read again each time it opens and a revoked grant is not served from the session's first read. `usePublishFolders` SHALL leave out a remembered destination that `canPublishTo` refuses (see `catalog-publish-flow`).
+
+#### Scenario: Rights revoked while the page stays open
+- **GIVEN** the user opened a publish panel while holding `write` on a unit folder and an administrator then removed all of the user's access to it
+- **WHEN** the user opens a publish panel again
+- **THEN** the rights are read again and the folder is disabled
+
+#### Scenario: Revoked folder that only the browser remembers
+- **GIVEN** a destination kept in the remembered list that DIAL Core no longer lists, and the rights refuse it
+- **WHEN** the user opens a publish panel
+- **THEN** the folder is absent from the tree, and it is listed again once the rights allow it
 
 #### Scenario: Folder named Production with the flag on and rights Ready
 - **WHEN** the flag is on, the status is `Ready`, and a user opens a publish panel where the folder `Production/Releases` lies under no org unit

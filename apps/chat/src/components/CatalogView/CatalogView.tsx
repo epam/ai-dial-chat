@@ -369,6 +369,7 @@ const CatalogView: FC<Props> = ({
         ? getOrgUnitNamespace(publishEntityType)
         : undefined,
       isActive: !isSelectorMode && publishOpenItem != null,
+      shouldRefreshOnOpen: true,
       isQuickApp:
         publishOpenItem != null &&
         resolveCatalogItemEntity(
