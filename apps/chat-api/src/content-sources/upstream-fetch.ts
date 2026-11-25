@@ -12,6 +12,8 @@ export interface UpstreamRequest {
   readonly maxBytes: number;
   /** Configured source id, used for logging only. */
   readonly sourceId: string;
+  /** Aborts the request together with its deadline (every consumer left). */
+  readonly signal?: AbortSignal;
 }
 
 export interface UpstreamResponse {
@@ -54,6 +56,9 @@ const readCapped = async (
 };
 
 /**
+ * Only `ContentSourcesUpstreamService` may call this: it holds the pool slot
+ * that bounds concurrent upstream calls. Providers never import it directly.
+ *
  * One bounded GET to a configured repository host: deadline, no redirects,
  * byte cap, and a single place that classifies failures. Never logs the URL's
  * query, the headers or the body; credential problems log the source id and
@@ -72,7 +77,12 @@ export const fetchUpstream = async (
       method: 'GET',
       headers: request.headers,
       redirect: 'manual',
-      signal: AbortSignal.timeout(request.timeoutMs),
+      signal: request.signal
+        ? AbortSignal.any([
+            AbortSignal.timeout(request.timeoutMs),
+            request.signal,
+          ])
+        : AbortSignal.timeout(request.timeoutMs),
     });
   } catch {
     throw new UpstreamError(

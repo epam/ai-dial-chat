@@ -7,6 +7,10 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { mapDialHttpStatus } from '../common/dial/dial-error.mapper';
+import {
+  CLIENT_CLOSED_REQUEST_STATUS,
+  ClientClosedRequestException,
+} from '../common/exceptions/client-closed-request.exception';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { DialClientService } from '../dial/dial-client.service';
 import {
@@ -36,19 +40,14 @@ const RETAINED_UPSTREAM_STATUSES: ReadonlySet<number> = new Set([
   400, 401, 403, 404, 409, 422, 429,
 ]);
 
-/** Non-standard "Client Closed Request" status; never reaches a client. */
-export const CLIENT_CLOSED_REQUEST_STATUS = 499;
+export { CLIENT_CLOSED_REQUEST_STATUS };
 
 /**
  * Thrown when the caller disconnected before the Core call finished. The
  * response is never delivered; it lets the controller classify the outcome
  * without counting it as an upstream failure.
  */
-export class CustomApiClientClosedException extends HttpException {
-  constructor() {
-    super('Client closed request', CLIENT_CLOSED_REQUEST_STATUS);
-  }
-}
+export class CustomApiClientClosedException extends ClientClosedRequestException {}
 
 /** Upstream statuses that succeed with a JSON body. */
 const JSON_SUCCESS_STATUSES: ReadonlySet<number> = new Set([200, 201]);

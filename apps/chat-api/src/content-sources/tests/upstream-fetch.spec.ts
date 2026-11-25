@@ -74,6 +74,26 @@ describe('fetchUpstream', () => {
     );
   });
 
+  it('aborts the request when the caller signal aborts', async () => {
+    const fetchMock = vi.fn(
+      (_url: URL, init: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          init.signal?.addEventListener('abort', () =>
+            reject(new DOMException('aborted', 'AbortError')),
+          );
+        }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    const controller = new AbortController();
+    const pending = failure(
+      fetchUpstream(request({ signal: controller.signal })),
+    );
+    controller.abort();
+
+    expect((await pending).failure).toBe(UpstreamFailure.Unavailable);
+    expect(fetchMock.mock.calls[0][1].signal?.aborted).toBe(true);
+  });
+
   it('rejects an oversized body by Content-Length and while streaming', async () => {
     vi.stubGlobal('fetch', respond(200, 'x', { 'content-length': '101' }));
     expect((await failure(fetchUpstream(request()))).failure).toBe(

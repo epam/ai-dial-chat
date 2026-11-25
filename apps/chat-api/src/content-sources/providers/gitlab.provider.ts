@@ -8,7 +8,8 @@ import {
   ContentSource,
   ContentSourceDateMode,
 } from '../content-sources-registry.service';
-import { fetchUpstream, parseUpstreamJson } from '../upstream-fetch';
+import { ContentSourcesUpstreamService } from '../content-sources-upstream.service';
+import { parseUpstreamJson } from '../upstream-fetch';
 
 const PAGE_SIZE = 100;
 /** Bounds a listing at 5,000 entries; reaching it is reported as truncated. */
@@ -33,6 +34,8 @@ const encodePath = (path: string): string =>
 @Injectable()
 export class GitLabProvider implements ContentProvider {
   private readonly logger = new Logger(GitLabProvider.name);
+
+  constructor(private readonly upstream: ContentSourcesUpstreamService) {}
 
   async listDocuments(
     source: ContentSource,
@@ -167,17 +170,18 @@ export class GitLabProvider implements ContentProvider {
     context: ProviderContext,
     maxBytes: number,
   ) {
-    return fetchUpstream({
-      url,
-      origin: new URL(source.baseUrl).origin,
-      headers: {
-        Accept: '*/*',
-        'User-Agent': 'ai-dial-chat-content-sources',
-        ...(source.token ? { 'PRIVATE-TOKEN': source.token } : {}),
+    return this.upstream.fetch(
+      source,
+      {
+        url,
+        headers: {
+          Accept: '*/*',
+          'User-Agent': 'ai-dial-chat-content-sources',
+          ...(source.token ? { 'PRIVATE-TOKEN': source.token } : {}),
+        },
+        maxBytes,
       },
-      timeoutMs: context.timeoutMs,
-      maxBytes,
-      sourceId: source.id,
-    });
+      context,
+    );
   }
 }

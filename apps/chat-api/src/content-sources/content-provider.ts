@@ -10,6 +10,8 @@ export enum UpstreamFailure {
   Unavailable = 'unavailable',
   TooLarge = 'too_large',
   BadResponse = 'bad_response',
+  /** The upstream pool's wait queue was full; nothing was sent upstream. */
+  QueueFull = 'queue_full',
 }
 
 export class UpstreamError extends Error {
@@ -22,9 +24,22 @@ export class UpstreamError extends Error {
   }
 }
 
+/** The rejection a cancelled content-source wait or load settles with. */
+export const abortReason = (signal: AbortSignal): unknown =>
+  signal.reason ??
+  new DOMException('Content source request was cancelled', 'AbortError');
+
 /** Options every provider call receives from the service. */
 export interface ProviderContext {
-  readonly timeoutMs: number;
+  /** Aborted once no request waits for this load any more. */
+  readonly signal?: AbortSignal;
+  /**
+   * True for a listing's own fan-out (tree, title and date reads). It is
+   * already bounded by the listing's concurrency and single-flighted per
+   * source, so it waits for a slot but is never refused by a full queue: a
+   * refusal would discard the listing's completed reads.
+   */
+  readonly isQueueLimitExempt?: boolean;
 }
 
 export interface ProviderListing {
