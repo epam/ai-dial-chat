@@ -196,6 +196,7 @@ export const useOpenAttachmentCanvas = (
       attachment: DisplayAttachment,
       canvasAttachmentId: string | undefined,
       commitCanvas: CommitCanvasContent,
+      showPdfLoading: () => void,
     ): Promise<boolean> => {
       if (attachment.url == null && attachment.referenceUrl != null) {
         const pdfContent = resolvers.resolveReferencePdfContent(attachment);
@@ -246,6 +247,7 @@ export const useOpenAttachmentCanvas = (
 
       const mimeTypeResolver = MIME_TYPE_RESOLVERS[contentType];
       if (mimeTypeResolver != null) {
+        if (mimeTypeResolver === 'resolvePdfContent') showPdfLoading();
         const content = await resolvers[mimeTypeResolver](attachment);
         return commitCanvas(
           content ??
@@ -279,6 +281,7 @@ export const useOpenAttachmentCanvas = (
 
       const extensionResolver = EXTENSION_RESOLVERS[ext];
       if (extensionResolver != null) {
+        if (extensionResolver === 'resolvePdfContent') showPdfLoading();
         const content = await resolvers[extensionResolver](attachment);
         if (content == null) return false;
         return commitCanvas(content, attachment.name, canvasAttachmentId);
@@ -425,6 +428,15 @@ export const useOpenAttachmentCanvas = (
             attachment,
             canvasAttachmentId,
             commitFileCanvas,
+            () => {
+              if (canCommit()) {
+                openCanvasLoading(
+                  attachment.name,
+                  canvasAttachmentId,
+                  AttachmentContentType.Pdf,
+                );
+              }
+            },
           );
           /* `canCommit` is re-checked here rather than reused from the commit
              above: closing is itself a canvas write, and a request that has

@@ -527,8 +527,10 @@ export interface AttachmentCanvasLabels {
 export interface AttachmentCanvasProps {
   /** Controls visibility of the side panel. */
   isOpen: boolean;
-  /** When `true`, renders a loading spinner instead of content and hides action buttons. Defaults to `false`. */
+  /** When `true`, renders a loading placeholder instead of content and hides action buttons. Defaults to `false`. */
   isLoading?: boolean;
+  /** Content type being resolved; `Pdf` uses a skeleton while loading. */
+  loadingContentType?: AttachmentContentType;
   /** Called when the user activates the built-in close button. */
   onClose: () => void;
   /** Called from the retry action of an `Error` with `errorType: LoadFailed`; the action is hidden when omitted. */
@@ -633,8 +635,10 @@ export type AttachmentCanvasBodyLabels = Pick<
 export interface AttachmentCanvasBodyProps {
   /** The attachment content to render. */
   content: AttachmentCanvasContent;
-  /** When `true`, renders a loading spinner instead of content. Defaults to `false`. */
+  /** When `true`, renders a loading placeholder instead of content. Defaults to `false`. */
   isLoading?: boolean;
+  /** Content type being resolved; `Pdf` uses a skeleton while loading. */
+  loadingContentType?: AttachmentContentType;
   /** File name used for image `alt` text and the audio player's accessible label. */
   fileName?: string;
   /**

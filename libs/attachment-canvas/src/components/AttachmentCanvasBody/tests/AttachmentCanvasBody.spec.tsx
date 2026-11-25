@@ -122,7 +122,7 @@ describe('AttachmentCanvasBody', () => {
       { isLoading: true },
     );
     expect(screen.queryByText('ignored')).toBeNull();
-    expect(screen.getByRole('status')).toBeTruthy();
+    expect(screen.getByRole('img', { name: 'Loading…' })).toBeTruthy();
   });
 
   it('names the isLoading spinner with labels.loadingLabel, defaulting to "Loading…"', () => {
@@ -141,6 +141,63 @@ describe('AttachmentCanvasBody', () => {
       />,
     );
     expect(screen.getByRole('img', { name: 'Chargement…' })).toBeTruthy();
+  });
+
+  it('keeps the PDF loading announcement mounted before, during, and after loading', async () => {
+    const previousContent: AttachmentCanvasContent = {
+      type: AttachmentContentType.PlainText,
+      text: 'previous attachment',
+    };
+    const labels = {
+      loadingLabel: 'Loading another file',
+      pdfContentLoadingLabel: 'Chargement du PDF…',
+    };
+    const { container, rerender } = renderBody(previousContent, { labels });
+    const status = screen.getByRole('status');
+    expect(status.textContent).toBe('');
+
+    rerender(
+      <AttachmentCanvasBody
+        content={previousContent}
+        isLoading
+        loadingContentType={AttachmentContentType.Pdf}
+        labels={labels}
+      />,
+    );
+
+    expect(screen.getByRole('status')).toBe(status);
+    expect(status.textContent).toBe('Chargement du PDF…');
+    expect(screen.queryByRole('img')).toBeNull();
+    expect(screen.queryByText('previous attachment')).toBeNull();
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- the skeleton is decorative and hidden from accessible role queries
+    expect(container.querySelector('[aria-busy="true"]')).toBeTruthy();
+
+    rerender(
+      <AttachmentCanvasBody
+        content={{ type: AttachmentContentType.Pdf, url: 'blob:resolved-pdf' }}
+        labels={labels}
+      />,
+    );
+    await screen.findByRole('region', { name: 'pdf-content' });
+
+    expect(screen.getAllByRole('status')).toContain(status);
+    expect(status.textContent).toBe('');
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- the decorative skeleton must disappear after loading
+    expect(container.querySelector('[aria-busy="true"]')).toBeNull();
+  });
+
+  it('keeps the spinner when non-PDF content replaces a PDF', () => {
+    renderBody(
+      { type: AttachmentContentType.Pdf, url: 'blob:previous-pdf' },
+      {
+        isLoading: true,
+        labels: { loadingLabel: 'Loading another file' },
+      },
+    );
+
+    expect(
+      screen.getByRole('img', { name: 'Loading another file' }),
+    ).toBeTruthy();
   });
 
   it('renders PlainText content', () => {
@@ -420,6 +477,12 @@ describe('AttachmentCanvasBody', () => {
     );
 
     expect(screen.getByText('Loading the PDF viewer…')).toBeTruthy();
+    expect(screen.queryByRole('img')).toBeNull();
+    const loadingStatus = screen
+      .getAllByRole('status')
+      .find((status) => status.textContent === 'Loading the PDF viewer…');
+    // eslint-disable-next-line testing-library/no-node-access -- the skeleton is decorative and hidden from accessible role queries
+    expect(loadingStatus?.querySelector('[aria-busy="true"]')).toBeTruthy();
 
     // Let the mocked dynamic import settle before the test ends, so its
     // resolution doesn't land as an unwrapped `act(...)` update afterward.

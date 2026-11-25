@@ -80,10 +80,23 @@ vi.mock('@epam/ai-dial-react-pdf-highlighter', () => ({
 vi.mock('@epam/ai-dial-ui-kit', async () => ({
   ...(await vi
     .importActual<typeof import('@epam/ai-dial-ui-kit')>('@epam/ai-dial-ui-kit')
-    .then(({ LiveRegion, LiveRegionElement }) => ({
-      LiveRegion,
-      LiveRegionElement,
-    }))),
+    .then(
+      ({
+        LiveRegion,
+        LiveRegionElement,
+        Skeleton,
+        SkeletonShimmer,
+        SkeletonTone,
+        SkeletonVariant,
+      }) => ({
+        LiveRegion,
+        LiveRegionElement,
+        Skeleton,
+        SkeletonShimmer,
+        SkeletonTone,
+        SkeletonVariant,
+      }),
+    )),
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   DIAL_KIT_ICON_STROKE: 1.5,
   DropdownOverlayRole: { Menu: 'menu', Dialog: 'dialog', None: 'none' },
@@ -520,15 +533,24 @@ describe('PdfContent', () => {
           url="doc.pdf"
           highlights={[]}
           configurePdfWorker={configurePdfWorker}
+          labels={{ loadingLabel: 'Preparing PDF…' }}
         />,
       );
       expect(configurePdfWorker).toHaveBeenCalledOnce();
       expect(documentPreviewState.props).toBeUndefined();
+      const loadingStatus = screen
+        .getAllByRole('status')
+        .find((status) => status.textContent === 'Preparing PDF…');
+      expect(loadingStatus).toBeTruthy();
+      expect(screen.queryByText('spinner')).toBeNull();
+      // eslint-disable-next-line testing-library/no-node-access -- the skeleton is decorative and hidden from accessible role queries
+      expect(loadingStatus?.querySelector('[aria-busy="true"]')).toBeTruthy();
 
       await act(async () => {
         resolvePreparation();
       });
       expect(documentPreviewState.props).toBeDefined();
+      expect(screen.queryByText('Preparing PDF…')).toBeNull();
     });
 
     it('shares one in-flight preparation across two concurrent opens', async () => {

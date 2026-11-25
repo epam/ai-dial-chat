@@ -47,7 +47,7 @@ export const SkillFilePreview: FC<Props> = ({ state, onRetry }) => {
   const { t } = useTranslation();
   const loadPdf = usePdfPreviewLoader();
   const { currentTheme } = useTheme();
-  const { content, fileName } = useAttachmentCanvas();
+  const { content, fileName, loadingContentType } = useAttachmentCanvas();
   const isError = state === SkillFilePreviewState.Error;
 
   return (
@@ -77,6 +77,7 @@ export const SkillFilePreview: FC<Props> = ({ state, onRetry }) => {
           <AttachmentCanvasBody
             content={content}
             isLoading={state === SkillFilePreviewState.Loading}
+            loadingContentType={loadingContentType}
             fileName={fileName}
             labels={{
               unsupportedLabel: t(AttachmentCanvasI18nKeys.UnsupportedLabel),

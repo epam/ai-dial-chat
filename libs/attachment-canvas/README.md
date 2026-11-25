@@ -68,7 +68,7 @@ the library — `pdfjs-dist`, `@epam/ai-dial-react-pdf-highlighter`, and
 `react-syntax-highlighter`, including their CSS, only enter a host bundle once
 a user opens a PDF or a syntax-highlighted code file. While that import is
 pending, `AttachmentCanvasBody`/`CodeContent` render an accessible
-`role="status"` loading state (a `Spinner` for PDF; the plain-text fallback
+`role="status"` loading state (a PDF skeleton; the plain-text fallback
 for code, which stays visible instead of being replaced by a spinner). If the
 import fails, a `role="status"` message and a retry control are shown instead;
 activating retry genuinely re-attempts the import (recreating the underlying
@@ -157,14 +157,18 @@ import {
 
 ### AttachmentCanvasBody
 
-Content-only renderer shared by `AttachmentCanvas` — the same Markdown/JSON/code/HTML/PDF/OOXML/image/audio/visualizer/unsupported/error rendering, with no sidebar chrome (no panel, header, close/download/copy actions). Use it when a host wants to mount an attachment preview inline in its own layout instead of the resizable side panel `AttachmentCanvas`/`AttachmentCanvasContainer` render. For content type `MarkdownTable`, pass the table copy/download labels in `labels` (and optionally `tableDownloadFilename`) to show the table's own inline copy/download header, same as `AttachmentCanvas`. The code-block, table and formula labels (`codeBlockCopyLabel`, `codeBlockCopiedLabel`, `codeBlockDownloadLabel`, `tableScrollRegionAriaLabel`, `mathScrollRegionAriaLabel`) are part of `AttachmentCanvasBodyLabels` too. `loadingLabel` (default `'Loading…'`) is the accessible name of every loading spinner the body renders — the whole-body spinner while `isLoading`, the HTML source fetch and iframe load, the OOXML/CSV viewer and the MCP App handshake; `AttachmentCanvas` and `AttachmentCanvasContainer` forward it from `AttachmentCanvasLabels`. For content type `McpApp`, pass `onAppInfo` to be notified once the mounted app completes its `ui/initialize` handshake, with its declared name/version.
+Content-only renderer shared by `AttachmentCanvas` — the same Markdown/JSON/code/HTML/PDF/OOXML/image/audio/visualizer/unsupported/error rendering, with no sidebar chrome (no panel, header, close/download/copy actions). Use it when a host wants to mount an attachment preview inline in its own layout instead of the resizable side panel `AttachmentCanvas`/`AttachmentCanvasContainer` render. For content type `MarkdownTable`, pass the table copy/download labels in `labels` (and optionally `tableDownloadFilename`) to show the table's own inline copy/download header, same as `AttachmentCanvas`. The code-block, table and formula labels (`codeBlockCopyLabel`, `codeBlockCopiedLabel`, `codeBlockDownloadLabel`, `tableScrollRegionAriaLabel`, `mathScrollRegionAriaLabel`) are part of `AttachmentCanvasBodyLabels` too. `loadingLabel` (default `'Loading…'`) names the body's loading states — the whole-body placeholder while `isLoading`, the HTML source fetch and iframe load, the OOXML/CSV viewer and the MCP App handshake; `AttachmentCanvas` and `AttachmentCanvasContainer` forward it from `AttachmentCanvasLabels`. Set `loadingContentType={AttachmentContentType.Pdf}` while resolving a PDF to show a skeleton rather than the generic spinner. `useOpenAttachmentCanvas` sets this context field from its PDF resolver routing, including MIME-based PDFs without a `.pdf` filename. PDF import and worker preparation also use the skeleton; `pdfContentLoadingLabel` overrides its announcement. For content type `McpApp`, pass `onAppInfo` to be notified once the mounted app completes its `ui/initialize` handshake, with its declared name/version.
 
 ```tsx
-import { AttachmentCanvasBody } from '@epam/ai-dial-attachment-canvas';
+import {
+  AttachmentCanvasBody,
+  AttachmentContentType,
+} from '@epam/ai-dial-attachment-canvas';
 
 <AttachmentCanvasBody
   content={canvasContent}
   isLoading={isLoading}
+  loadingContentType={AttachmentContentType.Pdf}
   fileName="report.pdf"
 />;
 ```

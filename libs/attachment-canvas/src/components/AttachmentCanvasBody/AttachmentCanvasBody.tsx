@@ -7,6 +7,7 @@ import {
 import {
   DIAL_KIT_ICON_STROKE,
   GhostButton,
+  LiveRegion,
   Spinner,
 } from '@epam/ai-dial-ui-kit';
 import { IconAlertTriangle, IconLock } from '@tabler/icons-react';
@@ -32,6 +33,7 @@ import { CodeContent } from '../CodeContent/CodeContent';
 import { HtmlContent } from '../HtmlContent/HtmlContent';
 import { LazyContentBoundary } from '../LazyContentBoundary/LazyContentBoundary';
 import { OoxmlContent } from '../OoxmlContent/OoxmlContent';
+import { PdfLoadingSkeleton } from '../PdfLoadingSkeleton/PdfLoadingSkeleton';
 import { VisualizerCanvasRenderer } from '../VisualizerCanvasRenderer/VisualizerCanvasRenderer';
 import styles from './AttachmentCanvasBody.module.scss';
 
@@ -110,6 +112,7 @@ const ImageContent: FC<ImageContentProps> = ({
 const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
   content,
   isLoading = false,
+  loadingContentType,
   fileName,
   isHtmlSourceView = false,
   labels: {
@@ -432,6 +435,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
             key={`${content.url}#${pdfReloadKey}`}
             retryKey={pdfRetryKey}
             onRetry={handleRetryPdf}
+            pendingContent={<PdfLoadingSkeleton />}
             errorLabelClassName={typography?.errorMessageClassName}
             labels={{
               loadingLabel: pdfContentLoadingLabel,
@@ -602,19 +606,38 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     loadingLabel,
   ]);
 
+  const isPdfLoading =
+    isLoading && loadingContentType === AttachmentContentType.Pdf;
+  const renderLoading = () => {
+    if (isPdfLoading) {
+      return {
+        containerClassName: 'h-full',
+        bodyContent: <PdfLoadingSkeleton />,
+      };
+    }
+    return {
+      containerClassName: 'flex h-full items-center justify-center',
+      bodyContent: <Spinner ariaLabel={loadingLabel} />,
+    };
+  };
+  const { containerClassName, bodyContent } = isLoading
+    ? renderLoading()
+    : {
+        containerClassName: bodyContainerClassName,
+        bodyContent: renderedContent,
+      };
+
   return (
     <div
       /* Every renderer reads `--ac-*` vars (status, error, JSON, code, MCP App), and
        * `buildCssVars` drops unset fields, so the root carries them for all types. */
       style={isLoading ? undefined : cssVars}
-      className={mergeClasses(
-        isLoading
-          ? 'flex h-full items-center justify-center'
-          : bodyContainerClassName,
-        bodyClassName,
-      )}
+      className={mergeClasses(containerClassName, bodyClassName)}
     >
-      {isLoading ? <Spinner ariaLabel={loadingLabel} /> : renderedContent}
+      {bodyContent}
+      <LiveRegion visuallyHidden>
+        {isPdfLoading ? (pdfContentLoadingLabel ?? loadingLabel) : ''}
+      </LiveRegion>
     </div>
   );
 };
