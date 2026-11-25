@@ -138,6 +138,7 @@ storage-failure case. See [architecture](../../docs/architecture.md#sse-streamin
 - 📝 Comprehensive error handling
 - 🗄️ In-memory caching (5-minute TTL)
 - 🔒 Security headers (helmet middleware)
+- 🗜️ Brotli/gzip for JSON responses of 1 KB and more; SSE streams, ranged responses, proxied files and static assets go out uncompressed
 - 🚦 Rate limiting (100 req/min default, per-endpoint overrides)
 - 📊 Request metrics logging
 - 🔭 OpenTelemetry traces, logs, and Prometheus-compatible metrics (opt-in, see [Observability](#observability))

@@ -22,6 +22,7 @@ import type { NextFunction, Request, Response } from 'express';
 import helmet from 'helmet';
 import 'reflect-metadata';
 import { AppModule } from './app/app.module';
+import { createResponseCompressionMiddleware } from './app/response-compression';
 import { createFrontendMiddleware } from './app/static-assets';
 import { clearLegacyCookies } from './auth/cookies/cookie-options';
 import { TraceparentErrorFilter } from './common/filters/traceparent-error.filter';
@@ -107,6 +108,9 @@ async function bootstrap() {
   const configService = app.get(ConfigService<EnvironmentVariables, true>);
 
   app.use(createRequestTimingMiddleware(runtimeEnvironment));
+  /* JSON API bodies only: SSE streams, proxied files and the frontend's
+     static assets pass through as they are (`response-compression.ts`). */
+  app.use(createResponseCompressionMiddleware());
   app.use(cookieParser());
   app.use((req: Request, res: Response, next: NextFunction) => {
     clearLegacyCookies(req, res, configService);
