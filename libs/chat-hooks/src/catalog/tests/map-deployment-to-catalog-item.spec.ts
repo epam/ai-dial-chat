@@ -297,6 +297,20 @@ describe('mapDeploymentToCatalogItem', () => {
     expect(result.supportsChat).toBe(true);
   });
 
+  describe('provider', () => {
+    it('carries the deployment provider into the catalog item', () => {
+      const result = mapItem({ ...baseDeployment, provider: 'aws' });
+
+      expect(result.provider).toBe('aws');
+    });
+
+    it('leaves the provider unset when the deployment has none', () => {
+      const result = mapItem(baseDeployment);
+
+      expect(result.provider).toBeUndefined();
+    });
+  });
+
   describe('catalog tab membership', () => {
     it('lists an MCP-only application under Toolsets while keeping it an agent', () => {
       const result = mapItem({ ...baseDeployment, interfaces: ['mcp'] });
