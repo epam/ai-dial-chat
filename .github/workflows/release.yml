@@ -49,12 +49,12 @@ jobs:
           lfs: true
       - name: Calculate version
         id: semantic_versioning
-        uses: epam/ai-dial-ci/actions/semantic_versioning@4.13.2
+        uses: epam/ai-dial-ci/actions/semantic_versioning@5.1.0
         with:
           promote: ${{ github.event_name == 'workflow_dispatch' && inputs.promote }}
       # HACK: jobs.<job_id>.if does not support hashFiles function, so we check it on the step
       - if: ${{ hashFiles('apps/mcp-app-sandbox/Dockerfile') != '' }}
-        uses: epam/ai-dial-ci/actions/build_docker@4.13.2
+        uses: epam/ai-dial-ci/actions/build_docker@5.1.0
         with:
           ghcr-username: ${{ github.actor }}
           ghcr-password: ${{ secrets.ACTIONS_BOT_TOKEN }}
@@ -90,7 +90,7 @@ jobs:
           lfs: true
       - name: Calculate version
         id: semantic_versioning
-        uses: epam/ai-dial-ci/actions/semantic_versioning@4.13.2
+        uses: epam/ai-dial-ci/actions/semantic_versioning@5.1.0
         with:
           promote: ${{ github.event_name == 'workflow_dispatch' && inputs.promote }}
       - name: Stamp release version
@@ -99,7 +99,7 @@ jobs:
           NEXT_VERSION: ${{ steps.semantic_versioning.outputs.next-version }}
       # HACK: jobs.<job_id>.if does not support hashFiles function, so we check it on the step
       - if: ${{ hashFiles('apps/chat-api/Dockerfile') != '' }}
-        uses: epam/ai-dial-ci/actions/build_docker@4.13.2
+        uses: epam/ai-dial-ci/actions/build_docker@5.1.0
         with:
           ghcr-username: ${{ github.actor }}
           ghcr-password: ${{ secrets.ACTIONS_BOT_TOKEN }}
