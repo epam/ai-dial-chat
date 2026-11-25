@@ -44,7 +44,9 @@ describe('AuthUiModeCase', () => {
     fieldName: string,
     optionName: string,
   ) => {
-    await user.click(screen.getByRole('combobox', { name: fieldName }));
+    await user.click(
+      screen.getByRole('combobox', { name: new RegExp(`^${fieldName}`) }),
+    );
     await user.click(await screen.findByRole('option', { name: optionName }));
   };
 

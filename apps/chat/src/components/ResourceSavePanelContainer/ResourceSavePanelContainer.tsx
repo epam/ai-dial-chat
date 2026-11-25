@@ -31,6 +31,7 @@ import {
   ButtonsI18nKeys,
   CatalogI18nKeys,
   ConversationPublishI18nKeys,
+  DialFileManagerI18nKeys,
   EditorI18nKeys,
   OrgUnitAccessI18nKeys,
   ResourceSavePanelI18nKeys,
@@ -296,7 +297,9 @@ const ResourceSavePanelContainer: FC<Props> = ({
       newVersionPlaceholder: t(ResourceSavePanelI18nKeys.NewVersionPlaceholder),
       searchPlaceholder: t(CatalogI18nKeys.PublishFolderSearchPlaceholder),
       clearSearchAriaLabel: commonLabels.clearSearchAriaLabel,
-      folderEmptyStateLabel: t(CatalogI18nKeys.PublishFolderEmptyState),
+      folderEmptyStateLabel: t(CatalogI18nKeys.PublishFolderEmptyState, {
+        query: '{query}',
+      }),
       cancelCreatingFolderLabel: t(ButtonsI18nKeys.Cancel),
       addSiblingFolderLabel: commonLabels.addSiblingFolderLabel,
       addChildFolderLabel: commonLabels.addChildFolderLabel,
@@ -312,7 +315,11 @@ const ResourceSavePanelContainer: FC<Props> = ({
       createFolderSameAsParentNameError: t(
         ConversationPublishI18nKeys.SameAsParentFolderNameError,
       ),
+      createFolderHiddenNameWarning: t(
+        DialFileManagerI18nKeys.RenameHiddenItemWarning,
+      ),
       retryLabel: t(ButtonsI18nKeys.Retry),
+      createFolderFailedMessage: t(DialFileManagerI18nKeys.FolderCreateError),
     }),
     [
       commonLabels.addChildFolderLabel,

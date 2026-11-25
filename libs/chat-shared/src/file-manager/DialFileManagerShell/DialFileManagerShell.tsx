@@ -4,6 +4,7 @@ import {
   DialFileManagerTabs,
   GridSelectionMode,
   type DialFileAcceptType,
+  type DialDestinationRequest,
   type FileManagerGridRow,
   type FileTreeOptions,
 } from '@epam/ai-dial-react-file-manager';
@@ -35,13 +36,9 @@ import {
   DialFileManagerActionProfile,
   DialFileManagerVariant,
 } from '../file-manager-variant';
-import type {
-  DialFileManagerDestinationFolderPopupOptions,
-  DialFileManagerShellLabels,
-  EmptyStateCopy,
-} from '../labels';
+import { FileManagerDestinationPanel } from '../FileManagerDestinationPanel/FileManagerDestinationPanel';
+import type { DialFileManagerShellLabels, EmptyStateCopy } from '../labels';
 import { OperationLoaderModal } from '../OperationLoaderModal/OperationLoaderModal';
-import { getParentFolderPath } from '../path';
 import type { DialFileManagerShellStyles } from '../shell-styles';
 import {
   buildTransferQueueLabels,
@@ -51,14 +48,6 @@ import {
 } from '../upload-queue';
 import { useGridEditingScroll } from '../useGridEditingScroll/useGridEditingScroll';
 import styles from './DialFileManagerShell.module.scss';
-
-type DestinationFolderPopupOptions =
-  DialFileManagerDestinationFolderPopupOptions & {
-    sourceFolder?: string;
-    destinationFolderPath?: string;
-    setDestinationFolderPath?: (path?: string) => void;
-    filesLoading?: boolean;
-  };
 
 interface OverlayFlags {
   isDeleting: boolean;
@@ -184,8 +173,8 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
     expandedPaths,
     loadedPaths,
     onExpandedPathsChange,
-    onFolderPopupPathChange,
     folderPopupLoadingPaths,
+    onFolderPopupPathChange,
     onUploadFiles,
     onUploadArchive,
     onValidateUpload,
@@ -231,10 +220,6 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
 
   /* Per-tab rules follow the browsed folder's source tab; the strip keeps `activeTab`. */
   const gateTab = sectionTab ?? activeTab;
-
-  const [destinationFolderPath, setDestinationFolderPath] = useState<
-    string | undefined
-  >(undefined);
 
   const { handleGridApiChange, reset: resetGridEditingScroll } =
     useGridEditingScroll();
@@ -458,62 +443,48 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
     ],
   );
 
-  const commonSelectedParentFolder = useMemo(() => {
-    let commonParent: string | undefined;
-    for (const selectedPath of selectedPaths) {
-      const parent = getParentFolderPath(selectedPath);
-      if (commonParent === undefined) {
-        commonParent = parent;
-      } else if (commonParent !== parent) {
-        return undefined;
-      }
-    }
-    return commonParent;
-  }, [selectedPaths]);
-
-  const isDestinationFolderLoading =
-    destinationFolderPath != null &&
-    folderPopupLoadingPaths.has(destinationFolderPath);
-
-  const disabledDestinationPath = isDestinationFolderLoading
-    ? destinationFolderPath
-    : commonSelectedParentFolder;
-
-  const destinationFolderPopupOptions = useMemo(
-    (): DestinationFolderPopupOptions => ({
-      copyLabel: labels.copyLabel,
-      moveLabel: labels.moveLabel,
+  /*
+   * Copy and Move are handed to the shell instead of the file manager's built-in panel, which cannot
+   * create folders when several sections are enabled. The shell shows the section the items come from.
+   */
+  const [destinationRequest, setDestinationRequest] =
+    useState<DialDestinationRequest | null>(null);
+  const destinationPanelLabels = useMemo(
+    () => ({
+      ...labels.destinationPanelTexts,
+      getCopyTitle: labels.getCopyDestinationTitle,
+      getMoveTitle: labels.getMoveDestinationTitle,
+      copyHeading: labels.copyDestinationHeading,
+      moveHeading: labels.moveDestinationHeading,
+      copyButtonLabel: labels.copyDestinationButton,
+      moveButtonLabel: labels.moveDestinationButton,
       addFolderLabel: labels.addFolderLabel,
-      hiddenFilesSwitcherLabel: labels.hiddenFilesSwitcherLabel,
-      getCopyHeader: labels.getCopyHeader,
-      getMoveHeader: labels.getMoveHeader,
-      disabledPathTooltip: isDestinationFolderLoading
-        ? labels.folderPickerLoadingTooltip
-        : labels.moveSourceDisabledTooltip,
+      sourceFolderTooltip: labels.moveSourceDisabledTooltip,
       movedIntoItselfTooltip: labels.movedIntoItselfTooltip,
-      emptyStateTitle: labels.folderPickerEmptyStateTitle,
-      emptyStateDescription: labels.folderPickerEmptyStateDescription,
-      sourceFolder: disabledDestinationPath,
-      destinationFolderPath,
-      setDestinationFolderPath,
-      filesLoading: isDestinationFolderLoading,
     }),
     [
-      labels.copyLabel,
-      labels.moveLabel,
+      labels.destinationPanelTexts,
+      labels.getCopyDestinationTitle,
+      labels.getMoveDestinationTitle,
+      labels.copyDestinationHeading,
+      labels.moveDestinationHeading,
+      labels.copyDestinationButton,
+      labels.moveDestinationButton,
       labels.addFolderLabel,
-      labels.hiddenFilesSwitcherLabel,
-      labels.getCopyHeader,
-      labels.getMoveHeader,
-      labels.folderPickerLoadingTooltip,
       labels.moveSourceDisabledTooltip,
       labels.movedIntoItselfTooltip,
-      labels.folderPickerEmptyStateTitle,
-      labels.folderPickerEmptyStateDescription,
-      isDestinationFolderLoading,
-      disabledDestinationPath,
-      destinationFolderPath,
     ],
+  );
+  const handleDestinationFinish = useCallback(
+    () => setDestinationRequest(null),
+    [],
+  );
+  /* The grid only awaits folder creation; the success flag matters to the destination panel. */
+  const handleGridCreateFolder = useCallback(
+    async (...args: Parameters<typeof onCreateFolder>): Promise<void> => {
+      await onCreateFolder(...args);
+    },
+    [onCreateFolder],
   );
 
   /* The queue confirms first when work is still running, so closing it aborts whatever is left. */
@@ -695,7 +666,6 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
             clearSearchResults={clearSearchResults}
             gridOptions={gridOptions}
             treeOptions={treeOptions}
-            onFolderPopupPathChange={onFolderPopupPathChange}
             toolbarOptions={toolbarOptions}
             bulkActionsToolbarOptions={bulkActionsToolbarOptions}
             autoSelectUploadedItems={autoSelectUploadedItems}
@@ -715,7 +685,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
             onUploadFiles={onUploadFiles}
             onUploadArchive={onUploadArchive}
             onValidateUpload={onValidateUpload}
-            onCreateFolder={onCreateFolder}
+            onCreateFolder={handleGridCreateFolder}
             onCreateFolderValidate={onCreateFolderValidate}
             onDownloadFiles={onDownloadFiles}
             onDeleteFiles={onDeleteFiles}
@@ -728,7 +698,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
             conflictResolutionPopupOptions={
               labels.conflictResolutionPopupOptions
             }
-            destinationFolderPopupOptions={destinationFolderPopupOptions}
+            onDestinationRequest={setDestinationRequest}
             forbiddenSymbolsRegExp={NOT_ALLOWED_SYMBOLS_REGEXP}
             forbiddenSymbolsTooltip={labels.forbiddenSymbolsTooltip}
             getDisabledTooltip={getDisabledTooltip}
@@ -765,6 +735,19 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
           labels={transferQueueLabels}
         />
       </div>
+
+      {destinationRequest != null && (
+        <FileManagerDestinationPanel
+          request={destinationRequest}
+          roots={items}
+          loadedPaths={loadedPaths}
+          loadingPaths={folderPopupLoadingPaths}
+          onFolderPopupPathChange={onFolderPopupPathChange}
+          onCreateFolder={onCreateFolder}
+          labels={destinationPanelLabels}
+          onFinish={handleDestinationFinish}
+        />
+      )}
 
       {(isCopying || isMoving) && (
         <OperationLoaderModal

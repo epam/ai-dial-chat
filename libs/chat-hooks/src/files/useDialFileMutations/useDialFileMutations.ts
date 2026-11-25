@@ -130,11 +130,12 @@ export interface UseDialFileMutationsResult {
   isRenaming: boolean;
   isCopying: boolean;
   isMoving: boolean;
+  /** Resolves `true` once the folder exists; `false` when the name is invalid or the request failed (already notified). */
   onCreateFolder: (
     file: DialUploadFileItem,
     folderPath: string,
     fileId: string,
-  ) => Promise<void>;
+  ) => Promise<boolean>;
   onCreateFolderValidate: (
     name: string,
     parentFolder: DialFile,
@@ -257,7 +258,7 @@ export const useDialFileMutations = ({
       _file: DialUploadFileItem,
       newFolderPath: string,
       _fileId: string,
-    ): Promise<void> => {
+    ): Promise<boolean> => {
       const { parentVirtualPath, name } = parseNewFolderVirtualPath(
         newFolderPath,
         rootLabel,
@@ -280,7 +281,8 @@ export const useDialFileMutations = ({
       const priorLiveError = lastLiveValidationErrorRef.current;
       lastLiveValidationErrorRef.current = null;
 
-      if (onCreateFolderValidate(name, parentFolder) || priorLiveError) return;
+      if (onCreateFolderValidate(name, parentFolder) || priorLiveError)
+        return false;
 
       setIsCreatingFolder(true);
       const { bucket: targetBucket, path: targetParentPath } =
@@ -306,11 +308,13 @@ export const useDialFileMutations = ({
         );
         bumpRetry();
         onOperationSuccess?.({ kind: FileOperationKind.FolderCreated, name });
+        return true;
       } catch {
         onNotification?.({
           variant: NotificationVariant.Error,
           reason: FileManagerNotificationReason.FolderCreateFailed,
         });
+        return false;
       } finally {
         setIsCreatingFolder(false);
       }

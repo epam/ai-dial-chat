@@ -7,7 +7,7 @@ The standalone publish-panel library: its public surface, and the independence f
 ## Requirements
 
 ### Requirement: Public package surface exports the shared publish UI and state
-`libs/publish-panel/src/index.ts` SHALL be the only public entry for the publish UI (`libs/catalog/src/index.ts` no longer re-exports any publish symbol; it only imports `@epam/ai-dial-publish-panel/styles.css`) and SHALL export: components `PublishPanel`, `StandalonePublishPanel`, `PublishFooter`, `PublishFoldersTree`, `PublishHistoryList`; the `usePublishFlow` hook (its `UsePublishFlowOptions.onPublish` signature now `(item: TItem, folderPath: string[], author: string, publishCredentials: boolean) => Promise<void>`, `UsePublishFlowOptions` now also accepting an optional `defaultAuthor?: string`, and `UsePublishFlowResult` now including `author: string`, `setAuthor: (author: string) => void`, `publishCredentials: boolean`, and `setPublishCredentials: (value: boolean) => void`); the pure functions `derivePublishState`, `formatPublishedDate`, and the `publish-folder-tree` helpers (`filterFolderTree`, `sortFolderTree`, `mergeFolderPaths`, `collectFolderKeys`, `toFolderPathKey`, `fromFolderPathKey`, `toDialFileTree`, `validateFolderName`, `getUniqueFolderName`, `getSiblingFolderNames`); the `PUBLISH_PANEL_CLASS` public class-name constant; and all associated types/interfaces (`PublishFolderNode`, `PublishHistoryEntry`, `PublishResourceSummary`, `PublishCalloutKind`, `PublishDerivationInput`, `PublishDerivedState`, `PublishFlowItem`, `UsePublishFlowOptions`, `UsePublishFlowResult`, `FolderNameValidationMessages`, every `*Labels`, `*Props`, `*Colors`, and `*Styles` interface). The barrel SHALL NOT export `PublishAccessRules`, `PublishAccessRuleEditor`, `PublicationRule`, `PublicationRuleFunction`, `SaveToFolderAccessRulesProps` or any `PublishAccessRule*`/`PublishAccessRules*` type. Internal-only helpers (e.g. `PublishPanel.tsx`'s unexported `calloutVariant`/`calloutMessage`/`withBoldFolderName`) SHALL NOT be exported from the barrel.
+`libs/publish-panel/src/index.ts` SHALL be the only public entry for the publish UI (`libs/catalog/src/index.ts` no longer re-exports any publish symbol; it only imports `@epam/ai-dial-publish-panel/styles.css`) and SHALL export: components `PublishPanel`, `StandalonePublishPanel`, `PublishFooter`, `PublishHistoryList`; the `usePublishFlow` hook (its `UsePublishFlowOptions.onPublish` signature now `(item: TItem, folderPath: string[], author: string, publishCredentials: boolean) => Promise<void>`, `UsePublishFlowOptions` now also accepting an optional `defaultAuthor?: string`, and `UsePublishFlowResult` now including `author: string`, `setAuthor: (author: string) => void`, `publishCredentials: boolean`, and `setPublishCredentials: (value: boolean) => void`); the pure functions `derivePublishState`, `formatPublishedDate`, and the `publish-folder-tree` helpers (`filterFolderTree`, `sortFolderTree`, `mergeFolderPaths`, `collectFolderKeys`, `toFolderPathKey`, `fromFolderPathKey`, `toDialFileTree`, `validateFolderName`, `getUniqueFolderName`, `getSiblingFolderNames`); the `PUBLISH_PANEL_CLASS` public class-name constant; and all associated types/interfaces (`PublishFolderNode`, `PublishHistoryEntry`, `PublishResourceSummary`, `PublishCalloutKind`, `PublishDerivationInput`, `PublishDerivedState`, `PublishFlowItem`, `UsePublishFlowOptions`, `UsePublishFlowResult`, `FolderNameValidationMessages`, every `*Labels`, `*Props`, `*Colors`, and `*Styles` interface). The barrel SHALL NOT export `PublishAccessRules`, `PublishAccessRuleEditor`, `PublicationRule`, `PublicationRuleFunction`, `SaveToFolderAccessRulesProps` or any `PublishAccessRule*`/`PublishAccessRules*` type. Internal-only helpers (e.g. `PublishPanel.tsx`'s unexported `calloutVariant`/`calloutMessage`/`withBoldFolderName`) SHALL NOT be exported from the barrel.
 
 #### Scenario: Consumer imports the publish panel from the new package
 - **WHEN** `apps/chat` or `libs/catalog` code writes `import { StandalonePublishPanel, usePublishFlow } from '@epam/ai-dial-publish-panel'`
@@ -307,8 +307,8 @@ The marker reports what a publication **requested**. The library SHALL NOT claim
 ### Requirement: Save-to-folder panel components are exported
 `@epam/ai-dial-publish-panel` (`libs/publish-panel/src/index.ts`) SHALL export:
 
-- `SaveToFolderPanel` (body) and `StandaloneSaveToFolderPanel` (`SideDrawer` shell with a pinned Cancel/Save footer);
-- the models `SaveToFolderPanelProps`, `SaveToFolderPanelLabels`, `SaveToFolderPanelColors`, `FolderDestination` (`{ rootKey: string; path: string[] }`) and `FolderDestinationRoot` (`{ key: string; label: string; items: PublishFolderNode[]; canCreateFolders?: boolean }`);
+- `StandaloneSaveToFolderPanel`, which renders the file manager's `FolderDestinationPanel` (`@epam/ai-dial-react-file-manager`) with this flow's sections;
+- the models `StandaloneSaveToFolderPanelProps`, `SaveToFolderPanelLabels`, `SaveToFolderPanelColors`, `FolderDestination` (`{ rootKey: string; path: string[] }`) and `FolderDestinationRoot` (`{ key: string; label: string; items: PublishFolderNode[]; canCreateFolders?: boolean }`);
 - the string enum `SaveVersionMode` (`Keep = 'keep'`, `New = 'new'`).
 
 The components SHALL take every user-visible string from `labels`, with English defaults. Every color SHALL come from `colors`, applied as `var(--publish-panel-x, fallback)` in their `.module.scss`. Typography comes from `*ClassName` props whose defaults are kit `dial-*-text` classes.
@@ -320,12 +320,12 @@ The components SHALL know no resource ids, REST paths, i18n, routing or storage.
 - optional version props: `versionMode`, `onVersionModeChange`, `currentVersion`, `newVersion`, `onNewVersionChange`, `newVersionError`;
 - `isSubmitting`, `isSubmitDisabled`, `onSubmit` and `onClose`.
 
-The version section renders only when `version` (`SaveToFolderVersionProps`) is provided. `StandaloneSaveToFolderPanel` owns the view state (`SaveToFolderView`: `Main`, `ChangeFolder`) and the pending Change-view destination, and renders the per-view header (the kit `SideDrawer`'s `onBack` in the Change view) and footer (Save, or Select). `SaveToFolderPanel` is the controlled body: it takes `view`, `pendingDestination`, `onPendingDestinationChange` and `onChangeFolderClick`.
+The version section renders only when `version` (`SaveToFolderVersionProps`) is provided. The view state, the pending Change-view destination, the per-view header and the footer (Save, or Select) belong to `FolderDestinationPanel`; `StandaloneSaveToFolderPanel` passes it the Save action, the version, dependency, note and history sections as `mainSections`. The former `SaveToFolderPanel` body and `SaveToFolderView` enum no longer exist.
 
-The main view shows the committed destination as the kit `FolderName` (the path joined with " / ", `destinationClassName` defaulting to `dial-small-semi-text`, color `destinationText`) followed by a small ghost Change button. `StandaloneSaveToFolderPanel` SHALL NOT render an access-rules section and SHALL NOT accept an `accessRules` prop; `FolderDestinationRoot` SHALL NOT carry `hasAccessRules`. The shell reports the pending destination through `onPendingDestinationChange`, including the reset to `destination` on entering and leaving that view, so the host can react to the folder the user is browsing.
+The main view shows the committed destination as the kit `FolderName` (the path joined with " / ", `destinationClassName` defaulting to `dial-small-semi-text`) followed by a small ghost Change button. `StandaloneSaveToFolderPanel` SHALL NOT render an access-rules section and SHALL NOT accept an `accessRules` prop; `FolderDestinationRoot` SHALL NOT carry `hasAccessRules`. The shell reports the pending destination through `onPendingDestinationChange`, including the reset to `destination` on entering and leaving that view, so the host can react to the folder the user is browsing.
 
 #### Scenario: Unversioned host
-- **WHEN** a host renders `SaveToFolderPanel` without `versionMode`
+- **WHEN** a host renders `StandaloneSaveToFolderPanel` without `versionMode`
 - **THEN** no Version section is rendered
 
 #### Scenario: Change view commits on Select only
@@ -333,15 +333,15 @@ The main view shows the committed destination as the kit `FolderName` (the path 
 - **THEN** `onDestinationChange` is not called until Select is pressed, and is never called when Back or Cancel is pressed
 
 #### Scenario: No history or dependencies
-- **WHEN** `SaveToFolderPanel` renders without `versionHistory` and `dependencies`
+- **WHEN** `StandaloneSaveToFolderPanel` renders without `versionHistory` and `dependencies`
 - **THEN** it renders no publish history and no dependencies list
 
-### Requirement: SaveToFolderPanel lists private dependencies in the main view
+### Requirement: StandaloneSaveToFolderPanel lists private dependencies in the main view
 
-`SaveToFolderPanelBaseProps` (`libs/publish-panel/src/models/save-to-folder-panel.ts`) SHALL accept optional `dependencies?: PublishDependency[]`, `dependenciesLabels?: PublishDependenciesLabels`, `dependenciesStyles?: PublishDependenciesStyles` and `dependenciesNote?: string`, and `SaveToFolderPanel` and `StandaloneSaveToFolderPanel` SHALL render `PublishDependenciesList` with the first three in the main view only, above the versions history. The section SHALL be informational: it SHALL NOT change `isSubmitDisabled` or any submit behavior, and SHALL render nothing while `dependencies` is omitted or empty and no note is given. When `dependenciesNote` is given and `dependencies` is omitted or empty, the panel SHALL render that text as a plain paragraph in the same place, under the section's heading from `dependenciesLabels`; when both are given the list is rendered and the note is not. The panel SHALL NOT decide when the section or the note applies; the host passes them only for the destinations and resource kinds that need them, and the library learns nothing about the resource's kind.
+`StandaloneSaveToFolderPanelProps` (`libs/publish-panel/src/models/save-to-folder-panel.ts`) SHALL accept optional `dependencies?: PublishDependency[]`, `dependenciesLabels?: PublishDependenciesLabels`, `dependenciesStyles?: PublishDependenciesStyles` and `dependenciesNote?: string`, and `StandaloneSaveToFolderPanel` SHALL render `PublishDependenciesList` with the first three in the main view only, above the versions history. The section SHALL be informational: it SHALL NOT change `isSubmitDisabled` or any submit behavior, and SHALL render nothing while `dependencies` is omitted or empty and no note is given. When `dependenciesNote` is given and `dependencies` is omitted or empty, the panel SHALL render that text as a plain paragraph in the same place, under the section's heading from `dependenciesLabels`; when both are given the list is rendered and the note is not. The panel SHALL NOT decide when the section or the note applies; the host passes them only for the destinations and resource kinds that need them, and the library learns nothing about the resource's kind.
 
 #### Scenario: Dependencies are listed in the main view
-- **WHEN** `SaveToFolderPanel` renders the main view with `dependencies` holding one prompt
+- **WHEN** `StandaloneSaveToFolderPanel` renders the main view with `dependencies` holding one prompt
 - **THEN** the dependencies heading and the prompt's name are present
 
 #### Scenario: Empty or omitted list renders nothing
@@ -360,8 +360,8 @@ The main view shows the committed destination as the kit `FolderName` (the path 
 - **WHEN** the panel renders the folder view with `dependencies` non-empty
 - **THEN** no dependencies section is rendered
 
-### Requirement: PublishFoldersTree supports multiple roots
-`PublishFoldersTree` SHALL accept optional `roots?: FolderDestinationRoot[]`, `destination?: FolderDestination` and `onDestinationChange?: (destination: FolderDestination | undefined) => void`. When `roots` is given:
+### Requirement: FolderDestinationTree supports multiple roots
+The file manager's `FolderDestinationTree` (`@epam/ai-dial-react-file-manager`), which this library renders through `FolderDestinationPanel` and `FolderDestinationPanelBody` rather than exporting, SHALL accept optional `roots?: FolderDestinationRoot[]`, `destination?: FolderDestination` and `onDestinationChange?: (destination: FolderDestination | undefined) => void`. When `roots` is given:
 
 - the tree renders one always-expanded top-level node per root, in order;
 - each root node and every folder under it is selectable;
@@ -376,11 +376,11 @@ When `roots` is absent, `items` / `rootLabel` / `selectedPath` / `onSelectedPath
 - **THEN** `onDestinationChange` receives `{ rootKey: 'organization', path: ['EPAM', 'Delivery'] }`
 
 #### Scenario: Single-root callers are unchanged
-- **WHEN** the Catalog Publish panel renders `PublishFoldersTree` with `items` and `rootLabel` only
+- **WHEN** the tree is rendered with `items` and `rootLabel` only
 - **THEN** it renders and selects exactly as before this change
 
 ### Requirement: PublishPanel picks the destination through a drill-in folder view
-`PublishPanel` SHALL render one of two views, chosen by its `view` prop (`PublishPanelView`, default `Main`), matching the save-to-folder panel. The main view SHALL show the entity summary, a "Publish to folder" heading, and a destination row with the committed path (`rootFolderLabel` followed by `selectedFolderPath`, joined with ` / ` in one truncating `FolderName`), or `noFolderSelectedLabel` when nothing is selected, beside a button labelled `changeFolderLabel` or `chooseFolderLabel` that calls `onChangeFolderClick`. The callout, author field and credentials opt-in SHALL follow the row. The `ChangeFolder` view SHALL show only the folder search and `PublishFoldersTree`, bound to `pendingFolderPath` and `onPendingFolderPathChange`.
+`PublishPanel` SHALL render one of two views, chosen by its `view` prop (`PublishPanelView`, default `Main`), matching the save-to-folder panel. The main view SHALL show the entity summary, a "Publish to folder" heading, and a destination row with the committed path (`rootFolderLabel` followed by `selectedFolderPath`, joined with ` / ` in one truncating `FolderName`), or `noFolderSelectedLabel` when nothing is selected, beside a button labelled `changeFolderLabel` or `chooseFolderLabel` that calls `onChangeFolderClick`. The callout, author field and credentials opt-in SHALL follow the row. The `ChangeFolder` view SHALL show only the folder search and the file manager's `FolderDestinationTree`, bound to `pendingFolderPath` and `onPendingFolderPathChange`.
 
 `usePublishFolderView` SHALL hold the view and the pending folder: opening copies the committed folder into the pending one, `selectFolder` commits a defined pending folder through `onSelectedFolderPathChange` and returns to the main view, `backToMain` returns without committing, and every opening of the flow starts on the main view. `PublishFooter` SHALL render Cancel and Select in place of the submit action when `view` is `ChangeFolder`. `StandalonePublishPanel` and the catalog `DetailsPanel` SHALL title the folder view "Change folder" and show a Back button that returns to the main view.
 
@@ -489,10 +489,10 @@ Every user-visible string of the section SHALL come from `PublishDependenciesLab
 - **WHEN** the host passes an `adminApprovalMessage` naming an application, conversation or project
 - **THEN** the banner renders that text instead of the English default
 
-### Requirement: PublishFoldersTree supports a per-row disabled state with a reason
-`PublishFoldersTree` SHALL accept an optional `getDisabledReason?: (destination: FolderDestination) => string | undefined` (in single-root mode `rootKey` is the empty string). A folder for which it returns a non-empty string SHALL render disabled with that string as its reason: `aria-disabled="true"`, not selectable by click, Enter or Space, still reachable by keyboard and arrow navigation, and still expandable so its children can be reached. The reason SHALL show as a kit tooltip on hover and focus and SHALL also be exposed through `aria-describedby` on the row, so it never depends on hover. The disabled look SHALL NOT rely on color or opacity alone. The tree takes no rights data and knows no unit: the host decides and passes the text. If the tree turns out not to support a per-row disabled state with a reason, the work stops and is reported before anything is built around it. When the callback is absent, or returns `undefined` for every folder, the tree behaves exactly as before. The whole-tree `disabled` prop keeps its meaning and wins over the per-row state. Search results and the existing keyboard navigation include disabled rows, and inline folder creation is not offered under a disabled folder. Layout uses logical properties and the tooltip places by `start`/`end`.
+### Requirement: FolderDestinationTree supports a per-row disabled state with a reason
+The file manager's `FolderDestinationTree` (`@epam/ai-dial-react-file-manager`) SHALL accept an optional `getDisabledReason?: (destination: FolderDestination) => string | undefined` (in single-root mode `rootKey` is the empty string). A folder for which it returns a non-empty string SHALL render disabled with that string as its reason: `aria-disabled="true"`, not selectable by click, Enter or Space, still reachable by keyboard and arrow navigation, and still expandable so its children can be reached. The reason SHALL show as a kit tooltip on hover and focus and SHALL also be exposed through `aria-describedby` on the row, so it never depends on hover. The disabled look SHALL NOT rely on color or opacity alone. The tree takes no rights data and knows no unit: the host decides and passes the text. If the tree turns out not to support a per-row disabled state with a reason, the work stops and is reported before anything is built around it. When the callback is absent, or returns `undefined` for every folder, the tree behaves exactly as before. The whole-tree `disabled` prop keeps its meaning and wins over the per-row state. Search results and the existing keyboard navigation include disabled rows, and inline folder creation is not offered under a disabled folder. Layout uses logical properties and the tooltip places by `start`/`end`.
 
-`SaveToFolderPanel`, `StandaloneSaveToFolderPanel`, `PublishPanel` and `StandalonePublishPanel` SHALL forward `getDisabledReason` to the tree, so a host sets one callback per panel (the catalog's details panel takes it as `getPublishDisabledReason`). `SaveToFolderPanel`'s main view SHALL also show the reason of the committed destination directly under the destination row, in the destination section and above `destinationNote`, as a kit section-message notification of the error variant inside an assertive `LiveRegion` that stays mounted with the view, so the reason is announced when it appears; the notification's own live role SHALL be overridden (`role="none"`) so no alert is nested in the region; the reason is linked to the destination group by `aria-describedby`.
+`StandaloneSaveToFolderPanel`, `PublishPanel` and `StandalonePublishPanel` SHALL forward `getDisabledReason` to the tree, so a host sets one callback per panel (the catalog's details panel takes it as `getPublishDisabledReason`). `StandaloneSaveToFolderPanel` passes the same callback to `FolderDestinationPanel`, whose main view owns showing and announcing the reason of the committed destination under the destination row; this library no longer renders that notice itself.
 
 #### Scenario: Disabled row cannot be selected
 - **WHEN** `getDisabledReason` returns a reason for `{ rootKey: 'organization', path: ['EPAM', 'Sales'] }` and the user clicks that row
@@ -514,14 +514,14 @@ Every user-visible string of the section SHALL come from `PublishDependenciesLab
 - **WHEN** the tree has `disabled` set and `getDisabledReason` returns `undefined` for a folder
 - **THEN** that folder is still disabled
 
-### Requirement: SaveToFolderPanel can show a notice under the destination
+### Requirement: StandaloneSaveToFolderPanel can show a notice under the destination
 
-`SaveToFolderPanelBaseProps` SHALL accept an optional `destinationNote?: string`, and `SaveToFolderPanel` and `StandaloneSaveToFolderPanel` SHALL render it in the main view as a plain paragraph under the destination path, in the same section. The panel SHALL render it as given, SHALL NOT decide when it applies, SHALL NOT change `isSubmitDisabled` or any submit behavior because of it, and SHALL NOT put it in a live region. It SHALL render nothing while `destinationNote` is omitted or empty, and nothing in the folder view.
+`StandaloneSaveToFolderPanelProps` SHALL accept an optional `destinationNote?: string`, and `StandaloneSaveToFolderPanel` SHALL render it in the main view as a plain paragraph under the destination path, in the same section. The panel SHALL render it as given, SHALL NOT decide when it applies, SHALL NOT change `isSubmitDisabled` or any submit behavior because of it, and SHALL NOT put it in a live region. It SHALL render nothing while `destinationNote` is omitted or empty, and nothing in the folder view.
 
 Both notes (`dependenciesNote` and `destinationNote`) SHALL take their typography from the optional `noteClassName` prop, whose default is `'dial-small-text'`, and their text color from `SaveToFolderPanelColors.noteText`, set as the CSS custom property `--stf-note-text` and falling back to `--text-secondary`. The notes SHALL use no physical left/right classes.
 
 #### Scenario: Destination note is shown
-- **WHEN** `SaveToFolderPanel` renders the main view with `destinationNote` "The icon will not be copied."
+- **WHEN** `StandaloneSaveToFolderPanel` renders the main view with `destinationNote` "The icon will not be copied."
 - **THEN** that text is present under the destination and is not inside an element with role `alert` or `status`
 
 #### Scenario: No note

@@ -19,6 +19,7 @@ export enum ButtonsI18nKeys {
   SaveAndSubmit = 'buttons.saveAndSubmit',
   Regenerate = 'buttons.regenerate',
   Copy = 'buttons.copy',
+  Move = 'buttons.move',
   Copied = 'buttons.copied',
   Like = 'buttons.like',
   Dislike = 'buttons.dislike',

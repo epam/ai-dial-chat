@@ -1,5 +1,5 @@
 import { DropdownItemType } from '@epam/ai-dial-ui-kit';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -168,7 +168,14 @@ describe('CreateButton — mobile', () => {
     );
 
     await userEvent.click(screen.getByRole('button', { name: 'Create' }));
-    await userEvent.type(await screen.findByLabelText('Find'), 'zzz');
+    /* The sheet takes initial focus a frame after opening; typing before that loses the keystrokes. */
+    const sheet = await screen.findByRole('dialog', { name: 'Create' });
+    await waitFor(() =>
+      // Focus is a document-level fact; no Testing Library query reports it.
+      // eslint-disable-next-line testing-library/no-node-access
+      expect(document.activeElement).toBe(sheet),
+    );
+    await userEvent.type(within(sheet).getByLabelText('Find'), 'zzz');
 
     expect(screen.getByRole('status').textContent).toBe('Nothing matches');
 

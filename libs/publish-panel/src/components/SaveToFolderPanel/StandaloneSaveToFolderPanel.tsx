@@ -1,17 +1,16 @@
-import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
-  DIAL_ICON_SIZE,
-  GhostButton,
-  NeutralButton,
-  PrimaryButton,
-  SideDrawer,
-  Spinner,
-} from '@epam/ai-dial-ui-kit';
-import { FC, useEffect, useRef, useState } from 'react';
-import type { FolderDestination } from '../../models/folder-destination';
+  buildCssVars,
+  EntityHeader,
+  mergeClasses,
+} from '@epam/ai-dial-chat-shared';
+import { FolderDestinationPanel } from '@epam/ai-dial-react-file-manager';
+import { Input, RadioGroup } from '@epam/ai-dial-ui-kit';
+import { FC, ReactNode, useCallback, useId, useState } from 'react';
+import { DEFAULT_DEPENDENCIES_TITLE } from '../../constants/publish-dependencies';
 import type { StandaloneSaveToFolderPanelProps } from '../../models/save-to-folder-panel';
-import { SaveToFolderView } from '../../types/save-to-folder';
-import { SaveToFolderPanel } from './SaveToFolderPanel';
+import { SaveVersionMode } from '../../types/save-to-folder';
+import { PublishDependenciesList } from '../PublishDependenciesList/PublishDependenciesList';
+import { VersionHistorySection } from '../VersionHistorySection/VersionHistorySection';
 import styles from './StandaloneSaveToFolderPanel.module.scss';
 
 /** End-edge slide-in panel for saving a resource to a chosen folder, with a summary view and a folder view. */
@@ -24,13 +23,31 @@ export const StandaloneSaveToFolderPanel: FC<
   isSubmitDisabled = false,
   returnFocusRef,
   labels = {},
-  colors,
   titleClassName = 'dial-body-semi-text',
+  resource,
+  roots,
   destination,
   onDestinationChange,
-  isSubmitting = false,
   onPendingDestinationChange,
-  ...bodyProps
+  getDisabledReason,
+  onCreateFolder,
+  onCreateFolderError,
+  version,
+  dependencies,
+  dependenciesLabels,
+  dependenciesStyles,
+  dependenciesNote,
+  destinationNote,
+  noteClassName = 'dial-small-text',
+  versionHistory,
+  isSubmitting = false,
+  submitError,
+  foldersError,
+  onRetryFolders,
+  panelLabels = {},
+  panelStyles = {},
+  headingClassName = 'dial-body-semi-text',
+  destinationClassName = 'dial-small-semi-text',
 }) => {
   const {
     title = 'Save',
@@ -42,163 +59,186 @@ export const StandaloneSaveToFolderPanel: FC<
     savingLabel = 'Saving…',
     selectLabel = 'Select',
   } = labels;
-  const cssVars = buildCssVars({
-    '--sstf-backdrop-bg': colors?.backdropBackground,
-    '--sstf-panel-bg': colors?.panelBackground,
-    '--sstf-panel-border': colors?.panelBorder,
-    '--sstf-divider-border': colors?.dividerBorder,
-    '--sstf-scrollbar-thumb': colors?.scrollbarThumb,
-    '--sstf-title-text': colors?.titleText,
-  });
-
-  const [view, setView] = useState(SaveToFolderView.Main);
-  const [pendingDestination, setPendingDestination] = useState<
-    FolderDestination | undefined
-  >(destination);
-  const titleRef = useRef<HTMLSpanElement>(null);
-  const changeFolderButtonRef = useRef<HTMLButtonElement>(null);
-
-  // Every opening starts on the main view.
-  useEffect(() => {
-    if (isOpen) setView(SaveToFolderView.Main);
-  }, [isOpen]);
-
-  /*
-   * Switching views moves focus to the new view's heading, and leaving the
-   * folder view hands it back to the Change button that opened it.
-   */
-  const previousViewRef = useRef(view);
-  useEffect(() => {
-    if (previousViewRef.current === view) return;
-    previousViewRef.current = view;
-    if (view === SaveToFolderView.ChangeFolder) {
-      titleRef.current?.focus({ preventScroll: true });
-    } else {
-      changeFolderButtonRef.current?.focus({ preventScroll: true });
-    }
-  }, [view]);
-
-  /* The kit returns focus to whatever had it before opening; a host target takes over when given. */
-  const wasOpenRef = useRef(isOpen);
-  useEffect(() => {
-    const wasOpen = wasOpenRef.current;
-    wasOpenRef.current = isOpen;
-    if (wasOpen && !isOpen && returnFocusRef?.current?.isConnected) {
-      returnFocusRef.current.focus({ preventScroll: true });
-    }
-  }, [isOpen, returnFocusRef]);
-
-  const isChangingFolder = view === SaveToFolderView.ChangeFolder;
-
-  const handlePendingDestinationChange = (
-    next: FolderDestination | undefined,
-  ) => {
-    setPendingDestination(next);
-    onPendingDestinationChange?.(next);
-  };
-  const handleChangeFolderClick = () => {
-    handlePendingDestinationChange(destination);
-    setView(SaveToFolderView.ChangeFolder);
-  };
-  /* Leaving without Select discards the pending folder, so the host hears the committed one again. */
-  const handleBackToMain = () => {
-    onPendingDestinationChange?.(destination);
-    setView(SaveToFolderView.Main);
-  };
-  const handleSelect = () => {
-    if (pendingDestination) onDestinationChange(pendingDestination);
-    setView(SaveToFolderView.Main);
+  const {
+    saveToFolderHeading = 'Save to folder',
+    versionHeading = 'Version',
+    keepVersionLabel = 'Keep version {version}',
+    saveAsNewVersionLabel = 'Save as new version',
+    newVersionLabel = 'Version',
+    newVersionPlaceholder = 'Enter new version',
+    createFolderFailedMessage = 'Failed to create the folder. Please try again.',
+    ...destinationLabels
+  } = panelLabels;
+  const { colors, folderTree, cssVars: extraCssVars } = panelStyles;
+  const cssVars = {
+    ...buildCssVars({
+      '--stf-heading-text': colors?.headingText,
+      '--stf-note-text': colors?.noteText,
+    }),
+    ...extraCssVars,
   };
 
-  /* The title goes in as a node so the dialog keeps the main title as its name in both views. */
-  return (
-    <SideDrawer
-      open={isOpen}
-      onClose={onClose}
-      header={
-        <span
-          ref={titleRef}
-          tabIndex={-1}
-          className={mergeClasses(
-            'block truncate outline-none',
-            titleClassName,
-            styles.title,
-          )}
-        >
-          {isChangingFolder ? changeFolderTitle : title}
-        </span>
-      }
-      ariaLabel={title}
-      onBack={isChangingFolder ? handleBackToMain : undefined}
-      backAriaLabel={backAriaLabel}
-      backDisabled={isSubmitting}
-      closeAriaLabel={closeAriaLabel}
-      closeDisabled={isSubmitting}
-      style={cssVars}
-      overlayStyle={cssVars}
-      className={mergeClasses(
-        styles.panel,
-        'tablet:w-[540px]! tablet:max-w-[calc(100%-32px)]!',
-      )}
-      overlayClassName={styles.backdrop}
-      headerClassName={mergeClasses('px-[22px]', styles.divider)}
-      bodyClassName="flex flex-col overflow-hidden"
-    >
-      <div
-        className={mergeClasses(
-          'min-h-0 flex-1 overflow-y-auto p-[22px]',
-          styles.content,
-        )}
-      >
-        <SaveToFolderPanel
-          {...bodyProps}
-          view={view}
-          destination={destination}
-          onDestinationChange={onDestinationChange}
-          isSubmitting={isSubmitting}
-          onChangeFolderClick={handleChangeFolderClick}
-          changeFolderButtonRef={changeFolderButtonRef}
-          pendingDestination={pendingDestination}
-          onPendingDestinationChange={handlePendingDestinationChange}
-        />
-      </div>
+  /* A rejected folder creation is announced through the panel's error slot until the next attempt or pick. */
+  const [createFolderError, setCreateFolderError] = useState<string>();
+  const handleCreateFolder = useCallback(
+    (rootKey: string, parentPath: string[], name: string) => {
+      setCreateFolderError(undefined);
+      return onCreateFolder(rootKey, parentPath, name);
+    },
+    [onCreateFolder],
+  );
+  const handleCreateFolderError = useCallback(
+    (error: unknown) => {
+      setCreateFolderError(createFolderFailedMessage);
+      onCreateFolderError?.(error);
+    },
+    [createFolderFailedMessage, onCreateFolderError],
+  );
+  const handleDestinationChange = useCallback(
+    (next: Parameters<typeof onDestinationChange>[0]) => {
+      setCreateFolderError(undefined);
+      onDestinationChange(next);
+    },
+    [onDestinationChange],
+  );
 
-      {/* Below the desktop breakpoint the two actions split the row in half. */}
-      <div
-        className={mergeClasses(
-          'flex items-center justify-end gap-2 border-t px-4 py-4 desktop:px-3.5',
-          styles.footer,
-        )}
-      >
-        <GhostButton
-          label={cancelLabel}
-          className="mobile:flex-1"
-          disabled={isSubmitting}
-          onClick={isChangingFolder ? handleBackToMain : onClose}
-        />
-        {isChangingFolder ? (
-          <NeutralButton
-            label={selectLabel}
-            className="mobile:flex-1"
-            disabled={pendingDestination == null}
-            onClick={handleSelect}
-          />
-        ) : (
-          <PrimaryButton
-            label={isSubmitting ? savingLabel : saveLabel}
-            className="mobile:flex-1"
-            disabled={isSubmitDisabled || isSubmitting}
-            iconBefore={
-              isSubmitting ? (
-                <span aria-hidden>
-                  <Spinner size={DIAL_ICON_SIZE.SM} />
-                </span>
-              ) : undefined
+  const newVersionInputId = useId();
+  const dependenciesHeadingId = useId();
+  const headingClass = mergeClasses(headingClassName, styles.heading);
+  const noteClass = mergeClasses(noteClassName, styles.note);
+  const hasDependenciesNote =
+    Boolean(dependenciesNote) && (dependencies?.length ?? 0) === 0;
+
+  const summary: ReactNode =
+    resource.type != null ? (
+      <EntityHeader
+        item={{
+          type: resource.type,
+          name: resource.title,
+          version: resource.version ?? '',
+          iconUrl: resource.iconUrl,
+        }}
+        iconSize={40}
+        hasFeaturedTag={false}
+        showVersion
+      />
+    ) : undefined;
+
+  const versionItems = version
+    ? [
+        {
+          value: SaveVersionMode.Keep,
+          label: keepVersionLabel.replace('{version}', version.currentVersion),
+        },
+        {
+          value: SaveVersionMode.New,
+          label: saveAsNewVersionLabel,
+          content: (
+            <Input
+              id={newVersionInputId}
+              value={version.newVersion}
+              onChange={(value) => version.onNewVersionChange(value ?? '')}
+              onBlur={version.onNewVersionBlur}
+              labelProps={{ label: newVersionLabel, required: true }}
+              placeholder={newVersionPlaceholder}
+              error={version.newVersionError}
+              invalid={Boolean(version.newVersionError)}
+              disabled={isSubmitting}
+            />
+          ),
+        },
+      ]
+    : [];
+
+  const mainSections = (
+    <div className="flex flex-col gap-5" style={cssVars}>
+      {destinationNote && <p className={noteClass}>{destinationNote}</p>}
+
+      {version && (
+        <section className="flex flex-col gap-2">
+          <h2 className={headingClass}>{versionHeading}</h2>
+          <RadioGroup
+            ariaLabel={versionHeading}
+            value={version.versionMode}
+            onChange={(value) =>
+              version.onVersionModeChange(value as SaveVersionMode)
             }
-            onClick={onSubmit}
+            items={versionItems}
+            disabled={isSubmitting}
           />
-        )}
-      </div>
-    </SideDrawer>
+        </section>
+      )}
+
+      {hasDependenciesNote && (
+        <section
+          className="flex flex-col gap-2"
+          aria-labelledby={dependenciesHeadingId}
+        >
+          <h2 id={dependenciesHeadingId} className={headingClass}>
+            {dependenciesLabels?.title ?? DEFAULT_DEPENDENCIES_TITLE}
+          </h2>
+          <p className={noteClass}>{dependenciesNote}</p>
+        </section>
+      )}
+
+      {!hasDependenciesNote && dependencies != null && (
+        <PublishDependenciesList
+          dependencies={dependencies}
+          labels={dependenciesLabels}
+          headingClassName={headingClassName}
+          styles={dependenciesStyles}
+        />
+      )}
+
+      {versionHistory != null && (
+        <VersionHistorySection
+          headingClassName={headingClassName}
+          {...versionHistory}
+        />
+      )}
+    </div>
+  );
+
+  return (
+    <FolderDestinationPanel
+      isOpen={isOpen}
+      onClose={onClose}
+      returnFocusRef={returnFocusRef}
+      onPendingDestinationChange={onPendingDestinationChange}
+      labels={{
+        title,
+        changeFolderTitle,
+        closeAriaLabel,
+        backAriaLabel,
+        cancelLabel,
+        selectLabel,
+      }}
+      titleClassName={titleClassName}
+      action={{
+        label: saveLabel,
+        busyLabel: savingLabel,
+        isDisabled: isSubmitDisabled,
+        onClick: onSubmit,
+      }}
+      item={{ title: resource.title, summary }}
+      roots={roots}
+      destination={destination}
+      onDestinationChange={handleDestinationChange}
+      onCreateFolder={handleCreateFolder}
+      onCreateFolderError={handleCreateFolderError}
+      getDisabledReason={getDisabledReason}
+      mainSections={mainSections}
+      isSubmitting={isSubmitting}
+      submitError={submitError ?? createFolderError}
+      foldersError={foldersError}
+      onRetryFolders={onRetryFolders}
+      panelLabels={{
+        destinationHeading: saveToFolderHeading,
+        ...destinationLabels,
+      }}
+      panelStyles={{ folderTree }}
+      headingClassName={headingClassName}
+      destinationClassName={destinationClassName}
+    />
   );
 };

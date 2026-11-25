@@ -3,8 +3,10 @@ import {
   RequestStatus,
   type DisplayAttachment,
 } from '@epam/ai-dial-chat-shared';
+import i18next from 'i18next';
 import { describe, expect, it } from 'vitest';
 import {
+  getDestinationPanelTexts,
   isAttachmentDownloadable,
   resolveAttachmentDownloadUrl,
   resolveDialFileDownloadUrl,
@@ -333,5 +335,27 @@ describe('project context file URLs', () => {
     expect(
       resolveDialUrl(makeAttachment({ url: 'files/bucket-1/docs/report.txt' })),
     ).toBe('/api/v1/files/download?bucket=bucket-1&path=docs%2Freport.txt');
+  });
+});
+
+describe('getDestinationPanelTexts', () => {
+  it('keeps the {query} placeholder the destination panel fills', async () => {
+    const i18n = i18next.createInstance();
+    await i18n.init({
+      lng: 'en',
+      resources: {
+        en: {
+          translation: {
+            catalog: {
+              publishFolderEmptyState: 'No folders match "{{query}}".',
+            },
+          },
+        },
+      },
+    });
+
+    expect(getDestinationPanelTexts(i18n.t).folderEmptyStateLabel).toBe(
+      'No folders match "{query}".',
+    );
   });
 });

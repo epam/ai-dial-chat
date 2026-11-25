@@ -36,6 +36,10 @@ import { useUser } from '../../context/auth/UserContext';
 import { useDialFilePreview } from '../../hooks/files/useDialFilePreview';
 import { useSearchPlaceholderByTab } from '../../hooks/files/useSearchPlaceholderByTab';
 import { useUploadQueueLabels } from '../../hooks/files/useUploadQueueLabels';
+import {
+  getDestinationPanelTexts,
+  getDestinationPanelTitles,
+} from '../../utils/dial-file';
 
 /*
  * The folders panel sits in the page's card, so it is divided from the grid by
@@ -237,28 +241,16 @@ const DialFileManagerPage: FC = () => {
       moveLabel: t(DialFileManagerI18nKeys.MoveAction),
       duplicateLabel: t(ButtonsI18nKeys.Duplicate),
       addFolderLabel: t(DialFileManagerI18nKeys.FolderPickerAddFolderLabel),
-      hiddenFilesSwitcherLabel: t(DialFileManagerI18nKeys.HiddenFiles),
-      getCopyHeader: (count, name) =>
-        count === 1
-          ? t(DialFileManagerI18nKeys.CopyHeaderSingle, { name })
-          : t(DialFileManagerI18nKeys.CopyHeaderMultiple, { count }),
-      getMoveHeader: (count, name) =>
-        count === 1
-          ? t(DialFileManagerI18nKeys.MoveHeaderSingle, { name })
-          : t(DialFileManagerI18nKeys.MoveHeaderMultiple, { count }),
+      destinationPanelTexts: getDestinationPanelTexts(t),
+      ...getDestinationPanelTitles(t),
+      copyDestinationHeading: t(DialFileManagerI18nKeys.CopyDestinationHeading),
+      moveDestinationHeading: t(DialFileManagerI18nKeys.MoveDestinationHeading),
+      copyDestinationButton: t(ButtonsI18nKeys.Copy),
+      moveDestinationButton: t(ButtonsI18nKeys.Move),
       moveSourceDisabledTooltip: t(
         DialFileManagerI18nKeys.MoveSourceDisabledTooltip,
       ),
       movedIntoItselfTooltip: t(DialFileManagerI18nKeys.MovedIntoItselfTooltip),
-      folderPickerLoadingTooltip: t(
-        DialFileManagerI18nKeys.FolderPickerLoadingTooltip,
-      ),
-      folderPickerEmptyStateTitle: t(
-        DialFileManagerI18nKeys.FolderPickerEmptyStateTitle,
-      ),
-      folderPickerEmptyStateDescription: t(
-        DialFileManagerI18nKeys.FolderPickerEmptyStateDescription,
-      ),
       copyingLabel: t(DialFileManagerI18nKeys.CopyingLabel),
       movingLabel: t(DialFileManagerI18nKeys.MovingLabel),
       operationLoaderCopyTitle: t(

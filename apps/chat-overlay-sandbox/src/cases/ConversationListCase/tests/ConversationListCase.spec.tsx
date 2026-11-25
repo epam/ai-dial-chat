@@ -96,7 +96,7 @@ describe('ConversationListCase', () => {
       }),
     );
 
-    const selector = screen.getByRole<HTMLInputElement>('combobox', {
+    const selector = screen.getByRole('combobox', {
       name: 'Conversation id',
     });
     await user.click(selector);
@@ -109,7 +109,11 @@ describe('ConversationListCase', () => {
     ).toBeNull();
     await user.click(option);
 
-    expect(selector.value).toContain('Quarterly planning');
+    expect(
+      screen.getByRole('combobox', {
+        name: /^Conversation id, Quarterly planning/,
+      }),
+    ).toBeTruthy();
 
     await user.click(
       screen.getByRole('button', {

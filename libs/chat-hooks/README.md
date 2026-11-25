@@ -224,12 +224,12 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-projects` \*
 - `@epam/ai-dial-publish-panel` \*
 - `@epam/ai-dial-quotations` \*
-- `@epam/ai-dial-react-file-manager` ^0.4.3
+- `@epam/ai-dial-react-file-manager` ^0.5.0-dev.5
 - `@epam/ai-dial-scheduled-tasks` \*
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
 - `@epam/ai-dial-source-panel` \*
-- `@epam/ai-dial-ui-kit` ^0.16.0
+- `@epam/ai-dial-ui-kit` ^0.17.0-dev.1
 - `@epam/ai-dial-usage-dashboard` \*
 - `@modelcontextprotocol/sdk` ^1.32.2
 - `@epam/pdf-highlighter-kit` ^0.0.23
@@ -3374,7 +3374,7 @@ const mutations = useDialFileMutations({
 
 **Parameters** (`UseDialFileMutationsOptions`, ~13 fields): most are the listing-cache seam threaded straight from `useDialFileListing`'s result (`folderPath`, `currentFolder`, `sharedRootMetaRef`, `listingPermissionsCache`, `invalidateFolders`, `bumpRetry`, `mergeCreatedFolder`, `setFolderPath`) plus `filesApi`, `bucket`, `rootLabel`, `activeTab`, `downloadDestination` (required), and the optional `onNotification`/`onOperationSuccess`/`forbiddenSymbolsRegExp`. See the exported `UseDialFileMutationsOptions` type for the complete shape.
 
-**Returns** (`UseDialFileMutationsResult`): `onCreateFolder`/`onCreateFolderValidate`, `onDownloadFiles`, `onDeleteFiles`, `onRenameValidate`/`onMoveToFiles`, `onCopyFiles`, `cancelCopyMove`, and an `isXxx` in-flight flag for each (`isCreatingFolder`, `isDownloading`, `isDeleting`, `isRenaming`, `isCopying`, `isMoving`). `onDownloadFiles` returns at once and runs each download as an entry of `downloadBatchState` (`FileDownloadBatchState`) with byte progress (`Content-Length` for a file, an estimate from the selected sizes for an archive, capped at 99% until done), cancel (`cancelDownloadFile(id)` / `cancelAllDownloads()`), a `failureReason` on failure, and `clearDownloadBatch()`. `isDownloading` is "a download is running" and does not feed `isAnyOperationInProgress`. `onCreateFolderValidate`/`onRenameValidate` return `FileNameValidationError | null` rather than a message string.
+**Returns** (`UseDialFileMutationsResult`): `onCreateFolder`/`onCreateFolderValidate`, `onDownloadFiles`, `onDeleteFiles`, `onRenameValidate`/`onMoveToFiles`, `onCopyFiles`, `cancelCopyMove`, and an `isXxx` in-flight flag for each (`isCreatingFolder`, `isDownloading`, `isDeleting`, `isRenaming`, `isCopying`, `isMoving`). `onDownloadFiles` returns at once and runs each download as an entry of `downloadBatchState` (`FileDownloadBatchState`) with byte progress (`Content-Length` for a file, an estimate from the selected sizes for an archive, capped at 99% until done), cancel (`cancelDownloadFile(id)` / `cancelAllDownloads()`), a `failureReason` on failure, and `clearDownloadBatch()`. `isDownloading` is "a download is running" and does not feed `isAnyOperationInProgress`. `onCreateFolderValidate`/`onRenameValidate` return `FileNameValidationError | null` rather than a message string. `onCreateFolder` resolves `true` once the folder exists and `false` when the name is invalid or the request failed (the failure is already reported through `onNotification`); it never rejects.
 
 ### useDialFileSharing
 

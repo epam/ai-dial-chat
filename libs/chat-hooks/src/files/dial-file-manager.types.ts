@@ -290,12 +290,12 @@ export interface UseDialFileManagerResult {
   /** Upload: empty the upload queue. */
   clearUploadBatch: () => void;
 
-  /** Folder creation: called when user confirms a new folder name. */
+  /** Folder creation: called when user confirms a new folder name; resolves `false` when the folder was not created. */
   onCreateFolder: (
     file: DialUploadFileItem,
     folderPath: string,
     fileId: string,
-  ) => Promise<void>;
+  ) => Promise<boolean>;
   /** Folder creation: inline synchronous validation (returns error message or null). */
   onCreateFolderValidate: (
     name: string,

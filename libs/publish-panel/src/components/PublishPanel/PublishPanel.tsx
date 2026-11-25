@@ -4,6 +4,11 @@ import {
   ResourceSummary,
 } from '@epam/ai-dial-chat-shared';
 import {
+  FolderDestinationPanelBody,
+  FolderDestinationView,
+  type FolderDestination as PanelDestination,
+} from '@epam/ai-dial-react-file-manager';
+import {
   Checkbox,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
@@ -14,18 +19,9 @@ import {
   Notification,
   NotificationType,
   NotificationVariant,
-  Search,
 } from '@epam/ai-dial-ui-kit';
 import { IconFolder } from '@tabler/icons-react';
-import {
-  FC,
-  ReactNode,
-  useEffect,
-  useId,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { FC, ReactNode, useEffect, useId, useMemo, useRef } from 'react';
 import { PUBLISH_PANEL_CLASS } from '../../constants/public-class-names';
 import type { FolderDestination } from '../../models/folder-destination';
 import {
@@ -40,9 +36,18 @@ import type { VersionHistorySectionProps } from '../../models/version-history';
 import { PublishPanelView } from '../../types/publish-panel';
 import { derivePublishState } from '../../utils/publish-state';
 import { PublishDependenciesList } from '../PublishDependenciesList/PublishDependenciesList';
-import { PublishFoldersTree } from '../PublishFoldersTree/PublishFoldersTree';
 import { VersionHistorySection } from '../VersionHistorySection/VersionHistorySection';
 import styles from './PublishPanel.module.scss';
+
+/* The Publish flow has one root; the key is empty so a host's `getDisabledReason` sees the same `rootKey` as before. */
+const SINGLE_ROOT_KEY = '';
+
+const noop = (): void => undefined;
+
+const toPanelDestination = (
+  path: string[] | undefined,
+): PanelDestination | undefined =>
+  path == null ? undefined : { rootKey: SINGLE_ROOT_KEY, path };
 
 /** Matches the publish endpoints' own `author` limit, so the field cannot compose a request the backend rejects. */
 const MAX_AUTHOR_LENGTH = 200;
@@ -151,7 +156,7 @@ export interface PublishPanelProps {
   onPendingFolderPathChange: (path: string[] | undefined) => void;
   /** Called when the user confirms a new folder name. */
   onCreateFolder: (parentPath: string[], name: string) => Promise<void>;
-  /** Reason a folder is unavailable as a destination, or `undefined` when it is usable; forwarded to the folder view's tree (`rootKey` is `''`), see `PublishFoldersTreeProps.getDisabledReason`. */
+  /** Reason a folder is unavailable as a destination, or `undefined` when it is usable; forwarded to the folder view's tree (`rootKey` is `''`), see `FolderDestinationTreeProps.getDisabledReason`. */
   getDisabledReason?: (destination: FolderDestination) => string | undefined;
   /**
    * Externally-controlled set of expanded folder path keys. Pass this
@@ -329,16 +334,11 @@ export const PublishPanel: FC<PublishPanelProps> = ({
     credentialsHint = 'Members will use this without signing in themselves. Your credential itself is never shown to them.',
   } = labels;
 
-  const [searchQuery, setSearchQuery] = useState('');
   /* The kit associates the field with its visible label through this id, so the label is real rather than an aria-label. */
   const authorFieldId = useId();
 
   const changeFolderButtonRef = useRef<HTMLButtonElement>(null);
   const folderViewRef = useRef<HTMLDivElement>(null);
-
-  const handleSearchChange = (value?: string) => {
-    setSearchQuery(value ?? '');
-  };
 
   /*
    * Switching views moves focus into the folder view, and leaving it hands
@@ -399,6 +399,60 @@ export const PublishPanel: FC<PublishPanelProps> = ({
     </span>
   );
 
+  const panelRoots = useMemo(
+    () => [
+      {
+        key: SINGLE_ROOT_KEY,
+        label: rootFolderLabel,
+        items: folderItems,
+        expandedPaths,
+        onExpandedPathsChange,
+        loadingPaths,
+      },
+    ],
+    [
+      rootFolderLabel,
+      folderItems,
+      expandedPaths,
+      onExpandedPathsChange,
+      loadingPaths,
+    ],
+  );
+  const folderPanelLabels = useMemo(
+    () => ({
+      searchPlaceholder,
+      clearSearchAriaLabel,
+      folderEmptyStateLabel,
+      addSiblingFolderLabel,
+      addChildFolderLabel,
+      cancelCreatingFolderLabel,
+      createFolderEmptyNameError,
+      createFolderInvalidNameError,
+      createFolderDuplicateNameError,
+      createFolderSameAsParentNameError,
+    }),
+    [
+      searchPlaceholder,
+      clearSearchAriaLabel,
+      folderEmptyStateLabel,
+      addSiblingFolderLabel,
+      addChildFolderLabel,
+      cancelCreatingFolderLabel,
+      createFolderEmptyNameError,
+      createFolderInvalidNameError,
+      createFolderDuplicateNameError,
+      createFolderSameAsParentNameError,
+    ],
+  );
+  const handlePendingDestinationChange = (
+    destination: PanelDestination | undefined,
+  ) => onPendingFolderPathChange(destination?.path);
+  const handleCreateFolder = (
+    _rootKey: string,
+    parentPath: string[],
+    name: string,
+  ) => onCreateFolder(parentPath, name);
+
   if (view === PublishPanelView.ChangeFolder) {
     return (
       <div
@@ -412,36 +466,23 @@ export const PublishPanel: FC<PublishPanelProps> = ({
         )}
         style={cssVars}
       >
-        <div role="search">
-          <Search
-            value={searchQuery}
-            onChange={handleSearchChange}
-            placeholder={searchPlaceholder}
-            clearLabel={clearSearchAriaLabel}
-            aria-label={searchPlaceholder}
-          />
-        </div>
-        <PublishFoldersTree
-          items={folderItems}
-          selectedPath={pendingFolderPath}
-          onSelectedPathChange={onPendingFolderPathChange}
-          onCreateFolder={onCreateFolder}
+        <FolderDestinationPanelBody
+          view={FolderDestinationView.ChangeFolder}
+          item={{ title: resource?.title ?? '' }}
+          roots={panelRoots}
+          destination={{
+            rootKey: SINGLE_ROOT_KEY,
+            path: selectedFolderPath ?? [],
+          }}
+          onDestinationChange={noop}
+          onChangeFolderClick={noop}
+          pendingDestination={toPanelDestination(pendingFolderPath)}
+          onPendingDestinationChange={handlePendingDestinationChange}
+          onCreateFolder={handleCreateFolder}
           getDisabledReason={getDisabledReason}
-          expandedPaths={expandedPaths}
-          onExpandedPathsChange={onExpandedPathsChange}
-          loadingPaths={loadingPaths}
-          searchQuery={searchQuery}
-          disabled={isSubmitting}
-          noResultsLabel={folderEmptyStateLabel}
-          addSiblingFolderLabel={addSiblingFolderLabel}
-          addChildFolderLabel={addChildFolderLabel}
-          cancelCreatingFolderLabel={cancelCreatingFolderLabel}
-          emptyFolderNameError={createFolderEmptyNameError}
-          invalidFolderNameError={createFolderInvalidNameError}
-          duplicateFolderNameError={createFolderDuplicateNameError}
-          sameAsParentFolderNameError={createFolderSameAsParentNameError}
-          rootLabel={rootFolderLabel}
-          styles={folderTreeStyles}
+          isSubmitting={isSubmitting}
+          panelLabels={folderPanelLabels}
+          panelStyles={{ folderTree: folderTreeStyles }}
         />
       </div>
     );
