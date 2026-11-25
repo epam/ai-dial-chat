@@ -5991,6 +5991,8 @@ if (loadState === SkillEditorLoadState.Loading) {
 
 ### useSkillEditorSubmit
 
+`phase` uses `SkillEditorSubmitPhase`: `Idle = 'idle'`, `Submitting = 'submitting'`, `Success = 'success'`, and `Failure = 'failure'`. Import the enum from `@epam/ai-dial-chat-hooks` or `@epam/ai-dial-chat-hooks/skill-editor` and compare with `phase === SkillEditorSubmitPhase.Submitting` to disable submission while saving. Dirty tracking remains separate from the submit lifecycle.
+
 Owns a Skill Editor's create/edit submission flow: field validation, building and (in edit mode) merging the `SKILL.md` manifest, calling `client.createSkill`/`client.updateSkill`, and mapping the resulting success/error/conflict outcomes to presentable state. Accepts an already-configured `client`, a `messages` object, and `onNavigate`/`onNotify` callbacks rather than importing routing, notification, or i18n modules itself. Pass `getCreateReturnUrl` when the host needs to select the created skill; it receives the normalized skill path and keeps host routing out of the hook. Pass `publishClient` (an object with `copyCatalogEntityToOrgUnit`) to give the Save-panel adapters a direct write into an org-unit folder; without it they offer none.
 
 `isSubmitErrorRetryable` is `true` only when `submitError` came from something a plain re-send can clear, such as an unavailable service; `retrySubmit` then re-sends the failed attempt's values, reusing the manifest and file blobs it already built. Pair the two to offer the action only where it can help — `onRetrySubmit={isSubmitErrorRetryable ? retrySubmit : undefined}` on `SkillEditor`.
@@ -6088,6 +6090,8 @@ const {
   contentRevisions,
 } = useSkillFileActions({
   maxFiles: config.skillUploadMaxFiles,
+  maxFileBytes: config.skillFileUploadMaxBytes,
+  maxTotalBytes: config.skillUploadMaxTotalBytes,
   files,
   setFiles,
   filesContentRef,
@@ -6223,6 +6227,8 @@ import { validateSkillFileBatch } from '@epam/ai-dial-chat-hooks';
 const { results, batchErrors, manifestCandidate } =
   await validateSkillFileBatch(candidates, {
     maxFiles: config.skillUploadMaxFiles,
+    maxFileBytes: config.skillFileUploadMaxBytes,
+    maxTotalBytes: config.skillUploadMaxTotalBytes,
     existingPaths: ['agents/analyzer.md'],
     existingTotalBytes: 2048,
     existingFileBytes: new Map([['agents/analyzer.md', 2048]]),

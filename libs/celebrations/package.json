@@ -60,6 +60,17 @@
       "!@epam/ai-dial-starter-buttons"
     ],
     "targets": {
+      "test-snow-circus-browser": {
+        "executor": "nx:run-commands",
+        "dependsOn": [
+          "build-storybook"
+        ],
+        "cache": false,
+        "options": {
+          "cwd": "libs/celebrations",
+          "command": "node --test browser-tests/snow-circus.browser.spec.mjs"
+        }
+      },
       "build-storybook": {
         "inputs": [
           "production",

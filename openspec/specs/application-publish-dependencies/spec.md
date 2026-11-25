@@ -73,9 +73,9 @@ The `targetUrl` of the application itself SHALL be the one it would have had wit
 
 ### Requirement: A dependency already published at its target is reused
 
-Before the request is built, the backend SHALL check, with the caller's token, whether each dependency's `targetUrl` already exists. A dependency whose target exists SHALL NOT be added to the request, and the published application SHALL still refer to that target. This is what makes publishing the same application version again after it was unpublished work: unpublishing removes only the application, so the dependencies of an earlier publish are still there. A dependency whose target does not exist is published as usual. The existing target's content is not refreshed: a dependency changed since it was published is not published again for the same application version, and publishing a new version creates a new namespace and publishes the dependencies again.
+Before the request is built, the backend SHALL check, with the caller's token, whether each dependency's `targetUrl` already exists. A dependency whose target exists SHALL NOT be added to the request, and the published application SHALL still refer to that target. This is what makes publishing the same application version again after it was unpublished work: unpublishing removes the application and its own files but not its dependencies, so the dependencies of an earlier publish are still there. A dependency whose target does not exist is published as usual. The existing target's content is not refreshed: a dependency changed since it was published is not published again for the same application version, and publishing a new version creates a new namespace and publishes the dependencies again.
 
-Unpublishing an application SHALL NOT change: it removes the application only, exactly as before this change, for applications published with or without dependencies.
+Unpublishing an application removes the application and the files published next to it (see `catalog-unpublish-api`), never its dependencies, for applications published with or without dependencies.
 
 #### Scenario: Republish after unpublish succeeds
 - **GIVEN** an application was published with a skill dependency, then unpublished
@@ -87,9 +87,9 @@ Unpublishing an application SHALL NOT change: it removes the application only, e
 - **WHEN** version `1.1.0` is published to the same folder
 - **THEN** the prompt is added to the request under the namespace of `Helper__1.1.0`
 
-#### Scenario: Unpublish is unchanged
+#### Scenario: Unpublish leaves the dependencies
 - **WHEN** an application published with dependencies is unpublished
-- **THEN** the Core removal request lists the application only
+- **THEN** the Core removal request lists the application and the files published next to it, and no dependency
 
 ### Requirement: The published application refers to the published dependencies
 

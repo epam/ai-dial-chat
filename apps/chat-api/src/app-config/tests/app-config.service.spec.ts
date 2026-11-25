@@ -96,13 +96,17 @@ describe('AppConfigService', () => {
       ).toEqual(origins);
     });
 
-    it('exposes the validated skill file count limit', async () => {
+    it('exposes the validated skill upload limits', async () => {
       const { service } = buildResolutionStack({
         SKILL_UPLOAD_MAX_FILES: '500',
+        SKILL_FILE_UPLOAD_MAX_BYTES: '10485760',
+        SKILL_UPLOAD_MAX_TOTAL_BYTES: '104857600',
       });
-      expect(
-        (await service.getClientConfig(ctx)).config.skillUploadMaxFiles,
-      ).toBe(500);
+      expect((await service.getClientConfig(ctx)).config).toMatchObject({
+        skillUploadMaxFiles: 500,
+        skillFileUploadMaxBytes: 10_485_760,
+        skillUploadMaxTotalBytes: 104_857_600,
+      });
     });
 
     describe('aiTextRefinementAvailable', () => {
@@ -1731,6 +1735,8 @@ describe('AppConfigService', () => {
         'projectContextTotalMaxBytes',
         'projectContextAllowedExtensions',
         'skillUploadMaxFiles',
+        'skillFileUploadMaxBytes',
+        'skillUploadMaxTotalBytes',
         'catalogCreationPermissions',
         'modelCatalogAvailable',
       ]);

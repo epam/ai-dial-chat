@@ -104,18 +104,19 @@ The primary button SHALL be labelled `buttons.create` in create mode and `button
 
 ### Requirement: Create strategies
 
-`ApplicationFormEditor` SHALL persist each kind according to its definition's `createStrategy`. For a kind with a `savePanel` (every registered application kind), Create SHALL first open the Save panel (see the `resource-save-panel` capability); the create below runs on the panel's Save, through `definition.create(values, setup, context, { folderPath })` into the chosen Personal folder, and the panel shows the Created notification.
+`ApplicationFormEditor` SHALL persist each kind according to its definition's `createStrategy`. For an `AllAtOnce` kind with a `savePanel`, Create SHALL first open the Save panel (see the `resource-save-panel` capability); the create below runs on the panel's Save, through `definition.create(values, setup, context, { folderPath })` into the chosen Personal folder, and the panel shows the Created notification. A `MetadataFirst` create SHALL NOT open the panel.
 
 - **`ApplicationCreateStrategy.AllAtOnce`.** A single `create` or `update` call persists metadata and setup together. Success then follows the shared success path; a created application can be published to an Organization folder from the panel.
 - **`ApplicationCreateStrategy.MetadataFirst`.**
   - In create mode the `Setup` component SHALL receive no `appId`, and SHALL render the `applicationEditor.setupPendingCreate` placeholder ("Create the application to configure its setup.").
-  - The panel SHALL offer the Personal root only. On its Save the page SHALL call `create` with the metadata only. It SHALL then replace the URL's search params (`replace: true`) to add the new id, which switches the page into edit mode in place, and start a best-effort `refetchDeployments()` that does not block the form.
-  - After that switch, the page SHALL NOT navigate away. The title becomes the edit title and the primary button becomes Save.
+  - Create SHALL call `create` with the metadata only, without a `folderPath`, so the application starts in the Personal root, and SHALL raise the `EntityOperation.Created` notification itself. It SHALL then replace the URL's search params (`replace: true`) to add the new id, which switches the page into edit mode in place and opens the embedded editor, and start a best-effort `refetchDeployments()` that does not block the form. A failed create keeps create mode and raises an error notification; a 409 also shows the name conflict inline on Name.
+  - After that switch, the page SHALL NOT navigate away. The title becomes the edit title and the primary button becomes Save, which opens the Save panel with both roots.
   - In edit mode, when the definition has no `update`, Save SHALL call the `Setup` handle's `save(metadata)`. After it resolves, the page follows the shared success path with `EntityOperation.Edited`.
 
 #### Scenario: Metadata-first create switches to edit mode in place
-- **WHEN** a user fills Name for a quick app, clicks Create, confirms the Save panel, and `createApplication` returns `{ id: "app-1" }`
-- **THEN** a "Quick app created successfully" notification shows
+- **WHEN** a user fills Name for a quick app, clicks Create, and `createApplication` returns `{ id: "app-1" }`
+- **THEN** no Save panel opens before the request
+- **AND** a "Quick app created successfully" notification shows
 - **AND** the URL gains `appId=app-1` without a history entry
 - **AND** the header shows the edit title with a Save button
 - **AND** the Setup section loads the schema editor for `app-1`

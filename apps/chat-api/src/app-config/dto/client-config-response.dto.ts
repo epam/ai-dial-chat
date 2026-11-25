@@ -35,6 +35,20 @@ export class ClientConfigDto {
   })
   skillUploadMaxFiles?: number;
 
+  @ApiPropertyOptional({
+    type: Number,
+    minimum: 1,
+    description: 'Maximum bytes per skill file, including SKILL.md.',
+  })
+  skillFileUploadMaxBytes?: number;
+
+  @ApiPropertyOptional({
+    type: Number,
+    minimum: 1,
+    description: 'Maximum total bytes per skill, including SKILL.md.',
+  })
+  skillUploadMaxTotalBytes?: number;
+
   @ApiProperty({
     description:
       'Active start-page celebration module ID selected by UI_EVENT. Null when UI_EVENT is absent or none. Event IDs are open-ended; clients ignore IDs not present in their local registry.',
