@@ -47,13 +47,21 @@ const makeService = () => {
   } as unknown as DialClientService;
   const cacheManager = makeCacheManager();
   const adminRoleService = { isAdmin: vi.fn().mockReturnValue(false) };
+  const filesListingService = { expandFolderContents: vi.fn() };
   const service = new PublishService(
     dialClient,
     cacheManager as never,
     adminRoleService as unknown as AdminRoleService,
     {} as never,
+    filesListingService as never,
   );
-  return { service, dialClient, cacheManager, adminRoleService };
+  return {
+    service,
+    dialClient,
+    cacheManager,
+    adminRoleService,
+    filesListingService,
+  };
 };
 
 const createPublicationBody = (dialClient: DialClientService, call = 0) =>
@@ -796,5 +804,185 @@ describe('PublishService.unpublish — who may ask', () => {
       ),
     ).rejects.toBeInstanceOf(BadGatewayException);
     expect(createPublication).not.toHaveBeenCalled();
+  });
+});
+
+describe('PublishService.unpublish, published files of an application', () => {
+  const APP_ID = 'applications/bucket-123/my-app__1.0.0';
+  const APP_TARGET = 'applications/public/Team/my-app__1.0.0';
+
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  const publishedInTeamFolder = (dialClient: DialClientService) =>
+    vi.spyOn(dialClient.client, 'getPublications').mockResolvedValue(
+      okResponse([
+        {
+          targetFolder: 'public/Team/',
+          createdAt: 1_700_000_000_000,
+          resources: [
+            { action: 'ADD', sourceUrl: APP_ID, targetUrl: APP_TARGET },
+          ],
+        },
+      ]),
+    );
+
+  const unpublishApp = (service: PublishService) =>
+    service.unpublish(
+      TEST_USER,
+      CatalogEntityType.Application,
+      APP_ID,
+      'Team',
+      '1.0.0',
+      'Test User',
+    );
+
+  it('also deletes the files published with the application, so the same version can be published again', async () => {
+    const { service, dialClient, filesListingService } = makeService();
+    publishedInTeamFolder(dialClient);
+    filesListingService.expandFolderContents.mockResolvedValue([
+      { path: 'Team/my-app__1.0.0/icon.svg' },
+    ]);
+    vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+      okResponse({ createdAt: 1_700_000_000_000 }),
+    );
+
+    await unpublishApp(service);
+
+    expect(filesListingService.expandFolderContents).toHaveBeenCalledWith(
+      'public',
+      'files/public/Team/my-app__1.0.0/',
+      '',
+      'token-abc',
+    );
+    expect(createPublicationBody(dialClient).resources).toEqual([
+      { action: 'DELETE', sourceUrl: APP_ID, targetUrl: APP_TARGET },
+      {
+        action: 'DELETE',
+        targetUrl: 'files/public/Team/my-app__1.0.0/icon.svg',
+      },
+    ]);
+  });
+
+  /* The Publish panel unpublishes through the published copy's url, which no publication names as a source. */
+  it('deletes the files of a published copy unpublished through its own url', async () => {
+    const { service, dialClient, filesListingService } = makeService();
+    vi.spyOn(dialClient.client, 'getPublications').mockResolvedValue(
+      okResponse([]),
+    );
+    filesListingService.expandFolderContents.mockResolvedValue([
+      { path: 'Team/my-app__1.0.0/icon.svg' },
+    ]);
+    vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+      okResponse({ createdAt: 1_700_000_000_000 }),
+    );
+    vi.spyOn(service, 'canUnpublish').mockResolvedValue(true);
+
+    await service.unpublish(
+      TEST_USER,
+      CatalogEntityType.Application,
+      APP_TARGET,
+      'Team',
+      '1.0.0',
+      'Test User',
+    );
+
+    expect(createPublicationBody(dialClient).resources).toEqual([
+      { action: 'DELETE', sourceUrl: APP_TARGET, targetUrl: APP_TARGET },
+      {
+        action: 'DELETE',
+        targetUrl: 'files/public/Team/my-app__1.0.0/icon.svg',
+      },
+    ]);
+  });
+
+  it('removes the application alone when it published no files', async () => {
+    const { service, dialClient, filesListingService } = makeService();
+    publishedInTeamFolder(dialClient);
+    filesListingService.expandFolderContents.mockRejectedValue(
+      new NotFoundException(),
+    );
+    vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+      okResponse({ createdAt: 1_700_000_000_000 }),
+    );
+
+    await unpublishApp(service);
+
+    expect(createPublicationBody(dialClient).resources).toEqual([
+      { action: 'DELETE', sourceUrl: APP_ID, targetUrl: APP_TARGET },
+    ]);
+  });
+
+  it('still removes the application when the published files cannot be listed', async () => {
+    const { service, dialClient, filesListingService } = makeService();
+    publishedInTeamFolder(dialClient);
+    filesListingService.expandFolderContents.mockRejectedValue(
+      new Error('listing down'),
+    );
+    vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+      okResponse({ createdAt: 1_700_000_000_000 }),
+    );
+
+    await unpublishApp(service);
+
+    expect(createPublicationBody(dialClient).resources).toEqual([
+      { action: 'DELETE', sourceUrl: APP_ID, targetUrl: APP_TARGET },
+    ]);
+  });
+
+  /*
+   * The folder is named after the application, which another author's
+   * application in the same folder can share, so it is listed only when the
+   * caller's own publication confirms it.
+   */
+  it('lists no files when the caller has no publication of the application in the folder', async () => {
+    const { service, dialClient, filesListingService } = makeService();
+    vi.spyOn(dialClient.client, 'getPublications').mockResolvedValue(
+      okResponse([]),
+    );
+    vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+      okResponse({ createdAt: 1_700_000_000_000 }),
+    );
+
+    await unpublishApp(service);
+
+    expect(filesListingService.expandFolderContents).not.toHaveBeenCalled();
+    expect(createPublicationBody(dialClient).resources).toEqual([
+      { action: 'DELETE', sourceUrl: APP_ID, targetUrl: APP_TARGET },
+    ]);
+  });
+
+  it('does not list files for an entity that is not an application', async () => {
+    const { service, dialClient, filesListingService } = makeService();
+    vi.spyOn(dialClient.client, 'getPublications').mockResolvedValue(
+      okResponse([
+        {
+          targetFolder: 'public/Team/',
+          createdAt: 1_700_000_000_000,
+          resources: [
+            {
+              action: 'ADD',
+              sourceUrl: 'toolsets/bucket-123/my-tool__1.0.0',
+              targetUrl: 'toolsets/public/Team/my-tool__1.0.0',
+            },
+          ],
+        },
+      ]),
+    );
+    vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+      okResponse({ createdAt: 1_700_000_000_000 }),
+    );
+
+    await service.unpublish(
+      TEST_USER,
+      CatalogEntityType.Toolset,
+      'toolsets/bucket-123/my-tool__1.0.0',
+      'Team',
+      '1.0.0',
+      'Test User',
+    );
+
+    expect(filesListingService.expandFolderContents).not.toHaveBeenCalled();
   });
 });
