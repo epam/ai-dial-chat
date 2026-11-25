@@ -384,6 +384,7 @@ const unit = (
 const setRights = (units: OrgUnit[], hasAdminAccess = false) => {
   const access = { hasAdminAccess, units };
   vi.mocked(useOrgUnitsContext).mockReturnValue({
+    hasAdminAccess,
     canPublishDirectlyAt: (path: string, namespace: OrgUnitNamespace) =>
       canWriteIntoOrgUnitAt(access, path, namespace) &&
       canApprovePublicationsAt(access, path),

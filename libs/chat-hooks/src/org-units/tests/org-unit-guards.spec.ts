@@ -275,14 +275,27 @@ describe('getMissingDirectWriteNamespaces', () => {
   });
 });
 
+const dep = (type: PublishDependencyType, isFolder = false) => ({
+  type,
+  isFolder,
+});
+
 describe('getPublishDirectAvailability', () => {
   const APPS = OrgUnitNamespace.Applications;
+  const NONE = {
+    isDirect: false,
+    missingNamespaces: [],
+    missingTypes: [],
+    hasFolderReference: false,
+  };
   const checks = (
     canPublish: boolean,
     writable: OrgUnitNamespace[],
+    hasAdminAccess = false,
   ): Parameters<typeof getPublishDirectAvailability>[3] => ({
     canPublishDirectlyAt: () => canPublish,
     canSaveDirectlyAt: (_path, namespace) => writable.includes(namespace),
+    hasAdminAccess,
   });
 
   it('is direct when every right is present', () => {
@@ -290,10 +303,10 @@ describe('getPublishDirectAvailability', () => {
       getPublishDirectAvailability(
         ['Acme'],
         APPS,
-        [PublishDependencyType.Toolset],
+        [dep(PublishDependencyType.Toolset)],
         checks(true, [OrgUnitNamespace.Toolsets]),
       ),
-    ).toEqual({ isDirect: true, missingNamespaces: [], missingTypes: [] });
+    ).toEqual({ ...NONE, isDirect: true });
   });
 
   it('names the dependency namespaces the user may not write', () => {
@@ -301,11 +314,11 @@ describe('getPublishDirectAvailability', () => {
       getPublishDirectAvailability(
         ['Acme'],
         APPS,
-        [PublishDependencyType.Toolset, PublishDependencyType.Prompt],
+        [dep(PublishDependencyType.Toolset), dep(PublishDependencyType.Prompt)],
         checks(true, [OrgUnitNamespace.Prompts]),
       ),
     ).toEqual({
-      isDirect: false,
+      ...NONE,
       missingNamespaces: [OrgUnitNamespace.Toolsets],
       missingTypes: [PublishDependencyType.Toolset],
     });
@@ -314,18 +327,18 @@ describe('getPublishDirectAvailability', () => {
   it('is direct without dependencies', () => {
     expect(
       getPublishDirectAvailability(['Acme'], APPS, [], checks(true, [])),
-    ).toEqual({ isDirect: true, missingNamespaces: [], missingTypes: [] });
+    ).toEqual({ ...NONE, isDirect: true });
   });
 
-  it('never lets a file dependency block', () => {
+  it('never lets a plain file dependency block', () => {
     expect(
       getPublishDirectAvailability(
         ['Acme'],
         APPS,
-        [PublishDependencyType.File],
+        [dep(PublishDependencyType.File)],
         checks(true, []),
       ),
-    ).toEqual({ isDirect: true, missingNamespaces: [], missingTypes: [] });
+    ).toEqual({ ...NONE, isDirect: true });
   });
 
   it('names nothing when the entity itself may not be published directly', () => {
@@ -333,10 +346,66 @@ describe('getPublishDirectAvailability', () => {
       getPublishDirectAvailability(
         ['Acme'],
         APPS,
-        [PublishDependencyType.Toolset],
+        [
+          dep(PublishDependencyType.Toolset),
+          dep(PublishDependencyType.File, true),
+        ],
         checks(false, []),
       ),
-    ).toEqual({ isDirect: false, missingNamespaces: [], missingTypes: [] });
+    ).toEqual(NONE);
+  });
+
+  describe('a folder reference', () => {
+    const folder = dep(PublishDependencyType.File, true);
+
+    it('is not direct for an application when the user is not a DIAL admin', () => {
+      expect(
+        getPublishDirectAvailability(
+          ['Acme'],
+          APPS,
+          [folder],
+          checks(true, []),
+        ),
+      ).toEqual({ ...NONE, hasFolderReference: true });
+    });
+
+    it('is reported next to a missing dependency namespace, with both lists', () => {
+      expect(
+        getPublishDirectAvailability(
+          ['Acme'],
+          APPS,
+          [dep(PublishDependencyType.Toolset), folder],
+          checks(true, []),
+        ),
+      ).toEqual({
+        ...NONE,
+        hasFolderReference: true,
+        missingNamespaces: [OrgUnitNamespace.Toolsets],
+        missingTypes: [PublishDependencyType.Toolset],
+      });
+    });
+
+    it('stays direct for a DIAL admin', () => {
+      expect(
+        getPublishDirectAvailability(
+          ['Acme'],
+          APPS,
+          [folder],
+          checks(true, [], true),
+        ),
+      ).toEqual({ ...NONE, isDirect: true });
+    });
+
+    it('does not apply to a toolset, prompt or skill', () => {
+      expect(
+        getPublishDirectAvailability(
+          ['Acme'],
+          OrgUnitNamespace.Prompts,
+          [folder],
+          checks(true, []),
+        ),
+      ).toEqual({ ...NONE, isDirect: true });
+    });
   });
 });
 
@@ -345,6 +414,7 @@ describe('getCatalogPublishDirectAvailability', () => {
     canPublishDirectlyAt: () => true,
     canSaveDirectlyAt: (_path: string, namespace: OrgUnitNamespace) =>
       namespace !== OrgUnitNamespace.Toolsets,
+    hasAdminAccess: false,
   };
 
   it('maps the item type to its namespace and names the missing dependency types', () => {
@@ -352,13 +422,14 @@ describe('getCatalogPublishDirectAvailability', () => {
       getCatalogPublishDirectAvailability(
         CatalogEntityType.Agent,
         ['Acme'],
-        [PublishDependencyType.Toolset, PublishDependencyType.Prompt],
+        [dep(PublishDependencyType.Toolset), dep(PublishDependencyType.Prompt)],
         checks,
       ),
     ).toEqual({
       isDirect: false,
       missingNamespaces: [OrgUnitNamespace.Toolsets],
       missingTypes: [PublishDependencyType.Toolset],
+      hasFolderReference: false,
     });
   });
 
@@ -373,6 +444,17 @@ describe('getCatalogPublishDirectAvailability', () => {
     ).toBe(true);
   });
 
+  it('flags a folder reference of an agent for a user who is not a DIAL admin', () => {
+    expect(
+      getCatalogPublishDirectAvailability(
+        CatalogEntityType.Agent,
+        ['Acme'],
+        [dep(PublishDependencyType.File, true)],
+        checks,
+      ),
+    ).toMatchObject({ isDirect: false, hasFolderReference: true });
+  });
+
   it('is never direct for a type that cannot be published', () => {
     expect(
       getCatalogPublishDirectAvailability(
@@ -381,6 +463,11 @@ describe('getCatalogPublishDirectAvailability', () => {
         [],
         checks,
       ),
-    ).toEqual({ isDirect: false, missingNamespaces: [], missingTypes: [] });
+    ).toEqual({
+      isDirect: false,
+      missingNamespaces: [],
+      missingTypes: [],
+      hasFolderReference: false,
+    });
   });
 });

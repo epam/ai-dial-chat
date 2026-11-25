@@ -2,7 +2,7 @@ import {
   OrgUnitNamespace,
   type CatalogEntityType,
 } from '@epam/ai-dial-chat-shared';
-import type { PublishDependencyType } from '@epam/ai-dial-publish-panel';
+import { PublishDependencyType } from '@epam/ai-dial-publish-panel';
 import {
   toPublishEntityType,
   type CatalogPublishEntityType,
@@ -202,54 +202,103 @@ export const getMissingDirectWriteNamespaces = (
         (namespace) => !canSaveDirectlyAt(folderPath.join('/'), namespace),
       );
 
+/** What {@link getPublishDirectAvailability} reads of a listed dependency. */
+export interface PublishDirectDependency {
+  /** What kind of resource it is. */
+  type: PublishDependencyType;
+  /** Whether a `file` dependency is a folder of files. */
+  isFolder?: boolean;
+}
+
 /** Outcome of {@link getPublishDirectAvailability}. */
 export interface PublishDirectAvailability {
-  /** Whether the publish may write directly: the entity check holds and no dependency namespace is missing. */
+  /** Whether the publish may write directly: the entity check holds, no dependency namespace is missing and no folder reference blocks it. */
   isDirect: boolean;
   /** Dependency namespaces the user may not write in the owning unit; empty unless the entity check holds. */
   missingNamespaces: OrgUnitNamespace[];
   /** The dependency kinds of `missingNamespaces`, for the host to name; same order, same emptiness. */
   missingTypes: PublishDependencyType[];
+  /** Whether an application refers to a folder of files and the user is not a DIAL admin, so a request is filed; `false` unless the entity check holds. */
+  hasFolderReference: boolean;
 }
 
-/** Checks {@link getPublishDirectAvailability} reads, both from `useOrgUnits`. */
+/** Checks {@link getPublishDirectAvailability} reads, all from `useOrgUnits`. */
 export interface PublishDirectChecks {
   /** The entity's own direct-publish check. */
   canPublishDirectlyAt: OrgUnitRightCheck;
   /** Strict write check, applied to each dependency namespace. */
   canSaveDirectlyAt: OrgUnitRightCheck;
+  /** Whether the user is a DIAL admin, the only caller DIAL Core lets copy an application that refers to a folder. */
+  hasAdminAccess: boolean;
 }
 
 /**
- * Whether a publish into the folder writes directly and which dependency
- * namespaces block it. A user who may not publish the entity directly gets no
- * missing list, since a request is filed anyway; a dependency type with no
- * namespace (a file) never blocks.
+ * Whether the dependencies and the user make an application a folder-reference
+ * case: a listed dependency is a folder of files and the user is not a DIAL
+ * admin. Only an application can be one.
+ * @param namespace - the entity's org-unit namespace
+ * @param dependencies - the private dependencies the panel lists
+ * @param hasAdminAccess - whether the user is a DIAL admin
+ */
+export const hasBlockingFolderReference = (
+  namespace: OrgUnitNamespace,
+  dependencies: readonly PublishDirectDependency[],
+  hasAdminAccess: boolean,
+): boolean =>
+  namespace === OrgUnitNamespace.Applications &&
+  !hasAdminAccess &&
+  dependencies.some(
+    (dependency) =>
+      dependency.type === PublishDependencyType.File &&
+      dependency.isFolder === true,
+  );
+
+/**
+ * Whether a publish into the folder writes directly and which reasons block
+ * it. A user who may not publish the entity directly gets no missing list and
+ * no folder flag, since a request is filed anyway; a plain file dependency
+ * never blocks, a folder of files blocks an application unless the user is a
+ * DIAL admin.
  * @param folderPath - the destination folder inside the Organization root
  * @param namespace - the entity's org-unit namespace
- * @param dependencyTypes - the types of the private dependencies the panel lists
- * @param checks - the hook's direct-publish and strict write checks
+ * @param dependencies - the private dependencies the panel lists
+ * @param checks - the hook's direct-publish and strict write checks, and the DIAL admin flag
  */
 export const getPublishDirectAvailability = (
   folderPath: string[],
   namespace: OrgUnitNamespace,
-  dependencyTypes: readonly PublishDependencyType[],
-  { canPublishDirectlyAt, canSaveDirectlyAt }: PublishDirectChecks,
+  dependencies: readonly PublishDirectDependency[],
+  {
+    canPublishDirectlyAt,
+    canSaveDirectlyAt,
+    hasAdminAccess,
+  }: PublishDirectChecks,
 ): PublishDirectAvailability => {
   const path = folderPath.join('/');
   if (!canPublishDirectlyAt(path, namespace)) {
-    return { isDirect: false, missingNamespaces: [], missingTypes: [] };
+    return {
+      isDirect: false,
+      missingNamespaces: [],
+      missingTypes: [],
+      hasFolderReference: false,
+    };
   }
-  const missingNamespaces = getDependencyOrgUnitNamespaces(
-    dependencyTypes.map((type) => ({ type })),
-  ).filter((dependency) => !canSaveDirectlyAt(path, dependency));
+  const missingNamespaces = getDependencyOrgUnitNamespaces(dependencies).filter(
+    (dependency) => !canSaveDirectlyAt(path, dependency),
+  );
+  const hasFolderReference = hasBlockingFolderReference(
+    namespace,
+    dependencies,
+    hasAdminAccess,
+  );
   return {
-    isDirect: missingNamespaces.length === 0,
+    isDirect: missingNamespaces.length === 0 && !hasFolderReference,
     missingNamespaces,
     missingTypes: missingNamespaces.flatMap((missing) => {
       const type = getDependencyTypeOfNamespace(missing);
       return type == null ? [] : [type];
     }),
+    hasFolderReference,
   };
 };
 
@@ -259,25 +308,30 @@ export const getPublishDirectAvailability = (
  * published (or has no namespace) is never direct.
  * @param itemType - the catalog entity type of the item being published
  * @param folderPath - the destination folder inside the Organization root
- * @param dependencyTypes - the types of the private dependencies the panel lists
- * @param checks - the hook's direct-publish and strict write checks
+ * @param dependencies - the private dependencies the panel lists
+ * @param checks - the hook's direct-publish and strict write checks, and the DIAL admin flag
  */
 export const getCatalogPublishDirectAvailability = (
   itemType: CatalogEntityType,
   folderPath: string[],
-  dependencyTypes: readonly PublishDependencyType[],
+  dependencies: readonly PublishDirectDependency[],
   checks: PublishDirectChecks,
 ): PublishDirectAvailability => {
   const entityType = toPublishEntityType(itemType);
   const namespace =
     entityType == null ? undefined : getOrgUnitNamespace(entityType);
   if (namespace == null) {
-    return { isDirect: false, missingNamespaces: [], missingTypes: [] };
+    return {
+      isDirect: false,
+      missingNamespaces: [],
+      missingTypes: [],
+      hasFolderReference: false,
+    };
   }
   return getPublishDirectAvailability(
     folderPath,
     namespace,
-    dependencyTypes,
+    dependencies,
     checks,
   );
 };

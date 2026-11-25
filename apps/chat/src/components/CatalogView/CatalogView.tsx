@@ -509,10 +509,15 @@ const CatalogView: FC<Props> = ({
         ? getCatalogPublishDirectAvailability(
             item.type,
             folderPath,
-            dependencies.map(({ type }) => type),
+            dependencies,
             orgUnits,
           )
-        : { isDirect: false, missingNamespaces: [], missingTypes: [] },
+        : {
+            isDirect: false,
+            missingNamespaces: [],
+            missingTypes: [],
+            hasFolderReference: false,
+          },
     [isOrgUnitsEnabled, orgUnits],
   );
 

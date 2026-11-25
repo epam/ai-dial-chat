@@ -36,6 +36,8 @@ export interface UseOrgUnitsResult {
   canSaveDirectlyAt: OrgUnitRightCheck;
   /** Whether a publication request into the path can be sent; `true` until the status is `Ready`. */
   canPublishAt: OrgUnitRightCheck;
+  /** Whether the user is a DIAL admin, the global role; a unit's own `admin` role does not count. `false` until the status is `Ready`. */
+  hasAdminAccess: boolean;
   /** Whether a publish panel may write straight into the path instead of filing a request: it lies inside an org unit, the user may write the namespace there and may approve publications (`read` and `write` on `publications`, or DIAL admin). `false` until the status is `Ready`. */
   canPublishDirectlyAt: OrgUnitRightCheck;
 }
@@ -147,6 +149,7 @@ export const useOrgUnits = ({
       canSaveDirectlyAt,
       canPublishAt,
       canPublishDirectlyAt,
+      hasAdminAccess: isReady && access.hasAdminAccess,
     }),
     [
       status,
@@ -156,6 +159,8 @@ export const useOrgUnits = ({
       canSaveDirectlyAt,
       canPublishAt,
       canPublishDirectlyAt,
+      isReady,
+      access.hasAdminAccess,
     ],
   );
 };

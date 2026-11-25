@@ -1181,7 +1181,9 @@ right. `canPublishDirectlyAt` is strict in the same way: it is `true` only when 
 path lies inside a listed unit, the user may write the namespace there and may
 approve publications (`read` and `write` on `publications`, or DIAL admin), which is
 what lets a publish panel write directly instead of filing a request. Each takes a decoded public-relative path and an `OrgUnitNamespace` from
-`@epam/ai-dial-chat-shared`. Available from the root and `./utils`.
+`@epam/ai-dial-chat-shared`. `hasAdminAccess` is a boolean, `false` until `Ready`: whether the user is a
+DIAL admin, the global role. A unit's own `admin` role does not count, and DIAL Core lets only a DIAL admin
+copy an application that refers to a folder of files. Available from the root and `./utils`.
 
 ```tsx
 import { OrgUnitsStatus, useOrgUnits } from '@epam/ai-dial-chat-hooks';
@@ -1211,7 +1213,7 @@ and `getDisabledReason`, plus `canSaveDirectlyTo` when the host passes the stric
 translated sentence) only for a disabled folder; without it `getDisabledReason`
 is `undefined`. Both `isDestinationUsable` and `getDisabledReason` take an optional `SaveDestinationRoot` as a second argument: only `SaveDestinationRoot.Organization` (also the meaning of an omitted root, since the publish panels have one tree) is matched against units, and a Personal folder is always usable even when it is named like a unit. With the flag off, a status
 other than `Ready`, or no namespace, both guards are `undefined`, so the panel
-keeps its default behaviour. `canSaveDirectlyTo` takes the same optional root and is `false` for any root but Organization, so a Personal folder named like a unit never direct-writes. `useFolderGuards({ purpose, namespace, isActive, isEnabled, orgUnits, shouldRefreshOnOpen?, getReason? })` wraps it for a panel: it calls `orgUnits.ensureUnits()` while `isActive`, re-reads loaded rights on open when `shouldRefreshOnOpen`, and returns the guards; `orgUnits` is the `useOrgUnits` result (or one shared through a host context) and `isEnabled` the host's flag. `toPublishDisabledReason(getDisabledReason)` adapts a guard's `getDisabledReason(folderPath)` to a publish panel's `getDisabledReason(destination)`. `toSaveDestinationRoot(rootKey)` turns a destination's `rootKey` into a `SaveDestinationRoot`, or `undefined`. `getDependencyOrgUnitNamespaces(dependencies)` lists the namespaces a direct write needs to copy the given dependencies (a `file` needs none), and `getMissingDirectWriteNamespaces({ isEnabled, status, canSaveDirectlyAt }, folderPath, namespaces)` returns those of `namespaces` the user may not write in the folder's unit, or none while the rights are not known. `getPublishDirectAvailability(folderPath, namespace, dependencyTypes, { canPublishDirectlyAt, canSaveDirectlyAt })` returns `{ isDirect, missingNamespaces }`: whether a publish writes directly and which dependency namespaces the user may not write there (plus `missingTypes`, the dependency kinds of those namespaces; both are empty when the entity itself may not be published directly, since a request is filed anyway). `getCatalogPublishDirectAvailability(itemType, folderPath, dependencyTypes, checks)` does the same for a catalog item type, taking the namespace from its publish entity type; a type that cannot be published is never direct. All are available from the root and `./utils`.
+keeps its default behaviour. `canSaveDirectlyTo` takes the same optional root and is `false` for any root but Organization, so a Personal folder named like a unit never direct-writes. `useFolderGuards({ purpose, namespace, isActive, isEnabled, orgUnits, shouldRefreshOnOpen?, getReason? })` wraps it for a panel: it calls `orgUnits.ensureUnits()` while `isActive`, re-reads loaded rights on open when `shouldRefreshOnOpen`, and returns the guards; `orgUnits` is the `useOrgUnits` result (or one shared through a host context) and `isEnabled` the host's flag. `toPublishDisabledReason(getDisabledReason)` adapts a guard's `getDisabledReason(folderPath)` to a publish panel's `getDisabledReason(destination)`. `toSaveDestinationRoot(rootKey)` turns a destination's `rootKey` into a `SaveDestinationRoot`, or `undefined`. `getDependencyOrgUnitNamespaces(dependencies)` lists the namespaces a direct write needs to copy the given dependencies (a `file` needs none), and `getMissingDirectWriteNamespaces({ isEnabled, status, canSaveDirectlyAt }, folderPath, namespaces)` returns those of `namespaces` the user may not write in the folder's unit, or none while the rights are not known. `getPublishDirectAvailability(folderPath, namespace, dependencies, { canPublishDirectlyAt, canSaveDirectlyAt, hasAdminAccess })` takes the listed dependencies (`{ type, isFolder? }`, not only their types) and returns `{ isDirect, missingNamespaces, missingTypes, hasFolderReference }`: whether a publish writes directly, which dependency namespaces the user may not write there (plus `missingTypes`, the dependency kinds of those namespaces), and whether an application refers to a folder of files and the user is not a DIAL admin, which also makes `isDirect` false; the lists and the flag are empty or `false` when the entity itself may not be published directly, since a request is filed anyway. `hasBlockingFolderReference(namespace, dependencies, hasAdminAccess)` is that last rule on its own. `getCatalogPublishDirectAvailability(itemType, folderPath, dependencies, checks)` does the same for a catalog item type, taking the namespace from its publish entity type; a type that cannot be published is never direct. All are available from the root and `./utils`.
 
 ```tsx
 import {
@@ -5645,6 +5647,13 @@ namespaces)` (the namespaces, among those asked, where the user may not write
   and `iconNote` becomes `panelProps.destinationNote` only on a direct write into
   a unit folder where `getMissingNamespaces` reports `files` as missing; pass
   `iconNote` only when the saved resource has an uploaded icon.
+- the folder-reference rule: pass `hasAdminAccess` (from `useOrgUnits`) and
+  `folderReferenceNote`. When a listed dependency is a folder of files
+  (`isFolder`) and the user is not a DIAL admin, an Organization destination
+  that would otherwise be a direct write takes the publication request instead,
+  the folder stays selectable, and `folderReferenceNote` becomes
+  `panelProps.destinationNote` in place of the icon sentence. Without
+  `hasAdminAccess` the rule does not apply.
 
 The host owns everything else: the resource summary, the panel's own labels,
 `onClose`, and the notification it shows from `onSaved(result, choice)`. The

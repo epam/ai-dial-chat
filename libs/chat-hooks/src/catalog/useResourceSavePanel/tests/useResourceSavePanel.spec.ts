@@ -1089,3 +1089,138 @@ describe('useResourceSavePanel — taken name in a direct-write folder', () => {
     expect(result.current.panelProps.isSubmitDisabled).toBe(false);
   });
 });
+
+describe('useResourceSavePanel — folder reference', () => {
+  const UNIT = {
+    rootKey: SaveDestinationRoot.Organization,
+    path: ['Acme', 'Teams'],
+  };
+  const FOLDER = {
+    ...DEPENDENCY,
+    id: 'files/b1/agent__1.0.0/',
+    name: 'agent__1.0.0',
+    type: PublishDependencyType.File,
+    isFolder: true,
+  };
+  const PLAIN_FILE = {
+    ...FOLDER,
+    id: 'files/b1/a.txt',
+    name: 'a.txt',
+    isFolder: false,
+  };
+  const NOTE = 'Refers to a folder of files, a request is sent.';
+  const setup = (
+    overrides: Partial<UseResourceSavePanelParams> = {},
+    dependencies: unknown[] = [FOLDER],
+  ) => {
+    const adapter = makeAdapter({
+      saveIntoOrgUnit: vi.fn().mockResolvedValue({ id: ID }),
+    });
+    return {
+      adapter,
+      ...renderPanel({
+        adapter,
+        canSaveDirectlyTo: (path) => path[0] === 'Acme',
+        loadDependencies: vi.fn().mockResolvedValue(dependencies),
+        hasAdminAccess: false,
+        folderReferenceNote: NOTE,
+        ...overrides,
+      }),
+    };
+  };
+  const chooseUnit = async (
+    result: ReturnType<typeof renderPanel>['result'],
+    count: number,
+  ) => {
+    act(() => result.current.panelProps.onDestinationChange(UNIT));
+    await waitFor(() =>
+      expect(result.current.panelProps.dependencies).toHaveLength(count),
+    );
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('takes the publish rows for a user who is not a DIAL admin and shows the note', async () => {
+    const { result, params, adapter } = setup();
+    await chooseUnit(result, 1);
+
+    expect(result.current.panelProps.destinationNote).toBe(NOTE);
+    await act(() => result.current.submit());
+
+    expect(adapter.saveIntoOrgUnit).not.toHaveBeenCalled();
+    expect(params.publishClient.publishCatalogEntity).toHaveBeenCalledTimes(1);
+    expect(params.onSaved).toHaveBeenCalledWith(
+      expect.objectContaining({ isPublished: true }),
+      expect.objectContaining({ isDirectWrite: false }),
+    );
+  });
+
+  it('keeps the unit folder selectable', async () => {
+    const getDisabledReason = vi.fn(() => undefined);
+    const { result } = setup({ getDisabledReason });
+    await chooseUnit(result, 1);
+
+    expect(result.current.panelProps.getDisabledReason?.(UNIT)).toBeUndefined();
+    expect(result.current.panelProps.isSubmitDisabled).toBe(false);
+  });
+
+  it('writes directly for a DIAL admin and shows no note', async () => {
+    const { result, params, adapter } = setup({ hasAdminAccess: true });
+    await chooseUnit(result, 1);
+
+    expect(result.current.panelProps.destinationNote).toBeUndefined();
+    await act(() => result.current.submit());
+
+    expect(adapter.saveIntoOrgUnit).toHaveBeenCalledTimes(1);
+    expect(params.publishClient.publishCatalogEntity).not.toHaveBeenCalled();
+  });
+
+  it('writes directly when the dependencies hold only a plain file', async () => {
+    const { result, adapter } = setup({}, [PLAIN_FILE]);
+    await chooseUnit(result, 1);
+
+    expect(result.current.panelProps.destinationNote).toBeUndefined();
+    await act(() => result.current.submit());
+
+    expect(adapter.saveIntoOrgUnit).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows no note and keeps the direct write while the list is empty or the read failed', async () => {
+    const { result, adapter } = setup({
+      loadDependencies: vi.fn().mockRejectedValue(new Error('down')),
+    });
+    act(() => result.current.panelProps.onDestinationChange(UNIT));
+
+    expect(result.current.panelProps.destinationNote).toBeUndefined();
+    await act(() => result.current.submit());
+
+    expect(adapter.saveIntoOrgUnit).toHaveBeenCalledTimes(1);
+  });
+
+  it('is unchanged when the host passes no admin flag', async () => {
+    const { result, adapter } = setup({ hasAdminAccess: undefined });
+    await chooseUnit(result, 1);
+
+    expect(result.current.panelProps.destinationNote).toBeUndefined();
+    await act(() => result.current.submit());
+
+    expect(adapter.saveIntoOrgUnit).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows no note for a folder that is not a direct-write folder', async () => {
+    const { result } = setup();
+    await chooseUnit(result, 1);
+    act(() => result.current.panelProps.onDestinationChange(EPAM));
+
+    expect(result.current.panelProps.destinationNote).toBeUndefined();
+  });
+
+  it('shows no note when the host passes none', async () => {
+    const { result } = setup({ folderReferenceNote: undefined });
+    await chooseUnit(result, 1);
+
+    expect(result.current.panelProps.destinationNote).toBeUndefined();
+  });
+});

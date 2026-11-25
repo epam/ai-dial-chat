@@ -138,6 +138,7 @@ const mockOrgUnits = (status: OrgUnitsStatus) =>
     canSaveDirectlyAt,
     canPublishDirectlyAt: vi.fn(() => false),
     canPublishAt: vi.fn(),
+    hasAdminAccess: false,
   });
 
 describe('ResourceSavePanelContainer', () => {
