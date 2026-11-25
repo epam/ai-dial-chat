@@ -26,6 +26,7 @@ import {
   TextRefinementPurpose,
 } from './dto/refine-text.dto';
 import { APPLICATION_DESCRIPTION_PROMPT } from './prompts/application-description.prompt';
+import { APPLICATION_NAME_PROMPT } from './prompts/application-name.prompt';
 import { PROJECT_DESCRIPTION_PROMPT } from './prompts/project-description.prompt';
 import { PROJECT_INSTRUCTIONS_PROMPT } from './prompts/project-instructions.prompt';
 import { PROMPT_DESCRIPTION_PROMPT } from './prompts/prompt-description.prompt';
@@ -117,6 +118,7 @@ export class TextRefinementService {
         SCHEDULED_TASK_INSTRUCTIONS_PROMPT,
       [TextRefinementPurpose.ApplicationDescription]:
         APPLICATION_DESCRIPTION_PROMPT,
+      [TextRefinementPurpose.ApplicationName]: APPLICATION_NAME_PROMPT,
       [TextRefinementPurpose.ToolsetDescription]: TOOLSET_DESCRIPTION_PROMPT,
       [TextRefinementPurpose.PromptDescription]: PROMPT_DESCRIPTION_PROMPT,
       [TextRefinementPurpose.PromptInstructions]: PROMPT_INSTRUCTIONS_PROMPT,
@@ -134,6 +136,8 @@ export class TextRefinementService {
         'TEXT_REFINEMENT_SCHEDULED_TASK_INSTRUCTIONS_PROMPT',
       [TextRefinementPurpose.ApplicationDescription]:
         'TEXT_REFINEMENT_APPLICATION_DESCRIPTION_PROMPT',
+      [TextRefinementPurpose.ApplicationName]:
+        'TEXT_REFINEMENT_APPLICATION_NAME_PROMPT',
       [TextRefinementPurpose.ToolsetDescription]:
         'TEXT_REFINEMENT_TOOLSET_DESCRIPTION_PROMPT',
       [TextRefinementPurpose.PromptDescription]:

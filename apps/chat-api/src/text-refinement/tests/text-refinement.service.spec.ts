@@ -11,6 +11,7 @@ import {
   TextRefinementPurpose,
 } from '../dto/refine-text.dto';
 import { APPLICATION_DESCRIPTION_PROMPT } from '../prompts/application-description.prompt';
+import { APPLICATION_NAME_PROMPT } from '../prompts/application-name.prompt';
 import { PROJECT_DESCRIPTION_PROMPT } from '../prompts/project-description.prompt';
 import { PROJECT_INSTRUCTIONS_PROMPT } from '../prompts/project-instructions.prompt';
 import { PROMPT_DESCRIPTION_PROMPT } from '../prompts/prompt-description.prompt';
@@ -110,6 +111,11 @@ describe('TextRefinementService', () => {
       TextRefinementPurpose.ApplicationDescription,
       'TEXT_REFINEMENT_APPLICATION_DESCRIPTION_PROMPT',
       APPLICATION_DESCRIPTION_PROMPT,
+    ],
+    [
+      TextRefinementPurpose.ApplicationName,
+      'TEXT_REFINEMENT_APPLICATION_NAME_PROMPT',
+      APPLICATION_NAME_PROMPT,
     ],
     [
       TextRefinementPurpose.ToolsetDescription,
@@ -511,5 +517,25 @@ describe('TextRefinementService', () => {
     await refine(controller.signal);
     expect(remove).toHaveBeenCalled();
     expect(vi.getTimerCount()).toBe(0);
+  });
+});
+
+describe('application name prompt', () => {
+  it('rewrites a name within the characters and length a name accepts', () => {
+    expect(APPLICATION_NAME_PROMPT).toContain('letters, digits, spaces');
+    expect(APPLICATION_NAME_PROMPT).toContain(
+      String(TEXT_REFINEMENT_LIMITS[TextRefinementPurpose.ApplicationName]),
+    );
+  });
+
+  it('treats the draft as a name to rewrite, never as an instruction', () => {
+    expect(APPLICATION_NAME_PROMPT).toContain('<draft>');
+    expect(APPLICATION_NAME_PROMPT).toMatch(/never as instructions/);
+  });
+
+  it('keeps the name limit at the platform limit for names', () => {
+    expect(TEXT_REFINEMENT_LIMITS[TextRefinementPurpose.ApplicationName]).toBe(
+      256,
+    );
   });
 });
