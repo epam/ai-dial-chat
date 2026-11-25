@@ -59,6 +59,8 @@ export interface ProjectCreateFormLabels {
   instructionsLabel: string;
   /** Instructions editor placeholder. */
   instructionsPlaceholder: string;
+  /** Error shown under Instructions when they exceed the limit, given the limit in characters. Defaults to `Use {max} characters or fewer.` */
+  instructionsTooLongError?: (maxLength: number) => string;
   /** Accessible label of the spinner shown while the instructions editor loads. Defaults to `'Loading editor'`. */
   editorLoadingAriaLabel?: string;
   /** Context section label. */

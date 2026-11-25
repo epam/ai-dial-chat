@@ -9,6 +9,7 @@ import { Trans, useTranslation } from 'react-i18next';
 import {
   BasicI18nKeys,
   ButtonsI18nKeys,
+  EditorI18nKeys,
   ProjectsI18nKeys,
 } from '../../constants/translation-keys';
 import { useTextRefinementLabels } from '../useTextRefinementLabels';
@@ -62,6 +63,8 @@ export const useProjectCreateFormLabels = ({
       instructionsPlaceholder: t(
         ProjectsI18nKeys.CreateInstructionsPlaceholder,
       ),
+      instructionsTooLongError: (count) =>
+        t(EditorI18nKeys.FieldTooLong, { count }),
       editorLoadingAriaLabel: t(BasicI18nKeys.Loading),
       contextLabel: t(ProjectsI18nKeys.CreateContextLabel),
       dropZoneLabel: ({ fromDevice, fileManager }) =>

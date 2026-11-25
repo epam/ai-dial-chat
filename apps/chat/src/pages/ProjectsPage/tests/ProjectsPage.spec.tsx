@@ -34,7 +34,10 @@ vi.mock('../../../context/UserConfigContext', () => ({
   useUserConfig: () => userConfig,
 }));
 
-const notifications = vi.hoisted(() => ({ showErrorNotification: vi.fn() }));
+const notifications = vi.hoisted(() => ({
+  showErrorNotification: vi.fn(),
+  showSuccessNotification: vi.fn(),
+}));
 vi.mock('../../../context/NotificationContext', () => ({
   useNotification: () => notifications,
 }));
@@ -238,6 +241,10 @@ describe('ProjectsPage', () => {
       true,
     );
     expect(notifications.showErrorNotification).not.toHaveBeenCalled();
+    expect(notifications.showSuccessNotification).toHaveBeenCalledWith({
+      title: 'entityNotifications.project.pinnedTitle',
+      message: 'entityNotifications.project.pinned',
+    });
   });
 
   it('reports a pin that could not be saved', async () => {

@@ -220,6 +220,42 @@ describe('ProjectCreateForm', () => {
     });
   });
 
+  describe('instructions limit', () => {
+    const VALID_NAME = { name: 'Handbook' };
+
+    it('shows an error and disables Create above 32000 characters', async () => {
+      renderForm({
+        values: { ...VALID_NAME, instructions: 'a'.repeat(32001) },
+      });
+
+      expect(
+        await screen.findByText('Use 32000 characters or fewer.'),
+      ).toBeTruthy();
+      expect(getCreateButton().hasAttribute('disabled')).toBe(true);
+    });
+
+    it('accepts exactly 32000 characters', () => {
+      renderForm({
+        values: { ...VALID_NAME, instructions: 'a'.repeat(32000) },
+      });
+
+      expect(screen.queryByText('Use 32000 characters or fewer.')).toBeNull();
+      expect(getCreateButton().hasAttribute('disabled')).toBe(false);
+    });
+
+    it('uses the host copy for the limit error', async () => {
+      renderForm({
+        values: { ...VALID_NAME, instructions: 'a'.repeat(32001) },
+        labels: {
+          ...LABELS,
+          instructionsTooLongError: (max) => `Max ${max}`,
+        },
+      });
+
+      expect(await screen.findByText('Max 32000')).toBeTruthy();
+    });
+  });
+
   describe('name', () => {
     it('marks the name field as required', () => {
       renderForm();

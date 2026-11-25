@@ -50,11 +50,16 @@ import { useFeatureFlag } from '../../context/AppConfigContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useUserConfig } from '../../context/UserConfigContext';
 import type { PinnedProjectActionState } from '../../models/pinned-project-action';
+import {
+  EntityOperation,
+  NotifiableEntity,
+} from '../../types/entity-notification';
 import { PinnedProjectActionKind } from '../../types/pinned-project-action';
 import { ROUTES } from '../../types/routes';
 import { StorageKey } from '../../types/storage-key';
 import { UserConfigStatus } from '../../types/user-config-status';
 import useLocalStorage from '../useLocalStorage';
+import { useOperationNotification } from '../useOperationNotification';
 import {
   projectsClient,
   subscribeProjectConversationViewed,
@@ -104,6 +109,7 @@ export const usePinnedProjectsPanel = (onOpenRoute: (path: string) => void) => {
   const { pinnedProjectIds, setPinnedProject, replacePinnedProjectId, status } =
     useUserConfig();
   const { showErrorNotification } = useNotification();
+  const { notifyOperationSuccess } = useOperationNotification();
 
   const chatMatch = useMatch(ROUTES.ProjectChat);
   const viewMatch = useMatch(ROUTES.ProjectView);
@@ -260,6 +266,14 @@ export const usePinnedProjectsPanel = (onOpenRoute: (path: string) => void) => {
     async (projectId: string) => {
       try {
         await setPinnedProject(projectId, false);
+        const name = projectsById.get(projectId)?.name;
+        if (name != null) {
+          notifyOperationSuccess(
+            NotifiableEntity.Project,
+            EntityOperation.Unpinned,
+            { name },
+          );
+        }
       } catch (err) {
         const { traceId } = await getApiErrorDetails(err);
         showErrorNotification({
@@ -268,7 +282,13 @@ export const usePinnedProjectsPanel = (onOpenRoute: (path: string) => void) => {
         });
       }
     },
-    [setPinnedProject, showErrorNotification, t],
+    [
+      notifyOperationSuccess,
+      projectsById,
+      setPinnedProject,
+      showErrorNotification,
+      t,
+    ],
   );
 
   /* The lib decides which actions a project offers; the app supplies each one's label, icon and handler. */

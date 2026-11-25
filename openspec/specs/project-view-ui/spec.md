@@ -194,7 +194,7 @@ On `mobile`, Publish and Edit move into the ⋮ menu (before Share). The lib ren
 
 - `onBack` and `onBrowseProjects` navigate to `ROUTES.Projects`;
 - `onEdit` navigates to `getProjectEditRoute(id)`;
-- `onTogglePin` calls `setPinnedProject(id, !isPinned)` from `useUserConfig()`;
+- `onTogglePin` calls `setPinnedProject(id, !isPinned)` from `useUserConfig()` and, once it succeeds, raises the project pin success notification of `entity-operation-notifications` ("Pinned to chat panel" / "Unpinned from chat panel" naming the project);
 - `onDownload` downloads the archive (see the actions requirement);
 - `onShare` opens `ProjectShareOverlay`, which portals to the body and makes the rest of the page `inert` while it is open; `onPublish` opens `PublishProjectPanelContainer`, which mounts on the first open and loads the project's publish history on each open, so a folder already holding the project is flagged;
 - `onDelete` opens the delete confirmation.
