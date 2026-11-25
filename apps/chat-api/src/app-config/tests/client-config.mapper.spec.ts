@@ -20,6 +20,8 @@ const SERVICE_ASSEMBLED_FIELDS = [
   'modelCatalogAvailable',
   'themesBaseUrl',
   'skillUploadMaxFiles',
+  'skillFileUploadMaxBytes',
+  'skillUploadMaxTotalBytes',
 ];
 
 /* The DTO's Swagger-declared fields, stored by @ApiProperty as `:<name>`. */

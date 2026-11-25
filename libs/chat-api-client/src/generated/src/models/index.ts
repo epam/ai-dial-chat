@@ -1921,6 +1921,18 @@ export interface ClientConfigDto {
    */
   skillUploadMaxFiles?: number;
   /**
+   * Maximum bytes per skill file, including SKILL.md.
+   * @type {number}
+   * @memberof ClientConfigDto
+   */
+  skillFileUploadMaxBytes?: number;
+  /**
+   * Maximum total bytes per skill, including SKILL.md.
+   * @type {number}
+   * @memberof ClientConfigDto
+   */
+  skillUploadMaxTotalBytes?: number;
+  /**
    * Active start-page celebration module ID selected by UI_EVENT. Null when UI_EVENT is absent or none. Event IDs are open-ended; clients ignore IDs not present in their local registry.
    * @type {string}
    * @memberof ClientConfigDto

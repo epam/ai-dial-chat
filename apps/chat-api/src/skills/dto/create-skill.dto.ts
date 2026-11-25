@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 import { SkillResourceQueryDto } from './skill-resource-query.dto';
 
 /**
@@ -12,7 +12,6 @@ import { SkillResourceQueryDto } from './skill-resource-query.dto';
 export class CreateSkillDto extends SkillResourceQueryDto {
   @IsString()
   @IsNotEmpty()
-  @MaxLength(1_048_576)
   @ApiProperty({
     description:
       'The complete SKILL.md text (YAML frontmatter plus instructions)',

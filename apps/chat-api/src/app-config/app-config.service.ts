@@ -163,6 +163,14 @@ export class AppConfigService {
         skillUploadMaxFiles: this.configService.get('SKILL_UPLOAD_MAX_FILES', {
           infer: true,
         }),
+        skillFileUploadMaxBytes: this.configService.get(
+          'SKILL_FILE_UPLOAD_MAX_BYTES',
+          { infer: true },
+        ),
+        skillUploadMaxTotalBytes: this.configService.get(
+          'SKILL_UPLOAD_MAX_TOTAL_BYTES',
+          { infer: true },
+        ),
         catalogCreationPermissions,
         modelCatalogAvailable:
           resolveModelCatalogApiKey(this.configService) != null,

@@ -6088,6 +6088,8 @@ const {
   contentRevisions,
 } = useSkillFileActions({
   maxFiles: config.skillUploadMaxFiles,
+  maxFileBytes: config.skillFileUploadMaxBytes,
+  maxTotalBytes: config.skillUploadMaxTotalBytes,
   files,
   setFiles,
   filesContentRef,
@@ -6223,6 +6225,8 @@ import { validateSkillFileBatch } from '@epam/ai-dial-chat-hooks';
 const { results, batchErrors, manifestCandidate } =
   await validateSkillFileBatch(candidates, {
     maxFiles: config.skillUploadMaxFiles,
+    maxFileBytes: config.skillFileUploadMaxBytes,
+    maxTotalBytes: config.skillUploadMaxTotalBytes,
     existingPaths: ['agents/analyzer.md'],
     existingTotalBytes: 2048,
     existingFileBytes: new Map([['agents/analyzer.md', 2048]]),
