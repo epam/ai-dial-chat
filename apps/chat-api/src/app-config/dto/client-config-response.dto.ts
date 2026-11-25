@@ -38,6 +38,15 @@ export class ClientConfigDto {
   @ApiPropertyOptional({
     type: Number,
     minimum: 1,
+    description:
+      'Maximum number of context files in a project, including retained files on edit.',
+    example: 100,
+  })
+  projectContextMaxFiles?: number;
+
+  @ApiPropertyOptional({
+    type: Number,
+    minimum: 1,
     description: 'Maximum bytes per skill file, including SKILL.md.',
   })
   skillFileUploadMaxBytes?: number;

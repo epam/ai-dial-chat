@@ -6,14 +6,16 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import * as yauzl from 'yauzl';
 import { handleDialSdkError } from '../../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
 import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
+import type { EnvironmentVariables } from '../../config/environment.config';
 import { DialClientService } from '../../dial/dial-client.service';
 import {
   PROJECT_ARCHIVE_READ_CONCURRENCY,
-  PROJECT_ARCHIVE_READ_MAX_BYTES,
+  DEFAULT_PROJECT_ARCHIVE_READ_MAX_BYTES,
   PROJECT_MANIFEST_MAX_BYTES,
 } from '../constants/project-context.constants';
 import { ProjectCreateErrorCode } from '../types/project-create-error-code.enum';
@@ -95,10 +97,10 @@ export const computeProjectContentVersion = (
   return `"${createHash('sha256').update(lines.join('\n'), 'utf8').digest('hex')}"`;
 };
 
-const tooLarge = (): HttpException =>
+const tooLarge = (maxBytes: number): HttpException =>
   projectPayloadTooLarge(
     ProjectCreateErrorCode.ProjectTooLarge,
-    `The project exceeds the ${PROJECT_ARCHIVE_READ_MAX_BYTES}-byte read limit`,
+    `The project exceeds the ${maxBytes}-byte read limit`,
   );
 
 /* `openapi-fetch` resolves an empty-bodied error with `error: undefined`, so
@@ -175,6 +177,7 @@ class ArchiveReadLimiter {
 
 const readBody = async (
   stream: ReadableStream<Uint8Array>,
+  maxBytes: number,
 ): Promise<Buffer> => {
   const reader = stream.getReader();
   const chunks: Buffer[] = [];
@@ -183,9 +186,9 @@ const readBody = async (
     const { done, value } = await reader.read();
     if (done) break;
     total += value.byteLength;
-    if (total > PROJECT_ARCHIVE_READ_MAX_BYTES) {
+    if (total > maxBytes) {
       await reader.cancel();
-      throw tooLarge();
+      throw tooLarge(maxBytes);
     }
     chunks.push(Buffer.from(value));
   }
@@ -225,7 +228,10 @@ export class ProjectsSnapshotService {
     PROJECT_ARCHIVE_READ_CONCURRENCY,
   );
 
-  constructor(private readonly dialClient: DialClientService) {}
+  constructor(
+    private readonly dialClient: DialClientService,
+    private readonly config: ConfigService<EnvironmentVariables>,
+  ) {}
 
   /**
    * `callerBucket` is the session user's bucket: Core masks a missing
@@ -304,13 +310,16 @@ export class ProjectsSnapshotService {
         );
       }
 
+      const maxBytes =
+        this.config.get<number>('PROJECT_ARCHIVE_READ_MAX_BYTES') ??
+        DEFAULT_PROJECT_ARCHIVE_READ_MAX_BYTES;
       const declaredLength = Number(response.headers.get('content-length'));
-      if (declaredLength > PROJECT_ARCHIVE_READ_MAX_BYTES) {
+      if (declaredLength > maxBytes) {
         await stream.cancel();
-        throw tooLarge();
+        throw tooLarge(maxBytes);
       }
 
-      return { buffer: await readBody(stream), etag };
+      return { buffer: await readBody(stream, maxBytes), etag };
     } catch (err) {
       return handleDialSdkError(err, SNAPSHOT_CONTEXT, this.logger);
     }

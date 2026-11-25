@@ -35,6 +35,28 @@ describe('checkContextFiles', () => {
     expect(accepted[0].id).toBeTruthy();
   });
 
+  it('counts existing files and only accepted additions against the configured count', () => {
+    const { accepted: stored } = checkContextFiles(
+      [makeFile('first.csv', 1)],
+      [],
+      limits,
+    );
+    const { accepted, rejected } = checkContextFiles(
+      [
+        makeFile('first.csv', 1),
+        makeFile('second.csv', 1),
+        makeFile('third.csv', 1),
+      ],
+      stored,
+      { ...limits, maxFiles: 2 },
+    );
+    expect(accepted.map((file) => file.name)).toEqual(['second.csv']);
+    expect(rejected.map((file) => file.reason)).toEqual([
+      ContextFileRejection.Duplicate,
+      ContextFileRejection.TooManyFiles,
+    ]);
+  });
+
   it('infers the content type from the extension when the browser gives none', () => {
     const { accepted } = checkContextFiles(
       [makeFile('report.pdf', 2)],

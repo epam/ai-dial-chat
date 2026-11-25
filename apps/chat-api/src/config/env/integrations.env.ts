@@ -11,6 +11,8 @@ import {
 import {
   DEFAULT_PROJECT_CONTEXT_ALLOWED_EXTENSIONS,
   DEFAULT_PROJECT_CONTEXT_FILE_MAX_BYTES,
+  DEFAULT_PROJECT_CONTEXT_MAX_FILES,
+  DEFAULT_PROJECT_ARCHIVE_READ_MAX_BYTES,
   DEFAULT_PROJECT_CONTEXT_TOTAL_MAX_BYTES,
   parseProjectContextExtensions,
   PROJECT_CONTEXT_EXTENSION_PATTERN,
@@ -70,14 +72,15 @@ export class IntegrationsEnv {
   @Min(1000)
   CONTENT_SOURCES_TIMEOUT_MS?: number = 10_000;
 
-  /*
-   * Project context limits, enforced by `POST /api/v1/projects` and
-   * published to the browser as `projects.*` client config. Keep them at or
-   * below DIAL Core's `complexResource.types.projects` limits (built-in:
-   * 5 MiB per file, 64 MiB total). `validate` also requires
-   * TOTAL >= FILE, and TOTAL <= the 64 MiB project read limit minus the
-   * 1 MiB PROJECT.md limit (63 MiB), so every project stays editable.
-   */
+  @IsInt()
+  @Min(1)
+  PROJECT_CONTEXT_MAX_FILES: number = DEFAULT_PROJECT_CONTEXT_MAX_FILES;
+
+  @IsInt()
+  @Min(1)
+  PROJECT_ARCHIVE_READ_MAX_BYTES: number =
+    DEFAULT_PROJECT_ARCHIVE_READ_MAX_BYTES;
+
   @IsOptional()
   @Transform(({ value }) => parseInt(value, 10))
   @IsInt()

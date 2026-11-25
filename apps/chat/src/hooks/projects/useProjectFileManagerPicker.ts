@@ -1,6 +1,12 @@
 import { resolveDialFileApiPath } from '@epam/ai-dial-chat-hooks';
 import { useSkillFileSystemPicker } from '@epam/ai-dial-chat-hooks/skill-editor';
-import type { AttachResult } from '@epam/ai-dial-chat-shared';
+import { formatFileSize, type AttachResult } from '@epam/ai-dial-chat-shared';
+import {
+  getContextFilesSize,
+  type ContextFileLimits,
+  type ProjectContextFile,
+} from '@epam/ai-dial-projects';
+import { DialFileNodeType } from '@epam/ai-dial-react-file-manager';
 import { useTranslation } from 'react-i18next';
 import {
   DialFileManagerI18nKeys,
@@ -8,6 +14,8 @@ import {
 } from '../../constants/translation-keys';
 import { useNotification } from '../../context/NotificationContext';
 import { downloadFile } from '../../server-api/files.api';
+
+class ProjectFileSizeError extends Error {}
 
 /** Result of {@link useProjectFileManagerPicker}. */
 export interface UseProjectFileManagerPickerResult {
@@ -30,9 +38,19 @@ export interface UseProjectFileManagerPickerResult {
  */
 export const useProjectFileManagerPicker = (
   bucket: string | undefined,
+  contextFiles: ProjectContextFile[],
+  {
+    maxFileBytes,
+    maxTotalBytes,
+  }: Pick<ContextFileLimits, 'maxFileBytes' | 'maxTotalBytes'>,
 ): UseProjectFileManagerPickerResult => {
   const { t } = useTranslation();
   const { showErrorNotification } = useNotification();
+  const remainingBytes = maxTotalBytes - getContextFilesSize(contextFiles);
+  /* Parallel downloads in one selection share an abort signal and a byte budget. */
+  const downloadedBytes = new WeakMap<AbortSignal, number>();
+  const capacityError = (name: string) =>
+    t(ProjectsI18nKeys.CreateErrorCapacityExceeded, { name });
   const picker = useSkillFileSystemPicker<File>({
     materializeFile: async (file, signal) => {
       const fileBucket = file.bucket ?? bucket;
@@ -49,21 +67,62 @@ export const useProjectFileManagerPicker = (
       if (!response.ok) {
         throw new Error(`Download failed with status ${response.status}`);
       }
-      const blob = await response.blob();
-      return new File([blob], file.name, {
-        type: file.contentType ?? blob.type,
+      const chunks: Uint8Array<ArrayBuffer>[] = [];
+      let fileBytes = 0;
+      const reader = response.body?.getReader();
+      if (reader) {
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            fileBytes += value.byteLength;
+            if (fileBytes > maxFileBytes) {
+              throw new ProjectFileSizeError(
+                t(ProjectsI18nKeys.CreateErrorTooLarge, {
+                  name: file.name,
+                  maxSize: formatFileSize(maxFileBytes),
+                }),
+              );
+            }
+            const total = (downloadedBytes.get(signal) ?? 0) + value.byteLength;
+            if (total > remainingBytes) {
+              throw new ProjectFileSizeError(capacityError(file.name));
+            }
+            downloadedBytes.set(signal, total);
+            chunks.push(new Uint8Array(value));
+          }
+        } finally {
+          reader.releaseLock();
+        }
+      }
+      return new File(chunks, file.name, {
+        type: file.contentType ?? response.headers.get('content-type') ?? '',
       });
     },
-    onError: () =>
+    onError: (error) =>
       showErrorNotification({
-        message: t(ProjectsI18nKeys.CreateToastFileManagerError),
+        message:
+          error instanceof ProjectFileSizeError
+            ? error.message
+            : t(ProjectsI18nKeys.CreateToastFileManagerError),
       }),
   });
 
   return {
     isOpen: picker.isOpen,
     pickFromFileManager: picker.pickFromFileSystem,
-    handleAttach: picker.handleAttach,
+    handleAttach: (selection) => {
+      let selectedBytes = 0;
+      for (const file of selection.files) {
+        if (file.nodeType !== DialFileNodeType.ITEM) continue;
+        selectedBytes += file.contentLength ?? 0;
+        if (selectedBytes > remainingBytes) {
+          showErrorNotification({ message: capacityError(file.name) });
+          return;
+        }
+      }
+      picker.handleAttach(selection);
+    },
     handleClose: picker.handleClose,
   };
 };

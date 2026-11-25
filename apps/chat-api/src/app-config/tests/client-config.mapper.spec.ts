@@ -19,6 +19,7 @@ const SERVICE_ASSEMBLED_FIELDS = [
   'catalogCreationPermissions',
   'modelCatalogAvailable',
   'themesBaseUrl',
+  'projectContextMaxFiles',
   'skillUploadMaxFiles',
   'skillFileUploadMaxBytes',
   'skillUploadMaxTotalBytes',

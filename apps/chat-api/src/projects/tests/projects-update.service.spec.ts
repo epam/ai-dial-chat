@@ -1,5 +1,5 @@
 import { ForbiddenException, HttpException, Logger } from '@nestjs/common';
-import type { ConfigService } from '@nestjs/config';
+import { ConfigService } from '@nestjs/config';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import type { DialClientService } from '../../dial/dial-client.service';
@@ -71,6 +71,7 @@ const found = {
 };
 
 const makeService = ({
+  settings = config,
   snapshot = snapshotOf(),
   snapshots = [] as ProjectSnapshot[],
   upload = {
@@ -107,7 +108,7 @@ const makeService = ({
   const dialClient = { client } as unknown as DialClientService;
   const service = new ProjectsUpdateService(
     dialClient,
-    new ProjectsCreateService(config),
+    new ProjectsCreateService(settings),
     { read } as unknown as ProjectsSnapshotService,
     userConfig as unknown as UserConfigService,
     readState as never,
@@ -461,6 +462,27 @@ describe('ProjectsUpdateService', () => {
 
     expect(status).toBe(400);
     expect(body.code).toBe('unknown-file');
+  });
+
+  it('counts retained and added files together before writing an edit', async () => {
+    const { service, client } = makeService({
+      settings: new ConfigService<EnvironmentVariables>({
+        PROJECT_CONTEXT_MAX_FILES: 2,
+      }),
+    });
+    const { status, body } = await errorOf(
+      service.updateProject(
+        PROJECT,
+        { name: 'q4', fileNames: '["third.csv"]' },
+        [csv('x')],
+        '"cv1"',
+        USER_BUCKET,
+        'token',
+      ),
+    );
+    expect(status).toBe(400);
+    expect(body.code).toBe('too-many-files');
+    expect(client.uploadProjectFolder).not.toHaveBeenCalled();
   });
 
   it('enforces the capacity against the stored files', async () => {

@@ -51,6 +51,7 @@ export type MappedClientConfig = Required<
     | 'catalogCreationPermissions'
     | 'modelCatalogAvailable'
     | 'themesBaseUrl'
+    | 'projectContextMaxFiles'
     | 'skillUploadMaxFiles'
     | 'skillFileUploadMaxBytes'
     | 'skillUploadMaxTotalBytes'

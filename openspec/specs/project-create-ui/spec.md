@@ -251,11 +251,12 @@ The Context section SHALL render:
 
 The Context header carries only the `labels.contextLabel` heading: there is no Add menu and no capacity meter.
 
-Files from every source go through `checkContextFiles(incoming, contextFiles, { allowedExtensions, maxFileBytes, maxTotalBytes })`. The helper returns `{ accepted: Attachment[]; rejected: { name: string; reason: ContextFileRejection }[] }`. The members of `ContextFileRejection` are `UnsupportedType = 'unsupported-type'`, `TooLarge = 'too-large'`, `CapacityExceeded = 'capacity-exceeded'`, `Duplicate = 'duplicate'` and `InvalidName = 'invalid-name'`. The helper rejects:
+Files from every source go through `checkContextFiles(incoming, contextFiles, { allowedExtensions, maxFiles, maxFileBytes, maxTotalBytes })`. The helper returns `{ accepted: Attachment[]; rejected: { name: string; reason: ContextFileRejection }[] }`. The members of `ContextFileRejection` are `TooManyFiles = 'too-many-files'`, `UnsupportedType = 'unsupported-type'`, `TooLarge = 'too-large'`, `CapacityExceeded = 'capacity-exceeded'`, `Duplicate = 'duplicate'` and `InvalidName = 'invalid-name'`. The helper rejects:
 
 - an extension that is not in `allowedExtensions`;
 - a file over `maxFileBytes`;
 - a file that would push the running total over `maxTotalBytes`;
+- a file that would exceed the optional `maxFiles` count from client config, including retained files and accepted additions;
 - a name already present in `contextFiles` or earlier in the same batch;
 - a name that fails `validateProjectName`.
 
@@ -264,6 +265,7 @@ Accepted files are appended through `onContextFilesChange`. Each rejection, `lab
 `useProjectFileManagerPicker` (`apps/chat/src/hooks/projects/useProjectFileManagerPicker.ts`) is the app-level adapter over the shared `useSkillFileSystemPicker<File>` from `@epam/ai-dial-chat-hooks/skill-editor`:
 
 - It opens `DialFileManagerModal` with `canAttachFolders={false}`, `allowedTypes` derived from the allowed extensions, and `maxSelectableFileSize={maxFileBytes}`.
+- The picker checks the configured count including retained and staged files, and compares known selection sizes with the remaining byte budget before downloading. An over-budget selection stays open so the user can adjust it. Parallel downloads enforce the per-file and remaining total limits on actual bytes, including files with missing or stale metadata.
 - It downloads each picked file, which copies it into the project; the download receives the picker's abort signal, so a cancelled pick aborts its requests.
 - It resolves the files as `File[]`, in selection order, folders ignored. A download failure shows `projects.create.toast.fileManagerError` and resolves `undefined`; closing the modal or leaving the page while a pick is pending resolves it as cancelled.
 

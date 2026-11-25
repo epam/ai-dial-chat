@@ -76,6 +76,7 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
   onContextFileDownload,
   selectedContextFileId,
   allowedExtensions,
+  maxFiles,
   maxFileBytes,
   maxTotalBytes,
   onPickFromFileManager,
@@ -141,10 +142,14 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
     [allowedExtensions],
   );
 
+  const rejectionMessage = ({ name, reason }: RejectedContextFile) =>
+    labels.fileRejections[reason]?.(name) ?? `${name}: too many context files`;
+
   const addFiles = (incoming: File[]) => {
     if (incoming.length === 0) return;
     const { accepted, rejected } = checkContextFiles(incoming, contextFiles, {
       allowedExtensions,
+      maxFiles,
       maxFileBytes,
       maxTotalBytes,
     });
@@ -155,9 +160,7 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
     setStatusMessage(
       [
         accepted.length > 0 ? labels.filesAddedStatus(accepted.length) : '',
-        ...rejected.map(({ name, reason }) =>
-          labels.fileRejections[reason](name),
-        ),
+        ...rejected.map(rejectionMessage),
       ]
         .filter(Boolean)
         .join(' '),
@@ -212,12 +215,7 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
   const refinementLabels = labels.refinement;
   const contextError = errors.context;
   /* The kit drop zone draws its error in the error color, below the area, and links it to the file input. */
-  const dropZoneError = [
-    ...rejections.map(({ name, reason }) =>
-      labels.fileRejections[reason](name),
-    ),
-    contextError,
-  ]
+  const dropZoneError = [...rejections.map(rejectionMessage), contextError]
     .filter(Boolean)
     .join('\n');
   const dropZoneLabel = labels.dropZoneLabel({

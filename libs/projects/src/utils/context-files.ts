@@ -19,6 +19,8 @@ export interface ContextFileLimits {
   maxFileBytes: number;
   /** Maximum combined size of all context files, in bytes. */
   maxTotalBytes: number;
+  /** Maximum final count when supplied by the host. */
+  maxFiles?: number;
 }
 
 /** One rejected incoming file. */
@@ -77,6 +79,7 @@ const getRejection = (
   file: File,
   takenNames: Set<string>,
   runningTotal: number,
+  fileCount: number,
   limits: ContextFileLimits,
 ): ContextFileRejection | null => {
   if (
@@ -92,6 +95,9 @@ const getRejection = (
   if (file.size > limits.maxFileBytes) return ContextFileRejection.TooLarge;
   if (runningTotal + file.size > limits.maxTotalBytes) {
     return ContextFileRejection.CapacityExceeded;
+  }
+  if (limits.maxFiles != null && fileCount >= limits.maxFiles) {
+    return ContextFileRejection.TooManyFiles;
   }
   return null;
 };
@@ -114,7 +120,13 @@ export const checkContextFiles = (
   const rejected: RejectedContextFile[] = [];
 
   for (const file of incoming) {
-    const reason = getRejection(file, takenNames, runningTotal, limits);
+    const reason = getRejection(
+      file,
+      takenNames,
+      runningTotal,
+      existing.length + accepted.length,
+      limits,
+    );
     if (reason != null) {
       rejected.push({ name: file.name, reason });
       continue;

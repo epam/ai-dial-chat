@@ -160,6 +160,10 @@ export class AppConfigService {
         ),
         appVersion,
         ...config,
+        projectContextMaxFiles: this.configService.get(
+          'PROJECT_CONTEXT_MAX_FILES',
+          { infer: true },
+        ),
         skillUploadMaxFiles: this.configService.get('SKILL_UPLOAD_MAX_FILES', {
           infer: true,
         }),
