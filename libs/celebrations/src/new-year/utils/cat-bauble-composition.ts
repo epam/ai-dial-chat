@@ -67,7 +67,8 @@ export const CAT_BAUBLE_BEATS = {
   firBack: 12.6,
   firStill: 13.2,
   sit: 13.3,
-  admireEnd: 15.0,
+  /* Ends early enough that the walk to the fir is not a dash. */
+  admireEnd: 14.6,
   atRear: 15.4,
   rear: 15.65,
   bite: 15.85,
@@ -175,6 +176,8 @@ const SNAP: Bezier = [0, 0, 0.3, 1];
 /* The rearing pose: body lean about the hind feet and head lift. */
 const REAR = { lean: -55, head: -20 } as const;
 const LYING: Point = [104, CAT_LYING_SQUASH];
+/* Curled up: low but still round, so the head does not flatten. */
+const CURL: Point = [108, 76];
 /* Forward pawing angle of the near foreleg, and the flick that follows. */
 const PAW_FORWARD = -80;
 
@@ -189,6 +192,21 @@ const sub = (a: Point, b: Point): Point => [a[0] - b[0], a[1] - b[1]];
 const lerp = (a: number, b: number, p: number) => a + (b - a) * p;
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value));
+/** Trot leg swing limits in degrees: short steps still read, long ones do not splay. */
+const WALK_SWING = { min: 12, max: 30 } as const;
+/* A trot reaches cruising speed quickly; slow-in, slow-out would rush the middle. */
+const WALK_EASE: Bezier = [0.25, 0, 0.75, 1];
+/** The time share at which an eased segment reaches `progress` of its change. */
+const easeTimeAt = (ease: Bezier, progress: number) => {
+  let lo = 0;
+  let hi = 1;
+  for (let i = 0; i < 30; i++) {
+    const mid = (lo + hi) / 2;
+    if (bezierProgress(ease, mid) < progress) lo = mid;
+    else hi = mid;
+  }
+  return (lo + hi) / 2;
+};
 /** Height along a ballistic arc that peaks `rise` above the higher end. */
 const arcY = (from: number, to: number, rise: number, p: number) => {
   const apex = Math.min(from, to) - rise;
@@ -331,6 +349,11 @@ export const buildCatBaubleComposition = (
   const tail = new Track([0]);
   const tailPuff = new Track([100]);
   const ears = new Track([100]);
+  /* Leg length while curled up, in percent: folded legs tuck under the body. */
+  const foreFold = new Track([100]);
+  const hindFold = new Track([100]);
+  /* Ears laid back, in degrees; negative turns the tips toward the tail. */
+  const earsBack = new Track([0]);
   const pupils = new Track([100]);
   const eyes = new Track([100]);
 
@@ -356,23 +379,33 @@ export const buildCatBaubleComposition = (
 
   const flip = (t: number, to: 1 | -1) => setHeld(face, t, to);
   const bell = new Track([0]);
-  /** Trot to `to` with alternating diagonal leg pairs; the bell swings with the steps. */
+  /**
+   * Trot to `to` with alternating diagonal leg pairs; the bell swings with the
+   * steps. Steps are timed by distance along the eased path, and the swing
+   * matches the step length, so the paws do not skate while the body speeds
+   * up and slows down.
+   */
   const walk = (to: number, t0: number, t1: number, stride = 26) => {
     const [from, y] = pos.value(t0);
-    const steps = Math.max(2, Math.ceil(Math.abs(to - from) / (stride * s)));
-    pos.set(t0, [from, y], EASE).set(t1, [to, y], EASE);
-    const dt = (t1 - t0) / steps;
+    const span = Math.abs(to - from) / s;
+    const steps = Math.max(2, Math.ceil(span / stride));
+    const swingAmp = clamp(
+      deg(Math.asin(Math.min(1, span / steps / (2 * CAT_RIG.leg)))),
+      WALK_SWING.min,
+      WALK_SWING.max,
+    );
+    pos.set(t0, [from, y], WALK_EASE).set(t1, [to, y], EASE);
     for (const leg of [legFore, legForeFar, legHind, legHindFar])
       leg.set(t0, 0);
     bell.set(t0, 0);
     for (let i = 1; i <= steps; i++) {
-      const t = t0 + dt * i;
-      const swing = i % 2 ? 22 : -22;
-      legFore.set(t - dt / 2, -swing);
-      legHindFar.set(t - dt / 2, -swing);
-      legForeFar.set(t - dt / 2, swing);
-      legHind.set(t - dt / 2, swing);
-      bell.set(t - dt / 2, swing * 0.6);
+      const t = lerp(t0, t1, easeTimeAt(WALK_EASE, (i - 0.5) / steps));
+      const swing = i % 2 ? swingAmp : -swingAmp;
+      legFore.set(t, -swing);
+      legHindFar.set(t, -swing);
+      legForeFar.set(t, swing);
+      legHind.set(t, swing);
+      bell.set(t, swing * 0.6);
     }
     for (const leg of [legFore, legForeFar, legHind, legHindFar])
       leg.set(t1, 0);
@@ -456,8 +489,8 @@ export const buildCatBaubleComposition = (
   for (let i = 0; i < 4; i++)
     headTilt.set(B.groom + 0.25 + i * 0.22, i % 2 ? 22 : 30);
   headTilt.set(B.groomEnd, 4);
-  legFore.set(B.groomEnd - 0.1, -125).set(B.groomEnd, 0);
-  stretch.set(B.groomEnd - 0.1, 1.15).set(B.groomEnd, 1);
+  legFore.set(B.groomEnd - 0.2, -125).set(B.groomEnd, 0);
+  stretch.set(B.groomEnd - 0.2, 1.15).set(B.groomEnd, 1);
   eyes
     .set(B.groom + 0.2, 100)
     .set(B.groom + 0.3, 30)
@@ -532,12 +565,12 @@ export const buildCatBaubleComposition = (
     .set(B.swat, 6, SNAP)
     .set(B.swat + 0.25, 0);
   squash.set(B.swat, [97, 104], SNAP).set(B.swat + 0.25, [100, 100]);
-  /* The chase: it follows the sliding toy and stops short of the fir. */
+  /* The chase: it follows the sliding toy and stops short of the fir just
+     before it freezes, so it trots rather than dashes. */
   const slideEndA = firA - toward * (CAT_FIR.trunkHalf * FS * s + tw / 2);
   const chaseA = slideEndA - toward * (tw / 2 + 52 * s);
   const chaseFrom = pos.value(B.swat + 0.3)[0];
-  if ((chaseA - chaseFrom) * toward > 0)
-    walk(chaseA, B.swat + 0.3, B.impact + 0.1, 32);
+  if ((chaseA - chaseFrom) * toward > 0) walk(chaseA, B.swat + 0.3, B.hung, 32);
 
   /* ==== Beat 5–6: the impact, the leaning fir and the freeze ==== */
   firTilt
@@ -557,12 +590,18 @@ export const buildCatBaubleComposition = (
     ]);
     track.set(from + 3.4, 0);
   });
-  /* Ears flat and tail puffed before the body moves. */
+  /* Ears laid back and tail puffed before the body moves; the ears turn
+     back and lower rather than sink into the head. */
   ears
     .set(B.hung, 100)
-    .set(B.hung + 0.1, 42, EASE_OUT)
-    .set(B.firStill, 42);
+    .set(B.hung + 0.1, 72, EASE_OUT)
+    .set(B.firStill, 72);
   ears.set(B.firStill + 0.2, 100);
+  earsBack
+    .set(B.hung, 0)
+    .set(B.hung + 0.1, -26, EASE_OUT)
+    .set(B.firStill, -26);
+  earsBack.set(B.firStill + 0.2, 0);
   tailPuff
     .set(B.hung, 100)
     .set(B.hung + 0.12, 150, EASE_OUT)
@@ -590,14 +629,14 @@ export const buildCatBaubleComposition = (
   lean.set(B.sit, 0).set(B.sit + 0.3, -14);
   headTilt
     .set(B.sit + 0.3, -10)
-    .set(B.sit + 0.9, -24)
-    .set(B.sit + 1.5, -24);
-  headTilt.set(B.sit + 1.8, 6).set(B.admireEnd - 0.2, 6);
-  blink(B.sit + 1.2);
+    .set(B.sit + 0.65, -24)
+    .set(B.sit + 0.85, -24);
+  headTilt.set(B.sit + 1.1, 6).set(B.admireEnd - 0.1, 6);
+  blink(B.sit + 0.95);
   tail
     .set(B.sit + 0.4, 0)
-    .set(B.sit + 0.9, 10)
-    .set(B.sit + 1.4, -6)
+    .set(B.sit + 0.7, 10)
+    .set(B.sit + 1.0, -6)
     .set(B.admireEnd - 0.1, 0);
 
   /* ==== Beat 8: rear up, bite, unhook ==== */
@@ -650,36 +689,41 @@ export const buildCatBaubleComposition = (
   lean.set(B.curl, 18);
 
   /* ==== Beat 10: the nap, the stretch and the exit ==== */
-  squash.set(B.curl, [100, 100]).set(B.curl + 0.4, [112, 58]);
+  squash.set(B.curl, [100, 100]).set(B.curl + 0.4, CURL);
   lean.set(B.curl + 0.4, 0);
   headTilt.set(B.curl + 0.4, 30);
   tail
     .set(B.curl, 0)
     .set(B.curl + 0.4, 110)
     .set(B.curlEnd, 110);
-  legHind
-    .set(B.curl, 0)
-    .set(B.curl + 0.4, -70)
-    .set(B.curlEnd, -70);
-  legHindFar
-    .set(B.curl, 0)
-    .set(B.curl + 0.4, -70)
-    .set(B.curlEnd, -70);
-  legForeFar
-    .set(B.curl, 0)
-    .set(B.curl + 0.4, -70)
-    .set(B.curlEnd, -70);
-  legFore
-    .set(B.curl, 0)
-    .set(B.curl + 0.4, -70)
-    .set(B.curlEnd, -70);
+  /* Hind legs fold under the hips; forepaws tuck forward under the chest. */
+  for (const leg of [legHind, legHindFar])
+    leg
+      .set(B.curl, 0)
+      .set(B.curl + 0.4, 20)
+      .set(B.curlEnd, 20);
+  for (const leg of [legFore, legForeFar])
+    leg
+      .set(B.curl, 0)
+      .set(B.curl + 0.4, -70)
+      .set(B.curlEnd, -70);
+  hindFold
+    .set(B.curl, 100)
+    .set(B.curl + 0.4, 40)
+    .set(B.curlEnd, 40)
+    .set(B.curlEnd + 0.1, 100);
+  foreFold
+    .set(B.curl, 100)
+    .set(B.curl + 0.4, 55)
+    .set(B.curlEnd, 55)
+    .set(B.curlEnd + 0.1, 100);
   eyes
     .set(B.curl + 0.2, 100)
     .set(B.curl + 0.45, 6)
     .set(B.curlEnd, 6);
   eyes.set(B.curlEnd + 0.2, 100);
   blink(B.stretchEnd + 0.15);
-  squash.set(B.curlEnd, [112, 58]).set(B.stretch + 0.2, [120, 86]);
+  squash.set(B.curlEnd, CURL).set(B.stretch + 0.2, [120, 86]);
   squash.set(B.stretchEnd, [120, 86]).set(B.exit, [100, 100]);
   lean
     .set(B.curlEnd, 0)
@@ -872,6 +916,12 @@ export const buildCatBaubleComposition = (
   joint(
     leg,
     'fore-near',
+    's',
+    toLottie(foreFold, ([k]) => [100, k]),
+  );
+  joint(
+    leg,
+    'fore-near',
     'p',
     toLottie(squash, ([sx, sy]) => [
       (CAT_RIG.shoulder[0] * sx) / 100,
@@ -907,6 +957,7 @@ export const buildCatBaubleComposition = (
     's',
     toLottie(ears, ([k]) => [100, k]),
   );
+  joint(art, 'ears', 'r', toLottie(earsBack));
   joint(
     art,
     'eyes',
@@ -928,6 +979,15 @@ export const buildCatBaubleComposition = (
   joint(art, 'hind-near', 'r', toLottie(legHind));
   joint(art, 'fore-far', 'r', toLottie(legForeFar));
   joint(art, 'hind-far', 'r', toLottie(legHindFar));
+  const hindScale = toLottie(hindFold, ([k]) => [100, k]);
+  joint(art, 'hind-near', 's', hindScale);
+  joint(art, 'hind-far', 's', hindScale);
+  joint(
+    art,
+    'fore-far',
+    's',
+    toLottie(foreFold, ([k]) => [100, k]),
+  );
   joint(art, 'bell', 'r', toLottie(bell));
   layer(
     'cat',

@@ -8,9 +8,14 @@ import {
 } from './snowman-delivery-art';
 import type { Point } from './snowman-delivery-rig';
 
-/** Flat palette: a cool grey tabby with a dark contour reads on light and dark hosts. */
+/**
+ * Flat palette: a cool grey tabby. Only the silhouette carries a soft contour
+ * a shade darker than the fur, so overlapping parts and squashed poses do not
+ * stack lines; facial features keep the dark ink.
+ */
 export const CAT_BAUBLE_PALETTE = {
   ink: '#2f3340',
+  outline: '#5b606b',
   fur: '#9aa0aa',
   furShade: '#7d838e',
   stripe: '#5d626c',
@@ -93,6 +98,8 @@ export const TANGERINE_RADIUS = 9;
 
 const P = CAT_BAUBLE_PALETTE;
 const { ink } = P;
+/** Contour widths in native units: the silhouette and the white paws only. */
+const CONTOUR = { body: 0.9, paw: 0.8 } as const;
 
 const leg = (
   name: string,
@@ -104,13 +111,15 @@ const leg = (
     name,
     [
       ...(hasWhitePaw
-        ? [group('paw', [ellipse([x, -1.5], [10.5, 5.5])], { fill: P.white })]
+        ? [
+            group('paw', [ellipse([x, -1.5], [10.5, 5.5])], {
+              fill: P.white,
+              stroke: P.outline,
+              width: CONTOUR.paw,
+            }),
+          ]
         : []),
-      group('shin', [rect([x, y + 10], [9.5, 21], 4.7)], {
-        fill: fur,
-        stroke: ink,
-        width: 1.2,
-      }),
+      group('shin', [rect([x, y + 10], [9.5, 21], 4.7)], { fill: fur }),
     ],
     {},
     identity([x, y]),
@@ -125,13 +134,13 @@ export const reachingLegArt = (): SnowmanShape => {
       group(
         'paw',
         [ellipse([0, -1.5], [11, 6])],
-        { fill: P.white, stroke: ink, width: 1 },
+        { fill: P.white, stroke: P.outline, width: CONTOUR.paw },
         { ...identity(), p: { a: 0, k: [x, y + CAT_RIG.leg] } },
       ),
       group(
         'shin',
         [rect([x, y + 10], [9.5, 21], 4.7)],
-        { fill: P.fur, stroke: ink, width: 1.2 },
+        { fill: P.fur },
         identity([x, y]),
       ),
     ],
@@ -183,7 +192,7 @@ const headArt = (): SnowmanShape =>
             0.1,
           ),
         ],
-        { fill: P.pink, stroke: ink, width: 0.6 },
+        { fill: P.pink },
       ),
       group(
         'mouth',
@@ -225,7 +234,7 @@ const headArt = (): SnowmanShape =>
           group(
             'irises',
             EYES.map((at) => ellipse(at, [7.5, 8])),
-            { fill: P.eye, stroke: ink, width: 0.8 },
+            { fill: P.eye },
           ),
         ],
         {},
@@ -257,8 +266,8 @@ const headArt = (): SnowmanShape =>
       ),
       group('skull', [ellipse([32, -44], [31, 27])], {
         fill: P.fur,
-        stroke: ink,
-        width: 1.3,
+        stroke: P.outline,
+        width: CONTOUR.body,
       }),
       group(
         'ears',
@@ -309,7 +318,7 @@ const headArt = (): SnowmanShape =>
                 0.06,
               ),
             ],
-            { fill: P.fur, stroke: ink, width: 1.2 },
+            { fill: P.fur, stroke: P.outline, width: CONTOUR.body },
           ),
         ],
         {},
@@ -327,13 +336,7 @@ export const catArt = (): SnowmanShape =>
     headArt(),
     group(
       'bell',
-      [
-        group('bell-ball', [ellipse([25, -27.5], [6, 6])], {
-          fill: P.bell,
-          stroke: ink,
-          width: 0.8,
-        }),
-      ],
+      [group('bell-ball', [ellipse([25, -27.5], [6, 6])], { fill: P.bell })],
       {},
       identity(CAT_RIG.bell),
     ),
@@ -407,8 +410,8 @@ export const catArt = (): SnowmanShape =>
     ),
     group('body', [ellipse([0, -29], [56, 31])], {
       fill: P.fur,
-      stroke: ink,
-      width: 1.3,
+      stroke: P.outline,
+      width: CONTOUR.body,
     }),
     group(
       'tail',
@@ -456,7 +459,7 @@ export const catArt = (): SnowmanShape =>
               0.22,
             ),
           ],
-          { stroke: ink, width: 8.6 },
+          { stroke: P.outline, width: 6.2 + 2 * CONTOUR.body },
         ),
       ],
       {},
