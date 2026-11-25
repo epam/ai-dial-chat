@@ -496,8 +496,10 @@ Pass the flow's `isDirectWrite` to `PublishPanel`. For `true` the panel renders
 no author field or credentials checkbox, drops the
 admin-approval callout and shows `labels.directWriteNote` (a plain line, nothing
 when the host supplies none) in the credentials checkbox's place.
-`directUnavailableNote` is a finished host sentence rendered as an information
-callout when a request is filed although the host would otherwise write directly.
+`directUnavailableNote` is a finished host sentence for when a request is filed although
+the host would otherwise write directly. While the admin-approval callout shows it is that
+callout's text, in the same block, so the panel shows one callout; when another callout kind (or
+none) shows, it is an information callout of its own. It is never rendered for a direct write.
 `styles.colors.directNoteText` (default `--text-secondary`) and
 `directNoteClassName` (default `'dial-small-text'`) restyle the note.
 
