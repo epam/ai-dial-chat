@@ -1,4 +1,7 @@
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
+  SKELETON_BAR_CLASS_NAME,
+  SKELETON_BAR_HEIGHT,
   Skeleton,
   SkeletonShimmer,
   SkeletonTone,
@@ -7,7 +10,6 @@ import {
 import {
   PDF_SKELETON_FULL_LINES_PER_PARAGRAPH,
   PDF_SKELETON_LAST_LINE_WIDTHS,
-  PDF_SKELETON_LINE_HEIGHT,
   PDF_SKELETON_TITLE_WIDTH,
 } from '../../constants/pdf-loading-skeleton';
 
@@ -17,10 +19,10 @@ export const PdfLoadingSkeleton = () => (
     <SkeletonShimmer className="flex w-full flex-col gap-10 px-15 pt-10">
       <Skeleton
         variant={SkeletonVariant.Text}
-        tone={SkeletonTone.Dark}
+        tone={SkeletonTone.Sunken}
         width={PDF_SKELETON_TITLE_WIDTH}
-        height={PDF_SKELETON_LINE_HEIGHT}
-        className="mx-auto max-w-[40%]"
+        height={SKELETON_BAR_HEIGHT}
+        className={mergeClasses('mx-auto max-w-[40%]', SKELETON_BAR_CLASS_NAME)}
       />
       {PDF_SKELETON_LAST_LINE_WIDTHS.map((lastLineWidth) => (
         <div key={lastLineWidth} className="flex flex-col gap-4">
@@ -30,17 +32,19 @@ export const PdfLoadingSkeleton = () => (
               <Skeleton
                 key={index}
                 variant={SkeletonVariant.Text}
-                tone={SkeletonTone.Dark}
+                tone={SkeletonTone.Sunken}
                 width="100%"
-                height={PDF_SKELETON_LINE_HEIGHT}
+                height={SKELETON_BAR_HEIGHT}
+                className={SKELETON_BAR_CLASS_NAME}
               />
             ),
           )}
           <Skeleton
             variant={SkeletonVariant.Text}
-            tone={SkeletonTone.Dark}
+            tone={SkeletonTone.Base}
             width={lastLineWidth}
-            height={PDF_SKELETON_LINE_HEIGHT}
+            height={SKELETON_BAR_HEIGHT}
+            className={SKELETON_BAR_CLASS_NAME}
           />
         </div>
       ))}
