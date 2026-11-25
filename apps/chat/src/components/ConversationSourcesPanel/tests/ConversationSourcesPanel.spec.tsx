@@ -311,7 +311,20 @@ describe('ConversationSourcesPanelContainer — derivation while closed', () => 
     sourcesDerivationInputs.length = 0;
   });
 
-  it('derives sources from an empty list while the sidebar is closed', () => {
+  it('keeps deriving from the last open messages once the sidebar closes, so the closing panel does not flash its empty state', () => {
+    const { rerender } = render(<ConversationSourcesPanelContainer />, {
+      wrapper: CanvasTestWrapper,
+    });
+
+    mockSidebarIsOpen = false;
+    rerender(<ConversationSourcesPanelContainer />);
+
+    expect(sourcesDerivationInputs[sourcesDerivationInputs.length - 1]).toBe(
+      mockSidebarMessages,
+    );
+  });
+
+  it('derives sources from an empty list while the sidebar has never been open', () => {
     mockSidebarIsOpen = false;
 
     render(<ConversationSourcesPanelContainer />, {
