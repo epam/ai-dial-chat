@@ -7,7 +7,7 @@ The `POST /api/v1/catalog/{entityType}/{entityId}/unpublish` endpoint in `apps/c
 
 The backend SHALL expose `POST /api/v1/catalog/{entityType}/{entityId}/unpublish` in the existing `apps/chat-api/src/publish/` domain (`publish.controller.ts`, `publish.service.ts`, new `dto/unpublish-catalog-entity.dto.ts` and `dto/unpublish-result.dto.ts`), following `apps/chat-api/AGENTS.md` — thin controller, `@ApiOperation` plus one `@ApiResponse` per status code, `Logger` in the service, validated DTOs, typed HTTP exceptions.
 
-The service SHALL NOT persist anything. It calls DIAL Core's `createPublication` through `DialClientService`, exactly as the publish endpoint does, with a single resource whose `action` is `DELETE`:
+The service SHALL NOT persist anything. It calls DIAL Core's `createPublication` through `DialClientService`, exactly as the publish endpoint does, with a single resource whose `action` is `DELETE` (an application also carries one per file published next to it, see "Unpublishing an application also removes the files published with it"):
 
 Request:
 ```
@@ -72,6 +72,42 @@ Generated-client impact: OpenAPI `operationId: unpublishCatalogEntity`; request 
 #### Scenario: Access rules are never forwarded
 - **WHEN** any unpublish request is submitted
 - **THEN** the Core request body contains no `rules` field, regardless of what rules the original publication carried
+
+### Requirement: Unpublishing an application also removes the files published with it
+
+Publishing an application writes its uploaded icon to `files/public/{folder}/{published name}/{icon}` (`getPublishedApplicationFilesFolderUrl`), and a republish of the same version is refused by DIAL Core while that file exists. For an `application` the service SHALL therefore list the files that exist in that folder with `FilesListingService.expandFolderContents` and add one `DELETE` resource, carrying only a `targetUrl`, for each, after the application's own `DELETE`. `{published name}` is the last segment of the application's `targetUrl`, so publish and unpublish address the same folder.
+
+The folder is listed in two cases: the entity id is the published copy itself (`applications/public/...`, which is what the Publish panel sends), because `canUnpublish` has then limited the caller to an administrator or that copy's publisher; or the entity id is the author's own and the caller's publication of it in that folder was found, because another author's application in the same folder can share the name. In every other case, and for every other entity type, the request is unchanged.
+
+Listing is best-effort: a folder that does not exist yields no extra resources, and any other listing failure is logged as a warning without a token and the application is removed without its files. A failure here SHALL NOT fail the unpublish.
+
+#### Scenario: The icon is removed with the application
+- **GIVEN** an application published with an uploaded icon, unpublished through its published copy
+- **WHEN** the unpublish request is submitted
+- **THEN** the Core request holds a `DELETE` for the application and a `DELETE` for each file in `files/public/{folder}/{published name}/`
+
+#### Scenario: Republish after unpublish is not refused
+- **GIVEN** an application with an uploaded icon was published and unpublished
+- **WHEN** the same version is published to the same folder again
+- **THEN** the icon target no longer exists and the publish succeeds
+
+#### Scenario: No files were published
+- **WHEN** the folder does not exist
+- **THEN** the request holds the application's `DELETE` alone
+
+#### Scenario: Files cannot be listed
+- **GIVEN** listing the folder fails with an error other than not found
+- **WHEN** the application is unpublished
+- **THEN** the application is removed without its files and a warning is logged
+
+#### Scenario: Own url without a publication in the folder
+- **GIVEN** the entity id is the author's own and no publication of it in the folder can be found
+- **WHEN** the application is unpublished
+- **THEN** no file is listed or deleted
+
+#### Scenario: Other entity types are unchanged
+- **WHEN** a toolset, prompt or skill is unpublished
+- **THEN** no file is listed and the request holds the entity's `DELETE` alone
 
 ### Requirement: Unpublish is a request, not a completed removal
 

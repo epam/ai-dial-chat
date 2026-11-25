@@ -698,6 +698,7 @@ describe('PublishController with application dependencies (integration)', () => 
       { get: vi.fn(), set: vi.fn(), del: vi.fn() } as never,
       { isAdmin: vi.fn() } as never,
       preparation,
+      {} as never,
     );
     app = await buildApp(publishService);
   });
