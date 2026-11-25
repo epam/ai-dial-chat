@@ -33,6 +33,10 @@ export class GenerationEnv {
 
   @IsOptional()
   @IsString()
+  TEXT_REFINEMENT_APPLICATION_NAME_PROMPT?: string;
+
+  @IsOptional()
+  @IsString()
   TEXT_REFINEMENT_TOOLSET_DESCRIPTION_PROMPT?: string;
 
   @IsOptional()

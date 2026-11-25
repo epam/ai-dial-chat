@@ -7,6 +7,7 @@ export enum TextRefinementPurpose {
   ScheduledTaskDescription = 'scheduled-task-description',
   ScheduledTaskInstructions = 'scheduled-task-instructions',
   ApplicationDescription = 'application-description',
+  ApplicationName = 'application-name',
   ToolsetDescription = 'toolset-description',
   PromptDescription = 'prompt-description',
   PromptInstructions = 'prompt-instructions',
@@ -20,6 +21,7 @@ export const TEXT_REFINEMENT_LIMITS: Record<TextRefinementPurpose, number> = {
   [TextRefinementPurpose.ScheduledTaskDescription]: 500,
   [TextRefinementPurpose.ScheduledTaskInstructions]: 32000,
   [TextRefinementPurpose.ApplicationDescription]: 2000,
+  [TextRefinementPurpose.ApplicationName]: 256,
   [TextRefinementPurpose.ToolsetDescription]: 2000,
   [TextRefinementPurpose.PromptDescription]: 2000,
   [TextRefinementPurpose.PromptInstructions]: 32000,
@@ -42,7 +44,7 @@ export class RefineTextRequestDto {
     minLength: 1,
     maxLength: 32000,
     description:
-      'Exact nonblank draft. Unicode code point limits: skill/project Description 4000, task Description 500, application/toolset/prompt Description 2000, skill/task/prompt/project Instructions 32000.',
+      'Exact nonblank draft. Unicode code point limits: skill/project Description 4000, task Description 500, application/toolset/prompt Description 2000, application Name 256, skill/task/prompt/project Instructions 32000.',
     example: 'Use this skill to explain project documentation.',
   })
   @IsString()

@@ -22269,6 +22269,7 @@
           "scheduled-task-description",
           "scheduled-task-instructions",
           "application-description",
+          "application-name",
           "toolset-description",
           "prompt-description",
           "prompt-instructions",
@@ -22293,7 +22294,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 32000,
-            "description": "Exact nonblank draft. Unicode code point limits: skill/project Description 4000, task Description 500, application/toolset/prompt Description 2000, skill/task/prompt/project Instructions 32000.",
+            "description": "Exact nonblank draft. Unicode code point limits: skill/project Description 4000, task Description 500, application/toolset/prompt Description 2000, application Name 256, skill/task/prompt/project Instructions 32000.",
             "example": "Use this skill to explain project documentation."
           }
         },
