@@ -247,7 +247,11 @@ export const usePublishFolders = ({
     const storedKeys = Array.isArray(rememberedFolderKeys)
       ? rememberedFolderKeys.filter((key) => typeof key === 'string')
       : [];
-    /* Core no longer lists a folder the user lost access to, so a remembered destination the host rule refuses is dropped from the tree instead of lingering as a disabled row. It returns once the rule allows it again. */
+    /*
+     * Core no longer lists a folder the user lost access to, so a remembered
+     * destination the host rule refuses is dropped from the tree instead of
+     * lingering as a row. It returns once the rule allows it again.
+     */
     const visibleStoredPaths = storedKeys
       .map(fromFolderPathKey)
       .filter((path) => canPublishTo == null || canPublishTo(path));

@@ -132,7 +132,12 @@ The path is a decoded public-relative path, as the file manager and the publish 
 #### Scenario: Rights revoked while the page stays open
 - **GIVEN** the user opened a publish panel while holding `write` on a unit folder and an administrator then removed all of the user's access to it
 - **WHEN** the user opens a publish panel again
-- **THEN** the rights are read again and the folder is disabled or, when remembered only locally, absent from the tree
+- **THEN** the rights are read again and the folder is disabled
+
+#### Scenario: Revoked folder that only the browser remembers
+- **GIVEN** a destination kept in the remembered list that DIAL Core no longer lists, and the rights refuse it
+- **WHEN** the user opens a publish panel
+- **THEN** the folder is absent from the tree, and it is listed again once the rights allow it
 
 #### Scenario: Folder named Production with the flag on and rights Ready
 - **WHEN** the flag is on, the status is `Ready`, and a user opens a publish panel where the folder `Production/Releases` lies under no org unit
