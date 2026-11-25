@@ -88,7 +88,6 @@ vi.mock('@epam/ai-dial-ui-kit', async () => ({
         SkeletonShimmer,
         SKELETON_BAR_CLASS_NAME,
         SKELETON_BAR_HEIGHT,
-        SKELETON_BAR_WIDTHS,
         SkeletonTone,
         SkeletonVariant,
       }) => ({
@@ -98,7 +97,6 @@ vi.mock('@epam/ai-dial-ui-kit', async () => ({
         SkeletonShimmer,
         SKELETON_BAR_CLASS_NAME,
         SKELETON_BAR_HEIGHT,
-        SKELETON_BAR_WIDTHS,
         SkeletonTone,
         SkeletonVariant,
       }),
