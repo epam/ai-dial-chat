@@ -23,6 +23,7 @@ import {
   defineApplicationEditor,
   getMissingRequiredProperties,
   resolveSchemaNotificationTarget,
+  toApplicationMetadataFields,
   toFolderPathField,
 } from '../../../utils/application-editor';
 import SchemaAppSetup from '../setup/SchemaAppSetup';
@@ -33,7 +34,6 @@ import {
   getSchemaAppTypeName,
   getSchemaId,
   getVersionLockedInEditMode,
-  toLocaleFields,
 } from './schemaDefinitionHelpers';
 
 const EMPTY_SETUP: SchemaApplicationSetup = { requiredProperties: [] };
@@ -73,14 +73,9 @@ const create = (
   options?: ApplicationCreateOptions,
 ) =>
   createApplication({
-    name: metadata.name.trim(),
+    ...toApplicationMetadataFields(metadata, { shouldOmitEmptyTopics: true }),
     type: getSchemaId(ctx),
-    description: metadata.description.trim() || undefined,
-    iconUrl: metadata.iconUrl.trim() || undefined,
-    version: metadata.version.trim() || undefined,
-    topics: metadata.topics.length > 0 ? metadata.topics : undefined,
     applicationProperties: setup.properties ?? {},
-    ...toLocaleFields(metadata),
     ...toFolderPathField(options),
   });
 
@@ -90,13 +85,8 @@ const update = (
   setup: SchemaApplicationSetup,
 ) =>
   updateApplication(appId, {
-    name: metadata.name.trim(),
-    description: metadata.description.trim() || undefined,
-    iconUrl: metadata.iconUrl.trim() || undefined,
-    version: metadata.version.trim() || undefined,
-    topics: metadata.topics,
+    ...toApplicationMetadataFields(metadata),
     applicationProperties: setup.properties ?? {},
-    ...toLocaleFields(metadata),
   });
 
 /** Schema-based application without an embedded editor: Metadata plus a form rendered from the schema, created in one request. */

@@ -168,6 +168,38 @@ export const deploymentToMetadata = (
   ),
 });
 
+/** Returns the `locales` and `primaryLocale` request fields of the Metadata's other locales. */
+export const toLocaleFields = (metadata: DeploymentCreationFormValues) => {
+  const locales = composeLocalePayload(metadata.otherLocales, PRIMARY_LOCALE);
+  return { locales, primaryLocale: locales ? PRIMARY_LOCALE : undefined };
+};
+
+/** Options of {@link toApplicationMetadataFields}. */
+export interface ApplicationMetadataFieldsOptions {
+  /** Sends no `topics` while there are none, instead of an empty list. Defaults to `false`. */
+  shouldOmitEmptyTopics?: boolean;
+}
+
+/**
+ * Returns the request fields every application write takes from the Metadata
+ * form: trimmed name, description, icon and version (an empty one is left
+ * out), the topics, and the locale fields.
+ */
+export const toApplicationMetadataFields = (
+  metadata: DeploymentCreationFormValues,
+  { shouldOmitEmptyTopics = false }: ApplicationMetadataFieldsOptions = {},
+) => ({
+  name: metadata.name.trim(),
+  description: metadata.description.trim() || undefined,
+  iconUrl: metadata.iconUrl.trim() || undefined,
+  version: metadata.version.trim() || undefined,
+  topics:
+    shouldOmitEmptyTopics && metadata.topics.length === 0
+      ? undefined
+      : metadata.topics,
+  ...toLocaleFields(metadata),
+});
+
 /** Returns the trimmed Metadata payload a quick app's embedded editor persists on save; carries `display_version`, never the backend `version`. */
 export const toTriggerSaveGeneral = (
   metadata: DeploymentCreationFormValues,

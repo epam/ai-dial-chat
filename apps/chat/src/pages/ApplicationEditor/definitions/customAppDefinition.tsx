@@ -5,7 +5,6 @@ import type {
   DeploymentItemDto,
 } from '@epam/ai-dial-chat-api-client';
 import {
-  composeLocalePayload,
   isValidAbsoluteUrl,
   isValidFeaturesData,
   parseFeaturesData,
@@ -42,8 +41,8 @@ import { NotifiableEntity } from '../../../types/entity-notification';
 import {
   defineApplicationEditor,
   toFolderPathField,
+  toLocaleFields,
 } from '../../../utils/application-editor';
-import { PRIMARY_LOCALE } from '../../../utils/locale';
 import CustomAppSetup from '../setup/CustomAppSetup';
 import { getVersionLockedInEditMode } from './schemaDefinitionHelpers';
 
@@ -95,11 +94,6 @@ const loadSetup = async (
       deployment?.maxInputAttachments ??
       '',
   };
-};
-
-const toLocaleFields = (metadata: DeploymentCreationFormValues) => {
-  const locales = composeLocalePayload(metadata.otherLocales, PRIMARY_LOCALE);
-  return { locales, primaryLocale: locales ? PRIMARY_LOCALE : undefined };
 };
 
 const create = async (

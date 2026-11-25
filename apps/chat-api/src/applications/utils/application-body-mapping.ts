@@ -1,6 +1,13 @@
 import type { components } from '@epam/ai-dial-typescript-sdk';
+import type { ApplicationResourceDependencyDto } from '../dto/resource-dependency.dto';
+import type { ResourceDependencyAccess } from '../types/resource-dependency-access.enum';
 
 type DialApplication = components['schemas']['Application'];
+
+type DialResourceDependency = components['schemas']['ResourceDependency'];
+
+/** The `kind` DIAL Core requires on every resource dependency entry. */
+const RESOURCE_LINK_KIND = 'dial.resourceLink';
 
 /**
  * `endpoint`, `features`, `inputAttachmentTypes`, and `maxInputAttachments` are
@@ -96,3 +103,38 @@ export const normalizeStoredApplication = (raw: unknown): DialApplication => {
   }
   return body as DialApplication;
 };
+
+/**
+ * Maps request dependency entries to the snake_case shape DIAL Core stores,
+ * defaulting `required` to false.
+ * @param entries - validated dependency entries from a create or update body
+ */
+export const toDialResourceDependencies = (
+  entries: ApplicationResourceDependencyDto[],
+): DialResourceDependency[] =>
+  entries.map((entry) => ({
+    kind: RESOURCE_LINK_KIND,
+    link_id: entry.linkId,
+    target: { url: entry.target.url },
+    access: entry.access,
+    required: entry.required ?? false,
+  }));
+
+/**
+ * Maps the dependencies of a stored application to the camelCase entries the
+ * API accepts. Values are passed through as stored, so an entry an
+ * administrator wrote is returned faithfully.
+ * @param stored - `resource_dependencies` of a stored application, if any
+ */
+export const fromDialResourceDependencies = (
+  stored: DialResourceDependency[] | undefined,
+): ApplicationResourceDependencyDto[] =>
+  (stored ?? []).map((entry) => {
+    const dependency: ApplicationResourceDependencyDto = {
+      linkId: entry.link_id ?? '',
+      target: { url: entry.target?.url ?? '' },
+      access: (entry.access ?? []) as ResourceDependencyAccess[],
+    };
+    if (entry.required != null) dependency.required = entry.required;
+    return dependency;
+  });

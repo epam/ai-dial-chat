@@ -30,6 +30,21 @@ const updatedApp = {
   id: 'applications/test-bucket/My%20App__0.0.1',
 };
 
+const storedEntry = {
+  linkId: 'access-files',
+  target: { url: 'files/{current-user}/' },
+  access: ['READ'],
+};
+
+const notAllowed403 = () =>
+  new ForbiddenException({
+    statusCode: 403,
+    error: 'Forbidden',
+    code: 'applicationResourceDependenciesNotAllowed',
+    message:
+      'Only an administrator can change the resource access of an application.',
+  });
+
 const TEST_USER = { sub: 'user-123', at: 'test-access-token' };
 
 async function buildApp(
@@ -74,6 +89,7 @@ describe('ApplicationsController (integration)', () => {
     listApplications: ReturnType<typeof vi.fn>;
     createApplication: ReturnType<typeof vi.fn>;
     updateApplication: ReturnType<typeof vi.fn>;
+    getApplicationResourceDependencies: ReturnType<typeof vi.fn>;
     deleteApplication: ReturnType<typeof vi.fn>;
     listApplicationFolders: ReturnType<typeof vi.fn>;
     moveApplication: ReturnType<typeof vi.fn>;
@@ -86,6 +102,9 @@ describe('ApplicationsController (integration)', () => {
       listApplications: vi.fn().mockResolvedValue(mockList),
       createApplication: vi.fn().mockResolvedValue(createdApp),
       updateApplication: vi.fn().mockResolvedValue(updatedApp),
+      getApplicationResourceDependencies: vi
+        .fn()
+        .mockResolvedValue({ resourceDependencies: [storedEntry] }),
       deleteApplication: vi.fn().mockResolvedValue(undefined),
       listApplicationFolders: vi
         .fn()
@@ -226,6 +245,14 @@ describe('ApplicationsController (integration)', () => {
         .send({ ...validBody, unknown_field: 'value' })
         .expect(400);
 
+      expect(service.createApplication).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 when resourceDependencies is sent, as create no longer takes it', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/applications')
+        .send({ name: 'My App', resourceDependencies: [storedEntry] })
+        .expect(400);
       expect(service.createApplication).not.toHaveBeenCalled();
     });
 
@@ -410,6 +437,115 @@ describe('ApplicationsController (integration)', () => {
         .patch('/api/v1/applications/my-app')
         .send(validBody)
         .expect(503);
+    });
+  });
+
+  describe('GET /api/v1/applications/:applicationName/resource-dependencies', () => {
+    it('returns 200 with the stored list', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/applications/my-app/resource-dependencies')
+        .expect(200);
+
+      expect(res.body).toEqual({ resourceDependencies: [storedEntry] });
+      expect(service.getApplicationResourceDependencies).toHaveBeenCalledWith(
+        TEST_USER.at,
+        'my-app',
+      );
+    });
+
+    it('returns 404 when the application is missing', async () => {
+      service.getApplicationResourceDependencies.mockRejectedValue(
+        new NotFoundException(),
+      );
+      await request(app.getHttpServer())
+        .get('/api/v1/applications/my-app/resource-dependencies')
+        .expect(404);
+    });
+
+    it('returns 403 when Core refuses the read', async () => {
+      service.getApplicationResourceDependencies.mockRejectedValue(
+        new ForbiddenException(),
+      );
+      await request(app.getHttpServer())
+        .get('/api/v1/applications/my-app/resource-dependencies')
+        .expect(403);
+    });
+
+    it('returns 400 for an invalid name without calling the service', async () => {
+      await request(app.getHttpServer())
+        .get('/api/v1/applications/bad%20name;x/resource-dependencies')
+        .expect(400);
+      expect(service.getApplicationResourceDependencies).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 for a traversal name without calling the service', async () => {
+      await request(app.getHttpServer())
+        .get('/api/v1/applications/..%2Fsecret/resource-dependencies')
+        .expect(400);
+      expect(service.getApplicationResourceDependencies).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('PATCH /api/v1/applications/:applicationName with resourceDependencies', () => {
+    const body = { name: 'My App', resourceDependencies: [storedEntry] };
+
+    it('forwards a valid list, and an empty one, to the service', async () => {
+      await request(app.getHttpServer())
+        .patch('/api/v1/applications/my-app')
+        .send(body)
+        .expect(200);
+      await request(app.getHttpServer())
+        .patch('/api/v1/applications/my-app')
+        .send({ name: 'My App', resourceDependencies: [] })
+        .expect(200);
+      expect(service.updateApplication).toHaveBeenNthCalledWith(
+        1,
+        TEST_USER.sub,
+        TEST_USER.at,
+        'my-app',
+        body,
+      );
+      expect(service.updateApplication).toHaveBeenNthCalledWith(
+        2,
+        TEST_USER.sub,
+        TEST_USER.at,
+        'my-app',
+        { name: 'My App', resourceDependencies: [] },
+      );
+    });
+
+    it('returns 400 for a malformed entry without calling the service', async () => {
+      await request(app.getHttpServer())
+        .patch('/api/v1/applications/my-app')
+        .send({
+          ...body,
+          resourceDependencies: [
+            { ...storedEntry, target: { url: 'files/b/../x' } },
+          ],
+        })
+        .expect(400);
+      expect(service.updateApplication).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 for SHARE access', async () => {
+      await request(app.getHttpServer())
+        .patch('/api/v1/applications/my-app')
+        .send({
+          ...body,
+          resourceDependencies: [{ ...storedEntry, access: ['SHARE'] }],
+        })
+        .expect(400);
+    });
+
+    it('returns the coded 403 when Core refuses the dependencies', async () => {
+      service.updateApplication.mockRejectedValue(notAllowed403());
+      const res = await request(app.getHttpServer())
+        .patch('/api/v1/applications/my-app')
+        .send(body)
+        .expect(403);
+      expect(res.body).toMatchObject({
+        code: 'applicationResourceDependenciesNotAllowed',
+      });
     });
   });
 

@@ -1231,6 +1231,117 @@ const { isDestinationUsable, getDisabledReason } = buildFolderGuards({
 });
 ```
 
+### useApplicationAccess
+
+Draft state of an application's **Access** section: which of the user's own resources (`files`, `projects`, `skills`, `prompts`, `conversations`, `applications`, `toolsets`) the application declares in its `resource_dependencies`. Available from the root and `./utils`; it needs no peer beyond `react`.
+
+The host loads the stored list (the `getApplicationResourceDependencies` operation of the generated client) and passes it as `storedList`; the hook never calls DIAL Core. A stored entry is **editable** only when its `target.url` is exactly `<type>/{current-user}/` for an offered content type, it is not `required`, its rights (compared as a set) are Read or Read and Write and allowed for that type, and no earlier entry already claimed the type. Every other entry (a fixed bucket, a path below the bucket root, `required: true`, write only, a type the host does not offer or the lib has no content type for, a second entry for a type, `write` on applications or toolsets) is **preserved**: exposed as plain data in `preserved`, kept out of `entries` and sent back unchanged. A missing `required` means `false`.
+
+| Return value       | Type                                              | Description                                                                                                                                                                                                                                                                    |
+| ------------------ | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `entries`          | `ApplicationAccessEntry[]`                        | Configured entries `{ contentType, accessLevel }`, at most one per type.                                                                                                                                                                                                       |
+| `preserved`        | `ApplicationAccessPreservedEntry[]`               | Read-only entries `{ index, linkId, url, access, level?, isRequired }`; `level` is `Read` or `ReadWrite` when the stored rights equal Read or Read and Write, whatever kept the entry from being editable, and `undefined` for any other rights. The host formats their chips. |
+| `setEntries`       | `(entries) => void`                               | Replaces the configured entries.                                                                                                                                                                                                                                               |
+| `isDirty`          | `boolean`                                         | The merged list differs from the baseline (order-sensitive, rights as a set, `url` byte-exact). It is computed, so reverting a change clears it.                                                                                                                               |
+| `reset`            | `(nextBaseline?) => void`                         | Discards the draft; a list argument becomes the new baseline, for example the one just saved.                                                                                                                                                                                  |
+| `toRequestValue()` | `ApplicationResourceDependencyDto[] \| undefined` | `undefined` while the merged list equals the baseline; otherwise the full list, `[]` only for an explicit clear with nothing preserved.                                                                                                                                        |
+
+The merge keeps every stored position: an edited entry is replaced in place with its stored `linkId`, a removed one is dropped, a new one is appended last as `access-<type>` (numeric suffix on a collision), and a preserved one never moves. Applications and toolsets are never given `write`. Rights are the shared `AccessLevel` enum from `@epam/ai-dial-chat-shared`. The pure functions behind the hook are exported too: `partitionResourceDependencies`, `mergeApplicationAccess`, `areResourceDependenciesEqual`, `buildApplicationAccessLinkId`, `buildApplicationAccessUrl`, `toResourceDependencyAccess`, `getAllowedAccessLevels`, `clampAccessLevel`, `changeApplicationAccessContentType` (resets the level to `Read` when the new type does not allow it), and the data `APPLICATION_ACCESS_CONTENT_TYPES` and `APPLICATION_ACCESS_ALLOWED_LEVELS`, from which a host derives its option list.
+
+```tsx
+import type { ApplicationResourceDependencyDto } from '@epam/ai-dial-chat-api-client';
+import {
+  ApplicationAccessContentType,
+  useApplicationAccess,
+} from '@epam/ai-dial-chat-hooks';
+import { AccessLevel } from '@epam/ai-dial-chat-shared';
+
+const AccessState = ({
+  storedList,
+  save,
+}: {
+  storedList: ApplicationResourceDependencyDto[];
+  save: (list: ApplicationResourceDependencyDto[]) => Promise<void>;
+}) => {
+  const access = useApplicationAccess({ storedList });
+
+  const onSave = async () => {
+    const list = access.toRequestValue();
+    if (list == null) return;
+    await save(list);
+    access.reset(list);
+  };
+
+  return (
+    <>
+      <button
+        onClick={() =>
+          access.setEntries([
+            ...access.entries,
+            {
+              contentType: ApplicationAccessContentType.Files,
+              accessLevel: AccessLevel.Read,
+            },
+          ])
+        }
+      >
+        Add Files
+      </button>
+      <button disabled={!access.isDirty} onClick={onSave}>
+        Save
+      </button>
+    </>
+  );
+};
+```
+
+### useApplicationAccessSync
+
+Composes `useApplicationAccess` with the load and the save of an application's Access list, so a host only supplies two operations. Available from the root and `./utils`. It holds no client: `loadStoredList(appId)` and `saveList(appId, list, context)` are the host's promises, and `context` is whatever the host passes to `save` (for example the form values the update needs).
+
+- **Loading.** For an enabled section with an `appId` and `shouldLoad`, it reads the list once (`status` is `Loading`, then `Loaded` or `Failed`; `retry()` reads again) and makes it the draft's baseline. A newer `appId` or an unmounted hook drops an answer that arrives late. A disabled section, a new application (empty `appId`) and `shouldLoad: false` read nothing and start `Loaded`. `hasStoredEntries` says whether the list loaded or last saved is not empty.
+- **Saving.** `save(applicationId, context)` never rejects and resolves to `{ outcome, message?, traceId? }`: `Unchanged` when the section is off, untouched or has nothing to send; `Saved` after the list was sent, which becomes the new baseline; `Refused` when DIAL Core answers `ApplicationErrorCode.ApplicationResourceDependenciesNotAllowed` (a non-administrator changing the list), with the draft and baseline kept; `Failed` for any other failure, with the API `message` (`null` when none could be read) and the draft kept. Nothing is shown: the host picks the wording.
+
+```tsx
+import type { ApplicationResourceDependencyDto } from '@epam/ai-dial-chat-api-client';
+import {
+  ApplicationAccessSaveOutcome,
+  useApplicationAccessSync,
+} from '@epam/ai-dial-chat-hooks';
+
+declare const loadStoredList: (
+  appId: string,
+) => Promise<ApplicationResourceDependencyDto[]>;
+declare const saveList: (
+  appId: string,
+  list: ApplicationResourceDependencyDto[],
+  name: string,
+) => Promise<unknown>;
+
+const AccessSync = ({ appId }: { appId: string }) => {
+  const sync = useApplicationAccessSync<string>({
+    isEnabled: true,
+    appId,
+    shouldLoad: true,
+    loadStoredList,
+    saveList,
+  });
+
+  const onSave = async () => {
+    const { outcome } = await sync.save(appId, 'My app');
+    if (outcome === ApplicationAccessSaveOutcome.Refused) {
+      // warn: only an administrator can change the access
+    }
+  };
+
+  return (
+    <button disabled={!sync.access.isDirty} onClick={onSave}>
+      Save
+    </button>
+  );
+};
+```
+
 ### useUsageLimitBanner
 
 Everything the composer usage-limit banner needs except its rendering: fetches the selected deployment's own usage and the caller's account usage, refreshes both once after each generation ends, picks the day/week/month token limit (from the deployment) or cost budget (from the account) closest to its cap, translates the limit and reset sentences, and tracks tab-lifetime dismissal. Spread the returned `banner` onto `UsageLimitBannerView` from `@epam/ai-dial-conversation-input`. Available from the root and from `@epam/ai-dial-chat-hooks/usage-limits`; needs the optional `@epam/ai-dial-conversation-input` peer (it supplies the `UsageLimitBannerSeverity` enum at runtime).
@@ -5725,7 +5836,7 @@ const { panelProps } = useResourceSavePanel({
 These functions build the `ResourceSaveAdapter` for each resource type.
 Each one takes a configured generated client and never creates one:
 
-- **`createEmbeddedApplicationSaveAdapter({ applicationsApi, applicationId, runEmbeddedSave, getCommitFailedMessage, publishClient? })`**
+- **`createEmbeddedApplicationSaveAdapter({ applicationsApi, applicationId, runEmbeddedSave, beforeEmbeddedSave?, getCommitFailedMessage, publishClient? })`**
   is for Quick Apps, whose embedded editor is the only writer. A new version
   runs in three steps:
   1. fork the stored application;
@@ -5734,6 +5845,14 @@ Each one takes a configured generated client and never creates one:
 
   If the save fails, the fork is deleted. If the commit fails, it throws a
   `ResourceSaveError` with `getCommitFailedMessage(version)`.
+  `beforeEmbeddedSave(applicationId)` is an optional host step that runs right
+  before every `runEmbeddedSave` (after the fork, for a new version) with the
+  original's id; a rejection aborts that save and deletes the fork, and
+  without it nothing changes. If the step succeeds and `runEmbeddedSave` then
+  fails, what the step wrote stays written and is not undone, and a retry runs
+  the step again; the Access step relies on its baseline already being reset,
+  so after such a failure the stored Access list is the new one, the rest of
+  the form is not saved, and the retry sends no Access request.
 
   It also gives the adapter `saveIntoOrgUnit(id, folderPath)`, which copies the
   saved application into an org-unit folder of the public bucket through
@@ -5742,8 +5861,20 @@ Each one takes a configured generated client and never creates one:
   `PublishApiClient` from `createPublishApiClient`; `createOrgUnitWriter(publishClient, entityType)`
   builds the same `saveIntoOrgUnit` for any other adapter. `publishClient` is optional on every adapter factory (as in `useSkillEditorSubmit`): without it the adapter has no `saveIntoOrgUnit` and keeps only the publish path, and `isWrittenToOrgUnit` on a result is optional, so a host built before org units needs no change. A host that wants the direct write passes the client and a BFF that serves `copy-to-org-unit`.
 
-- **`createHostApplicationSaveAdapter({ applicationsApi, applicationId, update, createVersion, publishClient? })`**
-  is for applications the host writes itself.
+- **`createHostApplicationSaveAdapter({ applicationsApi, applicationId, update, createVersion, afterSave?, publishClient? })`**
+  is for applications the host writes itself. `afterSave(id, { version? })` is
+  an optional host step that runs after `update` (with the edited
+  application's id) and after `createVersion` (with the created version's id
+  and `version`), before anything is moved, published or copied; a rejection
+  aborts the save, and without it nothing changes.
+- **`createReusingCreateIn({ memory, create, afterCreate? })`** returns the
+  `createIn` of a create adapter that creates once per folder. `memory` is a
+  `CreatedResourceMemory` (one per editor, from `useCreatedResourceMemory()`)
+  that remembers `{ id, folderKey }`: a retry in the same folder reuses that
+  resource and only runs `afterCreate(id)` again, another folder creates a new
+  one, and a create that answers no id rejects. The host forgets the resource
+  with `memory.take()`, which also returns it, for example to continue editing
+  the created resource after the panel is dismissed.
 - **`createToolsetSaveAdapter({ toolsetsApi, toolsetId, body, publishClient? })`** writes a new
   version with `createOnly: true` into the chosen folder.
 - **`createPromptSaveAdapter({ promptsApi, promptId, body, publishClient? })`** is unversioned:

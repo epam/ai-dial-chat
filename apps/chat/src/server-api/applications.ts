@@ -1,4 +1,6 @@
 import type {
+  ApplicationResourceDependenciesDto,
+  ApplicationResourceDependencyDto,
   ApplicationsResponseDto,
   CreateApplicationBodyDto,
   CreatedApplicationDto,
@@ -32,6 +34,39 @@ export const updateApplication = (
   applicationsApi.updateApplication({
     applicationName,
     updateApplicationBodyDto: body,
+  });
+
+/** Reads the resource dependencies stored on an application; never cached. */
+export const getApplicationResourceDependencies = (
+  applicationName: string,
+): Promise<ApplicationResourceDependenciesDto> =>
+  applicationsApi.getApplicationResourceDependencies({ applicationName });
+
+/** The display fields an application update replaces, already trimmed and mapped. */
+export type ApplicationDisplayFields = Pick<
+  UpdateApplicationBodyDto,
+  | 'name'
+  | 'description'
+  | 'iconUrl'
+  | 'version'
+  | 'topics'
+  | 'locales'
+  | 'primaryLocale'
+>;
+
+/*
+ * The update replaces the display fields it receives, so the Access step
+ * sends the values the Metadata form holds, together with the full
+ * dependency list.
+ */
+export const updateApplicationAccess = (
+  applicationName: string,
+  displayFields: ApplicationDisplayFields,
+  resourceDependencies: ApplicationResourceDependencyDto[],
+): Promise<UpdatedApplicationDto> =>
+  updateApplication(applicationName, {
+    ...displayFields,
+    resourceDependencies,
   });
 
 export const deleteApplication = (applicationName: string): Promise<void> =>

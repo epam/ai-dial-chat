@@ -195,6 +195,145 @@ describe('resource save adapters', () => {
     });
   });
 
+  describe('createEmbeddedApplicationSaveAdapter with beforeEmbeddedSave', () => {
+    const runEmbeddedSave = vi.fn();
+    const beforeEmbeddedSave = vi.fn();
+    const adapter = createEmbeddedApplicationSaveAdapter({
+      applicationsApi,
+      applicationId: APP_ID,
+      runEmbeddedSave,
+      beforeEmbeddedSave,
+      getCommitFailedMessage: (version) => `commit failed ${version}`,
+    });
+
+    beforeEach(() => {
+      runEmbeddedSave.mockResolvedValue(undefined);
+      beforeEmbeddedSave.mockResolvedValue(undefined);
+      applicationsApi.forkApplicationVersion.mockResolvedValue({
+        id: SNAPSHOT,
+      });
+      applicationsApi.commitApplicationVersion.mockResolvedValue({
+        id: SNAPSHOT,
+      });
+      applicationsApi.deleteApplication.mockResolvedValue(undefined);
+    });
+
+    it('runs before the embedded save, against the original, for an in-place save', async () => {
+      await adapter.saveInPlace();
+
+      expect(beforeEmbeddedSave).toHaveBeenCalledWith(APP_ID);
+      expect(beforeEmbeddedSave.mock.invocationCallOrder[0]).toBeLessThan(
+        runEmbeddedSave.mock.invocationCallOrder[0],
+      );
+    });
+
+    it('runs after the fork and before the embedded save and the commit for a new version', async () => {
+      await adapter.saveAsNewVersion?.('1.1.0', ['Design']);
+
+      expect(beforeEmbeddedSave).toHaveBeenCalledWith(APP_ID);
+      const fork =
+        applicationsApi.forkApplicationVersion.mock.invocationCallOrder[0];
+      const before = beforeEmbeddedSave.mock.invocationCallOrder[0];
+      const save = runEmbeddedSave.mock.invocationCallOrder[0];
+      const commit =
+        applicationsApi.commitApplicationVersion.mock.invocationCallOrder[0];
+      expect(fork).toBeLessThan(before);
+      expect(before).toBeLessThan(save);
+      expect(save).toBeLessThan(commit);
+    });
+
+    it('keeps what the step wrote and propagates the error when the embedded save fails after it', async () => {
+      runEmbeddedSave.mockRejectedValue(new Error('editor failed'));
+
+      await expect(adapter.saveInPlace()).rejects.toThrow('editor failed');
+
+      expect(beforeEmbeddedSave).toHaveBeenCalledOnce();
+      expect(runEmbeddedSave).toHaveBeenCalledOnce();
+    });
+
+    it('runs the step once, deletes the fork and never commits when the embedded save fails after it for a new version', async () => {
+      runEmbeddedSave.mockRejectedValue(new Error('editor failed'));
+
+      await expect(adapter.saveAsNewVersion?.('1.1.0', [])).rejects.toThrow(
+        'editor failed',
+      );
+
+      expect(beforeEmbeddedSave).toHaveBeenCalledOnce();
+      expect(applicationsApi.deleteApplication).toHaveBeenCalledWith({
+        applicationName: SNAPSHOT,
+      });
+      expect(applicationsApi.commitApplicationVersion).not.toHaveBeenCalled();
+    });
+
+    it('aborts an in-place save when it rejects, without running the embedded save', async () => {
+      beforeEmbeddedSave.mockRejectedValue(new ResourceSaveError('no'));
+
+      await expect(adapter.saveInPlace()).rejects.toThrow('no');
+      expect(runEmbeddedSave).not.toHaveBeenCalled();
+    });
+
+    it('deletes the fork and never commits when it rejects for a new version', async () => {
+      beforeEmbeddedSave.mockRejectedValue(new ResourceSaveError('no'));
+
+      await expect(adapter.saveAsNewVersion?.('1.1.0', [])).rejects.toThrow(
+        'no',
+      );
+      expect(runEmbeddedSave).not.toHaveBeenCalled();
+      expect(applicationsApi.deleteApplication).toHaveBeenCalledWith({
+        applicationName: SNAPSHOT,
+      });
+      expect(applicationsApi.commitApplicationVersion).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('createHostApplicationSaveAdapter with afterSave', () => {
+    const update = vi.fn();
+    const createVersion = vi.fn();
+    const afterSave = vi.fn();
+    const adapter = createHostApplicationSaveAdapter({
+      applicationsApi,
+      applicationId: APP_ID,
+      update,
+      createVersion,
+      afterSave,
+    });
+
+    beforeEach(() => {
+      update.mockResolvedValue(undefined);
+      afterSave.mockResolvedValue(undefined);
+    });
+
+    it('runs after the update with the edited application and no version', async () => {
+      await adapter.saveInPlace();
+
+      expect(afterSave).toHaveBeenCalledWith(APP_ID, {});
+      expect(update.mock.invocationCallOrder[0]).toBeLessThan(
+        afterSave.mock.invocationCallOrder[0],
+      );
+    });
+
+    it('runs after the version is created with its id and version', async () => {
+      createVersion.mockResolvedValue({ id: SNAPSHOT });
+
+      await expect(adapter.saveAsNewVersion?.('1.1.0', [])).resolves.toEqual({
+        id: SNAPSHOT,
+      });
+      expect(afterSave).toHaveBeenCalledWith(SNAPSHOT, { version: '1.1.0' });
+    });
+
+    it('does not run for a created version that has no id', async () => {
+      createVersion.mockResolvedValue(undefined);
+
+      await expect(adapter.saveAsNewVersion?.('1.1.0', [])).rejects.toThrow();
+      expect(afterSave).not.toHaveBeenCalled();
+    });
+
+    it('rejects the save when it rejects', async () => {
+      afterSave.mockRejectedValue(new ResourceSaveError('no'));
+      await expect(adapter.saveInPlace()).rejects.toThrow('no');
+    });
+  });
+
   describe('createToolsetSaveAdapter', () => {
     const TOOLSET_ID = 'toolsets/b1/search__1.0.0';
     const body = { name: 'search', version: '1.0.0' } as ToolsetBodyDto;

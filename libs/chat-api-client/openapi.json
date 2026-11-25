@@ -620,6 +620,69 @@
         "tags": ["applications"]
       }
     },
+    "/api/v1/applications/{applicationName}/resource-dependencies": {
+      "get": {
+        "description": "Returns the resource dependencies stored on the application, read from DIAL Core with the caller's own token. An application that declares none answers an empty list. Not cached.",
+        "operationId": "getApplicationResourceDependencies",
+        "parameters": [
+          {
+            "name": "applicationName",
+            "required": true,
+            "in": "path",
+            "description": "Application identifier. Slash-separated names must be percent-encoded in the URL (%2F). Empty, dot, and dot-dot path segments are rejected, including when encoded.",
+            "schema": {
+              "pattern": "^(?:[\\w.\\-:@/()+]|%[\\dA-Fa-f]{2})+$",
+              "example": "my-app__1.0",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The stored resource dependencies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationResourceDependenciesDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid application name"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller lacks permission to read the application"
+          },
+          "404": {
+            "description": "Application not found"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Get the resource dependencies of an application",
+        "tags": ["applications"]
+      }
+    },
     "/api/v1/applications/{applicationName}/move": {
       "post": {
         "description": "Moves an application in the caller's own bucket into `folderPath`, never overwriting an existing application. Invalidates the applications, deployments and details caches on success.",
@@ -898,7 +961,7 @@
             "description": "Not authenticated — valid session cookie required"
           },
           "403": {
-            "description": "Caller lacks permission, or, with `code` `applicationDependentResourceMissing`, a resource the application depends on is no longer available",
+            "description": "Caller lacks permission, or, with `code` `applicationDependentResourceMissing`, a resource the application depends on is no longer available, or, with `code` `applicationResourceDependenciesNotAllowed`, only an administrator can change the resource dependencies",
             "content": {
               "application/json": {
                 "schema": {
@@ -14168,6 +14231,62 @@
         },
         "required": ["folders"]
       },
+      "ApplicationResourceDependencyTargetDto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "A DIAL resource URL: `<type>/<bucket>/<path>` or `<type>/{current-user}/<path>`.",
+            "example": "files/{current-user}/",
+            "maxLength": 1024,
+            "pattern": "^(?:files|prompts|conversations|applications|toolsets|skills|projects)(?:\\/(?!\\.{1,2}(?:\\/|$))[^\\s*/]+)+\\/?$"
+          }
+        },
+        "required": ["url"]
+      },
+      "ResourceDependencyAccess": {
+        "type": "string",
+        "enum": ["READ", "WRITE"]
+      },
+      "ApplicationResourceDependencyDto": {
+        "type": "object",
+        "properties": {
+          "linkId": {
+            "type": "string",
+            "description": "Identity of the entry within the application declaration.",
+            "example": "access-files",
+            "maxLength": 1024
+          },
+          "target": {
+            "$ref": "#/components/schemas/ApplicationResourceDependencyTargetDto"
+          },
+          "access": {
+            "type": "array",
+            "example": ["READ"],
+            "items": {
+              "$ref": "#/components/schemas/ResourceDependencyAccess"
+            }
+          },
+          "required": {
+            "type": "boolean",
+            "description": "When true, an unresolvable or unconsented dependency fails the call. Defaults to false."
+          }
+        },
+        "required": ["linkId", "target", "access"]
+      },
+      "ApplicationResourceDependenciesDto": {
+        "type": "object",
+        "properties": {
+          "resourceDependencies": {
+            "maxItems": 100,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApplicationResourceDependencyDto"
+            }
+          }
+        },
+        "required": ["resourceDependencies"]
+      },
       "MoveResourceDto": {
         "type": "object",
         "properties": {
@@ -14390,8 +14509,11 @@
       },
       "ApplicationErrorCode": {
         "type": "string",
-        "enum": ["applicationDependentResourceMissing"],
-        "description": "Why DIAL Core refused the save. `applicationDependentResourceMissing`: a resource the application depends on is no longer available."
+        "enum": [
+          "applicationDependentResourceMissing",
+          "applicationResourceDependenciesNotAllowed"
+        ],
+        "description": "Why DIAL Core refused the save. `applicationDependentResourceMissing`: a resource the application depends on is no longer available. `applicationResourceDependenciesNotAllowed`: only an administrator can change the resource dependencies."
       },
       "ApplicationErrorDto": {
         "type": "object",
@@ -14410,7 +14532,7 @@
             "example": "This application refers to a resource that is no longer available. Remove or replace it to continue."
           },
           "code": {
-            "description": "Why DIAL Core refused the save. `applicationDependentResourceMissing`: a resource the application depends on is no longer available.",
+            "description": "Why DIAL Core refused the save. `applicationDependentResourceMissing`: a resource the application depends on is no longer available. `applicationResourceDependenciesNotAllowed`: only an administrator can change the resource dependencies.",
             "allOf": [
               {
                 "$ref": "#/components/schemas/ApplicationErrorCode"
@@ -14491,6 +14613,14 @@
           "primaryLocale": {
             "type": "string",
             "example": "en"
+          },
+          "resourceDependencies": {
+            "maxItems": 100,
+            "description": "When supplied, replaces the stored resource dependencies (an empty array clears them). Omit to keep the stored list.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApplicationResourceDependencyDto"
+            }
           }
         },
         "required": ["name"]
