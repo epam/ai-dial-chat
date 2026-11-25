@@ -73,6 +73,7 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
   contextSearchQuery,
   onContextSearchQueryChange,
   onBack,
+  headerLeading,
   onTogglePin,
   onPublish,
   onUnpublish,
@@ -413,18 +414,20 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
           styles.header,
         )}
       >
-        <GhostIconButton
-          icon={
-            <IconArrowNarrowLeft
-              size={DIAL_ICON_SIZE.LG}
-              className="rtl:scale-x-[-1]"
-              aria-hidden
-              stroke={DIAL_KIT_ICON_STROKE}
-            />
-          }
-          aria-label={labels.backLabel}
-          onClick={onBack}
-        />
+        {headerLeading ?? (
+          <GhostIconButton
+            icon={
+              <IconArrowNarrowLeft
+                size={DIAL_ICON_SIZE.LG}
+                className="rtl:scale-x-[-1]"
+                aria-hidden
+                stroke={DIAL_KIT_ICON_STROKE}
+              />
+            }
+            aria-label={labels.backLabel}
+            onClick={onBack}
+          />
+        )}
         <h1
           className={mergeClasses(
             'min-w-0 flex-1',

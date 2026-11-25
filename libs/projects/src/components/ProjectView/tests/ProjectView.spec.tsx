@@ -434,6 +434,23 @@ describe('ProjectView', () => {
     expect(onBack).toHaveBeenCalledOnce();
   });
 
+  it('renders headerLeading in place of the back button', async () => {
+    const onToggle = vi.fn();
+    const { onBack } = renderView({
+      headerLeading: (
+        <button type="button" onClick={onToggle}>
+          Toggle panel
+        </button>
+      ),
+    });
+
+    expect(screen.queryByRole('button', { name: 'Back' })).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Toggle panel' }));
+
+    expect(onToggle).toHaveBeenCalledOnce();
+    expect(onBack).not.toHaveBeenCalled();
+  });
+
   it('offers Share, Download and Delete in the more-actions menu', async () => {
     const { onDownload } = renderView();
 
