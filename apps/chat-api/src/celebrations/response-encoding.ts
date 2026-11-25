@@ -2,6 +2,10 @@ import { promisify } from 'node:util';
 import { brotliCompress, constants, gzip } from 'node:zlib';
 import type { Request, Response } from 'express';
 import {
+  acceptedQuality,
+  parseAcceptEncoding,
+} from '../common/utils/accept-encoding';
+import {
   CELEBRATION_SVG_CONTENT_SECURITY_POLICY,
   GZIP_LEVEL,
 } from './constants/celebrations.constants';
@@ -18,26 +22,6 @@ const COMPRESSIBLE_MEDIA_TYPES = new Set<string>([
   CelebrationMediaType.Json,
   CelebrationMediaType.Svg,
 ]);
-
-/** Returns the `Accept-Encoding` q-value for one coding, `*` included, or 0 when it is not accepted. */
-const acceptedQuality = (
-  codings: Map<string, number>,
-  coding: string,
-): number => codings.get(coding) ?? codings.get('*') ?? 0;
-
-const parseAcceptEncoding = (header: string): Map<string, number> => {
-  const codings = new Map<string, number>();
-  for (const part of header.split(',')) {
-    const [name, ...parameters] = part.trim().toLowerCase().split(';');
-    if (!name) continue;
-    const quality = parameters
-      .map((parameter) => parameter.trim())
-      .find((parameter) => parameter.startsWith('q='));
-    const value = quality === undefined ? 1 : Number(quality.slice(2));
-    codings.set(name, Number.isFinite(value) ? value : 0);
-  }
-  return codings;
-};
 
 /**
  * Returns the encoding to serve: `br` when the client accepts it, else `gzip`,

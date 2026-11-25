@@ -9,6 +9,7 @@ import {
   trustedStyleNoncePlugin,
 } from '../../tools/vite/csp-nonce.mjs';
 import { inlinePublicScriptPlugin } from '../../tools/vite/inline-public-script.mjs';
+import { precompressAssetsPlugin } from '../../tools/vite/precompress-assets.mjs';
 import { nxReadySignal } from '@nx/vite/plugins/nx-ready-signal.plugin';
 
 export default defineConfig(() => ({
@@ -34,6 +35,8 @@ export default defineConfig(() => ({
     // Inlines the synchronous theme-paint script into the `index.html` head; see the plugin's doc.
     inlinePublicScriptPlugin('theme-init.js'),
     inlinePublicScriptPlugin('boot-prefetch.js'),
+    // Writes `.br`/`.gz` copies of the built assets for chat-api to serve.
+    precompressAssetsPlugin(),
     tailwindcss(),
     react(),
     svgr(),

@@ -128,7 +128,7 @@ storage-failure case. See [architecture](../../docs/architecture.md#sse-streamin
 - 🌊 SSE streaming for chat completions and the client channel
 - 📚 Swagger/OpenAPI documentation, and a generated typed client (`libs/chat-api-client`)
 - 🌐 CORS configuration
-- 📦 Static file serving for the React frontend and the overlay sandbox
+- 📦 Static file serving for the React frontend and the overlay sandbox, with the `.br`/`.gz` copies the frontend build writes sent to clients that accept them
 - ⚙️ Environment validation at startup
 - 🎨 Theme management endpoints
 - 🏥 Health check endpoint
