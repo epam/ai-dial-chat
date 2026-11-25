@@ -17,6 +17,7 @@ const MESSAGES: Record<NewYearScene, keyof NewYearLabels> = {
   [NewYearScene.SnowmanDelivery]: 'snowmanDeliveryToastMessage',
   [NewYearScene.ReindeerTakeoff]: 'reindeerTakeoffToastMessage',
   [NewYearScene.ElfFireworks]: 'elfFireworksToastMessage',
+  [NewYearScene.CatBauble]: 'catBaubleToastMessage',
 };
 
 /** The New Year celebration event. */
