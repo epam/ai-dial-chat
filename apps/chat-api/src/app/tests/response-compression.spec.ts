@@ -4,6 +4,7 @@ import type { AddressInfo } from 'net';
 import { gunzipSync } from 'zlib';
 import express, { type Express } from 'express';
 import { describe, expect, it } from 'vitest';
+import { pipeWebBody } from '../../common/utils/stream';
 import {
   createResponseCompressionMiddleware,
   RESPONSE_COMPRESSION_THRESHOLD_BYTES,
@@ -17,6 +18,8 @@ const LARGE_LIST = {
 };
 
 const PRE_ENCODED_BODY = Buffer.from('pre-encoded');
+
+const PROXIED_JSON_FILE = Buffer.from(JSON.stringify(LARGE_LIST));
 
 const createTestApp = (): Express => {
   const app = express();
@@ -46,6 +49,13 @@ const createTestApp = (): Express => {
       `bytes 0-${body.length - 1}/${body.length * 2}`,
     );
     res.type('application/json').send(body);
+  });
+  /* The shape of GET /api/v1/files/download: DIAL Core's headers copied,
+     then the web body piped through `pipeWebBody`. */
+  app.get('/proxied-json-file', async (_req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Length', String(PROXIED_JSON_FILE.length));
+    await pipeWebBody(new Blob([PROXIED_JSON_FILE]).stream(), res);
   });
   app.get('/encoded-json', (_req, res) => {
     res.setHeader('Content-Encoding', 'gzip');
@@ -136,6 +146,16 @@ describe('createResponseCompressionMiddleware', () => {
     const res = await rawGet(createTestApp(), '/text', 'gzip');
 
     expect(res.headers['content-encoding']).toBeUndefined();
+  });
+
+  it('passes a proxied JSON file through with its Content-Length', async () => {
+    const res = await rawGet(createTestApp(), '/proxied-json-file', 'gzip, br');
+
+    expect(res.headers['content-encoding']).toBeUndefined();
+    expect(res.headers['content-length']).toBe(
+      String(PROXIED_JSON_FILE.length),
+    );
+    expect(res.body.equals(PROXIED_JSON_FILE)).toBe(true);
   });
 
   it('leaves a ranged JSON response alone', async () => {

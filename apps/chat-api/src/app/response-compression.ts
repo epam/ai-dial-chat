@@ -1,5 +1,6 @@
 import compression from 'compression';
 import type { Request, RequestHandler, Response } from 'express';
+import { isResponseCompressionSkipped } from '../common/utils/compression-passthrough';
 
 /**
  * Content types the BFF compresses: JSON and `+json` media types. Everything
@@ -16,7 +17,9 @@ const JSON_CONTENT_TYPE = /^application\/(?:[\w.+-]+\+)?json(?:\s*;|$)/i;
 export const RESPONSE_COMPRESSION_THRESHOLD_BYTES = 1024;
 
 /**
- * Whether `res` is a JSON body worth compressing. A ranged response is left
+ * Whether `res` is a JSON body worth compressing. A proxied DIAL Core file
+ * (marked by `pipeWebBody`) passes through even when it is a `.json` file,
+ * keeping its upstream bytes and `Content-Length`. A ranged response is left
  * alone because compressing it would invalidate its `Content-Range`. A body
  * the handler already encoded (the celebration assets) is skipped by
  * `compression` itself.
@@ -25,6 +28,7 @@ export const shouldCompressResponse = (
   req: Request,
   res: Response,
 ): boolean => {
+  if (isResponseCompressionSkipped(res)) return false;
   const contentType = res.getHeader('Content-Type');
   if (typeof contentType !== 'string' || !JSON_CONTENT_TYPE.test(contentType)) {
     return false;
