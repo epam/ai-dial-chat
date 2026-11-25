@@ -33,6 +33,8 @@ Architecture guard for every slice that touches `libs/*`: the lib receives only 
 
 ## 3. Folder creation never produces a hidden folder
 
+> **Blocked — approach not decided.** Issue #8825 (#9970) merged first and moved the Publish and Save folder trees to `FolderDestinationPanel` / `FolderDestinationTree` from the external `@epam/ai-dial-react-file-manager` (`0.5.0-dev.5`). That package has no per-parent creation gate: only `getDisabledReason`, `roots[].canCreateFolders` (root level) and `onValidateFolderName`. The slice was implemented against the former `PublishFoldersTree` and removed from the branch during the rebase onto that change; the original commit is kept on `backup/hide-non-org-unit-folders-pre-rebase`. Options: add `canCreateFolderIn` to `@epam/ai-dial-react-file-manager` and bump it here; refuse the name through `onValidateFolderName` (needs a new localized error string, and the create actions stay visible); or move the slice to a follow-up. Tasks 3.1–3.4 below describe the original plan and will be rewritten once the approach is chosen.
+
 - [ ] 3.1 `libs/publish-panel/src/components/PublishFoldersTree/PublishFoldersTree.tsx`: add the optional `canCreateFolderIn?: (destination: FolderDestination) => boolean`, and make `canCreateUnder` require it. Thread it through:
   - `PublishPanel` and `StandalonePublishPanel` (`libs/publish-panel/src/components/PublishPanel/`);
   - `SaveToFolderPanel` / `StandaloneSaveToFolderPanel` (`libs/publish-panel/src/components/SaveToFolderPanel/`). If `feat/file-destintaion-side-panel` (Issue #8825) has merged first, thread it through `FolderDestinationPanel` instead.

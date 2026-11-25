@@ -94,7 +94,7 @@ Recorded as an open question, not decided silently.
 - **[A unit the user cannot see makes its folder look plain]** → Core decides visibility, so a hidden unit's folder is hidden too. That is intended: the user has no role there. An admin gets every unit.
 - **[Deep link or remembered path into a hidden folder]** → The publish tree prunes remembered paths after the merge. The file manager resets a hidden current path to the section root. Core access is unchanged, because this is not a security control.
 - **[An admin creates a plain folder in the file manager]** → The file manager's "New folder" is not gated by this change, since only DIAL admins can write outside units. An admin who creates a plain folder will not see it in the Organization section. Documented in the spec, and the follow-up lives in Open Questions.
-- **[Branch drift]** → `feat/file-destintaion-side-panel` (Issue #8825) replaces `SaveToFolderPanel` with `FolderDestinationPanel`. Whichever merges second ports `canCreateFolderIn` to the surviving component. Tasks name both.
+- **[Branch drift]** → Issue #8825 merged first and replaced `PublishFoldersTree` and `SaveToFolderPanel` with `FolderDestinationPanel` from `@epam/ai-dial-react-file-manager`, which has no per-parent creation gate. The hiding (D1–D3, the file manager) is unaffected, since it prunes the data the panels receive. The creation gate (`canCreateFolderIn`) needs a new prop in that external package or another approach; tasks section 3 is blocked until one is chosen.
 - **[Lib API growth]** → All inputs are optional and default to today's behaviour. READMEs document them, and `npm run validate:docs` checks them.
 
 ## Migration Plan
