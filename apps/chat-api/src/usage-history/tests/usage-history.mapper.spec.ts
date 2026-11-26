@@ -46,18 +46,20 @@ const dailyModelRow = (
   usage_requests: requests,
 });
 
+type Rows = Record<string, unknown>[];
+
 const build = ({
   window = WEEK,
-  daily = [] as object[],
-  models = [] as object[],
+  daily = [] as Rows,
+  models = [] as Rows,
   dailyModels,
   clients,
 }: {
   window?: UsageWindow;
-  daily?: object[];
-  models?: object[];
-  dailyModels?: object[];
-  clients?: object[];
+  daily?: Rows;
+  models?: Rows;
+  dailyModels?: Rows;
+  clients?: Rows;
 }) =>
   buildAvailableHistory({
     period: UsageHistoryPeriod.Week,
@@ -197,7 +199,10 @@ describe('usage history mapper', () => {
         buildAvailableHistory({
           period: UsageHistoryPeriod.Week,
           window: WEEK,
-          dailyTotals: { data: [] },
+          /* A body of the wrong shape, as an untyped ADAS answer may be. */
+          dailyTotals: { data: [] } as Parameters<
+            typeof buildAvailableHistory
+          >[0]['dailyTotals'],
           ranked: [],
         }),
       ).toThrow(UsageHistoryMappingError);

@@ -1489,6 +1489,12 @@ a query document. No query is ever sent without the own-rows filter: an ADAS tha
 an unfiltered retry. Because every query is confined, the BFF does not pre-check the caller's table permissions; a
 caller who cannot read the table is refused by the queries themselves.
 
+**Transport.** chat-api calls ADAS through the typed DIAL Analytics client of `@epam/ai-dial-typescript-sdk`, one
+instance per process (`DialAnalyticsClientService` in `src/dial/`). Every call carries only the caller's bearer token
+and `User-Agent: ai-dial-chat/<version>`, never follows a redirect, and is aborted after `ANALYTICS_TIMEOUT_MS`
+(response body included) or when the caller cancels it. Each ADAS status is logged; an ADAS error body is discarded
+unread, so it is never logged or returned.
+
 **ADAS prerequisites** (configured in ADAS, not in chat-api):
 
 1. ADAS 0.24 or later, a build with query caller values (ai-dial-analytics#86). An older ADAS answers every usage
@@ -1522,7 +1528,7 @@ apps/chat-api/src/
 ├── common/                  # Shared filters, interceptors, utilities
 ├── config/                  # environment.config.ts (validated env schema) + validation
 ├── constants/               # Shared constants
-├── dial/                    # DIAL Core module and shared upstream client
+├── dial/                    # DIAL Core and DIAL Analytics modules and shared SDK clients
 ├── models/                  # Shared backend models
 ├── openapi/                 # OpenAPI generation helpers
 ├── telemetry/               # OpenTelemetry bootstrap, logger bridge, metrics, traceparent

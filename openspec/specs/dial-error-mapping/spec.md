@@ -4,7 +4,7 @@
 Provides one shared mapper (`apps/chat-api/src/common/dial/dial-error.mapper.ts`) that every `chat-api` domain service uses to translate a DIAL Core error — whether SDK-shaped (`@epam/ai-dial-typescript-sdk`) or fetch-shaped — into the matching NestJS `HttpException`, so upstream DIAL Core status codes surface consistently across the API instead of each domain reimplementing its own mapping.
 ## Requirements
 ### Requirement: Single DIAL error mapper for all chat-api domains
-The system SHALL expose one module (`apps/chat-api/src/common/dial/dial-error.mapper.ts`) that all `chat-api` domain services use to translate a DIAL Core error into a NestJS `HttpException`, regardless of whether the error originated from `@epam/ai-dial-typescript-sdk` (SDK-shaped, `{ status }`) or from a raw `fetch` call (`Response`-shaped, `AbortError`, network `TypeError`).
+The system SHALL expose one module (`apps/chat-api/src/common/dial/dial-error.mapper.ts`) that all `chat-api` domain services use to translate a DIAL Core or DIAL Analytics error into a NestJS `HttpException`, regardless of whether the error originated from `@epam/ai-dial-typescript-sdk` (SDK-shaped, `{ status }`) or from a raw `fetch` call (`Response`-shaped, `AbortError`, network `TypeError`). Every log line and exception message SHALL name the upstream that failed, and the DIAL Core texts SHALL stay exactly as they are.
 
 #### Scenario: SDK-shaped error is mapped through the shared status mapper
 - **WHEN** a service calls `handleDialSdkError(error, context, logger?, response?)` with an SDK error carrying `status` 400, 401, 403, 404, 409, 413, 429, or a 5xx value
@@ -33,6 +33,19 @@ The system SHALL expose one module (`apps/chat-api/src/common/dial/dial-error.ma
 #### Scenario: Upstream message replaces generic text except for 401/403/404
 - **WHEN** a caller invokes `mapDialHttpStatus(status, context, logger?, errorBody?, upstreamMessage?)` with an `upstreamMessage`
 - **THEN** that message replaces the generic exception text for 400, 405, 409, 412, 413, 422, 429, and 5xx, while 401, 403, and 404 keep their generic text; `isUpstreamTextExposable(status)` exposes the same rule to other domains, and `errorBody`, when given, is only logged
+
+#### Scenario: A DIAL Analytics failure names DIAL Analytics
+- **WHEN** a DIAL Analytics (ADAS) call answers a non-ok status, times out, cannot connect, or returns an empty or unparseable body
+- **THEN** a non-ok status throws the same `HttpException` subtype `mapDialHttpStatus` throws for that status from DIAL Core; a timeout throws `ServiceUnavailableException('DIAL Analytics request timed out')`; a refused connection or an empty or unparseable body throws `ServiceUnavailableException('DIAL Analytics is currently unavailable')`; and neither the exception message nor any log line contains "DIAL Core"
+
+#### Scenario: The DIAL Analytics error body is never logged or exposed
+- **GIVEN** ADAS answers a non-ok status with an error body
+- **WHEN** the failure is mapped
+- **THEN** the body is discarded unread, so it never appears in a log line or in the exception message, at any status
+
+#### Scenario: DIAL Core texts are unchanged
+- **WHEN** any DIAL Core caller of `mapDialHttpStatus`, `handleDialSdkError` or `handleDialFetchError` hits any status or failure
+- **THEN** it receives exactly the exception subtype, message and log lines it received before DIAL Analytics was added, verified by the pre-existing `dial-error.mapper.spec.ts` suite passing unmodified
 
 ### Requirement: SDK-shaped error paths propagate the real upstream HTTP status
 Every `chat-api` service method that calls `handleDialSdkError` after receiving an SDK-shaped `{ data, error, response }` result SHALL pass the raw `response` (or a `{ status }` value derived from it) as the 4th argument, not rely on the parsed error body alone, so `mapDialHttpStatus` throws the exception matching DIAL Core's actual response.

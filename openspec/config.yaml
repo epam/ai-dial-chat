@@ -22,7 +22,7 @@ context: |
   - Commits: Conventional commits — feat/fix/chore/refactor/test/docs with optional scope
 
   ## Libraries
-  - @epam/ai-dial-typescript-sdk: Preferred server-side DIAL Core client in apps/chat-api
+  - @epam/ai-dial-typescript-sdk: Preferred server-side DIAL Core and DIAL Analytics client in apps/chat-api
   - @epam/ai-dial-ui-kit: Design system base components
   - @tabler/icons-react: Icon set — use for all icons, no inline SVGs
   - react-i18next / i18next: Internationalisation
@@ -160,9 +160,10 @@ rules:
       truth (URI versioning, thin controllers + Swagger, Logger + ConfigService, validated
       DTOs with allowlist @Matches, typed HTTP exceptions, env on EnvironmentVariables).
       Do NOT duplicate or paraphrase those rules in the design — reference the section.
-    - For DIAL Core integrations in apps/chat-api/**, prefer @epam/ai-dial-typescript-sdk
-      via the shared AppService SDK client. Use raw fetch only for non-DIAL upstreams or
-      SDK gaps, and document why the exception is needed.
+    - For DIAL Core and DIAL Analytics integrations in apps/chat-api/**, prefer
+      @epam/ai-dial-typescript-sdk via the shared DialClientService / DialAnalyticsClientService
+      SDK clients. Use raw fetch only for other upstreams or SDK gaps, and document why the
+      exception is needed.
     - Apply ARIA attributes for dynamic content — role="log" + aria-live="polite" for chat
       messages, role="alert" for errors
     - Design explicit loading, empty, and error states for any new UI surface — not just the

@@ -14,12 +14,18 @@ export interface RecordedRequest {
   body: unknown;
 }
 
-/** What the fake answers. `hang` never answers, to exercise the timeout. */
+/**
+ * What the fake answers. `hang` never answers, to exercise the timeout;
+ * `stallBody` sends the status and headers, then never finishes the body;
+ * `rawBody` is sent as is instead of the JSON-serialised `body`.
+ */
 export interface FakeResponse {
   status?: number;
   body?: unknown;
   headers?: Record<string, string>;
   hang?: boolean;
+  stallBody?: boolean;
+  rawBody?: string;
 }
 
 export type FakeHandler = (
@@ -74,7 +80,14 @@ export const startFakeAnalytics = async (
       for (const [name, value] of Object.entries(response.headers ?? {})) {
         res.setHeader(name, value);
       }
-      res.end(response.body === undefined ? '' : JSON.stringify(response.body));
+      if (response.stallBody) {
+        res.write('{"rows":');
+        return;
+      }
+      res.end(
+        response.rawBody ??
+          (response.body === undefined ? '' : JSON.stringify(response.body)),
+      );
     })();
   });
 

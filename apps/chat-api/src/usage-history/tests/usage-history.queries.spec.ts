@@ -256,6 +256,44 @@ describe('usage history queries', () => {
     }
   });
 
+  it('builds the budget-scope daily totals query over the paid model rows', () => {
+    const budgetEquals = (name: string, value: string) => ({
+      op: 'eq',
+      args: [field(name), { type: 'value', value_type: 'string', value }],
+    });
+
+    expect(buildDailyTotalsQuery(MONTH, BUDGET)).toEqual({
+      entity: 'dial_usage_log',
+      mode: 'aggregate',
+      filter: {
+        op: 'and',
+        args: [
+          ...WINDOW_AND_ROOT.slice(0, 3),
+          budgetEquals('budget_cost_object', 'engineering'),
+          budgetEquals('budget_policy', 'policies/company/pro'),
+          budgetEquals('budget_outcome', 'paid'),
+        ],
+      },
+      select: [
+        DAY,
+        {
+          expr: {
+            type: 'fn',
+            name: 'to_string',
+            args: [
+              { type: 'fn', name: 'sum', args: [field('deployment_price')] },
+            ],
+          },
+          as: 'usage_spend',
+        },
+        REQUESTS,
+      ],
+      group_by: ['usage_day'],
+      sort: [{ field: 'usage_day', dir: 'asc' }],
+      page: { type: 'offset', offset: 0, limit: 31 },
+    });
+  });
+
   it.each([0, 11])(
     'refuses a per-day model query for %i deployments',
     (count) => {

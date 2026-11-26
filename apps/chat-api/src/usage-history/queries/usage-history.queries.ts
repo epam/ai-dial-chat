@@ -1,3 +1,4 @@
+import type { AnalyticsComponents } from '@epam/ai-dial-typescript-sdk';
 import type { UsageWindow } from '../usage-period';
 
 /*
@@ -11,11 +12,15 @@ import type { UsageWindow } from '../usage-period';
  * resolves from the request's own token (ai-dial-analytics#86), so the BFF
  * never sees a user hash. There is no SQL. Aliases carry a `usage_` prefix
  * because ADAS rejects an alias equal to a column name that projects another
- * expression. See openspec/changes/archive/2026-11-20-add-user-usage-history-api/design.md (D3)
- * and openspec/changes/archive/2026-11-20-filter-usage-history-own-rows/design.md (D1).
+ * expression. The documents have local wire types (`UsageQuery`), because the
+ * SDK's `StructuredQuery` does not describe ADAS's wire format. See
+ * openspec/changes/archive/2026-11-20-add-user-usage-history-api/design.md (D3),
+ * openspec/changes/archive/2026-11-20-filter-usage-history-own-rows/design.md (D1)
+ * and openspec/changes/archive/2026-11-26-integrate-dial-analytics-sdk/design.md (D7).
  */
 
-const ENTITY = 'dial_usage_log';
+/** The ADAS entity every usage query reads. */
+export const USAGE_LOG_ENTITY = 'dial_usage_log';
 
 export const DAILY_TOTALS_LIMIT = 31;
 export const MODEL_RANKING_LIMIT = 1000;
@@ -55,24 +60,128 @@ export interface UsageBudget {
   policy: string;
 }
 
-const field = (name: string) => ({ type: 'field', name });
+type StructuredQuery = AnalyticsComponents['schemas']['StructuredQuery'];
 
-const fn = (name: string, ...args: object[]) => ({ type: 'fn', name, args });
+/*
+ * The documents as ADAS's Jackson reads them. The SDK types the expression and
+ * page discriminators with schema names ('FieldExpr', 'OffsetPage') where ADAS
+ * expects 'field', 'fn', 'value', 'param', 'array' and 'offset', gives FnExpr
+ * no args and ValueExpr no null value; only the fields that match the wire are
+ * taken from StructuredQuery.
+ */
+interface FieldExpr {
+  type: 'field';
+  name: string;
+}
 
-const stringValue = (value: string) => ({
+interface FnExpr {
+  type: 'fn';
+  name: string;
+  args: UsageExpr[];
+}
+
+interface StringValue {
+  type: 'value';
+  value_type: 'string';
+  value: string;
+}
+
+interface TimestampValue {
+  type: 'value';
+  value_type: 'timestamp';
+  value: string;
+}
+
+interface NullValue {
+  type: 'value';
+  value_type: 'null';
+  value: null;
+}
+
+interface ParamExpr {
+  type: 'param';
+  name: string;
+}
+
+interface ArrayExpr {
+  type: 'array';
+  items: UsageExpr[];
+}
+
+/** An expression of a usage query document. */
+export type UsageExpr =
+  | FieldExpr
+  | FnExpr
+  | StringValue
+  | TimestampValue
+  | NullValue
+  | ParamExpr
+  | ArrayExpr;
+
+/** One comparison of a usage query filter. */
+export interface UsageComparison {
+  op: 'eq' | 'ge' | 'lt' | 'in';
+  args: UsageExpr[];
+}
+
+/** The filter of a usage query: a conjunction of comparisons. */
+export interface UsageFilter {
+  op: 'and';
+  args: UsageComparison[];
+}
+
+/** One output column of a usage query. */
+export interface UsageColumn {
+  expr: UsageExpr;
+  as: string;
+}
+
+/** The offset page every usage query requests. */
+export interface UsageOffsetPage {
+  type: 'offset';
+  offset: number;
+  limit: number;
+}
+
+/** A usage query document exactly as it is sent to ADAS. */
+export interface UsageQuery extends Required<
+  Pick<StructuredQuery, 'entity' | 'mode' | 'group_by' | 'sort'>
+> {
+  filter: UsageFilter;
+  select: UsageColumn[];
+  page: UsageOffsetPage;
+}
+
+/**
+ * Returns the usage query as the SDK's request body type, unchanged. This is
+ * the one cast of the chain: the SDK's discriminator types do not describe
+ * ADAS's wire format (see the types above).
+ */
+export const toStructuredQuery = (query: UsageQuery): StructuredQuery =>
+  query as unknown as StructuredQuery;
+
+const field = (name: string): FieldExpr => ({ type: 'field', name });
+
+const fn = (name: string, ...args: UsageExpr[]): FnExpr => ({
+  type: 'fn',
+  name,
+  args,
+});
+
+const stringValue = (value: string): StringValue => ({
   type: 'value',
   value_type: 'string',
   value,
 });
 
-const timestampValue = (instant: Date) => ({
+const timestampValue = (instant: Date): TimestampValue => ({
   type: 'value',
   value_type: 'timestamp',
   value: String(instant.getTime()),
 });
 
 /* `eq` against a null literal renders `IS NULL` in ADAS. */
-const ROOT_SPAN_PREDICATE = {
+const ROOT_SPAN_PREDICATE: UsageComparison = {
   op: 'eq',
   args: [
     field('parent_deployment'),
@@ -86,12 +195,12 @@ const ROOT_SPAN_PREDICATE = {
  * still gets only its own, and a caller without a hash matches no row. A
  * top-level conjunct of every filter, so nothing else in it can widen it.
  */
-export const OWN_ROWS_PREDICATE = {
+export const OWN_ROWS_PREDICATE: UsageComparison = {
   op: 'eq',
   args: [field('user_hash'), { type: 'param', name: 'caller.user_hash' }],
 };
 
-const equals = (name: string, value: string) => ({
+const equals = (name: string, value: string): UsageComparison => ({
   op: 'eq',
   args: [field(name), stringValue(value)],
 });
@@ -100,7 +209,7 @@ const equals = (name: string, value: string) => ({
  * User scope counts each request once, on its root span. Budget scope counts
  * the model rows the budget paid for, wherever they sit in the chain.
  */
-const scopePredicates = (budget?: UsageBudget): object[] =>
+const scopePredicates = (budget?: UsageBudget): UsageComparison[] =>
   budget
     ? [
         equals(BUDGET_COST_OBJECT_FIELD, budget.costObject),
@@ -112,8 +221,8 @@ const scopePredicates = (budget?: UsageBudget): object[] =>
 const windowFilter = (
   window: UsageWindow,
   budget: UsageBudget | undefined,
-  ...extra: object[]
-) => ({
+  ...extra: UsageComparison[]
+): UsageFilter => ({
   op: 'and',
   args: [
     { op: 'ge', args: [field('request_time'), timestampValue(window.from)] },
@@ -128,10 +237,10 @@ const windowFilter = (
  * A root span's `total_price` includes the calls it made; a model row's
  * `deployment_price` is what its budget was charged.
  */
-const priceField = (budget?: UsageBudget) =>
+const priceField = (budget?: UsageBudget): FieldExpr =>
   field(budget ? 'deployment_price' : 'total_price');
 
-const DAY_SELECT = {
+const DAY_SELECT: UsageColumn = {
   expr: fn(
     'to_string',
     fn('date_trunc', stringValue('day'), field('request_time')),
@@ -140,7 +249,7 @@ const DAY_SELECT = {
 };
 
 /* `to_string` returns the exact decimal text, so money is never a float in transit. */
-const spendSelect = (budget?: UsageBudget) => ({
+const spendSelect = (budget?: UsageBudget): UsageColumn => ({
   expr: fn('to_string', fn('sum', priceField(budget))),
   as: SPEND_ALIAS,
 });
@@ -149,21 +258,25 @@ const spendSelect = (budget?: UsageBudget) => ({
  * Numeric twin of SPEND_SELECT, used only to sort: sorting the decimal text
  * would order "10.5" before "9.1".
  */
-const spendRankSelect = (budget?: UsageBudget) => ({
+const spendRankSelect = (budget?: UsageBudget): UsageColumn => ({
   expr: fn('sum', priceField(budget)),
   as: SPEND_RANK_ALIAS,
 });
 
-const REQUESTS_SELECT = { expr: fn('count'), as: REQUESTS_ALIAS };
+const REQUESTS_SELECT: UsageColumn = { expr: fn('count'), as: REQUESTS_ALIAS };
 
-const page = (limit: number) => ({ type: 'offset', offset: 0, limit });
+const page = (limit: number): UsageOffsetPage => ({
+  type: 'offset',
+  offset: 0,
+  limit,
+});
 
 /** Q1: spend and requests per UTC day of the window. */
 export const buildDailyTotalsQuery = (
   window: UsageWindow,
   budget?: UsageBudget,
-) => ({
-  entity: ENTITY,
+): UsageQuery => ({
+  entity: USAGE_LOG_ENTITY,
   mode: 'aggregate',
   filter: windowFilter(window, budget),
   select: [DAY_SELECT, spendSelect(budget), REQUESTS_SELECT],
@@ -176,8 +289,8 @@ export const buildDailyTotalsQuery = (
 export const buildModelRankingQuery = (
   window: UsageWindow,
   budget?: UsageBudget,
-) => ({
-  entity: ENTITY,
+): UsageQuery => ({
+  entity: USAGE_LOG_ENTITY,
   mode: 'aggregate',
   filter: windowFilter(window, budget),
   select: [
@@ -200,14 +313,14 @@ export const buildDailyTopModelsQuery = (
   window: UsageWindow,
   deployments: readonly string[],
   budget?: UsageBudget,
-) => {
+): UsageQuery => {
   if (deployments.length === 0 || deployments.length > TOP_MODEL_COUNT) {
     throw new Error(
       `The per-day model query takes 1 to ${TOP_MODEL_COUNT} deployments, got ${deployments.length}`,
     );
   }
   return {
-    entity: ENTITY,
+    entity: USAGE_LOG_ENTITY,
     mode: 'aggregate',
     filter: windowFilter(window, budget, {
       op: 'in',
@@ -235,8 +348,8 @@ export const buildDailyTopModelsQuery = (
 export const buildClientSplitQuery = (
   window: UsageWindow,
   budget?: UsageBudget,
-) => ({
-  entity: ENTITY,
+): UsageQuery => ({
+  entity: USAGE_LOG_ENTITY,
   mode: 'aggregate',
   filter: windowFilter(window, budget),
   select: [

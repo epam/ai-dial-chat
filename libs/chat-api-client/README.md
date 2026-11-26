@@ -92,12 +92,11 @@ method directly when you need the true unknown boundary.
 - This library has no hand-authored source and no peer dependencies beyond `tslib`.
 - Do not import this package from hand-authored `libs/*` libraries. Consume it through app-level adapters such as `apps/chat/src/server-api`.
 - `src/generated/README.md` is emitted by the OpenAPI generator; it is not maintained by hand.
-- **Known divergence from `@epam/ai-dial-typescript-sdk`.** `LimitStatsDto` carries an optional
-  `resetsAt` (the exclusive end of a stat's current calendar period), but
-  `@epam/ai-dial-typescript-sdk@0.1.1` types `CostItemLimitStats` and `ItemLimitStats` as
-  `{ total?: number; used?: number }` with no such field. The BFF already returns
+- **`resetsAt` on limit stats.** `LimitStatsDto` carries an optional `resetsAt` (the exclusive
+  end of a stat's current calendar period). The `@epam/ai-dial-typescript-sdk` version pinned in
+  `apps/chat-api/package.json` (`0.3.1`) types it too, as `CostItemLimitStats.resetsAt` and
+  `ItemLimitStats.resetsAt`. The BFF still returns
   `result.data as unknown as UserLimitStatsResponseDto` from
-  `apps/chat-api/src/deployments/details/deployments-details.service.ts`, and that cast is what
-  carries `resetsAt` through to this client at runtime. The hand-authored DTO in
-  `apps/chat-api/src/openapi/openapi-response.dto.ts` is authoritative for the BFF's published
-  contract until the SDK types the field.
+  `apps/chat-api/src/deployments/details/deployments-details.service.ts`, so the payload reaches
+  this client unchanged. The hand-authored DTO in `apps/chat-api/src/openapi/openapi-response.dto.ts`
+  stays authoritative for the BFF's published contract.
