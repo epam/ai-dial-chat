@@ -27,7 +27,6 @@ import {
 } from '../destination-folders';
 import type { FileManagerController } from '../file-manager-controller';
 import type { FileManagerDestinationPanelLabels } from '../labels';
-import { isHiddenPath } from '../path';
 
 /* The panel shows the one section the items come from, so it has one root; the key is not shown anywhere. */
 const ROOT_KEY = 'files';
@@ -108,24 +107,10 @@ export const FileManagerDestinationPanel: FC<
   const sourcePath = toPathSegments(request.sourceFolder).slice(
     rootSegmentCount,
   );
-  const [destination, setDestination] = useState<FolderDestination>(() => {
-    const source = { rootKey: ROOT_KEY, path: sourcePath };
-    if (!isMove || getDisabledReason(source) == null) return source;
-    /* Move disables the source folder, so the panel opens on the first folder it accepts instead of an error state. */
-    const candidates = [
-      { rootKey: ROOT_KEY, path: [] },
-      ...(root?.items ?? [])
-        .filter(
-          (item) =>
-            item.nodeType === DialFileNodeType.FOLDER &&
-            !isHiddenPath(item.name),
-        )
-        .map((item) => ({
-          rootKey: ROOT_KEY,
-          path: toPathSegments(item.path).slice(rootSegmentCount),
-        })),
-    ];
-    return candidates.find((c) => getDisabledReason(c) == null) ?? source;
+  /* Every folder stays selectable; Move on the source folder only keeps its action disabled. */
+  const [destination, setDestination] = useState<FolderDestination>({
+    rootKey: ROOT_KEY,
+    path: sourcePath,
   });
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(
     () => new Set(),
