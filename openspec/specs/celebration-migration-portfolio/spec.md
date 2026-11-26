@@ -97,8 +97,8 @@ Click and secret pools SHALL stay unchanged.
 - **AND** its reopen condition is met: batch 1 reached go on 2026-11-22, and `interaction-copy-track-v1` covers a copied word on the composition's clock through its `composer-word` role. The row stays `retain` until a later batch's own change decides it
 
 #### Scenario: No page button in ReindeerTakeoff
-- **WHEN** the `reindeer-takeoff` row is compared with the `NewYearScene.ReindeerTakeoff` documentation, which mentions a page button
-- **THEN** the row follows the code and `new-year-reindeer-takeoff`, which catch a textarea word or the drawn ice catch, and it records the enum documentation as drift to fix outside this change
+- **WHEN** the `reindeer-takeoff` row is compared with the code, `new-year-reindeer-takeoff` and the `NewYearScene.ReindeerTakeoff` documentation
+- **THEN** the row follows the code and `new-year-reindeer-takeoff`, which catch a textarea word or the drawn ice catch, and the enum documentation describes the same catch; its former page-button wording was fixed by `fix-celebration-docs-drift`
 
 #### Scenario: GiftWrapping
 - **WHEN** the `gift-wrapping` row is read

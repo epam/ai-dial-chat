@@ -1,17 +1,18 @@
 /** Every Halloween scene; hosts enable or disable them by these ids. */
 export enum HalloweenScene {
   /**
-   * Spiders abseil from the top edge, sway on their threads, and climb back
-   * up. Triggered by the secret phrase — the trick half of the bargain.
+   * Spiders descend to up to three start-page elements, wrap them in silk and
+   * carry copies above the viewport; without a target they abseil from the top
+   * edge and climb back. Triggered by the secret phrase.
    */
   Spiders = 'spiders',
-  /** A flock of ghosts drifts across the viewport. Triggered by the pumpkin. */
+  /** Ghosts possess small interface elements and one fails to scare the pumpkin; without targets a flock drifts across. */
   Ghost = 'ghost',
   /** Spiders weave silk across the start screen, including the history panel. */
   Web = 'web',
-  /** Small bats sweep past with individually flapping wings. */
+  /** Two bats fail to wake a third hanging under the composer; without room below it, small bats sweep past. */
   Bats = 'bats',
-  /** A black cat follows drifting will-o’-the-wisps. */
+  /** A black cat pushes small buttons by the composer to test gravity; without eligible buttons it crosses the floor. */
   Cat = 'cat',
   /** Two witches enchant page buttons and undo a wayward spell. */
   Witches = 'witches',
