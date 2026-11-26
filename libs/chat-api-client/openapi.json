@@ -9055,7 +9055,7 @@
     },
     "/api/v1/catalog/{entityType}/{entityId}/copy-to-org-unit": {
       "post": {
-        "description": "Copies a catalog entity of the caller's own bucket into `folderPath` of the public bucket under the same name (or, when `version` is given, under the name a publication of that version would use), by proxying DIAL Core's resource copy. No publication request is created: DIAL Core decides whether the caller may write into the folder and applies its per-type rules to the copy, and its 403 and 409 are returned as they are. Applications, toolsets, prompts and skills are supported; other types answer 400. A target that already exists answers 409: the copy never overwrites. An application is copied together with its first-level private dependencies (in the caller's own bucket, written under a `.{application}.deps` folder next to it) and its uploaded icon, and refers to the copies; a dependency already copied is reused, and an icon that cannot be copied is dropped from the shared copy. A `publications` right is not checked here: DIAL Core does not enforce it on a copy. Before the first copy the caller must hold `write` in the folder's org unit on the namespace of the application and of every dependency to copy, otherwise the answer is 403 naming the missing namespaces and nothing is written. An application that refers to a folder of files is written only for a DIAL admin, because DIAL Core copies such an application only for one; every other caller gets 422 with `code` `folderReferenceNeedsRequest` and nothing is written, and has to use a publication request. Answers 403 while the `features.orgUnitsEnabled` flag is off.",
+        "description": "Copies a catalog entity of the caller's own bucket into `folderPath` of the public bucket under the same name (or, when `version` is given, under the name a publication of that version would use), by proxying DIAL Core's resource copy. No publication request is created: DIAL Core decides whether the caller may write into the folder and applies its per-type rules to the copy, and its 403 and 409 are returned as they are. Applications, toolsets, prompts and skills are supported; other types answer 400. A target that already exists answers 409: the copy never overwrites. An application is copied together with its first-level private dependencies (in the caller's own bucket, written under a `.{application}.deps` folder next to it) and its uploaded icon, and refers to the copies; a dependency already copied is reused, and an icon that cannot be copied is dropped from the shared copy. A `publications` right is not checked here: DIAL Core does not enforce it on a copy. Before the first copy the caller must hold `write` in the folder's org unit on the namespace of the application and of every dependency to copy, otherwise the answer is 403 naming the missing namespaces and nothing is written. An application that refers to a folder of files, or whose application dependency to be copied does, is written only for a DIAL admin, because DIAL Core copies such an application only for one; every other caller gets 422 with `code` `folderReferenceNeedsRequest` and nothing is written, and has to use a publication request. Answers 403 while the `features.orgUnitsEnabled` flag is off.",
         "operationId": "copyCatalogEntityToOrgUnit",
         "parameters": [
           {
@@ -9134,7 +9134,7 @@
             "description": "DIAL Core rejected the payload as too large"
           },
           "422": {
-            "description": "The application refers to a folder of files and the caller is not a DIAL admin (`code` `folderReferenceNeedsRequest`); nothing is written, a publication request is the way",
+            "description": "The application, or an application dependency to be copied, refers to a folder of files and the caller is not a DIAL admin (`code` `folderReferenceNeedsRequest`); nothing is written, a publication request is the way",
             "content": {
               "application/json": {
                 "schema": {
@@ -21039,7 +21039,7 @@
       "OrgUnitCopyErrorCode": {
         "type": "string",
         "enum": ["folderReferenceNeedsRequest"],
-        "description": "`folderReferenceNeedsRequest`: the application refers to a folder of files and the caller is not a DIAL admin, so it has to go through a publication request."
+        "description": "`folderReferenceNeedsRequest`: the application, or an application dependency to be copied, refers to a folder of files and the caller is not a DIAL admin, so it has to go through a publication request."
       },
       "OrgUnitCopyErrorDto": {
         "type": "object",
@@ -21057,7 +21057,7 @@
             "example": "This application refers to a folder of files, so it cannot be saved directly to the folder. Publish it through a publication request instead"
           },
           "code": {
-            "description": "`folderReferenceNeedsRequest`: the application refers to a folder of files and the caller is not a DIAL admin, so it has to go through a publication request.",
+            "description": "`folderReferenceNeedsRequest`: the application, or an application dependency to be copied, refers to a folder of files and the caller is not a DIAL admin, so it has to go through a publication request.",
             "allOf": [
               {
                 "$ref": "#/components/schemas/OrgUnitCopyErrorCode"

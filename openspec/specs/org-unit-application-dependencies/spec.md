@@ -7,7 +7,7 @@ Saving an application into an org-unit folder by a direct write also brings the 
 
 ### Requirement: A direct write of an application copies its first-level private dependencies and its icon
 
-When `POST /api/v1/catalog/applications/:entityId/copy-to-org-unit` (see `org-units-api`) copies an application of the caller's own bucket into an org-unit folder, the backend SHALL also copy, in the same call, the application's first-level private dependencies and its icon, and SHALL write the application so that it refers to the copies. The dependencies are the ones `publish-dependencies-api` lists for the saved application, limited as in `application-publish-dependencies`: only resources in the caller's own bucket, and no `file` dependency (Core copies and relinks the files a schema marks when it copies the application). A dependency's own references SHALL NOT be resolved or copied.
+When `POST /api/v1/catalog/applications/:entityId/copy-to-org-unit` (see `org-units-api`) copies an application of the caller's own bucket into an org-unit folder, the backend SHALL also copy, in the same call, the application's first-level private dependencies and its icon, and SHALL write the application so that it refers to the copies. The dependencies are the ones `publish-dependencies-api` lists for the saved application, limited as in `application-publish-dependencies`: only resources in the caller's own bucket, and no `file` dependency (Core copies and relinks the files a schema marks when it copies the application). A dependency's own references SHALL NOT be copied or rewritten; they are read only to detect a folder, as "An application that is written together with a dependency that refers to a folder is written directly only by a DIAL admin" defines.
 
 Each dependency SHALL be written to the same per-application namespace publishing uses (`{type}/public/{folderPath}/.{applicationResourceName}.deps/{sourceBucket}/{path}`), where `{folderPath}` is the destination folder and `{applicationResourceName}` is the last segment of the application's own target. A dependency whose target already exists SHALL be reused: not copied again and not overwritten, and the application SHALL still refer to it. The user's own application SHALL NOT be modified: its references are rewritten in a temporary copy in the user's bucket, which is copied into the unit and deleted before the call returns, on success and on failure.
 
@@ -94,3 +94,84 @@ If planning, copying a dependency, copying the icon (other than as described abo
 #### Scenario: Application target already exists
 - **WHEN** the folder already holds the application under the same name
 - **THEN** the response is `409` and nothing is overwritten
+
+### Requirement: An application that refers to a folder is written directly only by a DIAL admin
+
+When `POST /api/v1/catalog/applications/:entityId/copy-to-org-unit` (see `org-units-api`) is asked to copy an application whose schema refers to a folder of files, the backend SHALL write it only for a caller who is a DIAL admin. For any other caller it SHALL answer `422` with the code `folderReferenceNeedsRequest` and a message saying the application refers to a folder and has to be published through a request, and SHALL NOT write or copy anything. A folder reference is a value the application's schema marks as a resource whose url is a folder of files (it ends with `/`) in the caller's own bucket or in another user's bucket. Folders in the public bucket and files the caller cannot read are not covered by this check: DIAL Core still answers for them. The caller is a DIAL admin when the org-units rights say so (`hasAdminAccess` of `org-units-api`), which is stricter than DIAL Core's own notion on a deployment without admin rules, so such a deployment sends a folder-reference application through the request. The check SHALL run before any copy, including the single copy of an application with no other dependency, and before the rights check of this capability. It SHALL be skipped, leaving DIAL Core as the authority, when the caller's rights cannot be read or org units are off for the deployment. Other entity types and applications without a folder reference SHALL be unaffected, and a DIAL admin SHALL get exactly what they got before this change.
+
+#### Scenario: Regular user, folder reference
+- **GIVEN** a user who is not a DIAL admin, with `write` on applications in the unit, and an application that refers to the folder `files/{bucket}/{name}__1.0.0/`
+- **WHEN** they ask for the direct write into `Delivery/Teams`
+- **THEN** the response is `422` with code `folderReferenceNeedsRequest` and nothing is copied
+
+#### Scenario: DIAL admin, folder reference
+- **GIVEN** a DIAL admin and the same application
+- **WHEN** they ask for the direct write
+- **THEN** the application is copied as before and the response is `200` with its id
+
+#### Scenario: Regular user, no folder reference
+- **GIVEN** a user who is not a DIAL admin and an application that refers only to private prompts and a plain file
+- **WHEN** they ask for the direct write
+- **THEN** the write proceeds as before
+
+#### Scenario: Unit admin who is not a DIAL admin
+- **GIVEN** a user with the `admin` role in the unit, who is not a DIAL admin, and an application that refers to a folder of their files
+- **WHEN** they ask for the direct write into a folder of that unit
+- **THEN** the response is `422` with code `folderReferenceNeedsRequest`
+
+#### Scenario: Folder only, no other dependency
+- **GIVEN** a user who is not a DIAL admin and an application whose only reference is a folder, with no private dependency and no icon
+- **WHEN** they ask for the direct write
+- **THEN** the response is `422` and DIAL Core is not asked to copy anything
+
+#### Scenario: Other entity types
+- **WHEN** a toolset, prompt or skill is copied into a unit folder
+- **THEN** the folder-reference check does not apply
+
+#### Scenario: Org units off
+- **WHEN** `features.orgUnitsEnabled` is off
+- **THEN** the endpoint answers `403` as before and the check is not reached
+
+#### Scenario: Rights cannot be read
+- **WHEN** the caller's org-unit rights cannot be read
+- **THEN** the check is skipped and DIAL Core's own answers apply
+
+### Requirement: An application that is written together with a dependency that refers to a folder is written directly only by a DIAL admin
+
+When the direct write of an application would copy a dependency of type application, and that dependency's own schema refers to a folder of files (a value that is a resource url ending with `/`), the backend SHALL write it only for a caller who is a DIAL admin, as for a folder referenced by the application itself ("An application that refers to a folder is written directly only by a DIAL admin", a requirement of `route-folder-reference-apps-to-request`, which defines who a DIAL admin is). For any other caller it SHALL answer `422` with the same code `folderReferenceNeedsRequest` and the same message as the own-folder refusal, and SHALL NOT write or copy anything, including the icon and the temporary copy. Only a dependency that would be copied is read: a dependency whose target already exists in the unit, a dependency in another user's bucket and a dependency of any other type are not. Only dependencies one level below the saved application are read, and a folder they refer to is detected, never copied. A dependency that cannot be read SHALL fail the call, answered like any other failed read of DIAL Core (`503`), never be treated as free of folders. The refusal takes precedence over the taken-target `409` and the missing-namespace `403` for such a caller, as the own-reference refusal does. The check SHALL be skipped for a DIAL admin and, leaving DIAL Core as the authority, when the caller's rights cannot be read or org units are off for the deployment. It SHALL run before the rights check of this capability. Unreadable single files and folders in the public bucket are not covered: DIAL Core still answers for them.
+
+#### Scenario: Dependency refers to a folder, regular user
+- **GIVEN** a user who is not a DIAL admin and a Quick App that uses a private application that refers to the folder `files/{bucket}/{name}__1.0.0/`
+- **WHEN** they ask for the direct write into `Delivery/Teams`
+- **THEN** the response is `422` with code `folderReferenceNeedsRequest` and nothing is written
+
+#### Scenario: Dependency refers to a folder, DIAL admin
+- **GIVEN** a DIAL admin and the same Quick App
+- **WHEN** they ask for the direct write
+- **THEN** the application and its dependency are copied as before
+
+#### Scenario: Dependency already in the unit
+- **GIVEN** the target of that dependency already exists in the unit
+- **WHEN** a regular user asks for the direct write
+- **THEN** the dependency is not read for folders and the write proceeds
+
+#### Scenario: Dependency without a folder
+- **WHEN** a regular user writes an application whose application dependency refers only to plain files
+- **THEN** the write proceeds as before
+
+#### Scenario: Reused dependency and a dependency with a folder
+- **GIVEN** a regular user and an application with two application dependencies, one already in the unit and one that refers to a folder
+- **WHEN** they ask for the direct write
+- **THEN** only the second is read and the response is `422` with code `folderReferenceNeedsRequest`
+
+#### Scenario: Dependency of another type
+- **WHEN** the application's dependencies are toolsets, prompts or skills
+- **THEN** no dependency is read for folders
+
+#### Scenario: Dependency cannot be read
+- **WHEN** reading a dependency to be copied fails
+- **THEN** the call answers `503` and nothing is written
+
+#### Scenario: Rights cannot be read
+- **WHEN** the caller's org-unit rights cannot be read
+- **THEN** the check is skipped and DIAL Core's own answers apply

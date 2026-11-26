@@ -9,6 +9,7 @@ import {
   type ApplicationDependencyPlan,
 } from '../application-publish-preparation.service';
 import { PublishDependenciesService } from '../dependencies/publish-dependencies.service';
+import { CatalogEntityType } from '../dto/catalog-entity-params.dto';
 import { ResourceDependencyType } from '../dto/resource-dependency.dto';
 
 const BUCKET = 'bucket-123';
@@ -275,6 +276,137 @@ describe('ApplicationPublishPreparationService', () => {
         iconUrl: 'files/public/new',
       });
       expect(removeIcon).toEqual({ displayName: 'A' });
+    });
+  });
+
+  describe('hasFolderInCopiedApplications', () => {
+    const APP_FOLDER = dependency(
+      ResourceDependencyType.Application,
+      `applications/${BUCKET}/Loop__1.0.0`,
+    );
+    const APP_PLAIN = dependency(
+      ResourceDependencyType.Application,
+      `applications/${BUCKET}/Plain__1.0.0`,
+    );
+    const planOf = (...items: (typeof SKILL)[]) =>
+      ({
+        dependencies: items,
+        toCopy: items.map((item) => ({
+          dependency: item,
+          sourceUrl: item.id,
+          targetUrl: `target/${item.id}`,
+        })),
+        targets: new Map<string, string>(),
+        hasFolderReference: false,
+      }) as unknown as ApplicationDependencyPlan;
+    const readerOf = (
+      byId: Record<string, unknown[]>,
+      made: ReturnType<typeof makeService>,
+    ) =>
+      made.dependenciesService.getDependenciesStrict.mockImplementation(
+        async (_t, _u, _type, id: string) => ({
+          dependencies: byId[id] ?? [],
+        }),
+      );
+
+    it('is true when a copied application dependency refers to a folder, reading each one once', async () => {
+      const made = makeService([]);
+      readerOf({ [APP_FOLDER.id]: [FOLDER], [APP_PLAIN.id]: [FILE] }, made);
+
+      const result = await made.service.hasFolderInCopiedApplications(
+        'user-1',
+        'token',
+        planOf(APP_PLAIN, APP_FOLDER),
+      );
+
+      expect(result).toBe(true);
+      expect(
+        made.dependenciesService.getDependenciesStrict,
+      ).toHaveBeenCalledTimes(2);
+      expect(
+        made.dependenciesService.getDependenciesStrict,
+      ).toHaveBeenCalledWith(
+        'token',
+        'user-1',
+        CatalogEntityType.Application,
+        APP_FOLDER.id,
+      );
+    });
+
+    it('is false for an application dependency that refers only to files', async () => {
+      const made = makeService([]);
+      readerOf({ [APP_PLAIN.id]: [FILE] }, made);
+
+      expect(
+        await made.service.hasFolderInCopiedApplications(
+          'user-1',
+          'token',
+          planOf(APP_PLAIN),
+        ),
+      ).toBe(false);
+    });
+
+    it('reads only application dependencies', async () => {
+      const made = makeService([]);
+
+      expect(
+        await made.service.hasFolderInCopiedApplications(
+          'user-1',
+          'token',
+          planOf(SKILL, PROMPT),
+        ),
+      ).toBe(false);
+      expect(
+        made.dependenciesService.getDependenciesStrict,
+      ).not.toHaveBeenCalled();
+    });
+
+    it('reads only the application of a mixed plan', async () => {
+      const made = makeService([]);
+      readerOf({ [APP_FOLDER.id]: [FOLDER] }, made);
+
+      expect(
+        await made.service.hasFolderInCopiedApplications(
+          'user-1',
+          'token',
+          planOf(SKILL, APP_FOLDER),
+        ),
+      ).toBe(true);
+      expect(
+        made.dependenciesService.getDependenciesStrict,
+      ).toHaveBeenCalledOnce();
+    });
+
+    it('does not read a dependency that is reused', async () => {
+      const made = makeService([]);
+      readerOf({ [APP_FOLDER.id]: [FOLDER] }, made);
+      const plan = { ...planOf(APP_FOLDER), toCopy: [] };
+
+      expect(
+        await made.service.hasFolderInCopiedApplications(
+          'user-1',
+          'token',
+          plan,
+        ),
+      ).toBe(false);
+      expect(
+        made.dependenciesService.getDependenciesStrict,
+      ).not.toHaveBeenCalled();
+    });
+
+    it('lets a failed read through instead of reading it as no folder', async () => {
+      const made = makeService([]);
+      made.dependenciesService.getDependenciesStrict.mockRejectedValue(
+        new Error('application read failed with status 403'),
+      );
+
+      await expect(
+        made.service.hasFolderInCopiedApplications(
+          'user-1',
+          'token',
+          planOf(APP_FOLDER),
+        ),
+      ).rejects.toThrow('status 403');
     });
   });
 
