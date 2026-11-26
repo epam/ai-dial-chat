@@ -60,7 +60,7 @@ No task touches `libs/celebrations/src`, `apps/*`, a README or a pack. Scratch s
 
 ## 3. Publication and integration checks
 
-- [ ] 3.1 Draft the #9226 comment:
+- [x] 3.1 Draft the #9226 comment:
   - the pins from 1.1;
   - the addendum rows `elf-fireworks` and `cat-bauble` with their decision, linking the spec rather than restating it;
   - the non-candidates;
