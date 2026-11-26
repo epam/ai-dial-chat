@@ -133,9 +133,6 @@ export const toPublishDisabledReason = (
 ): ((destination: { path: string[] }) => string | undefined) | undefined =>
   getDisabledReason && ((destination) => getDisabledReason(destination.path));
 
-/* The enum is only a type here (see below), so the `file` kind is named through its values. */
-const FILE_DEPENDENCY_TYPE: `${PublishDependencyType}` = 'file';
-
 /* Keyed by the enum's values, which are the publish-dependencies API's `type` values: the enum is only a type here so this module, which the lean `./utils` entry carries, takes no runtime dependency on the optional `@epam/ai-dial-publish-panel` peer. */
 const NAMESPACE_BY_DEPENDENCY_TYPE: Record<
   `${PublishDependencyType}`,
@@ -209,7 +206,7 @@ export const getMissingDirectWriteNamespaces = (
 export interface PublishDirectDependency {
   /** What kind of resource it is. */
   type: PublishDependencyType;
-  /** Whether a `file` dependency is a folder of files. */
+  /** Whether the dependency is a folder of files; only a `file` dependency is ever one. */
   isFolder?: boolean;
 }
 
@@ -258,11 +255,7 @@ export const hasBlockingFolderReference = (
 ): boolean =>
   namespace === OrgUnitNamespace.Applications &&
   !hasAdminAccess &&
-  dependencies.some(
-    (dependency) =>
-      (dependency.type as `${PublishDependencyType}`) ===
-        FILE_DEPENDENCY_TYPE && dependency.isFolder === true,
-  );
+  dependencies.some((dependency) => dependency.isFolder === true);
 
 /**
  * Whether a publish into the folder writes directly and which reasons block

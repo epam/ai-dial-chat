@@ -12,6 +12,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getApiErrorDetails } from '../../api-error/api-error';
 import {
   getDependencyOrgUnitNamespaces,
+  getOrgUnitNamespace,
   hasBlockingFolderReference,
 } from '../../org-units/org-unit-guards';
 import type { PublishApiClient } from '../create-publish-api';
@@ -195,14 +196,12 @@ export const useResourceSavePanel = ({
   const [dependencies, setDependencies] =
     useState<PublishDependency[]>(EMPTY_DEPENDENCIES);
 
-  /* Only an application lists a folder of files; DIAL Core copies it only for a DIAL admin, so anyone else goes through a publication request. */
+  /* DIAL Core copies an application that refers to a folder of files only for a DIAL admin, so anyone else goes through a publication request. */
+  const entityNamespace = getOrgUnitNamespace(adapter.publishEntityType);
   const hasFolderReference =
     hasAdminAccess != null &&
-    hasBlockingFolderReference(
-      OrgUnitNamespace.Applications,
-      dependencies,
-      hasAdminAccess,
-    );
+    entityNamespace != null &&
+    hasBlockingFolderReference(entityNamespace, dependencies, hasAdminAccess);
 
   /* Only an Organization folder can be a unit; a Personal folder named like one never matches. */
   const isUnitDestination = useCallback(

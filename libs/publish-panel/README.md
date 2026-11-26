@@ -498,8 +498,10 @@ admin-approval callout and shows `labels.directWriteNote` (a plain line, nothing
 when the host supplies none) in the credentials checkbox's place.
 `directUnavailableNote` is a finished host sentence for when a request is filed although
 the host would otherwise write directly. While the admin-approval callout shows it is that
-callout's text, in the same block, so the panel shows one callout. When another callout kind
-takes its place, the note is not shown. It is never rendered for a direct write.
+callout's text, in the same block, so the panel shows one callout. When another callout
+takes its place and submit is still possible (a retry, or an allowed replace) it is an
+information callout of its own; when submit is blocked it is hidden. It is never rendered for a
+direct write.
 `styles.colors.directNoteText` (default `--text-secondary`) and
 `directNoteClassName` (default `'dial-small-text'`) restyle the note.
 

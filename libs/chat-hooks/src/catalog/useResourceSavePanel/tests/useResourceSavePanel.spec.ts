@@ -1199,6 +1199,26 @@ describe('useResourceSavePanel — folder reference', () => {
     expect(adapter.saveIntoOrgUnit).toHaveBeenCalledTimes(1);
   });
 
+  it('applies only to the entity type that can refer to a folder', async () => {
+    const adapter = makeAdapter({
+      publishEntityType: 'toolset',
+      saveIntoOrgUnit: vi.fn().mockResolvedValue({ id: ID }),
+    });
+    const { result } = renderPanel({
+      adapter,
+      canSaveDirectlyTo: (path) => path[0] === 'Acme',
+      loadDependencies: vi.fn().mockResolvedValue([FOLDER]),
+      hasAdminAccess: false,
+      folderReferenceNote: NOTE,
+    });
+    await chooseUnit(result, 1);
+
+    expect(result.current.panelProps.destinationNote).toBeUndefined();
+    await act(() => result.current.submit());
+
+    expect(adapter.saveIntoOrgUnit).toHaveBeenCalledTimes(1);
+  });
+
   it('is unchanged when the host passes no admin flag', async () => {
     const { result, adapter } = setup({ hasAdminAccess: undefined });
     await chooseUnit(result, 1);

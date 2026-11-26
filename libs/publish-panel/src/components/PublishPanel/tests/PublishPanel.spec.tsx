@@ -286,10 +286,34 @@ describe('PublishPanel', () => {
       expect(text.endsWith(NOTE)).toBe(true);
     });
 
-    it('hides the note when another callout takes the place of the approval one', () => {
+    it('shows the note on its own when another callout takes the place of the approval one and submit stays possible', () => {
       renderPanel({
         selectedFolderPath: ['Shared', 'Data Science', 'Published models'],
         hasExistingPublicationInFolder: true,
+        allowReplace: true,
+        directUnavailableNote: NOTE,
+      });
+
+      expect(screen.queryByText('Admin approval required')).toBeNull();
+      expect(screen.getByText(NOTE)).toBeTruthy();
+    });
+
+    it('shows the note on its own after a failed submit', () => {
+      renderPanel({
+        selectedFolderPath: selected,
+        hasSubmitError: true,
+        directUnavailableNote: NOTE,
+      });
+
+      expect(screen.queryByText('Admin approval required')).toBeNull();
+      expect(screen.getByText(NOTE)).toBeTruthy();
+    });
+
+    it('hides the note when another callout blocks submit', () => {
+      renderPanel({
+        selectedFolderPath: ['Shared', 'Data Science', 'Published models'],
+        hasExistingPublicationInFolder: true,
+        allowReplace: false,
         directUnavailableNote: NOTE,
       });
 
