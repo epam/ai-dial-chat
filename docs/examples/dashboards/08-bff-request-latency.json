@@ -21,7 +21,7 @@
   },
   "links": [],
   "title": "DIAL BFF - Request latency and Core attribution",
-  "description": "Whole-period endpoint latency and request-local Core attribution. Requests count when their transport ends. Core time is the union of observed Core activity; outside-Core time includes Chat processing and other waits. Default: last 24 hours, ordinary transports.",
+  "description": "Whole-period endpoint latency and request-local Core and DIAL Analytics attribution. Requests count when their transport ends. Core and Analytics time are the unions of observed Core and ADAS activity; time outside both includes Chat processing and other waits. Default: last 24 hours, ordinary transports.",
   "tags": ["dial-chat", "bff", "observability", "request-latency"],
   "timezone": "browser",
   "time": {
@@ -370,7 +370,7 @@
       },
       "options": {
         "mode": "markdown",
-        "content": "**Compare endpoints over the full selected period (default: last 24 hours).** Requests count when they end; open streams appear later. **Core** is observed time with at least one Core operation active, including network/transfer. **Outside Core** includes Chat processing, other dependencies and delivery waits; it is not CPU time. Ordinary transports are selected by default. Missing data stays missing; new measurements have no historical backfill."
+        "content": "**Compare endpoints over the full selected period (default: last 24 hours).** Requests count when they end; open streams appear later. **Core** is observed time with at least one Core operation active, including network/transfer; **Analytics** is the same for DIAL Analytics (ADAS). Time when both are active counts in both. **Outside Core and Analytics** includes Chat processing, other dependencies and delivery waits; it is not CPU time. Ordinary transports are selected by default. Missing data stays missing; new measurements have no historical backfill."
       }
     },
     {
@@ -894,9 +894,9 @@
     },
     {
       "id": 8,
-      "title": "All endpoints — Core and outside-Core attribution",
+      "title": "All endpoints — Upstream and outside-upstream attribution",
       "type": "table",
-      "description": "Components are recorded for the same request population at transport settlement. Core is the union of observed request-local Core intervals, clipped at settlement. Outside Core is total minus that union and includes Chat work, IdP/other dependencies, scheduling and client delivery waits. Core includes network/transfer and may overlap local work; it is not Core server CPU time. Requests without Core calls have an observed zero Core component.",
+      "description": "Components are recorded for the same request population at transport settlement. Core is the union of observed request-local Core intervals and Analytics the union of DIAL Analytics (ADAS) intervals, both clipped at settlement. Outside Core and Analytics is total minus the union of both and includes Chat work, IdP/other dependencies, scheduling and client delivery waits. When Core and Analytics overlap within a request, that time appears in both components but leaves the outside component once, so the components can add up to more than the total. Upstream components include network/transfer and may overlap local work; they are not upstream server CPU time. Requests without such calls have an observed zero component.",
       "datasource": {
         "type": "prometheus",
         "uid": "$datasource"
@@ -955,6 +955,19 @@
           "refId": "D",
           "editorMode": "code",
           "expr": "label_join((sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_sum{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"core\"}[$__range]))) / (sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_sum{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range])) > 0), \"endpoint\", \" \", \"http_request_method\", \"http_route\")",
+          "legendFormat": "{{http_request_method}} {{http_route}}",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "E",
+          "editorMode": "code",
+          "expr": "label_join((sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_sum{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"analytics\"}[$__range]))) / (sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range])) > 0), \"endpoint\", \" \", \"http_request_method\", \"http_route\")",
           "legendFormat": "{{http_request_method}} {{http_route}}",
           "range": false,
           "instant": true,
@@ -1034,7 +1047,27 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Mean outside Core"
+              "options": "Mean Analytics"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "decimals",
+                "value": 3
+              },
+              {
+                "id": "custom.width",
+                "value": 155
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Mean outside Core and Analytics"
             },
             "properties": [
               {
@@ -1090,14 +1123,16 @@
               "endpoint": 0,
               "Value #A": 1,
               "Value #B": 2,
-              "Value #C": 3,
-              "Value #D": 4
+              "Value #E": 3,
+              "Value #C": 4,
+              "Value #D": 5
             },
             "renameByName": {
               "endpoint": "Endpoint",
               "Value #A": "Mean total",
               "Value #B": "Mean Core",
-              "Value #C": "Mean outside Core",
+              "Value #E": "Mean Analytics",
+              "Value #C": "Mean outside Core and Analytics",
               "Value #D": "Core time share"
             }
           }
@@ -1108,7 +1143,7 @@
         "cellHeight": "md",
         "sortBy": [
           {
-            "displayName": "Mean outside Core",
+            "displayName": "Mean outside Core and Analytics",
             "desc": true
           }
         ],
@@ -1121,7 +1156,7 @@
       "id": 9,
       "title": "Top 10 slowest endpoints — mean time components",
       "type": "barchart",
-      "description": "Same whole-period mean ranking as above. Each horizontal bar adds mean Core-active time and mean outside-Core time to the mean total duration. Concurrent Core calls count once. The attribution table includes every endpoint and can be sorted by outside-Core time.",
+      "description": "Same whole-period mean ranking as above. Each horizontal bar stacks mean Core-active time, mean Analytics-active time and mean time outside both. Concurrent calls to one upstream count once. When Core and Analytics overlap within a request, the overlap is in both segments, so a bar can be longer than the mean total. The attribution table includes every endpoint and can be sorted by outside time.",
       "datasource": {
         "type": "prometheus",
         "uid": "$datasource"
@@ -1167,6 +1202,19 @@
           "refId": "C",
           "editorMode": "code",
           "expr": "label_join(topk(10, (sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_sum{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range]))) / (sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range])) > 0)), \"endpoint\", \" \", \"http_request_method\", \"http_route\")",
+          "legendFormat": "{{http_request_method}} {{http_route}}",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "D",
+          "editorMode": "code",
+          "expr": "label_join(((sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_sum{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"analytics\"}[$__range]))) / (sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range])) > 0)) and on (http_request_method, http_route) (topk(10, (sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_sum{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range]))) / (sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range])) > 0))), \"endpoint\", \" \", \"http_request_method\", \"http_route\")",
           "legendFormat": "{{http_request_method}} {{http_route}}",
           "range": false,
           "instant": true,
@@ -1217,7 +1265,22 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Outside Core"
+              "options": "Analytics"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "purple"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Outside Core and Analytics"
             },
             "properties": [
               {
@@ -1259,12 +1322,14 @@
             "indexByName": {
               "endpoint": 0,
               "Value #A": 1,
-              "Value #B": 2
+              "Value #D": 2,
+              "Value #B": 3
             },
             "renameByName": {
               "endpoint": "Endpoint",
               "Value #A": "Core",
-              "Value #B": "Outside Core"
+              "Value #D": "Analytics",
+              "Value #B": "Outside Core and Analytics"
             }
           }
         }
@@ -1649,7 +1714,7 @@
           },
           "options": {
             "mode": "markdown",
-            "content": "Select a **Trace datasource (Tempo)**, set **Trace service.name** to the deployed `OTEL_SERVICE_NAME` (default `@epam/chat-api`), and choose **Trace minimum duration**. The table uses this service, threshold and the dashboard time range. **Metric workload, endpoint, transport and outcome filters do not apply to this table.** Select a Tempo source scoped to the intended environment or add verified resource filters in the query.\n\nOpen a **Trace / span** link to inspect one request. Timing columns are seconds and carry the same Core/outside-Core interpretation as the metrics. Results include up to 100 matching traces and 20 spans per spanset, sorted by total duration among those returned. Sampling, retention and search limits apply: this is not an exhaustive daily ranking of every request. The collapsed section does not load its panels until expanded."
+            "content": "Select a **Trace datasource (Tempo)**, set **Trace service.name** to the deployed `OTEL_SERVICE_NAME` (default `@epam/chat-api`), and choose **Trace minimum duration**. The table uses this service, threshold and the dashboard time range. **Metric workload, endpoint, transport and outcome filters do not apply to this table.** Select a Tempo source scoped to the intended environment or add verified resource filters in the query.\n\nOpen a **Trace / span** link to inspect one request. Timing columns are seconds and carry the same Core/Analytics/outside interpretation as the metrics. Results include up to 100 matching traces and 20 spans per spanset, sorted by total duration among those returned. Sampling, retention and search limits apply: this is not an exhaustive daily ranking of every request. The collapsed section does not load its panels until expanded."
           }
         },
         {
@@ -1675,7 +1740,7 @@
                 "uid": "$tempo_datasource"
               },
               "queryType": "traceql",
-              "query": "{ resource.service.name = ${trace_service:json} && span.dial.chat.http.request.timing = true && span:duration > $trace_min_duration } | select(span.http.route, span.http.request.method, span.dial.chat.http.duration.total, span.dial.chat.http.duration.core, span.dial.chat.http.duration.chat)",
+              "query": "{ resource.service.name = ${trace_service:json} && span.dial.chat.http.request.timing = true && span:duration > $trace_min_duration } | select(span.http.route, span.http.request.method, span.dial.chat.http.duration.total, span.dial.chat.http.duration.core, span.dial.chat.http.duration.analytics, span.dial.chat.http.duration.chat)",
               "filters": [],
               "tableType": "spans",
               "limit": 100,
@@ -1773,7 +1838,27 @@
               {
                 "matcher": {
                   "id": "byName",
-                  "options": "Outside Core"
+                  "options": "Analytics"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "s"
+                  },
+                  {
+                    "id": "decimals",
+                    "value": 3
+                  },
+                  {
+                    "id": "custom.width",
+                    "value": 150
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Outside Core and Analytics"
                 },
                 "properties": [
                   {
@@ -1806,6 +1891,10 @@
                     "destinationType": "number"
                   },
                   {
+                    "targetField": "dial.chat.http.duration.analytics",
+                    "destinationType": "number"
+                  },
+                  {
                     "targetField": "dial.chat.http.duration.chat",
                     "destinationType": "number"
                   }
@@ -1828,8 +1917,9 @@
                   "http.route": 3,
                   "dial.chat.http.duration.total": 4,
                   "dial.chat.http.duration.core": 5,
-                  "dial.chat.http.duration.chat": 6,
-                  "traceIdHidden": 7
+                  "dial.chat.http.duration.analytics": 6,
+                  "dial.chat.http.duration.chat": 7,
+                  "traceIdHidden": 8
                 },
                 "renameByName": {
                   "Span ID": "Trace / span",
@@ -1837,7 +1927,8 @@
                   "http.route": "Endpoint",
                   "dial.chat.http.duration.total": "Total",
                   "dial.chat.http.duration.core": "Core",
-                  "dial.chat.http.duration.chat": "Outside Core"
+                  "dial.chat.http.duration.analytics": "Analytics",
+                  "dial.chat.http.duration.chat": "Outside Core and Analytics"
                 }
               }
             }

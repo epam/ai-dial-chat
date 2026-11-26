@@ -7,7 +7,6 @@ import {
 } from '@opentelemetry/api';
 import type { RequestHandler } from 'express';
 import packageJson from '../../package.json';
-import { initializeCoreRequestTiming } from './core-request-timing';
 import { isExcludedFromTelemetry } from './excluded-paths';
 import {
   HttpLifecycleOutcome,
@@ -21,6 +20,7 @@ import {
   RequestTimingState,
   requestTimingStorage,
 } from './request-timing-state';
+import { initializeUpstreamRequestTiming } from './upstream-request-timing';
 
 export const REQUEST_PHASE_DURATION_BOUNDARIES = [
   0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 10, 30, 60,
@@ -33,7 +33,7 @@ const requestPhaseDuration = meter.createHistogram(
   'dial.chat.http.request.phase.duration',
   {
     description:
-      'Request wall time from the first Express middleware to HTTP settlement, split into total, the union of Core wire intervals, and time outside Core.',
+      'Request wall time from the first Express middleware to HTTP settlement, split into total, the union of Core wire intervals, the union of DIAL Analytics wire intervals, and time outside both.',
     unit: 's',
     advice: { explicitBucketBoundaries: REQUEST_PHASE_DURATION_BOUNDARIES },
   },
@@ -42,7 +42,7 @@ const requestPhaseDuration = meter.createHistogram(
 /*
  * Register before cookies, body parsing and guards. This is a separate timing
  * population from the raw Node lifecycle metric: each request that reaches
- * this middleware contributes three values at the same terminal boundary.
+ * this middleware contributes four values at the same terminal boundary.
  * AsyncLocalStorage.run isolates concurrent requests without enterWith leakage.
  */
 export const createRequestTimingMiddleware = (
@@ -56,7 +56,7 @@ export const createRequestTimingMiddleware = (
   ) {
     return (_req, _res, next) => next();
   }
-  initializeCoreRequestTiming();
+  initializeUpstreamRequestTiming();
 
   return (req, res, next) => {
     if (isExcludedFromTelemetry(req.url)) {
@@ -99,6 +99,7 @@ export const createRequestTimingMiddleware = (
         ...attributes,
         'dial.chat.http.duration.total': durations.total,
         'dial.chat.http.duration.core': durations.core,
+        'dial.chat.http.duration.analytics': durations.analytics,
         'dial.chat.http.duration.chat': durations.chat,
       });
       if (outcome !== HttpLifecycleOutcome.Completed || res.statusCode >= 500) {
