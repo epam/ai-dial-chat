@@ -77,9 +77,9 @@ Tool-call data comes from `message.custom_content.state`, which the SSE chunk me
 
 ### 3. Rendering: inline preview first, canvas on demand
 
-Each matched message renders `McpAppInlinePreview` below its stages (and below a grouped visualizer, if any). It is a bordered box sized to the app's content, with a header showing `mcpToolName` — plus the app's self-reported name once `ui/initialize` completes (its version is deliberately omitted so it is not read as the version of the entity the app shows) — and two actions: reload and expand.
+Each matched message renders `McpAppInlinePreview` below its stages (and below a grouped visualizer, if any). It is a bordered box sized to the app's content, with a header that shows no title — only two actions: reload and expand (tool and app names are technical identifiers, so they are not shown).
 
-The full-width canvas **never opens by itself**. It is reached only through the expand button, or when the app requests `fullscreen`. While a message's canvas is open, its inline preview keeps the header but shows an "opened in canvas" placeholder instead of the app, so the same app is never mounted twice.
+The full-width canvas **never opens by itself**. It is reached only through the expand button, or when the app requests `fullscreen`. While a message's canvas is open, its inline preview keeps the header buttons but shows an "opened in canvas" placeholder instead of the app, so the same app is never mounted twice.
 
 | App request                                                                                  | Inline preview                                                                       | Canvas                                                                                     |
 | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
