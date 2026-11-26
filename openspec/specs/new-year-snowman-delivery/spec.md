@@ -89,7 +89,7 @@ Separate tracks SHALL drive the body (squash ≤8 %), the head, the scarf tail, 
 
 At preparation, after the player import, the scene SHALL measure the host anchors once. It SHALL use only the host-provided `CelebrationAnchors` `composer`, `starterList` and `welcomeRegion`, and SHALL pick the first qualifying mode:
 
-1. **Ledge.** The card's row is the lowest content in the welcome region, and a free band below it fits the reach-up stance. The snowman stands on a drawn snow ledge under the starter row and pulls the card copy down.
+1. **Ledge.** The starter list's top is at or below the composer's bottom (or no composer is measured), the card sits in the list's bottom row, and the band from the card's bottom down to the ledge floor fits inside the viewport and is clear of the composer and the heading. No other welcome-region content is measured. The snowman stands on a drawn snow ledge under the starter row and pulls the card copy down.
 2. **Rim.** The composer is a safe stage, and the band above its upper edge across the travel span is clear of the heading and of every starter except the borrowed card. The snowman rides the composer's snowy upper edge.
 3. **Rim with a decorative sled.** Used when no card is eligible or reachable.
 4. **Self-contained snowy platform with a decorative sled.** Used when no safe composer stage exists.
@@ -106,6 +106,11 @@ The composer SHALL only be measured as a support. It SHALL NOT be copied, moved 
 
 - **WHEN** the starter list renders below the composer and its bottom row has an eligible card with a free band beneath
 - **THEN** the scene uses the Ledge mode, the snowman reaches up to grip the card copy, and the composer is not covered
+
+#### Scenario: Ledge ignores unmeasured welcome-region content
+
+- **WHEN** the starter list sits below the composer and another element of the welcome region, neither the composer nor the heading, lies under the starter row
+- **THEN** that element does not block the Ledge mode; only the composer, the heading and the viewport bounds limit the ledge band
 
 #### Scenario: Starters above the composer
 

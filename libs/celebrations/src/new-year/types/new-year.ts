@@ -6,7 +6,7 @@ export enum NewYearScene {
   GiftWrapping = 'gift-wrapping',
   /** A pompous snowman sleds on a borrowed starter card to deliver a present, loses his head in a fir on impact, recovers it and returns the card. */
   SnowmanDelivery = 'snowman-delivery',
-  /** Two reindeer free a ribbon caught on a page button before taking flight. */
+  /** Two reindeer free a ribbon caught on a word copied from the composer, or on a drawn ice catch, before taking flight. */
   ReindeerTakeoff = 'reindeer-takeoff',
   /** An elf fishes the send button onto the composer rim, stomps it to launch fireworks and rides the last rocket away. */
   ElfFireworks = 'elf-fireworks',
