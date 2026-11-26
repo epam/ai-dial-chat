@@ -203,6 +203,26 @@ describe('OnboardingTour', () => {
     expect(screen.getByRole('dialog', { name: 'Start a chat' })).toBeTruthy();
   });
 
+  it('keeps a press on the card from reaching outside-press listeners', async () => {
+    const user = userEvent.setup();
+    const onOutsidePress = vi.fn();
+    const onFinish = vi.fn();
+    document.addEventListener('pointerdown', onOutsidePress, true);
+    document.addEventListener('mousedown', onOutsidePress);
+    render(
+      <Host initialSteps={stepsFixture().slice(0, 1)} onFinish={onFinish} />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Done' }));
+
+    expect(onOutsidePress).not.toHaveBeenCalled();
+    expect(onFinish).toHaveBeenCalledOnce();
+    await user.click(screen.getByRole('button', { name: 'New chat' }));
+    expect(onOutsidePress).toHaveBeenCalled();
+    document.removeEventListener('pointerdown', onOutsidePress, true);
+    document.removeEventListener('mousedown', onOutsidePress);
+  });
+
   it('reports only the steps shown when closed with Escape', async () => {
     const user = userEvent.setup();
     const onFinish = vi.fn();
