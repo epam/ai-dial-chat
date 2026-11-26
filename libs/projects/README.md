@@ -42,7 +42,7 @@ Page shell with:
 
 - an `<h1>` title, and a subtitle when `labels.subtitle` is set;
 - a search input inside a `role="search"` landmark;
-- a sort control inside a `role="group"` named by `labels.sortLabel`. Its trigger shows the applied option's label, or `labels.sortLabel` when `sortKey` matches no option;
+- an icon-only sort button (`SortMenuButton` from `@epam/ai-dial-chat-shared`) named and tooltipped by `labels.sortLabel`. Its menu marks the applied option with a trailing check;
 - the content region.
 
 Search matches project names case-insensitively, using the trimmed `searchQuery`, and highlights the match. Projects with `isPinned: true` come first in every order. When `onTogglePin(id, isPinned)` is supplied, every card has a pin toggle in its top inline-end corner, named by `labels.pinLabel` (default `'Pin'`) with `aria-pressed` for the state; an unpinned card's toggle shows on hover or keyboard focus, and stays visible on touch screens. Without the callback, a pinned card shows a static marker there instead, with visually hidden `labels.pinnedLabel` text (default `'Pinned'`). In both date orders, projects without `updatedAt` come last. Name A–Z collates with `Intl.Collator(locale, { sensitivity: 'base', numeric: true })`.
@@ -121,7 +121,7 @@ import {
 
 The layout is mobile-first:
 
-- On mobile, there is no visible title row (the `<h1>` stays for assistive tech and the subtitle is not shown), the toolbar keeps a standard-size search and a small sort control on one row, and cards use a single column with a 16px gap.
+- On mobile, there is no visible title row (the `<h1>` stays for assistive tech and the subtitle is not shown), the toolbar keeps a standard-size search and a small sort button on one row, and cards use a single column with a 16px gap.
 - From the `desktop` breakpoint, the title row is shown, the search is large, and the grid has three columns with a 20px gap, at most 1116px wide and centred.
 - The empty and no-results states sit at the top of the content area; loading and error states are centred in it.
 
@@ -133,7 +133,7 @@ Only logical properties are used, so the layout follows the inherited `dir`.
 | ------------------ | ------------------- |
 | `background`       | `--bg-layer-base`   |
 | `subtitleText`     | `--text-secondary`  |
-| `sortButtonText`   | `--text-accent`     |
+| `sortButtonText`   | `--text-secondary`  |
 | `cardBackground`   | `--bg-layer-raised` |
 | `cardTitleText`    | `--text-primary`    |
 | `updatedAtText`    | `--text-secondary`  |
