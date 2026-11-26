@@ -11,6 +11,7 @@ import {
   Highlight,
   LiveRegion,
   Search,
+  useSkeletonTiming,
 } from '@epam/ai-dial-ui-kit';
 import { IconCheck } from '@tabler/icons-react';
 import {
@@ -215,9 +216,19 @@ export const ModelSelectorBottomSheet: FC<ModelSelectorBottomSheetProps> = ({
 
   const hasDeployments = deployments && deployments.length > 0;
   const isLoading = loadingLabel !== undefined;
+  const {
+    showPlaceholder,
+    showSkeleton,
+    placeholderClassName,
+    contentClassName,
+  } = useSkeletonTiming(isLoading);
 
+  /* The state label waits for the skeleton to leave: a list still loading, or
+     held for its minimum time, is unknown, not empty. */
   const stateLabel =
-    !hasDeployments && !isLoading ? (errorLabel ?? emptyLabel) : undefined;
+    !hasDeployments && !showPlaceholder
+      ? (errorLabel ?? emptyLabel)
+      : undefined;
 
   const filtered = hasDeployments ? filterDeployments(deployments, query) : [];
 
@@ -241,8 +252,10 @@ export const ModelSelectorBottomSheet: FC<ModelSelectorBottomSheetProps> = ({
   });
 
   let listContent: ReactNode;
-  if (isLoading) {
-    listContent = <ModelSelectorSkeletonRows />;
+  if (showPlaceholder) {
+    listContent = (
+      <ModelSelectorSkeletonRows className={placeholderClassName} />
+    );
   } else if (stateLabel) {
     listContent = (
       <div
@@ -297,10 +310,10 @@ export const ModelSelectorBottomSheet: FC<ModelSelectorBottomSheetProps> = ({
         {/* Mounted with the sheet rather than with the skeleton, so the loading
             text lands in a region that already exists and is announced. */}
         <LiveRegion visuallyHidden>
-          {isLoading ? loadingLabel : null}
+          {showSkeleton ? loadingLabel : null}
         </LiveRegion>
         {/* Search */}
-        {hasDeployments && !isLoading && (
+        {hasDeployments && !showPlaceholder && (
           <>
             <div
               style={buildCssVars({
@@ -326,7 +339,11 @@ export const ModelSelectorBottomSheet: FC<ModelSelectorBottomSheetProps> = ({
         )}
 
         {/* List */}
-        {listContent}
+        {showPlaceholder ? (
+          listContent
+        ) : (
+          <div className={contentClassName}>{listContent}</div>
+        )}
       </div>
     </BottomSheetShell>
   );

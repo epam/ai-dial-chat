@@ -11,6 +11,7 @@ import {
   Dropdown,
   DropdownOverlayRole,
   GhostIconButton,
+  LiveRegion,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown } from '@tabler/icons-react';
 import { type CSSProperties, type FC, ReactNode, useState } from 'react';
@@ -83,6 +84,7 @@ export const ModelSelectorControl: FC<Props> = ({
     unavailableTooltip,
     selectedLabel,
     selectedVersion,
+    loadingAnnouncement,
     menuItems,
     menuHeader,
     menuStyle,
@@ -285,6 +287,9 @@ export const ModelSelectorControl: FC<Props> = ({
       className={mergeClasses(disabledIconClassName)}
       aria-disabled={isBlocked || undefined}
     >
+      {/* Mounted with the control, outside the menu, so the loading text lands in
+          a region that already exists; the skeleton inside the menu is silent. */}
+      <LiveRegion visuallyHidden>{loadingAnnouncement}</LiveRegion>
       <Dropdown
         items={menuItems}
         menuHeader={menuHeader}

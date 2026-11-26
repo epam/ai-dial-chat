@@ -19,15 +19,13 @@ const ROW_COUNT = 5;
 
 /*
  * `Suspense` fallback of the model picker overlay, which is already open while
- * its chunk loads. It mounts on `showPlaceholder` with no delay so the popup
- * never opens at 0px, and announces the label once the skeleton is drawn.
+ * its chunk loads. `showPlaceholder` is true from the first render, so the rows
+ * hold the popup's height invisibly during the show delay (no 0px popup, no
+ * flash on a fast chunk load); the label is announced once they are drawn.
  */
 const DeploymentSelectorSkeleton: FC = () => {
   const { t } = useTranslation();
-  const { showPlaceholder, showSkeleton, placeholderClassName } =
-    useSkeletonTiming(true, { delay: 0 });
-
-  if (!showPlaceholder) return null;
+  const { showSkeleton, placeholderClassName } = useSkeletonTiming(true);
 
   return (
     <SkeletonShimmer

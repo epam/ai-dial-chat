@@ -11,6 +11,7 @@ import {
   Highlight,
   MenuItemMark,
   Search,
+  useSkeletonTiming,
 } from '@epam/ai-dial-ui-kit';
 import { type CSSProperties, type ReactNode, useMemo, useState } from 'react';
 import {
@@ -56,6 +57,8 @@ export interface UseModelSelectorResult {
   selectedLabel: string | undefined;
   /** Display version of the currently selected deployment, or `undefined` when none is selected, loading, or the deployment has no version. */
   selectedVersion: string | undefined;
+  /** Loading text for a status region that is always mounted beside the dropdown: set while the skeleton is drawn, empty otherwise, so a fast load is never announced. */
+  loadingAnnouncement: string;
   /** Menu items for the deployment dropdown. */
   menuItems: DropdownItem[];
   /** Sticky search header rendered above the menu items. */
@@ -81,17 +84,28 @@ export const useModelSelector = ({
     [deployments, selectedDeploymentId],
   );
   const isLoading = modelSelectorLabels?.loading !== undefined;
+  const {
+    showPlaceholder,
+    showSkeleton,
+    placeholderClassName,
+    contentClassName,
+  } = useSkeletonTiming(isLoading);
 
+  /* Loading, then the skeleton's minimum display time, defers every resolved
+     state: an unloaded list is unknown, not unavailable or empty. */
   const isSelectedDeploymentUnavailable =
-    !isLoading && !selectedItem && !!selectedDeploymentId;
+    !showPlaceholder && !selectedItem && !!selectedDeploymentId;
 
   /* The icon sits inside the trigger button, whose own tooltip owns hover and
    * focus, so a tooltip on the icon would never open. The unavailable notice
    * travels to the button instead (`unavailableTooltip`). */
   const selectorIcon: ReactNode = useMemo(
     () =>
-      isLoading ? (
-        <ModelSelectorSkeletonIcon size={DIAL_ICON_SIZE.LG} />
+      showPlaceholder ? (
+        <ModelSelectorSkeletonIcon
+          size={DIAL_ICON_SIZE.LG}
+          className={placeholderClassName}
+        />
       ) : (
         buildDeploymentIcon(
           selectedItem?.iconUrl,
@@ -100,7 +114,7 @@ export const useModelSelector = ({
           DIAL_ICON_SIZE.LG,
         )
       ),
-    [isLoading, selectedItem],
+    [showPlaceholder, placeholderClassName, selectedItem],
   );
 
   const selectedLabel = selectedItem?.displayName ?? selectedItem?.id;
@@ -114,21 +128,17 @@ export const useModelSelector = ({
     : (modelSelectorLabels?.ariaLabel ?? 'Select model');
 
   const menuItems: DropdownItem[] = useMemo(() => {
-    if (isLoading) {
+    if (showPlaceholder) {
       /* One plain-text item holds the whole shimmer block: a regular item is a
        * fixed-height, truncating button, and a shimmer per item would run one
-       * wave per row. */
+       * wave per row. The loading text is announced by the status region
+       * `loadingAnnouncement` feeds, not from inside the menu. */
       return [
         {
           key: '__loading',
           type: DropdownItemType.PlainText,
           className: 'p-0!',
-          label: (
-            <>
-              <span className="sr-only">{modelSelectorLabels?.loading}</span>
-              <ModelSelectorSkeletonRows />
-            </>
-          ),
+          label: <ModelSelectorSkeletonRows className={placeholderClassName} />,
         },
       ];
     }
@@ -174,13 +184,16 @@ export const useModelSelector = ({
           isSelected && menuStyles?.selectedItemClassName,
           CONVERSATION_INPUT_CLASS.modelMenuItem,
           isSelected && CONVERSATION_INPUT_CLASS.modelMenuItemSelected,
+          contentClassName,
         ),
         onClick: () => onDeploymentChange?.(item.id),
       };
     });
   }, [
     deployments,
-    isLoading,
+    showPlaceholder,
+    placeholderClassName,
+    contentClassName,
     searchQuery,
     selectedDeploymentId,
     modelSelectorLabels,
@@ -208,7 +221,7 @@ export const useModelSelector = ({
 
   const menuHeader: ReactNode = useMemo(
     () =>
-      !isLoading && deployments && deployments.length > 0 ? (
+      !showPlaceholder && deployments && deployments.length > 0 ? (
         <div
           style={buildCssVars({
             '--ms-search-header-bg': menuStyles?.colors?.searchHeaderBackground,
@@ -231,7 +244,7 @@ export const useModelSelector = ({
       ) : undefined,
     [
       deployments,
-      isLoading,
+      showPlaceholder,
       searchQuery,
       modelSelectorLabels,
       menuStyles?.searchHeaderClassName,
@@ -251,6 +264,9 @@ export const useModelSelector = ({
     unavailableTooltip,
     selectedLabel,
     selectedVersion,
+    loadingAnnouncement: showSkeleton
+      ? (modelSelectorLabels?.loading ?? '')
+      : '',
     menuItems,
     menuHeader,
     menuStyle,

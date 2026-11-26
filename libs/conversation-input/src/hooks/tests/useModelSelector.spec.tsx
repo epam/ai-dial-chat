@@ -1,8 +1,8 @@
 import type { DeploymentItem } from '@epam/ai-dial-chat-shared';
 import { DropdownItemType } from '@epam/ai-dial-ui-kit';
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import type { MouseEvent as ReactMouseEvent } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CONVERSATION_INPUT_CLASS } from '../../constants/public-class-names';
 import { useModelSelector } from '../useModelSelector';
 
@@ -150,6 +150,65 @@ describe('useModelSelector — menuItems', () => {
       '__loading',
     ]);
     expect(result.current.menuHeader).toBeUndefined();
+  });
+
+  describe('skeleton timing', () => {
+    const renderLoadingHook = () =>
+      renderHook(
+        (props: { isLoading: boolean }) =>
+          useModelSelector({
+            deployments: mockDeployments,
+            modelSelectorLabels: props.isLoading
+              ? { loading: 'Loading…' }
+              : undefined,
+          }),
+        { initialProps: { isLoading: true } },
+      );
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('announces loading only once the skeleton is drawn, and not at all for a fast load', () => {
+      vi.useFakeTimers();
+      const { result, rerender } = renderLoadingHook();
+      expect(result.current.loadingAnnouncement).toBe('');
+
+      rerender({ isLoading: false });
+      act(() => {
+        vi.advanceTimersByTime(1000);
+      });
+      expect(result.current.loadingAnnouncement).toBe('');
+
+      rerender({ isLoading: true });
+      act(() => {
+        vi.advanceTimersByTime(400);
+      });
+      expect(result.current.loadingAnnouncement).toBe('Loading…');
+    });
+
+    it('keeps the skeleton item until its minimum display time has passed', () => {
+      vi.useFakeTimers();
+      const { result, rerender } = renderLoadingHook();
+      act(() => {
+        vi.advanceTimersByTime(400);
+      });
+
+      rerender({ isLoading: false });
+      act(() => {
+        vi.advanceTimersByTime(499);
+      });
+      expect(result.current.menuItems.map((item) => item.key)).toEqual([
+        '__loading',
+      ]);
+
+      act(() => {
+        vi.advanceTimersByTime(1);
+      });
+      expect(result.current.menuItems.map((item) => item.key)).toEqual(
+        mockDeployments.map((item) => item.id),
+      );
+    });
   });
 
   it('falls back to error label when loading is absent', () => {
