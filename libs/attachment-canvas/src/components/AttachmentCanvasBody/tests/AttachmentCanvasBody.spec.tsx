@@ -166,7 +166,7 @@ describe('AttachmentCanvasBody', () => {
     );
 
     expect(screen.getByRole('status')).toBe(status);
-    expect(status.textContent).toBe('Chargement du PDF…');
+    expect(status.textContent).toBe('Loading another file');
     expect(screen.queryByRole('img')).toBeNull();
     expect(screen.queryByText('previous attachment')).toBeNull();
     // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- the skeleton is decorative and hidden from accessible role queries

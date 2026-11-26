@@ -112,7 +112,8 @@ describe('useOpenAttachmentCanvas routing', () => {
       const opening = result.current.openAttachmentCanvas(
         makeAttachment(name, mimeType),
       );
-      expect(mockOpenCanvasLoading).toHaveBeenLastCalledWith(
+      expect(mockOpenCanvasLoading).toHaveBeenCalledOnce();
+      expect(mockOpenCanvasLoading).toHaveBeenCalledWith(
         name,
         name,
         AttachmentContentType.Pdf,

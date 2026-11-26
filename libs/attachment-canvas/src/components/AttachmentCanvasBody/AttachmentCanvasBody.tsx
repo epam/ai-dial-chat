@@ -608,24 +608,18 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
 
   const isPdfLoading =
     isLoading && loadingContentType === AttachmentContentType.Pdf;
-  const renderLoading = () => {
-    if (isPdfLoading) {
-      return {
-        containerClassName: 'h-full',
-        bodyContent: <PdfLoadingSkeleton />,
-      };
-    }
-    return {
-      containerClassName: 'flex h-full items-center justify-center',
-      bodyContent: <Spinner ariaLabel={loadingLabel} />,
-    };
-  };
-  const { containerClassName, bodyContent } = isLoading
-    ? renderLoading()
-    : {
-        containerClassName: bodyContainerClassName,
-        bodyContent: renderedContent,
-      };
+  const loadingClassName = isPdfLoading
+    ? 'h-full'
+    : 'flex h-full items-center justify-center';
+  const containerClassName = isLoading
+    ? loadingClassName
+    : bodyContainerClassName;
+  const loadingBody = isPdfLoading ? (
+    <PdfLoadingSkeleton />
+  ) : (
+    <Spinner ariaLabel={loadingLabel} />
+  );
+  const bodyContent = isLoading ? loadingBody : renderedContent;
 
   return (
     <div
@@ -635,9 +629,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
       className={mergeClasses(containerClassName, bodyClassName)}
     >
       {bodyContent}
-      <LiveRegion visuallyHidden>
-        {isPdfLoading ? (pdfContentLoadingLabel ?? loadingLabel) : ''}
-      </LiveRegion>
+      <LiveRegion visuallyHidden>{isPdfLoading ? loadingLabel : ''}</LiveRegion>
     </div>
   );
 };

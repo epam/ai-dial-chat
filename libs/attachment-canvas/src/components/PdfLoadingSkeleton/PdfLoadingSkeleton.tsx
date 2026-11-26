@@ -16,7 +16,7 @@ import {
 /** Lightweight PDF placeholder that does not load the PDF rendering engine. */
 export const PdfLoadingSkeleton = () => (
   <div aria-hidden className="h-full w-full overflow-hidden">
-    <SkeletonShimmer className="flex w-full flex-col gap-10 px-15 pt-10">
+    <SkeletonShimmer className="flex w-full flex-col gap-10 px-5 pt-10 desktop:px-15">
       <Skeleton
         variant={SkeletonVariant.Text}
         tone={SkeletonTone.Sunken}

@@ -101,6 +101,13 @@ export const SkillFilePreview: FC<Props> = ({ state, onRetry }) => {
               pdfPageNumberLabel: t(
                 AttachmentCanvasI18nKeys.PdfPageNumberLabel,
               ),
+              pdfContentLoadingLabel: t(
+                AttachmentCanvasI18nKeys.PdfContentLoadingLabel,
+              ),
+              pdfContentErrorLabel: t(
+                AttachmentCanvasI18nKeys.PdfContentErrorLabel,
+              ),
+              pdfContentRetryLabel: t(ButtonsI18nKeys.Retry),
               xlsxFormulaLabel: t(AttachmentCanvasI18nKeys.XlsxFormulaLabel),
               codeBlockCopyLabel: t(ButtonsI18nKeys.Copy),
               codeBlockCopiedLabel: t(ButtonsI18nKeys.Copied),
