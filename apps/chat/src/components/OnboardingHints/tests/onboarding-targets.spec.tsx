@@ -18,7 +18,6 @@ const labels: OnboardingTargetLabels = {
   catalogViewMode: 'View mode',
   catalogFilterFrom: 'From',
   catalogFilterMy: 'My',
-  catalogSortOptions: ['Recently Updated', 'Newest', 'Name A-Z'],
   catalogBrowseSettings: 'Browse settings',
   addToFavorites: 'Add to favorites',
   removeFromFavorites: 'Remove from favorites',
@@ -56,12 +55,6 @@ const labels: OnboardingTargetLabels = {
   scheduledTaskStarting: 'Starting…',
   scheduledTaskHistory: 'History',
   scheduledTaskActive: 'Active',
-  scheduledTasksSortOptions: [
-    'First to run',
-    'Last to run',
-    'Newest',
-    'Name A-Z',
-  ],
   extensions: 'Extensions',
   theme: 'Theme',
   language: 'Language',
@@ -260,9 +253,7 @@ describe('resolveOnboardingTarget', () => {
           <button type="button" aria-expanded="false">
             {filter}
           </button>
-          <button type="button" aria-haspopup="menu">
-            Recently Updated
-          </button>
+          <button type="button" aria-haspopup="menu" aria-label="Sort" />
           <article aria-label="GPT-4o">
             <button type="button" aria-label="Remove from favorites" />
           </article>
@@ -280,7 +271,7 @@ describe('resolveOnboardingTarget', () => {
         within(catalog).getByRole('button', { name: 'From' }),
       );
       expect(resolve(OnboardingHintTarget.CatalogSort)).toBe(
-        within(catalog).getByRole('button', { name: 'Recently Updated' }),
+        within(catalog).getByRole('button', { name: 'Sort' }),
       );
       expect(resolve(OnboardingHintTarget.CatalogCard)).toBe(
         within(catalog).getByRole('article', { name: 'GPT-4o' }),
@@ -702,7 +693,6 @@ describe('resolveOnboardingTarget', () => {
               <input aria-label="Search context files" />
             </div>
           </aside>
-          <div role="group" aria-label="Sort" />
         </main>,
       );
       expect(resolve(OnboardingHintTarget.ProjectViewPin)).toBe(
@@ -720,8 +710,26 @@ describe('resolveOnboardingTarget', () => {
       expect(resolve(OnboardingHintTarget.ProjectContextSearch)).toBe(
         screen.getByRole('search'),
       );
+    });
+
+    it('finds the projects sort button next to the projects search', () => {
+      render(
+        <main id="main-content">
+          <section aria-label="Catalog">
+            <button type="button" aria-label="Sort" />
+          </section>
+          <div role="toolbar" aria-label="Projects toolbar">
+            <div role="search">
+              <input aria-label="Search projects" />
+            </div>
+            <button type="button" aria-label="Sort" />
+          </div>
+        </main>,
+      );
       expect(resolve(OnboardingHintTarget.ProjectsSort)).toBe(
-        screen.getByRole('group', { name: 'Sort' }),
+        within(
+          screen.getByRole('toolbar', { name: 'Projects toolbar' }),
+        ).getByRole('button', { name: 'Sort' }),
       );
     });
   });
@@ -757,18 +765,20 @@ describe('resolveOnboardingTarget', () => {
       render(
         <main id="main-content">
           <section aria-label="Catalog">
-            <button type="button">Newest</button>
+            <button type="button" aria-label="Sort" />
           </section>
-          <div>
+          <div aria-label="Scheduled tasks toolbar" role="toolbar">
             <div role="search">
               <input aria-label="Search scheduled tasks by name" />
             </div>
-            <button type="button">First to run</button>
+            <button type="button" aria-label="Sort" />
           </div>
         </main>,
       );
       expect(resolve(OnboardingHintTarget.ScheduledTasksSort)).toBe(
-        screen.getByRole('button', { name: 'First to run' }),
+        within(
+          screen.getByRole('toolbar', { name: 'Scheduled tasks toolbar' }),
+        ).getByRole('button', { name: 'Sort' }),
       );
     });
   });

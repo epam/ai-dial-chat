@@ -36,8 +36,6 @@ export interface OnboardingTargetLabels {
   catalogFilterFrom: string;
   /** The catalog filter's label while only the user's own items are shown ("My"). */
   catalogFilterMy: string;
-  /** The catalog's sort options; the sort trigger is named after the applied one. */
-  catalogSortOptions: string[];
   /** The phone-only button that opens the catalog's view, sort and filter sheet. */
   catalogBrowseSettings: string;
   /** A catalog card's star while the item is not a favorite. */
@@ -112,8 +110,6 @@ export interface OnboardingTargetLabels {
   scheduledTaskHistory: string;
   /** A scheduled task's "Active" switch. */
   scheduledTaskActive: string;
-  /** The Scheduled tasks page's sort options; its sort trigger is named after the applied one. */
-  scheduledTasksSortOptions: string[];
   /** The settings page's extensions table. */
   extensions: string;
   /** The settings page's theme picker. */
@@ -392,12 +388,11 @@ const buildResolvers = (
           name === labels.catalogFilterMy ||
           name.startsWith(`${labels.catalogFilterMy} · `),
       ),
-    /* The trigger is named after the applied order; on a phone, sorting lives
-     * in the browse-settings sheet. */
+    /* The icon-only trigger is named "Sort"; on a phone, sorting lives in the
+     * browse-settings sheet. */
     [OnboardingHintTarget.CatalogSort]: (labels) =>
-      findControlBy(catalogRegions(labels), (name) =>
-        labels.catalogSortOptions.includes(name),
-      ) ?? findControl(catalogRegions(labels), labels.catalogBrowseSettings),
+      findControl(catalogRegions(labels), labels.sort) ??
+      findControl(catalogRegions(labels), labels.catalogBrowseSettings),
     /* Each card is an `article` named after its item, the favorites strip's
      * first. */
     [OnboardingHintTarget.CatalogCard]: (labels) =>
@@ -454,8 +449,12 @@ const buildResolvers = (
       const panel = projectDetailsPanel(labels);
       return panel ? findSearch([panel], labels.projectContextSearch) : null;
     },
+    /* Looked for next to the page's own search, like the Scheduled tasks one. */
     [OnboardingHintTarget.ProjectsSort]: (labels) =>
-      firstNamed(mainContent(), '[role="group"]', labels.sort),
+      findControlNear(
+        findSearch(mainContent(), labels.projectsSearch),
+        isOneOf(labels.sort),
+      ),
     [OnboardingHintTarget.ScheduledTaskFormSubmit]: (labels) =>
       findControlNear(
         firstNamed(
@@ -549,12 +548,12 @@ const buildResolvers = (
       scheduledTaskHistoryList(labels),
     [OnboardingHintTarget.ScheduledTaskActive]: (labels) =>
       firstNamed(mainContent(), '[role="switch"]', labels.scheduledTaskActive),
-    /* Named after the applied order, like the catalog's; looked for next to the
-     * page's own search so the catalog's sort never passes for it. */
+    /* Named "Sort", like the catalog's; looked for next to the page's own
+     * search so the catalog's sort never passes for it. */
     [OnboardingHintTarget.ScheduledTasksSort]: (labels) =>
       findControlNear(
         findSearch(mainContent(), labels.scheduledTasksSearch),
-        (name) => labels.scheduledTasksSortOptions.includes(name),
+        isOneOf(labels.sort),
       ),
     [OnboardingHintTarget.SettingsExtensions]: (labels) =>
       firstOnScreen(extensionsTables(labels)),
