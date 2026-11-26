@@ -116,8 +116,15 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
         loadingLabel,
       } = labels ?? {};
 
-      const { isOpen, isLoading, content, fileName, closeCanvas, retryCanvas } =
-        useAttachmentCanvas();
+      const {
+        isOpen,
+        isLoading,
+        loadingContentType,
+        content,
+        fileName,
+        closeCanvas,
+        retryCanvas,
+      } = useAttachmentCanvas();
 
       const handleDownload = useCallback(() => {
         downloadAttachmentContent(content, fileName);
@@ -149,6 +156,7 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
         <AttachmentCanvas
           isOpen={isOpen}
           isLoading={isLoading}
+          loadingContentType={loadingContentType}
           onClose={closeCanvas}
           onRetry={retryCanvas}
           content={content}

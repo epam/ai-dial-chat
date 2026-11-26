@@ -7,6 +7,7 @@ import { AttachmentType } from '@epam/ai-dial-chat-shared';
 import { annotationsToPdfHighlights } from '@epam/ai-dial-quotations';
 import { renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { AttachmentContentType } from '../../../types/attachment-canvas';
 import { findVisualizerForMime } from '../../../utils/visualizer';
 import type { UseOpenAttachmentCanvasResolvers } from '../useOpenAttachmentCanvas';
 import { useOpenAttachmentCanvas } from '../useOpenAttachmentCanvas';
@@ -89,6 +90,44 @@ describe('useOpenAttachmentCanvas routing', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
+
+  it.each([
+    ['PDF citation title', 'application/pdf'],
+    ['REPORT.PDF', 'application/octet-stream'],
+  ])(
+    'marks %s as PDF while its resolver is pending',
+    async (name, mimeType) => {
+      let finishLoading: (content: {
+        type: AttachmentContentType.Pdf;
+        url: string;
+      }) => void = () => undefined;
+      mockResolvePdf.mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            finishLoading = resolve;
+          }),
+      );
+      const { result } = renderOpenAttachmentCanvas();
+
+      const opening = result.current.openAttachmentCanvas(
+        makeAttachment(name, mimeType),
+      );
+      expect(mockOpenCanvasLoading).toHaveBeenCalledOnce();
+      expect(mockOpenCanvasLoading).toHaveBeenCalledWith(
+        name,
+        name,
+        AttachmentContentType.Pdf,
+      );
+      expect(mockOpenCanvas).not.toHaveBeenCalled();
+
+      finishLoading({
+        type: AttachmentContentType.Pdf,
+        url: 'blob:resolved-pdf',
+      });
+      await opening;
+      expect(mockOpenCanvas).toHaveBeenCalledOnce();
+    },
+  );
 
   it.each([
     [

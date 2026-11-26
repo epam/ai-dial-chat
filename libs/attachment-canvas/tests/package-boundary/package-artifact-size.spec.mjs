@@ -95,8 +95,12 @@ describe('publish-ready package artifact size', () => {
      * `LazyContentBoundary` with retry, plus its README paragraph; measured at 256,958 before
      * the README paragraph.
      * Raised from 258_000: the `./mcp-app-renderer` subpath entry (its dist chunk, declaration
-     * and `exports` row) plus its README section; measured at 258,291. */
-    expect(artifact.unpackedSize).toBeLessThanOrEqual(259_000);
+     * and `exports` row) plus its README section; measured at 258,291.
+     * Raised from 259_000: the `PdfLoadingSkeleton` chunk, its constants and README text;
+     * measured at 259,605.
+     * Raised from 260_000: the `getLoadingContentType` routing helper and the README context
+     * paragraph; measured at 260,621. */
+    expect(artifact.unpackedSize).toBeLessThanOrEqual(261_000);
   });
 
   it('contains no private OOXML renderer or worker chunks', () => {

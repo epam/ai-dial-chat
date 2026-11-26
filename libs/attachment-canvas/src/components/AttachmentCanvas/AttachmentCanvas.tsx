@@ -36,6 +36,7 @@ const COPY_RESET_MS = 2000;
 const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
   isOpen,
   isLoading = false,
+  loadingContentType,
   onClose,
   onRetry,
   content,
@@ -420,6 +421,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
       <AttachmentCanvasBody
         content={content}
         isLoading={isLoading}
+        loadingContentType={loadingContentType}
         fileName={fileName}
         isHtmlSourceView={isHtmlSourceView}
         onAppInfo={

@@ -31,6 +31,7 @@ import {
   LazyContentError,
   LazyContentPending,
 } from '../LazyContentBoundary/LazyContentBoundary';
+import { PdfLoadingSkeleton } from '../PdfLoadingSkeleton/PdfLoadingSkeleton';
 import styles from './PdfContent.module.scss';
 /*
  * These stylesheets are only needed once a PDF is actually being rendered.
@@ -603,7 +604,10 @@ export const PdfContent: FC<PdfContentProps> = ({
     return (
       <>
         {errorRegion}
-        <LazyContentPending loadingLabel={loadingLabel} />
+        <LazyContentPending
+          loadingLabel={loadingLabel}
+          pendingContent={<PdfLoadingSkeleton />}
+        />
       </>
     );
   }

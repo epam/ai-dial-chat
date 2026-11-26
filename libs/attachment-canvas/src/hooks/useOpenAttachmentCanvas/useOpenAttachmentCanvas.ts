@@ -40,6 +40,7 @@ import {
   isTextPreviewable,
   releaseCanvasContent,
 } from '../../utils/content';
+import { getLoadingContentType } from '../../utils/open-routing';
 import { findVisualizerForMime } from '../../utils/visualizer';
 
 /**
@@ -420,7 +421,11 @@ export const useOpenAttachmentCanvas = (
             return true;
           };
           onBeforeOpen?.();
-          openCanvasLoading(attachment.name, canvasAttachmentId);
+          openCanvasLoading(
+            attachment.name,
+            canvasAttachmentId,
+            getLoadingContentType(attachment, customVisualizers),
+          );
           const opened = await openFileCanvas(
             attachment,
             canvasAttachmentId,
@@ -455,6 +460,7 @@ export const useOpenAttachmentCanvas = (
       openFileCanvas,
       resolvers,
       startCanvasRequest,
+      customVisualizers,
     ],
   );
 

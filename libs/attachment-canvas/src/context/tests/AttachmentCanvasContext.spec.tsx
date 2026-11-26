@@ -43,6 +43,50 @@ describe('AttachmentCanvasProvider', () => {
       wrapper: AttachmentCanvasProvider,
     });
 
+  it('tracks the pending type independently of the previous content and clears it after loading', () => {
+    const { result } = renderCanvas();
+
+    act(() => {
+      result.current.openCanvas({
+        type: AttachmentContentType.PlainText,
+        text: 'previous file',
+      });
+      result.current.openCanvasLoading(
+        'PDF without an extension',
+        'pdf-id',
+        AttachmentContentType.Pdf,
+      );
+    });
+    expect(result.current.loadingContentType).toBe(AttachmentContentType.Pdf);
+    expect(result.current.content.type).toBe(AttachmentContentType.PlainText);
+
+    act(() => result.current.openCanvasLoading('next.txt'));
+    expect(result.current.loadingContentType).toBeUndefined();
+
+    act(() => {
+      result.current.openCanvasLoading(
+        'report.pdf',
+        'pdf-id',
+        AttachmentContentType.Pdf,
+      );
+      result.current.openCanvas({
+        type: AttachmentContentType.Pdf,
+        url: 'blob:pdf',
+      });
+    });
+    expect(result.current.loadingContentType).toBeUndefined();
+
+    act(() => {
+      result.current.openCanvasLoading(
+        'report.pdf',
+        'pdf-id',
+        AttachmentContentType.Pdf,
+      );
+      result.current.closeCanvas();
+    });
+    expect(result.current.loadingContentType).toBeUndefined();
+  });
+
   it('keeps the retry of opened content until the canvas closes or reloads', () => {
     const { result } = renderCanvas();
     const onRetry = vi.fn();
