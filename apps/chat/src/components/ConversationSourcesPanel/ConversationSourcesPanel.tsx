@@ -36,7 +36,7 @@ import type {
   ConversationSourcesPanelStyles,
   QuotationSource,
 } from '@epam/ai-dial-source-panel';
-import { memo, useCallback, useMemo, type FC } from 'react';
+import { memo, useCallback, useMemo, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MIN_CONTENT_AREA_WIDTH } from '../../constants/layout';
 import {
@@ -63,7 +63,7 @@ import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import TaskDetailsSection from './TaskDetailsSection/TaskDetailsSection';
 import TaskHistorySection from './TaskHistorySection/TaskHistorySection';
 
-/* Stable stand-in for the messages while the panel is closed. */
+/* Stable stand-in for the messages until the panel first opens. */
 const EMPTY_MESSAGES: Message[] = [];
 
 const MIN_PANEL_WIDTH = 312;
@@ -102,8 +102,17 @@ const ConversationSourcesPanelContainer: FC = () => {
    * route param — see the hook's JSDoc).
    */
   useCloseSourcesSidebarOnSubjectChange();
+  /*
+   * A closed panel keeps the messages it last showed open, so it slides out
+   * with its content instead of flashing the empty state, and keeps one stable
+   * input so the sources are not recomputed while it stays closed.
+   */
+  const [lastOpenMessages, setLastOpenMessages] = useState(EMPTY_MESSAGES);
+  if (isOpen && lastOpenMessages !== messages) {
+    setLastOpenMessages(messages);
+  }
   const { uploaded, generated, sources } = useConversationSources(
-    isOpen ? messages : EMPTY_MESSAGES,
+    isOpen ? messages : lastOpenMessages,
     attachmentDisplayResolvers,
   );
   const { handleAttachmentClick: downloadAttachment } = useAttachmentAction({

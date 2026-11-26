@@ -90,22 +90,55 @@ export class OrgUnitsService {
     folderPath: string,
     namespaces: readonly string[],
   ): Promise<string[] | undefined> {
-    let rights: OrgUnitsResponseDto;
+    const rights = await this.readRights(
+      userSub,
+      accessToken,
+      'org-unit write',
+    );
+    if (rights == null || !rights.enabled) return undefined;
+    if (findOwningOrgUnit(rights.units, folderPath) == null) return undefined;
+    return [...new Set(namespaces)].filter(
+      (namespace) => !canWriteIntoOrgUnitAt(rights, folderPath, namespace),
+    );
+  }
+
+  /**
+   * Whether the caller is a DIAL admin, from the same cached listing the unit
+   * rights come from. Answers `undefined` (unknown, DIAL Core decides) when org
+   * units are off or the caller's rights cannot be read.
+   * @param userSub - caller's session subject
+   * @param accessToken - caller's bearer token
+   */
+  async isDialAdmin(
+    userSub: string,
+    accessToken: string,
+  ): Promise<boolean | undefined> {
+    const rights = await this.readRights(userSub, accessToken, 'DIAL admin');
+    return rights?.enabled ? rights.hasAdminAccess : undefined;
+  }
+
+  /**
+   * The cached listing, or `undefined` after one warning when it cannot be read,
+   * so a check that only narrows what DIAL Core decides can be skipped.
+   * @param userSub - caller's session subject
+   * @param accessToken - caller's bearer token
+   * @param checkName - what the skipped check is called in the warning
+   */
+  private async readRights(
+    userSub: string,
+    accessToken: string,
+    checkName: string,
+  ): Promise<OrgUnitsResponseDto | undefined> {
     try {
-      rights = await this.listOrgUnits(userSub, accessToken);
+      return await this.listOrgUnits(userSub, accessToken);
     } catch (err) {
       this.logger.warn(
-        `Skipping the org-unit write check, rights could not be read: ${
+        `Skipping the ${checkName} check, rights could not be read: ${
           err instanceof Error ? err.message : 'unknown error'
         }`,
       );
       return undefined;
     }
-    if (!rights.enabled) return undefined;
-    if (findOwningOrgUnit(rights.units, folderPath) == null) return undefined;
-    return [...new Set(namespaces)].filter(
-      (namespace) => !canWriteIntoOrgUnitAt(rights, folderPath, namespace),
-    );
   }
 
   private toDto(item: CoreOrgUnitItem): OrgUnitDto[] {

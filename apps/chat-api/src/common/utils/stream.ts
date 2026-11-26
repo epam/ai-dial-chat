@@ -1,6 +1,7 @@
 import { Readable, type Writable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import type { ReadableStream as NodeWebReadableStream } from 'node:stream/web';
+import { skipResponseCompression } from './compression-passthrough';
 
 /**
  * `Readable.fromWeb()` for a DIAL Core response body, with a permanent
@@ -35,11 +36,15 @@ export const readableFromWeb = (stream: ReadableStream): Readable => {
  * connection at once. Without it, a browser that disconnected before piping
  * started (an HTML preview iframe reload) would hold that connection open
  * until `FILE_TRANSFER_TIMEOUT_MS` fires.
+ *
+ * The body is a proxied file, so it is exempt from response compression
+ * even when its upstream `Content-Type` is JSON.
  */
 export const pipeWebBody = async (
   stream: ReadableStream,
   destination: Writable,
 ): Promise<void> => {
+  skipResponseCompression(destination);
   const source = readableFromWeb(stream);
   try {
     await pipeline(source, destination);

@@ -129,7 +129,7 @@ const lastPanelProps = () =>
 const ensureUnits = vi.fn();
 const canSaveDirectlyAt = vi.fn();
 
-const mockOrgUnits = (status: OrgUnitsStatus) =>
+const mockOrgUnits = (status: OrgUnitsStatus, hasAdminAccess = false) =>
   vi.mocked(useOrgUnitsContext).mockReturnValue({
     status,
     ensureUnits,
@@ -138,6 +138,7 @@ const mockOrgUnits = (status: OrgUnitsStatus) =>
     canSaveDirectlyAt,
     canPublishDirectlyAt: vi.fn(() => false),
     canPublishAt: vi.fn(),
+    hasAdminAccess,
   });
 
 describe('ResourceSavePanelContainer', () => {
@@ -198,6 +199,38 @@ describe('ResourceSavePanelContainer', () => {
         'Acme/Teams',
         OrgUnitNamespace.Applications,
       );
+    });
+
+    it('gives the flow the DIAL admin flag and the folder-reference note once Ready', () => {
+      vi.mocked(useFeatureFlag).mockReturnValue(true);
+      mockOrgUnits(OrgUnitsStatus.Ready, true);
+
+      renderContainer();
+
+      expect(lastFlowParams().hasAdminAccess).toBe(true);
+      expect(lastFlowParams().folderReferenceNote).toBe(
+        ResourceSavePanelI18nKeys.DirectUnavailableFolder,
+      );
+    });
+
+    it('tells the flow a user without DIAL admin access is not one', () => {
+      vi.mocked(useFeatureFlag).mockReturnValue(true);
+      mockOrgUnits(OrgUnitsStatus.Ready, false);
+
+      renderContainer();
+
+      expect(lastFlowParams().hasAdminAccess).toBe(false);
+    });
+
+    it('leaves the folder-reference rule off while the flag is off or the rights are not Ready', () => {
+      mockOrgUnits(OrgUnitsStatus.Ready, true);
+      renderContainer();
+      expect(lastFlowParams().hasAdminAccess).toBeUndefined();
+
+      vi.mocked(useFeatureFlag).mockReturnValue(true);
+      mockOrgUnits(OrgUnitsStatus.Loading, true);
+      renderContainer();
+      expect(lastFlowParams().hasAdminAccess).toBeUndefined();
     });
 
     it('asks the org units to load while the panel is open, and not while it is closed', () => {

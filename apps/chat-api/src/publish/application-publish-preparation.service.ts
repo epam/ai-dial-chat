@@ -19,7 +19,10 @@ import {
   type ApplicationPublishCopy,
 } from './application-publish-copy.service';
 import { PublishDependenciesService } from './dependencies/publish-dependencies.service';
-import { selectPublishableDependencies } from './dependencies/publish-dependency.util';
+import {
+  hasFolderDependency,
+  selectPublishableDependencies,
+} from './dependencies/publish-dependency.util';
 import { replaceSchemaResources } from './dependencies/schema-resource-collector.util';
 import { CatalogEntityType } from './dto/catalog-entity-params.dto';
 import {
@@ -63,6 +66,8 @@ export interface ApplicationDependencyPlan {
   toCopy: PlannedDependency[];
   /** Dependency id to target url, for every dependency in `dependencies`. */
   targets: Map<string, string>;
+  /** Whether the application refers to a folder of files, which is never in `dependencies`. */
+  hasFolderReference: boolean;
 }
 
 /**
@@ -81,6 +86,19 @@ const withIcon = (
   } = body as DialApplication & Record<string, unknown>;
   return (iconUrl == null ? rest : { ...rest, iconUrl }) as DialApplication;
 };
+
+/**
+ * A plan with nothing to copy or reuse; a new one each call, so no two callers share its `Map`.
+ * @param hasFolderReference - whether the application still refers to a folder of files
+ */
+export const createEmptyDependencyPlan = (
+  hasFolderReference = false,
+): ApplicationDependencyPlan => ({
+  dependencies: [],
+  toCopy: [],
+  targets: new Map(),
+  hasFolderReference,
+});
 
 /** The DIAL Core resource type of each dependency kind that is copied; a `file` has none. */
 export const DIAL_TYPE_BY_DEPENDENCY: Partial<
@@ -204,9 +222,10 @@ export class ApplicationPublishPreparationService {
           CatalogEntityType.Application,
           entityId,
         ));
+    const hasFolderReference = hasFolderDependency(found);
     const dependencies = selectPublishableDependencies(found, bucket);
     if (dependencies.length === 0) {
-      return { dependencies, toCopy: [], targets: new Map() };
+      return createEmptyDependencyPlan(hasFolderReference);
     }
 
     const headers = getBearerAuthHeaders(accessToken);
@@ -234,7 +253,7 @@ export class ApplicationPublishPreparationService {
         targetUrl,
       });
     });
-    return { dependencies, toCopy, targets };
+    return { dependencies, toCopy, targets, hasFolderReference };
   }
 
   /**

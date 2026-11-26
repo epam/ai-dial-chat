@@ -278,3 +278,45 @@ describe('OrgUnitsService.findMissingWriteNamespaces', () => {
     ).resolves.toBeUndefined();
   });
 });
+
+describe('OrgUnitsService.isDialAdmin', () => {
+  it('is true for a DIAL admin', async () => {
+    const { service, getUserRoleAssignments } = makeService();
+    getUserRoleAssignments.mockResolvedValue(
+      ok({ adminAccess: 'FULL', items: [] }),
+    );
+
+    await expect(service.isDialAdmin('user-1', 'token-1')).resolves.toBe(true);
+  });
+
+  it('is false for a user whose only admin role is a unit role', async () => {
+    const { service, getUserRoleAssignments } = makeService();
+    getUserRoleAssignments.mockResolvedValue(
+      ok({
+        adminAccess: 'NONE',
+        items: [{ ...ACME, permissions: { applications: ['read', 'write'] } }],
+      }),
+    );
+
+    await expect(service.isDialAdmin('user-1', 'token-1')).resolves.toBe(false);
+  });
+
+  it('is unknown while org units are off', async () => {
+    const { service, getUserRoleAssignments } = makeService();
+    getUserRoleAssignments.mockResolvedValue(err(404));
+
+    await expect(
+      service.isDialAdmin('user-1', 'token-1'),
+    ).resolves.toBeUndefined();
+  });
+
+  it('is unknown when the rights cannot be read', async () => {
+    const { service, getUserRoleAssignments } = makeService();
+    getUserRoleAssignments.mockResolvedValue(err(500));
+    vi.spyOn(Logger.prototype, 'warn').mockReturnValue(undefined);
+
+    await expect(
+      service.isDialAdmin('user-1', 'token-1'),
+    ).resolves.toBeUndefined();
+  });
+});

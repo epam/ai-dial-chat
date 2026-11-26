@@ -79,7 +79,7 @@ export const requiresHistoryLadder = (
     CelebrationCapability.InteractionHistoryLadderV1,
   );
 
-/** Whether this release can play the scene's renderer, capabilities and placement. */
+/** Whether this release can play the scene's renderer, capabilities and placement; more than one `interaction-*` entry, even a repeated ID, cannot play. */
 export const isCelebrationSceneSupported = (
   scene: CelebrationSceneDescriptor,
 ): boolean => {

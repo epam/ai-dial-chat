@@ -7757,6 +7757,48 @@ export type OnboardingHintTarget =
   (typeof OnboardingHintTarget)[keyof typeof OnboardingHintTarget];
 
 /**
+ * `folderReferenceNeedsRequest`: the application refers to a folder of files and the caller is not a DIAL admin, so it has to go through a publication request.
+ * @export
+ */
+export const OrgUnitCopyErrorCode = {
+  FolderReferenceNeedsRequest: 'folderReferenceNeedsRequest',
+} as const;
+export type OrgUnitCopyErrorCode =
+  (typeof OrgUnitCopyErrorCode)[keyof typeof OrgUnitCopyErrorCode];
+
+/**
+ *
+ * @export
+ * @interface OrgUnitCopyErrorDto
+ */
+export interface OrgUnitCopyErrorDto {
+  /**
+   *
+   * @type {number}
+   * @memberof OrgUnitCopyErrorDto
+   */
+  statusCode: number;
+  /**
+   *
+   * @type {string}
+   * @memberof OrgUnitCopyErrorDto
+   */
+  error: string;
+  /**
+   *
+   * @type {string}
+   * @memberof OrgUnitCopyErrorDto
+   */
+  message: string;
+  /**
+   * `folderReferenceNeedsRequest`: the application refers to a folder of files and the caller is not a DIAL admin, so it has to go through a publication request.
+   * @type {OrgUnitCopyErrorCode}
+   * @memberof OrgUnitCopyErrorDto
+   */
+  code: OrgUnitCopyErrorCode;
+}
+
+/**
  *
  * @export
  * @interface OrgUnitDto

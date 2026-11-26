@@ -504,7 +504,7 @@ its reversible visual transform is cancelled when playback stops.
 Typing, pointer/focus interaction, scrolling, viewport or target changes,
 hidden tabs, navigation, scene replacement and motion-preference changes stop
 the scene and release its player, listeners, observers and timers. The gift
-picks the penguin, the snowman or the fireworks elf; the secret phrase picks the elves or reindeer.
+picks the penguin, the snowman, the fireworks elf or the cat; the secret phrase picks the elves or reindeer.
 Hosts can override `penguinStarToastMessage` through existing labels. The scene
 budgets 140 generated SVG artwork nodes, 32 animated properties, 80 keyframes
 per property and 120 KB of composition data. It uses no external assets,
