@@ -232,7 +232,6 @@ const DialFileManagerPage: FC = () => {
       uploadArchiveAction: t(DialFileManagerI18nKeys.UploadArchiveAction),
       newFolderLabel: t(DialFileManagerI18nKeys.NewFolder),
       downloadLabel: t(ButtonsI18nKeys.Download),
-      downloadingLabel: t(DialFileManagerI18nKeys.Downloading),
       deleteLabel: t(ButtonsI18nKeys.Delete),
       deletingLabel: t(BasicI18nKeys.DeletingStatus),
       renameLabel: t(ButtonsI18nKeys.Rename),

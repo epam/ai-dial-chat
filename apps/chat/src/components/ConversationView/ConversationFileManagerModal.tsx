@@ -74,7 +74,6 @@ const ConversationFileManagerModal: FC<ConversationFileManagerModalProps> = ({
           uploadFilesLabel={t(DialFileManagerI18nKeys.Upload)}
           newFolderLabel={t(DialFileManagerI18nKeys.NewFolder)}
           downloadLabel={t(ButtonsI18nKeys.Download)}
-          downloadingLabel={t(DialFileManagerI18nKeys.Downloading)}
           deleteLabel={t(ButtonsI18nKeys.Delete)}
           deletingLabel={t(BasicI18nKeys.DeletingStatus)}
           deleteConfirmBody={(names) => (

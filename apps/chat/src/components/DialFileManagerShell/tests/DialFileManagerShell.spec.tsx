@@ -233,7 +233,6 @@ const baseLabels: DialFileManagerShellLabels = {
   uploadArchiveAction: 'Upload archive',
   newFolderLabel: 'New folder',
   downloadLabel: 'Download',
-  downloadingLabel: 'Downloading…',
   deleteLabel: 'Delete',
   deletingLabel: 'Deleting…',
   renameLabel: 'Rename',

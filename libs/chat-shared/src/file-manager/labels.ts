@@ -115,11 +115,6 @@ export interface DialFileManagerShellLabels {
   newFolderLabel: string;
   /** Label for the Download action. */
   downloadLabel: string;
-  /**
-   * Overlay label shown while a download was in progress.
-   * @deprecated Not read: downloads run as transfer-queue rows with no overlay.
-   */
-  downloadingLabel?: string;
   /** Label for the Delete action. */
   deleteLabel: string;
   /** Overlay label shown while a delete operation is in progress. */
