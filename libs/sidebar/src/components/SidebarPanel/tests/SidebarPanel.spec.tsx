@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { SidebarPanelProps } from '../../../models/panel-props';
@@ -311,6 +311,51 @@ describe('SidebarPanel — open/close animation', () => {
     const wrapper = getPanelWrapper();
     expect(wrapper.classList.contains('transition-[width]')).toBe(true);
     expect(wrapper.classList.contains('transition-transform')).toBe(false);
+  });
+
+  it('does not animate a closed panel when a breakpoint switches it into a bounded overlay', async () => {
+    const { container, rerender } = render(
+      <SidebarPanel {...defaultProps} isOpen={false}>
+        <span />
+      </SidebarPanel>,
+    );
+    // eslint-disable-next-line testing-library/no-node-access -- the outermost width/transition wrapper is a plain div with no accessible role or text
+    const wrapper = container.firstChild as HTMLElement;
+
+    rerender(
+      <SidebarPanel {...defaultProps} isOpen={false} isBoundedOverlay>
+        <span />
+      </SidebarPanel>,
+    );
+
+    expect(wrapper.classList.contains('transition-none')).toBe(true);
+    expect(wrapper.classList.contains('transition-transform')).toBe(false);
+    await waitFor(() =>
+      expect(wrapper.classList.contains('transition-transform')).toBe(true),
+    );
+    expect(wrapper.classList.contains('transition-none')).toBe(false);
+  });
+
+  it('does not animate a closed panel when a breakpoint switches it back to a column', async () => {
+    const { container, rerender } = render(
+      <SidebarPanel {...defaultProps} isOpen={false} isBoundedOverlay>
+        <span />
+      </SidebarPanel>,
+    );
+    // eslint-disable-next-line testing-library/no-node-access -- the outermost width/transition wrapper is a plain div with no accessible role or text
+    const wrapper = container.firstChild as HTMLElement;
+
+    rerender(
+      <SidebarPanel {...defaultProps} isOpen={false}>
+        <span />
+      </SidebarPanel>,
+    );
+
+    expect(wrapper.classList.contains('transition-none')).toBe(true);
+    expect(wrapper.classList.contains('transition-[width]')).toBe(false);
+    await waitFor(() =>
+      expect(wrapper.classList.contains('transition-[width]')).toBe(true),
+    );
   });
 
   it('honours a reduced-motion preference', () => {

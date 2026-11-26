@@ -150,6 +150,33 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
    * transition is still applied for the open/close animation. */
   const [isResizing, setIsResizing] = useState(false);
 
+  /*
+   * Crossing a breakpoint swaps a closed panel between a zero-width column and
+   * an off-screen overlay. Animating that swap slid the closed panel across the
+   * screen, so the transition stays off from the commit that changes the mode
+   * until two frames later: only opening and closing animate.
+   */
+  const previousModeRef = useRef({ isOverlay, isBoundedOverlay });
+  const [isModeSwitching, setIsModeSwitching] = useState(false);
+  useLayoutEffect(() => {
+    const previousMode = previousModeRef.current;
+    if (
+      previousMode.isOverlay !== isOverlay ||
+      previousMode.isBoundedOverlay !== isBoundedOverlay
+    ) {
+      previousModeRef.current = { isOverlay, isBoundedOverlay };
+      setIsModeSwitching(true);
+    }
+    let innerFrame = 0;
+    const outerFrame = requestAnimationFrame(() => {
+      innerFrame = requestAnimationFrame(() => setIsModeSwitching(false));
+    });
+    return () => {
+      cancelAnimationFrame(outerFrame);
+      cancelAnimationFrame(innerFrame);
+    };
+  }, [isOverlay, isBoundedOverlay]);
+
   /* Stores the user's manually chosen width together with the defaultWidth it
    * was set for. On breakpoint crossing the stored width is restored only when
    * defaultWidth returns to the same value (e.g. desktop→mobile→desktop
@@ -243,6 +270,9 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
    * every computed change, including the ones a resize drag makes per frame.
    */
   const getTransitionClass = () => {
+    if (isModeSwitching) {
+      return 'transition-none';
+    }
     if (isOverlay || isBoundedOverlay) {
       return 'transition-transform duration-200 ease-in-out motion-reduce:transition-none';
     }
