@@ -346,26 +346,6 @@ describe('ChatVisualizerConnector — application-editor messages', () => {
     ]);
   });
 
-  it('posts an editor message unprefixed and unchanged to every host', () => {
-    const other = 'https://admin.example.com';
-    const connector = createConnector([HOST, other]);
-    const message = { type: AppsEditorMessages.SaveSuccess, hasChanges: true };
-    connector.sendEditorMessage(message);
-    expect(postSpy).toHaveBeenNthCalledWith(1, message, HOST);
-    expect(postSpy).toHaveBeenNthCalledWith(2, message, other);
-  });
-
-  it('posts an editor message only to the host given', () => {
-    const other = 'https://admin.example.com';
-    const connector = createConnector([HOST, other]);
-    connector.sendEditorMessage(
-      { type: AppsEditorMessages.DirtyState, payload: { isDirty: true } },
-      other,
-    );
-    expect(postSpy).toHaveBeenCalledOnce();
-    expect(postSpy).toHaveBeenCalledWith(expect.anything(), other);
-  });
-
   it('hands TRIGGER_SAVE without a payload to onEditorMessage with its origin', () => {
     const onEditorMessage = vi.fn();
     createConnector(HOST, NAME, { onEditorMessage });

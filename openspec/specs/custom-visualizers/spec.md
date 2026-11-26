@@ -154,7 +154,6 @@ Constructor: `new VisualizerConnector(root: HTMLElement | string, options: Visua
 
 - `root`: the DOM container, or a CSS selector string, into which the iframe is mounted. A selector that matches nothing SHALL throw an `Error`.
 - `options.domain`: the visualizer URL.
-- `options.hostDomain?: string`: optional and `@deprecated`. The connector SHALL ignore it, and `VisualizerCanvasRenderer` SHALL NOT pass it.
 - `options.visualizerName`: the type prefix used on outbound messages. The app supplies it from the registry entry's `title`, and the iframe-side app must be constructed with the identical string.
 - `options.requestTimeout?: number`: an optional timeout in milliseconds applied to each `send()` request. It defaults to `10000` and is taken from the registry entry's `requestTimeout` when that is set. It MUST NOT be applied to `ready()`.
 - `options.loaderStyles?`: a partial map of CSS declarations applied to the built-in loader overlay while the iframe is not yet ready.
@@ -214,11 +213,6 @@ Message reception:
 - **WHEN** `destroy()` is called and nothing awaited `ready()`
 - **THEN** nothing is written to `console.error`
 - **AND** no unhandled promise rejection is raised
-
-#### Scenario: hostDomain is optional
-
-- **WHEN** the connector is constructed without `hostDomain`
-- **THEN** the handshake, `send()` and `subscribe()` behave exactly as when `hostDomain` is passed
 
 #### Scenario: message from wrong source window is ignored
 
@@ -324,7 +318,6 @@ The workspace package `@epam/ai-dial-visualizer-connector` SHALL export `ChatVis
 - Post `${appName}/READY_TO_INTERACT` when the consumer calls `sendReadyToInteract()`.
 - Post `${appName}/readyToSave` when the consumer calls `sendReadyToSave()`, and `${appName}/loggedOut` when it calls `sendLoggedOut()`, using the `AppsEditorEvents` wire values.
 - Post `${appName}/SEND_MESSAGE` with payload `{ message: content }` and no `requestId` from `sendMessage(content)`.
-- Post an `AppsEditorMessages` message unchanged, with no `${appName}/` prefix, from `sendEditorMessage(message, dialHost?)`.
 - Hand an inbound `AppsEditorMessages` message from an allowed origin to the `onEditorMessage(message, origin)` callback, whether or not it carries a `payload`. A prefixed copy (`${appName}/TRIGGER_SAVE`) is not an editor message.
 - Post every outgoing message to each configured host, or, when `send()` is given a `dialHost`, to that host only.
 - Listen for `${appName}/SEND_VISUALIZE_DATA` inbound messages, invoke the `onData` callback when the payload has `visualizerData` (`mimeType` is optional, because Chat 0.x's application editor sends `{ visualizerData: { layout } }` alone), and post `${appName}/SEND_VISUALIZE_DATA/RESPONSE` with the same `requestId` back to the sender's origin.
@@ -348,11 +341,6 @@ The host handles `SEND_MESSAGE` only when the operator enables it, as specified 
 
 - **WHEN** `sendReadyToSave()` and then `sendLoggedOut()` are called on a connector with `appName` `'my-viz'`
 - **THEN** it posts `my-viz/readyToSave` and then `my-viz/loggedOut` to each configured host
-
-#### Scenario: an editor message is posted unprefixed
-
-- **WHEN** `sendEditorMessage({ type: AppsEditorMessages.SaveSuccess, hasChanges: true })` is called
-- **THEN** that object is posted as is to each configured host
 
 #### Scenario: TRIGGER_SAVE reaches onEditorMessage
 
