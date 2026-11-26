@@ -4,6 +4,7 @@ import {
   ConflictException,
   ForbiddenException,
   NotFoundException,
+  ServiceUnavailableException,
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -72,6 +73,7 @@ const makeService = () => {
     plan: vi
       .fn()
       .mockResolvedValue({ dependencies: [], toCopy: [], targets: new Map() }),
+    hasFolderInCopiedApplications: vi.fn().mockResolvedValue(false),
     stage: vi.fn().mockResolvedValue(STAGED_COPY),
     deleteCopy: vi.fn().mockResolvedValue(undefined),
   };
@@ -1016,6 +1018,156 @@ describe('OrgUnitCopyService folder reference', () => {
     await copy(made.service);
 
     expect(made.orgUnitsService.isDialAdmin).not.toHaveBeenCalled();
+  });
+
+  describe('a dependency that refers to a folder', () => {
+    const planWith = (type: string, name: string) => {
+      const item = {
+        dependency: { id: `${type}s/b1/${name}`, name, type },
+        sourceUrl: `${type}s/b1/${name}`,
+        targetUrl: `${type}s/public/Acme/.agent__1.0.0.deps/b1/${name}`,
+      };
+      return {
+        dependencies: [item.dependency],
+        toCopy: [item],
+        targets: new Map(),
+        hasFolderReference: false,
+      };
+    };
+    const withNestedFolder = (made: ReturnType<typeof makeService>) => {
+      made.preparation.plan.mockResolvedValue(
+        planWith('application', 'Helper'),
+      );
+      made.preparation.hasFolderInCopiedApplications.mockResolvedValue(true);
+    };
+
+    it('refuses a caller who is not a DIAL admin before anything is written', async () => {
+      const made = makeService();
+      withNestedFolder(made);
+
+      const refusal = await refusalOf(copy(made.service));
+
+      expect(refusal).toBeInstanceOf(UnprocessableEntityException);
+      expect(refusal.getResponse()).toMatchObject({
+        statusCode: 422,
+        code: OrgUnitCopyErrorCode.FolderReferenceNeedsRequest,
+      });
+      expect(made.copyResource).not.toHaveBeenCalled();
+      expect(made.preparation.stage).not.toHaveBeenCalled();
+      expect(made.getCustomApplication).not.toHaveBeenCalled();
+      expect(
+        made.orgUnitsService.findMissingWriteNamespaces,
+      ).not.toHaveBeenCalled();
+    });
+
+    it('lets a DIAL admin copy the application and its dependency without reading the dependency', async () => {
+      const made = makeService();
+      withNestedFolder(made);
+      made.orgUnitsService.isDialAdmin.mockResolvedValue(true);
+
+      await expect(copy(made.service)).resolves.toBeDefined();
+
+      expect(
+        made.preparation.hasFolderInCopiedApplications,
+      ).not.toHaveBeenCalled();
+      expect(made.preparation.stage).toHaveBeenCalledOnce();
+    });
+
+    it('leaves the answer to DIAL Core when the rights cannot be read', async () => {
+      const made = makeService();
+      withNestedFolder(made);
+      made.orgUnitsService.isDialAdmin.mockResolvedValue(undefined);
+
+      await expect(copy(made.service)).resolves.toBeDefined();
+
+      expect(
+        made.preparation.hasFolderInCopiedApplications,
+      ).not.toHaveBeenCalled();
+    });
+
+    it('copies normally when no dependency refers to a folder and asks for admin rights once', async () => {
+      const made = makeService();
+      made.preparation.plan.mockResolvedValue(
+        planWith('application', 'Helper'),
+      );
+
+      await expect(copy(made.service)).resolves.toBeDefined();
+
+      expect(made.orgUnitsService.isDialAdmin).toHaveBeenCalledOnce();
+      expect(
+        made.preparation.hasFolderInCopiedApplications,
+      ).toHaveBeenCalledWith(
+        'user1',
+        'token',
+        expect.objectContaining({
+          toCopy: [
+            expect.objectContaining({ sourceUrl: 'applications/b1/Helper' }),
+          ],
+        }),
+      );
+      expect(made.preparation.stage).toHaveBeenCalledOnce();
+    });
+
+    it('asks for admin rights once when the application and a dependency both qualify', async () => {
+      const made = makeService();
+      withFolderReference(made, {
+        ...planWith('application', 'Helper'),
+        hasFolderReference: true,
+      });
+
+      await refusalOf(copy(made.service));
+
+      expect(made.orgUnitsService.isDialAdmin).toHaveBeenCalledOnce();
+      expect(
+        made.preparation.hasFolderInCopiedApplications,
+      ).not.toHaveBeenCalled();
+    });
+
+    it('checks a plan that mixes a toolset with an application dependency', async () => {
+      const made = makeService();
+      const toolset = planWith('toolset', 'Tools');
+      const application = planWith('application', 'Helper');
+      made.preparation.plan.mockResolvedValue({
+        ...application,
+        dependencies: [...toolset.dependencies, ...application.dependencies],
+        toCopy: [...toolset.toCopy, ...application.toCopy],
+      });
+      made.preparation.hasFolderInCopiedApplications.mockResolvedValue(true);
+
+      await expect(refusalOf(copy(made.service))).resolves.toBeInstanceOf(
+        UnprocessableEntityException,
+      );
+      expect(made.orgUnitsService.isDialAdmin).toHaveBeenCalledOnce();
+    });
+
+    it('reads nothing when no application dependency is copied', async () => {
+      const made = makeService();
+      made.preparation.plan.mockResolvedValue(planWith('toolset', 'Tools'));
+
+      await copy(made.service);
+
+      expect(made.orgUnitsService.isDialAdmin).not.toHaveBeenCalled();
+      expect(
+        made.preparation.hasFolderInCopiedApplications,
+      ).not.toHaveBeenCalled();
+    });
+
+    it('fails and writes nothing when the dependency cannot be read', async () => {
+      const made = makeService();
+      made.preparation.plan.mockResolvedValue(
+        planWith('application', 'Helper'),
+      );
+      made.preparation.hasFolderInCopiedApplications.mockRejectedValue(
+        new Error('application read failed with status 403'),
+      );
+
+      await expect(copy(made.service)).rejects.toBeInstanceOf(
+        ServiceUnavailableException,
+      );
+
+      expect(made.copyResource).not.toHaveBeenCalled();
+      expect(made.preparation.stage).not.toHaveBeenCalled();
+    });
   });
 
   it('does not apply to other entity types', async () => {

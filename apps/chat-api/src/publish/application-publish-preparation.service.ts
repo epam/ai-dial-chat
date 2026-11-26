@@ -100,6 +100,17 @@ export const createEmptyDependencyPlan = (
   hasFolderReference,
 });
 
+/**
+ * The application dependencies of a plan that still have to be copied.
+ * @param plan - the plan of an application's dependencies
+ */
+export const selectApplicationsToCopy = (
+  plan: ApplicationDependencyPlan,
+): PlannedDependency[] =>
+  plan.toCopy.filter(
+    ({ dependency }) => dependency.type === ResourceDependencyType.Application,
+  );
+
 /** The DIAL Core resource type of each dependency kind that is copied; a `file` has none. */
 export const DIAL_TYPE_BY_DEPENDENCY: Partial<
   Record<ResourceDependencyType, DialResourceType>
@@ -254,6 +265,37 @@ export class ApplicationPublishPreparationService {
       });
     });
     return { dependencies, toCopy, targets, hasFolderReference };
+  }
+
+  /**
+   * Whether an application dependency that still has to be copied refers to a
+   * folder of files. Reads only the schema references of those dependencies
+   * (one level, nothing is copied or listed), so a failed read is thrown, never
+   * taken for "no folder". Detection only: replace it by a check on the full
+   * dependency tree if DIAL Core ever returns one.
+   * @param userSub - caller's session subject
+   * @param accessToken - caller's bearer token
+   * @param plan - the plan returned by `plan()`
+   * @throws {Error} When the dependencies of a dependency cannot be read
+   */
+  async hasFolderInCopiedApplications(
+    userSub: string,
+    accessToken: string,
+    plan: ApplicationDependencyPlan,
+  ): Promise<boolean> {
+    const results = await Promise.all(
+      selectApplicationsToCopy(plan).map(({ dependency }) =>
+        this.dependenciesService.getDependenciesStrict(
+          accessToken,
+          userSub,
+          CatalogEntityType.Application,
+          dependency.id,
+        ),
+      ),
+    );
+    return results.some(({ dependencies }) =>
+      hasFolderDependency(dependencies),
+    );
   }
 
   /**

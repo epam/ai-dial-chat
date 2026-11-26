@@ -174,7 +174,7 @@ On the panel's Save, `runResourceSave` (`libs/chat-hooks/src/catalog/resource-sa
 | Org-unit folder the user may write to, New | New | `saveAsNewVersion(version, currentPersonalFolder)`, then the direct write of the new id into the unit folder; no `publishCatalogEntity` |
 | Org-unit folder the user may write to (create) | — | `createIn([])`, then the direct write into the unit folder; no `publishCatalogEntity` |
 
-An Organization destination takes a direct-write row only when it lies inside an org unit whose owner grants `write` on the resource type's namespace and the rights are loaded (`org-units-folder-permissions`); every other Organization destination keeps the publish rows. A failure of the direct write after the first step SHALL be reported like a failed publish (`ResourceSavePanelI18nKeys.SavedButPublishFailed` is replaced there by a dedicated key naming the unit folder).
+An Organization destination takes a direct-write row only when it lies inside an org unit whose owner grants `write` on the resource type's namespace and the rights are loaded (`org-units-folder-permissions`), and, for an application that refers to a folder of files, only when the user is a DIAL admin; every other Organization destination keeps the publish rows. A failure of the direct write after the first step SHALL be reported like a failed publish (`ResourceSavePanelI18nKeys.SavedButPublishFailed` is replaced there by a dedicated key naming the unit folder), except the server's `folderReferenceNeedsRequest` refusal, after which the save SHALL continue with the publish step of the same row family (a publication request for the saved id) and report it as a publication request, not as a failure.
 The Save panel SHALL NOT render an access-rules editor for any destination and SHALL NOT load folder rules. The publish request SHALL carry no `rules`, no `author` and no `publishCredentials`, so DIAL Core keeps the folder's existing rules. After a successful publish the orchestrator SHALL call `rememberPublishFolder(folderPath)`.
 
 Notifications, shown on success through `useOperationNotification` / `useNotification` helpers:
@@ -219,6 +219,11 @@ While a save runs, every panel control SHALL be disabled, and the Save button SH
 #### Scenario: Direct write into a unit
 - **WHEN** the user holds `write` on `applications` in unit `Delivery`, keeps the version and selects `Delivery/Teams`
 - **THEN** the application is saved, written into `Delivery/Teams`, no publication request is created, and the "saved to" notification shows
+
+#### Scenario: Folder reference refused by the server, request follows
+- **GIVEN** a user who is not a DIAL admin with `write` on `applications` in unit `Delivery`, and a DIAL Loop application whose dependencies the panel cannot list
+- **WHEN** they keep the version, select `Delivery/Teams`, and the direct write is answered with `folderReferenceNeedsRequest`
+- **THEN** the application stays saved, a publication request is created for `Delivery/Teams`, and the `EntityOperation.PublishRequested` notification shows with no error
 
 #### Scenario: Publish fails after a successful save
 - **WHEN** the save succeeds and the publish request fails
@@ -334,3 +339,22 @@ While the committed destination of the Save panel is a folder that takes a direc
 
 - **WHEN** the destination is under Personal or sends a publication request
 - **THEN** no check is sent
+
+### Requirement: The Save panel announces a folder reference that sends the save to a request
+
+The panel knows a folder reference when it lists the dependencies (a schema-form application): a listed `File` dependency that is a folder. For such an application and a user who is not a DIAL admin, an Organization destination inside an org unit SHALL take the publish rows of "Save sequencing by destination and version" and the folder SHALL stay selectable. For an application with an embedded editor, such as DIAL Loop opened in its editor, the panel cannot list the dependencies; the direct write is then tried as before and the sequencing requirement's `folderReferenceNeedsRequest` rule applies.
+
+While the direct-write rows are not taken for this reason, the panel SHALL show one information note in the destination note slot saying that the application refers to a folder of files and a publication request is sent instead of a direct save (`resourceSavePanel.directUnavailableFolder`). The note SHALL NOT change which folders are enabled, and a DIAL admin and every application without a folder reference SHALL see no such note.
+
+#### Scenario: Schema-form application with a folder reference
+- **GIVEN** a user who is not a DIAL admin with `write` on applications in the unit, and a form whose dependencies include a folder
+- **WHEN** they choose a folder of the unit
+- **THEN** the note is shown before saving, and saving creates a publication request for that folder
+
+#### Scenario: DIAL admin
+- **WHEN** a DIAL admin saves the same application into a unit folder
+- **THEN** no note is shown, the direct write is used and no publication request is created
+
+#### Scenario: Application without a folder reference
+- **WHEN** a user who is not a DIAL admin saves an application that refers to no folder into a unit folder they may write to
+- **THEN** no note is shown and the direct write is used

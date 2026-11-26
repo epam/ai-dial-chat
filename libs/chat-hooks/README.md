@@ -5676,7 +5676,7 @@ when `choice.isDirectWrite` is `true` and the adapter has `saveIntoOrgUnit`
 `saveIntoOrgUnit(savedId, folderPath)` replaces `publish`, and the result's
 `isWrittenToOrgUnit` is `true`. When that direct write fails with the server's `422` code
 `folderReferenceNeedsRequest` (`OrgUnitCopyErrorCode` of the generated client, read through
-`getApiErrorDetails`; the application refers to a folder of files and the user is not a DIAL
+`getApiErrorDetails`; the application, or an application dependency the server would copy, refers to a folder of files and the user is not a DIAL
 admin), the save continues with `publish` for the saved id instead, the result's `isPublished` is
 `true` and `isWrittenToOrgUnit` stays `false`; a failed `publish` then gives
 `SavedButPublishFailed`, and any other direct-write failure stays

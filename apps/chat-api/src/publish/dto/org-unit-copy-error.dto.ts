@@ -36,7 +36,7 @@ export class OrgUnitCopyErrorDto {
     enum: OrgUnitCopyErrorCode,
     enumName: 'OrgUnitCopyErrorCode',
     description:
-      '`folderReferenceNeedsRequest`: the application refers to a folder of files and the caller is not a DIAL admin, so it has to go through a publication request.',
+      '`folderReferenceNeedsRequest`: the application, or an application dependency to be copied, refers to a folder of files and the caller is not a DIAL admin, so it has to go through a publication request.',
   })
   code!: OrgUnitCopyErrorCode;
 }

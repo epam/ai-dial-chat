@@ -196,7 +196,7 @@ export class PublishController {
       "An application is copied together with its first-level private dependencies (in the caller's own bucket, written under a `.{application}.deps` folder next to it) and its uploaded icon, and refers to the copies; a dependency already copied is reused, and an icon that cannot be copied is dropped from the shared copy. " +
       'A `publications` right is not checked here: DIAL Core does not enforce it on a copy. ' +
       "Before the first copy the caller must hold `write` in the folder's org unit on the namespace of the application and of every dependency to copy, otherwise the answer is 403 naming the missing namespaces and nothing is written. " +
-      'An application that refers to a folder of files is written only for a DIAL admin, because DIAL Core copies such an application only for one; every other caller gets 422 with `code` `folderReferenceNeedsRequest` and nothing is written, and has to use a publication request. ' +
+      'An application that refers to a folder of files, or whose application dependency to be copied does, is written only for a DIAL admin, because DIAL Core copies such an application only for one; every other caller gets 422 with `code` `folderReferenceNeedsRequest` and nothing is written, and has to use a publication request. ' +
       'Answers 403 while the `features.orgUnitsEnabled` flag is off.',
   })
   @ApiBody({ type: CopyCatalogEntityToOrgUnitDto })
@@ -230,7 +230,7 @@ export class PublishController {
   @ApiResponse({
     status: 422,
     description:
-      'The application refers to a folder of files and the caller is not a DIAL admin (`code` `folderReferenceNeedsRequest`); nothing is written, a publication request is the way',
+      'The application, or an application dependency to be copied, refers to a folder of files and the caller is not a DIAL admin (`code` `folderReferenceNeedsRequest`); nothing is written, a publication request is the way',
     type: OrgUnitCopyErrorDto,
   })
   @ApiResponse({

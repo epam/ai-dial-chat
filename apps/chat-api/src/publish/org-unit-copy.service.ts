@@ -33,6 +33,7 @@ import {
   DIAL_TYPE_BY_DEPENDENCY,
   ApplicationPublishPreparationService,
   createEmptyDependencyPlan,
+  selectApplicationsToCopy,
   type ApplicationDependencyPlan,
 } from './application-publish-preparation.service';
 import { CatalogEntityType } from './dto/catalog-entity-params.dto';
@@ -309,6 +310,42 @@ export class OrgUnitCopyService {
   }
 
   /**
+   * Whether the direct write must be refused because the application, or an
+   * application dependency to be copied, refers to a folder of files and the
+   * caller is not a DIAL admin. Asks for admin rights once, and only when
+   * there is something to refuse.
+   * @param userSub - caller's session subject
+   * @param accessToken - caller's bearer token
+   * @param plan - the application's dependency plan
+   * @throws {Error} When the dependencies of a dependency to be copied cannot be read
+   */
+  private async refusesFolderReference(
+    userSub: string,
+    accessToken: string,
+    plan: ApplicationDependencyPlan,
+  ): Promise<boolean> {
+    if (
+      !plan.hasFolderReference &&
+      selectApplicationsToCopy(plan).length === 0
+    ) {
+      return false;
+    }
+    const isDialAdmin = await this.orgUnitsService.isDialAdmin(
+      userSub,
+      accessToken,
+    );
+    if (isDialAdmin !== false) return false;
+    return (
+      plan.hasFolderReference ||
+      (await this.preparation.hasFolderInCopiedApplications(
+        userSub,
+        accessToken,
+        plan,
+      ))
+    );
+  }
+
+  /**
    * Copies an application together with its first-level private dependencies
    * and icon: rights check, icon, staging copy, each missing dependency, the
    * staging copy to the target, and the staging copy's deletion. An
@@ -317,7 +354,7 @@ export class OrgUnitCopyService {
    * @param params - the caller, the own source and the destination of the application
    * @returns the dependencies this call copied, for cache clearing
    * @throws {ForbiddenException} When the caller may not write a namespace the write needs
-   * @throws {UnprocessableEntityException} `folderReferenceNeedsRequest` when the application refers to a folder of files and the caller is not a DIAL admin
+   * @throws {UnprocessableEntityException} `folderReferenceNeedsRequest` when the application, or an application dependency to be copied, refers to a folder of files and the caller is not a DIAL admin
    */
   private async copyApplication(
     params: CopyApplicationParams,
@@ -338,10 +375,7 @@ export class OrgUnitCopyService {
         leaf,
         true,
       )) ?? createEmptyDependencyPlan();
-    if (
-      plan.hasFolderReference &&
-      (await this.orgUnitsService.isDialAdmin(userSub, accessToken)) === false
-    ) {
+    if (await this.refusesFolderReference(userSub, accessToken, plan)) {
       throw createFolderReferenceNeedsRequest();
     }
     const iconUrl = await readPublishableApplicationIconUrl(
