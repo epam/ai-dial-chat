@@ -541,6 +541,12 @@ Configured at startup:
   Report-only mode accepts legacy HTML without the nonce marker with
   a startup warning; enforcement requires a nonce-aware build. See
   [CSP configuration](../apps/chat-api/README.md#content-security-policy).
+- `compression` — Brotli, gzip or deflate, by `Accept-Encoding`, for JSON responses of 1 KB and
+  more (`apps/chat-api/src/app/response-compression.ts`). SSE streams, ranged responses, proxied
+  files (including `.json` files: `pipeWebBody` marks them through
+  `apps/chat-api/src/common/utils/compression-passthrough.ts`) and the frontend's static assets pass
+  through uncompressed. The model, toolset and prompt
+  lists the chat loads on every page are megabytes of JSON.
 - `ValidationPipe` — whitelist + `forbidNonWhitelisted` + `transform`
 - URI versioning — business endpoints at `/api/v{N}/{resource}`
 - CORS with `credentials: true`, except the default-prefix MCP App resource and
@@ -1180,6 +1186,7 @@ Import direction is enforced by lint. Every Nx project carries exactly one `type
 | `@nestjs/throttler`                     | Rate limiting                                                      |
 | `@nestjs/cache-manager`                 | In-memory cache                                                    |
 | `helmet`                                | Security headers                                                   |
+| `compression`                           | Brotli/gzip for JSON API responses                                 |
 | `jose` + `openid-client`                | OIDC / JWT handling in auth module                                 |
 
 ---
