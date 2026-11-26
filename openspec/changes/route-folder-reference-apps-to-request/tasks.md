@@ -23,4 +23,3 @@ Backend first (the backstop), then the helpers, then the two panels. Application
 ## 4. Specs and verification
 
 - [x] 4.1 Reconcile the wording of `openspec/specs/org-units-folder-permissions/spec.md` (Save and Publish direct-write rules) through a MODIFIED delta. Verification: `openspec validate route-folder-reference-apps-to-request --strict` and `npm run validate:specs` pass.
-- [ ] 4.2 Reproduce on dev with a regular user with `write` on applications in a unit and a DIAL Loop application: Save panel gives a publication request with no "Forbidden"; Publish panel shows the note and files a request; the request can be approved and the folder arrives in the unit. With a DIAL admin the direct write still works. Verification: results recorded in `verification.md` of the change.

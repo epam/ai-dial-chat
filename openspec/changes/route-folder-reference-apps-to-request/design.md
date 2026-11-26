@@ -32,7 +32,7 @@ On the client the direct decision already has three places: the Publish panel th
 ## Risks / Trade-offs
 
 - [A regular user waits for approval where a direct save would be faster] → Intended; same as for plain public folders. The user sees the note before saving when the list is known.
-- [The request flow for a DIAL Loop application, with the requester also the approver, has not been run] → Verified on dev with a regular user as part of the last task before the change is archived.
+- [The request flow for a DIAL Loop application, with the requester also the approver, has not been run] → Not covered by a task of this change; the team checks it on dev with a regular user before release.
 - [The server cannot tell the caller is a DIAL admin when the rights read fails] → The check is skipped and Core answers, as for the existing namespace check.
-- [A DIAL admin's direct copy of a folder-reference app is assumed to work] → Supported by Core's code (the check is skipped) and by the dev run of a DIAL Loop application with a skill; re-verified in the last task.
+- [A DIAL admin's direct copy of a folder-reference app is assumed to work] → Supported by Core's code (the check is skipped) and by the dev run of a DIAL Loop application with a skill; the team re-checks it on dev before release.
 - [Spec wording: `org-units-folder-permissions` also says Save writes directly for a unit the user may write to] → Checked in task 4.1; the Save sequencing requirement itself is modified here.
