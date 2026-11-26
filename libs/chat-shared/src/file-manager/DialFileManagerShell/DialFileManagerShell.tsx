@@ -2,6 +2,8 @@ import {
   DialFileManager,
   DialFileManagerActions,
   DialFileManagerTabs,
+  FileManagerSortDirection,
+  FileManagerSortField,
   GridSelectionMode,
   type DialFileAcceptType,
   type DialDestinationRequest,
@@ -426,6 +428,27 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
     [isAttachVariant, labels.getSelectionLabel, bulkActionLabels],
   );
 
+  const sortLabels = labels.sort;
+  const sortOptions = useMemo(
+    () =>
+      sortLabels == null
+        ? undefined
+        : {
+            label: sortLabels.label,
+            fieldLabels: {
+              [FileManagerSortField.Name]: sortLabels.fieldLabels.name,
+              [FileManagerSortField.UpdatedAt]:
+                sortLabels.fieldLabels.updatedAt,
+              [FileManagerSortField.Size]: sortLabels.fieldLabels.size,
+            },
+            directionLabels: {
+              [FileManagerSortDirection.Asc]: sortLabels.directionLabels.asc,
+              [FileManagerSortDirection.Desc]: sortLabels.directionLabels.desc,
+            },
+          },
+    [sortLabels],
+  );
+
   const deleteConfirmationOptions = useMemo(
     () => ({
       cancelLabel: labels.deleteCancelLabel,
@@ -667,6 +690,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
             gridOptions={gridOptions}
             treeOptions={treeOptions}
             toolbarOptions={toolbarOptions}
+            sortOptions={sortOptions}
             bulkActionsToolbarOptions={bulkActionsToolbarOptions}
             autoSelectUploadedItems={autoSelectUploadedItems}
             emptyStateTitle={emptyStateCopy.title}

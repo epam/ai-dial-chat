@@ -404,6 +404,18 @@ const DialFileManagerModal: FC<Props> = ({
       ),
       metadataSizeLabel: t(DialFileManagerI18nKeys.MetadataSizeLabel),
       metadataAuthorLabel: t(DialFileManagerI18nKeys.MetadataAuthorLabel),
+      sort: {
+        label: t(ButtonsI18nKeys.Sort),
+        fieldLabels: {
+          name: t(DialFileManagerI18nKeys.SortName),
+          updatedAt: t(DialFileManagerI18nKeys.SortModifiedDate),
+          size: t(DialFileManagerI18nKeys.SortSize),
+        },
+        directionLabels: {
+          asc: t(DialFileManagerI18nKeys.SortAscending),
+          desc: t(DialFileManagerI18nKeys.SortDescending),
+        },
+      },
     }),
     [
       title,
