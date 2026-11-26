@@ -338,7 +338,7 @@ The Log out entry SHALL call `openLogout()` from `useLogout()`, which opens `Log
 `GET /api/v1/auth/me` SHALL return an optional `pictureUrl` on `UserProfileDto` (mirrored as `UserProfile.pictureUrl` in `@epam/ai-dial-chat-shared`), omitted when there is no picture. Its value is one of:
 
 - the `picture` claim, when it is an absolute `http(s)` URL (`getPictureClaim`);
-- the same-origin path `/api/v1/auth/me/picture`, when the session carries the `pic` flag.
+- the same-origin path `/api/v1/auth/me/picture` with a `u` query, when the session carries the `pic` flag. The `u` value SHALL be derived from the provider id and the subject, so it is stable for one user and differs between users; a browser-cached picture is then never shown to the next user who signs in on the same browser. The endpoint SHALL ignore the query.
 
 The login callback SHALL set `pic` only for an inline `data:` picture that `parseInlinePicture` accepts: JPEG, PNG, GIF or WebP, at most 256 KiB decoded, read from Keycloak UserInfo whose `sub` matches the ID token. The image itself SHALL NOT be stored in the session cookie. SVG and any other type SHALL be refused because SVG can carry script.
 
@@ -356,8 +356,14 @@ The login callback SHALL set `pic` only for an inline `data:` picture that `pars
 
 - **WHEN** Keycloak UserInfo for the signed-in subject carries `picture: 'data:image/jpeg;base64,...'`
 - **THEN** the session cookie holds only the `pic` flag and no `picture` claim
-- **AND** `GET /api/v1/auth/me` returns `pictureUrl: '/api/v1/auth/me/picture'`
+- **AND** `GET /api/v1/auth/me` returns `pictureUrl: '/api/v1/auth/me/picture?u=<per-user key>'`
 - **AND** `GET /api/v1/auth/me/picture` returns the JPEG bytes with `Content-Type: image/jpeg`
+
+#### Scenario: Another user signs in on the same browser
+
+- **WHEN** user A with an inline picture logs out and user B with an inline picture logs in on the same browser
+- **THEN** `GET /api/v1/auth/me` returns a different `pictureUrl` for user B than for user A
+- **AND** the sidebar avatar shows user B's picture, not user A's cached one
 
 #### Scenario: Unusable or missing picture
 

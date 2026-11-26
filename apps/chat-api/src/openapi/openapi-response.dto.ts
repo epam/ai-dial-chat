@@ -44,11 +44,13 @@ export class UserProfileDto {
   isAdmin!: boolean;
 
   @ApiPropertyOptional({
-    example: '/api/v1/auth/me/picture',
+    example: '/api/v1/auth/me/picture?u=Zm9vYmFyYmF6cXV4',
     description:
       "URL of the user's profile picture: the IdP's absolute http(s) " +
       '`picture` claim, or the same-origin `GET /auth/me/picture` path when ' +
-      'the IdP supplied the image inline. Omitted when there is no picture.',
+      'the IdP supplied the image inline. The inline path carries a per-user ' +
+      '`u` query so a browser-cached picture is never reused for another ' +
+      'user. Omitted when there is no picture.',
   })
   pictureUrl?: string;
 }
