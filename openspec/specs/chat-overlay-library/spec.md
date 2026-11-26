@@ -292,7 +292,7 @@ Enabling `enabledFeatures` after construction does not retroactively change the 
 
 `setOverlayOptions()` SHALL accept an updated `auth` option via the `Partial<Pick<...>>` shape: when `auth` is included in the update, the stored `options.auth` SHALL be replaced. When `auth` is absent from the update, the existing stored `auth` SHALL be preserved. The updated options are re-sent to the iframe via `sendCurrentOverlayOptions()` as before. An in-progress external login attempt (managed by the app side) is NOT affected by this update; the new map takes effect on the next login initiation.
 
-`ChatOverlayOptions` also accepts a deprecated `signInOptions` (`LegacySignInOptions`: `autoSignIn`, `signInProvider`, `signInInNewWindow`). `sendCurrentOverlayOptions()` derives the effective `auth` on every send through `resolveOverlayAuth` (`libs/chat-overlay/src/lib/internal/legacy-sign-in.ts`): when `signInOptions.autoSignIn` is `true`, `signInProvider` is non-blank, and `auth.autoSignInProvider` is not set, the trimmed `signInProvider` becomes the transmitted `authAutoSignInProvider` and is added to the transmitted `authProviderUiModes` as `sameWindow` (`external` when `signInInNewWindow` is `true`), unless `auth.providerUiModes` already maps that provider. Otherwise the stored `auth` is sent unchanged.
+`ChatOverlayOptions` has no `signInOptions` field: the legacy `LegacySignInOptions` shape was removed, and `sendCurrentOverlayOptions()` sends the stored `auth` unchanged.
 
 `libs/chat-overlay` MUST NOT fetch providers, construct `/api` URL paths, read auth/session state, inspect cookies, or encode any knowledge of specific IdP brands.
 
@@ -301,12 +301,6 @@ Enabling `enabledFeatures` after construction does not retroactively change the 
 - **WHEN** `new ChatOverlay('#root', { domain: 'https://chat.example.com' })` is called
 - **THEN** the instance is created without error
 - **AND** the `SET_OVERLAY_OPTIONS` payload does NOT include `authProviderUiModes`
-
-#### Scenario: Legacy signInOptions are translated into auth fields
-
-- **WHEN** `new ChatOverlay('#root', { domain, signInOptions: { autoSignIn: true, signInProvider: 'keycloak' } })` sends its options
-- **THEN** the `SET_OVERLAY_OPTIONS` payload contains `authAutoSignInProvider: 'keycloak'` and `authProviderUiModes: { keycloak: 'sameWindow' }`
-- **AND** with `signInInNewWindow: true` the mode is `'external'`, and an explicit `auth.autoSignInProvider` suppresses the translation
 
 #### Scenario: Constructor with auth.providerUiModes transmits authProviderUiModes
 
