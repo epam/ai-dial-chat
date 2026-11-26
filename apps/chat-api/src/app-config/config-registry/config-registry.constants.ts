@@ -58,7 +58,7 @@ const boundedText = (
  * needs a new schema version. Unique ids cannot be expressed in JSON Schema;
  * Chat keeps the first hint with an id and drops the rest with a warning.
  *
- * Unchanged since schema 1.0.0. */
+ * Schema 1.3.0 added the project view and scheduled task form targets. */
 const ONBOARDING_HINTS_SCHEMA: ManagedValueSchema = {
   type: ManagedSchemaType.Array,
   maxItems: 50,

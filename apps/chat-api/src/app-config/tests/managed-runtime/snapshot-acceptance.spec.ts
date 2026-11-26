@@ -176,7 +176,7 @@ describe('acceptSnapshot', () => {
   });
 
   it('rejects a version this build does not support', () => {
-    expect(rejectionOf(snapshotBody({ schemaVersion: '1.3.0' }))).toBe(
+    expect(rejectionOf(snapshotBody({ schemaVersion: '1.4.0' }))).toBe(
       ManagedRejectionReason.UnsupportedSchema,
     );
   });
@@ -250,7 +250,7 @@ describe('acceptSnapshot', () => {
     const result = acceptSnapshot(snapshotBody({ payload }), chatContext());
     expect(result.accepted).toBe(true);
     if (!result.accepted) return;
-    expect(result.snapshot.schemaVersion).toBe('1.2.0');
+    expect(result.snapshot.schemaVersion).toBe('1.3.0');
   });
 
   it('rejects an announcement title Studio would never publish', () => {
@@ -408,7 +408,12 @@ describe('acceptSnapshot', () => {
 
 describe('compileManagedPayloadValidators', () => {
   it('compiles every supported version from the bundled artifacts', () => {
-    expect([...validators.keys()]).toEqual(['1.0.0', '1.1.0', '1.2.0']);
+    expect([...validators.keys()]).toEqual([
+      '1.0.0',
+      '1.1.0',
+      '1.2.0',
+      '1.3.0',
+    ]);
   });
 
   it('refuses an artifact whose hash differs from its pin', () => {

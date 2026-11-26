@@ -88,6 +88,18 @@ export interface OnboardingTargetLabels {
   projectChatBack: string;
   /** The scheduled task form's "Configuration" section. */
   scheduledTaskConfiguration: string;
+  /** The scheduled task form's "Details" section. */
+  scheduledTaskDetails: string;
+  /** The scheduled task form's "Skills" picker. */
+  scheduledTaskSkills: string;
+  /** The start of the scheduled task form's "Instructions" label, which may carry a "required" marker. */
+  scheduledTaskInstructions: string;
+  /** Every state of the instructions' "Refine with AI" button. */
+  scheduledTaskRefine: string[];
+  /** The scheduled task form's "Change timezone" button. */
+  scheduledTaskTimezone: string;
+  /** The scheduled task form's "Start date" picker label. */
+  scheduledTaskStartDate: string;
   /** The scheduled task form's "Repeat" picker. */
   scheduledTaskRepeat: string;
   /** The fixed start of the scheduled task form's model or agent picker name. */
@@ -150,6 +162,10 @@ export interface OnboardingTargetLabels {
   projectsSearch: string;
   /** The project view's chats section. */
   projectChats: string;
+  /** The project view's "Outputs" heading. */
+  projectOutputs: string;
+  /** The project view's "Chats" heading. */
+  projectChatList: string;
   /** The project view's details panel. */
   projectDetails: string;
   /** The Scheduled tasks page's "New task" button. */
@@ -244,6 +260,13 @@ const buildResolvers = (
     labels: OnboardingTargetLabels,
   ): HTMLElement | null =>
     firstNamed(mainContent(), 'aside', labels.projectDetails);
+
+  /* The project view's chats section: its composer, Outputs and Chats. */
+  const projectChatsSections = (labels: OnboardingTargetLabels): Element[] =>
+    named(mainContent(), 'section', labels.projectChats);
+
+  const scheduledTaskGroups = (name: string): Element[] =>
+    named(mainContent(), '[role="group"]', name);
 
   const scheduledTaskHistoryList = (
     labels: OnboardingTargetLabels,
@@ -465,6 +488,54 @@ const buildResolvers = (
             accessibleName(element),
           ),
         ),
+      ),
+    [OnboardingHintTarget.ProjectOutputs]: (labels) =>
+      firstNamed(
+        projectChatsSections(labels),
+        'section',
+        labels.projectOutputs,
+      ),
+    [OnboardingHintTarget.ProjectChatList]: (labels) =>
+      firstNamed(
+        projectChatsSections(labels),
+        'section',
+        labels.projectChatList,
+      ),
+    [OnboardingHintTarget.ScheduledTaskDetails]: (labels) =>
+      firstOnScreen(scheduledTaskGroups(labels.scheduledTaskDetails)),
+    [OnboardingHintTarget.ScheduledTaskSkills]: (labels) =>
+      firstNamed(
+        scheduledTaskGroups(labels.scheduledTaskConfiguration),
+        '[role="combobox"]',
+        labels.scheduledTaskSkills,
+      ),
+    /* The refinable field is a group named by its label; without refinement, the editor's textarea is. */
+    [OnboardingHintTarget.ScheduledTaskInstructions]: (labels) =>
+      firstOnScreen(
+        queryAll(
+          scheduledTaskGroups(labels.scheduledTaskConfiguration),
+          '[role="group"], textarea',
+        ).filter((element) =>
+          startsWithNonEmpty(labels.scheduledTaskInstructions)(
+            accessibleName(element),
+          ),
+        ),
+      ),
+    [OnboardingHintTarget.ScheduledTaskRefineInstructions]: (labels) =>
+      findControlBy(
+        scheduledTaskGroups(labels.scheduledTaskConfiguration),
+        isOneOf(...labels.scheduledTaskRefine),
+      ),
+    [OnboardingHintTarget.ScheduledTaskTimezone]: (labels) =>
+      findControl(
+        scheduledTaskGroups(labels.scheduledTaskDetails),
+        labels.scheduledTaskTimezone,
+      ),
+    /* The picker is named by its label followed by its value or placeholder. */
+    [OnboardingHintTarget.ScheduledTaskStartDate]: (labels) =>
+      findControlBy(
+        scheduledTaskGroups(labels.scheduledTaskDetails),
+        startsWithNonEmpty(labels.scheduledTaskStartDate),
       ),
     [OnboardingHintTarget.ScheduledTaskStartNow]: (labels) =>
       findControlBy(

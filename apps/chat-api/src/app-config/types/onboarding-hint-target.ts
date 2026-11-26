@@ -150,4 +150,20 @@ export enum OnboardingHintTarget {
   ActiveChat = 'active-chat',
   /** The "More actions" menu button of the open conversation's row (pin, duplicate, export, share…). */
   ActiveChatActions = 'active-chat-actions',
+  /** The project view's "Outputs" section, once the project's chats produced files. */
+  ProjectOutputs = 'project-outputs',
+  /** The project view's "Chats" list. */
+  ProjectChatList = 'project-chat-list',
+  /** The scheduled task form's "Details" section. */
+  ScheduledTaskDetails = 'scheduled-task-details',
+  /** The scheduled task form's "Skills" picker. */
+  ScheduledTaskSkills = 'scheduled-task-skills',
+  /** The scheduled task form's "Instructions" editor. */
+  ScheduledTaskInstructions = 'scheduled-task-instructions',
+  /** The "Refine with AI" button of the scheduled task form's instructions. */
+  ScheduledTaskRefineInstructions = 'scheduled-task-refine-instructions',
+  /** The scheduled task form's "Change timezone" button. */
+  ScheduledTaskTimezone = 'scheduled-task-timezone',
+  /** The scheduled task form's "Start date" picker. */
+  ScheduledTaskStartDate = 'scheduled-task-start-date',
 }

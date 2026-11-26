@@ -44,6 +44,12 @@ const labels: OnboardingTargetLabels = {
   projectContextSearch: 'Search context files',
   projectChatBack: 'Back to',
   scheduledTaskConfiguration: 'Configuration',
+  scheduledTaskDetails: 'Details',
+  scheduledTaskSkills: 'Skills',
+  scheduledTaskInstructions: 'Instructions',
+  scheduledTaskRefine: ['Refine with AI', 'Refining', 'Regenerate'],
+  scheduledTaskTimezone: 'Change timezone',
+  scheduledTaskStartDate: 'Start date',
   scheduledTaskRepeat: 'Repeat',
   scheduledTaskModel: 'Model or Agent',
   scheduledTaskStartNow: 'Start now',
@@ -80,6 +86,8 @@ const labels: OnboardingTargetLabels = {
   projectsCreate: 'New project',
   projectsSearch: 'Search projects',
   projectChats: 'Project chats',
+  projectOutputs: 'Outputs',
+  projectChatList: 'Chats',
   projectDetails: 'Details',
   scheduledTasksCreate: 'New task',
   scheduledTasksSearch: 'Search scheduled tasks by name',
@@ -563,6 +571,77 @@ describe('resolveOnboardingTarget', () => {
       );
     });
 
+    it("finds the scheduled task form's details, skills, instructions, timezone and start date", () => {
+      render(
+        <main id="main-content">
+          <div role="group" aria-label="Details">
+            <button type="button">Change timezone</button>
+            <span id="start-label">Start date</span>
+            <span id="start-value">Pick start date</span>
+            <div role="button" aria-labelledby="start-label start-value" />
+          </div>
+          <div role="group" aria-label="Configuration">
+            <label htmlFor="skills">Skills</label>
+            <button type="button" role="combobox" id="skills" />
+            <div role="group" aria-labelledby="instructions-label">
+              <label id="instructions-label" htmlFor="instructions">
+                Instructions*
+              </label>
+              <button type="button">Refine with AI</button>
+              <textarea id="instructions" />
+            </div>
+          </div>
+        </main>,
+      );
+      expect(resolve(OnboardingHintTarget.ScheduledTaskDetails)).toBe(
+        screen.getByRole('group', { name: 'Details' }),
+      );
+      expect(resolve(OnboardingHintTarget.ScheduledTaskSkills)).toBe(
+        screen.getByRole('combobox', { name: 'Skills' }),
+      );
+      expect(resolve(OnboardingHintTarget.ScheduledTaskInstructions)).toBe(
+        screen.getByRole('group', { name: 'Instructions*' }),
+      );
+      expect(
+        resolve(OnboardingHintTarget.ScheduledTaskRefineInstructions),
+      ).toBe(screen.getByRole('button', { name: 'Refine with AI' }));
+      expect(resolve(OnboardingHintTarget.ScheduledTaskTimezone)).toBe(
+        screen.getByRole('button', { name: 'Change timezone' }),
+      );
+      expect(resolve(OnboardingHintTarget.ScheduledTaskStartDate)).toBe(
+        screen.getByRole('button', { name: 'Start date Pick start date' }),
+      );
+    });
+
+    it('finds the instructions textarea when the field cannot be refined', () => {
+      render(
+        <main id="main-content">
+          <div role="group" aria-label="Configuration">
+            <label htmlFor="instructions">Instructions</label>
+            <textarea id="instructions" />
+          </div>
+        </main>,
+      );
+      expect(resolve(OnboardingHintTarget.ScheduledTaskInstructions)).toBe(
+        screen.getByRole('textbox', { name: 'Instructions' }),
+      );
+      expect(
+        resolve(OnboardingHintTarget.ScheduledTaskRefineInstructions),
+      ).toBeNull();
+    });
+
+    it("skips the scheduled task form's controls inside an inert subtree", () => {
+      render(
+        <main id="main-content">
+          <div role="group" aria-label="Details" inert>
+            <button type="button">Change timezone</button>
+          </div>
+        </main>,
+      );
+      expect(resolve(OnboardingHintTarget.ScheduledTaskDetails)).toBeNull();
+      expect(resolve(OnboardingHintTarget.ScheduledTaskTimezone)).toBeNull();
+    });
+
     it('finds no form submit button on a page without its form', () => {
       render(
         <main id="main-content">
@@ -575,6 +654,40 @@ describe('resolveOnboardingTarget', () => {
   });
 
   describe('project view', () => {
+    it('finds the Outputs section and the Chats list inside the project chats', () => {
+      render(
+        <main id="main-content">
+          <section aria-label="Project chats">
+            <section aria-labelledby="outputs-heading">
+              <h2 id="outputs-heading">Outputs</h2>
+            </section>
+            <section aria-labelledby="chats-heading">
+              <h2 id="chats-heading">Chats</h2>
+            </section>
+          </section>
+        </main>,
+      );
+      expect(resolve(OnboardingHintTarget.ProjectOutputs)).toBe(
+        screen.getByRole('region', { name: 'Outputs' }),
+      );
+      expect(resolve(OnboardingHintTarget.ProjectChatList)).toBe(
+        screen.getByRole('region', { name: 'Chats' }),
+      );
+    });
+
+    it('finds no Outputs section before the project has outputs, nor one outside the project', () => {
+      render(
+        <main id="main-content">
+          <section aria-label="Project chats" />
+          <section aria-labelledby="outputs-heading">
+            <h2 id="outputs-heading">Outputs</h2>
+          </section>
+        </main>,
+      );
+      expect(resolve(OnboardingHintTarget.ProjectOutputs)).toBeNull();
+      expect(resolve(OnboardingHintTarget.ProjectChatList)).toBeNull();
+    });
+
     it('finds the header actions next to the details panel', () => {
       render(
         <main id="main-content">
