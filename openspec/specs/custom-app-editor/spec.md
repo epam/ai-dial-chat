@@ -89,7 +89,7 @@ On save in creation mode, `CustomAppEditor` SHALL NOT send `type` in the create 
 - **THEN** the create request body carries no `type` field and no `application_type_schema_id`
 
 ### Requirement: General step validation — name and version
-`CustomAppEditor` SHALL validate metadata through `useMetadataForm` with `validateVersionPattern: SEMVER_VERSION_PATTERN`. `name` is required. A non-empty version must be one or more dot-separated numeric segments (e.g. `0.0.1`, `2.0`).
+`CustomAppEditor` SHALL validate metadata through `useMetadataForm` with `validateVersionPattern: true`, i.e. the shared resource version rule (`resource-version-pattern`), in create mode, and with `STORED_VERSION_PATTERN` in edit mode. `name` is required. A non-empty version must match that rule: 1 to 64 letters, digits, underscores, dots, plus signs or hyphens, not ending with a dot, not containing `__` and not starting with `_` (e.g. `0.0.1`, `beta-2`).
 
 Each field's error SHALL appear once that field has been touched (on blur), independently of the other field. All errors SHALL appear on a submit attempt. The primary button SHALL NOT be disabled for validation reasons. Instead, a submit attempt with invalid metadata SHALL show the errors, focus the first invalid field and send no request.
 
@@ -100,7 +100,7 @@ The version-invalid error message SHALL be `"Version format is invalid (example:
 - **THEN** a name-required error is shown under the Name field
 
 #### Scenario: Version format error on blur
-- **WHEN** the Version field contains a value that is not entirely dot-separated numeric segments (e.g. contains letters) and loses focus
+- **WHEN** the Version field contains a value that breaks the shared rule (e.g. contains a space, ends with a dot, contains `__`, starts with `_`, or is longer than 64 characters) and loses focus
 - **THEN** a version-invalid error ("Version format is invalid (example: 0.0.1)") is shown under the Version field
 
 #### Scenario: Submit attempt with invalid metadata
@@ -158,7 +158,7 @@ On save in edit mode, `CustomAppEditor` SHALL call `PATCH /api/v1/applications/:
 
 ### Requirement: `UpdateApplicationBodyDto` — settings fields
 `UpdateApplicationBodyDto` (`apps/chat-api/src/applications/dto/update-application.dto.ts`) SHALL accept the following optional settings fields:
-- `version` — string matching `/^[a-zA-Z0-9._-]+$/`
+- `version` — string matching the shared resource version rule (`resource-version-pattern`)
 - `endpoint` — URL string (protocol required, TLD not required, trailing dot allowed)
 - `features` — `Record<string, unknown>` object
 - `inputAttachmentTypes` — `string[]`, each entry matching a MIME-type pattern such as `image/png`
