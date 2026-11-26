@@ -173,13 +173,13 @@ describe('FileManagerDestinationPanel', () => {
     );
   });
 
-  it('starts Copy on the source folder and Move on the first folder it accepts', () => {
+  it('starts Copy and Move on the source folder', () => {
     const { unmount } = renderPanel(makeRequest(DestinationFolderMode.Copy));
     expect(screen.getByLabelText('Destination').textContent).toBe('reports');
     unmount();
 
     renderPanel(makeRequest(DestinationFolderMode.Move));
-    expect(screen.getByLabelText('Destination').textContent).toBe('');
+    expect(screen.getByLabelText('Destination').textContent).toBe('reports');
   });
 
   it('disables Move for a moved folder and its subfolders', () => {
@@ -236,6 +236,21 @@ describe('FileManagerDestinationPanel', () => {
       (screen.getByRole('button', { name: 'Move here' }) as HTMLButtonElement)
         .disabled,
     ).toBe(true);
+  });
+
+  it('disables Move but not Copy while the source folder is the destination', () => {
+    const { unmount } = renderPanel(makeRequest(DestinationFolderMode.Move));
+    expect(
+      (screen.getByRole('button', { name: 'Move here' }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+    unmount();
+
+    renderPanel(makeRequest(DestinationFolderMode.Copy));
+    expect(
+      (screen.getByRole('button', { name: 'Copy here' }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(false);
   });
 
   it('keeps the primary button disabled while the destination is loading', () => {
