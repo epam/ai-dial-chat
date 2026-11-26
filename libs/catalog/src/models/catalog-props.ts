@@ -19,6 +19,10 @@ import type { CatalogCardRenderProps } from './card-props';
 import type { CatalogItem } from './catalog-item';
 import type { CatalogStyles } from './catalog-styles';
 import type {
+  CatalogAboutFooterRenderProps,
+  CatalogDetailsIdentityRenderProps,
+} from './details-slots';
+import type {
   CatalogContentFilePreview,
   CatalogContentFileTreeRenderProps,
   CatalogItemDetailsFetchResult,
@@ -442,6 +446,26 @@ export interface CatalogProps {
   renderContentFileTree?: (
     props: CatalogContentFileTreeRenderProps,
   ) => ReactNode;
+  /**
+   * Draws the details panel's identity block (icon, caption, name, version,
+   * featured chip, status badge and folder path) in place of the built-in one,
+   * so a host can give it its own design, e.g. a provider and a topic above
+   * the name. The action row below stays the panel's own. The slot receives
+   * the item plus the panel's `statusBadge` and folder-path `footer` nodes to
+   * place. Omitted, the built-in block renders. Forwarded to
+   * `DetailsPanel.renderDetailsIdentity`.
+   */
+  renderDetailsIdentity?: (
+    props: CatalogDetailsIdentityRenderProps,
+  ) => ReactNode;
+  /**
+   * Draws the footer of the details panel's About tab, under the description,
+   * in place of the built-in topic tags, e.g. capability tags. Return `null`
+   * to show nothing; the tab is empty when the item has no description and the
+   * slot returns nothing. Omitted, the topic tags render. Forwarded to
+   * `DetailsPanel.renderAboutFooter`.
+   */
+  renderAboutFooter?: (props: CatalogAboutFooterRenderProps) => ReactNode;
   /**
    * Called immediately when the "Delete" button in the details panel is
    * clicked, with no confirmation step. Shown only when the item's `isMyApp`

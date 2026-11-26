@@ -317,8 +317,12 @@ vi.mock('../../Details/DetailsPanel', () => ({
     onLogin,
     onLogout,
     onClose,
+    renderDetailsIdentity,
+    renderAboutFooter,
   }: {
     item: CatalogItem;
+    renderDetailsIdentity?: (props: { item: CatalogItem }) => React.ReactNode;
+    renderAboutFooter?: (props: { item: CatalogItem }) => React.ReactNode;
     isOpen?: boolean;
     isPrimaryActionVisible?: (item: CatalogItem) => boolean;
     shareOverlay?: (item: CatalogItem, onClose: () => void) => React.ReactNode;
@@ -360,6 +364,8 @@ vi.mock('../../Details/DetailsPanel', () => ({
         </button>
       )}
       {shareOverlay?.(item, () => undefined)}
+      {renderDetailsIdentity?.({ item })}
+      {renderAboutFooter?.({ item })}
       <span>{`details:${JSON.stringify(item.details ?? null)}`}</span>
       <span>{`isDetailsLoading:${String(isDetailsLoading)}`}</span>
       <span>{`isOpen:${String(isOpen)}`}</span>
@@ -671,6 +677,22 @@ describe('Catalog', () => {
       expect.any(Function),
     );
     expect(screen.getByText('share overlay content')).toBeTruthy();
+  });
+
+  it('passes renderDetailsIdentity and renderAboutFooter through to the details panel', async () => {
+    render(
+      <Catalog
+        items={[makeItem('1', 'Claude')]}
+        favorites={[]}
+        renderDetailsIdentity={({ item }) => <span>identity:{item.id}</span>}
+        renderAboutFooter={({ item }) => <span>footer:{item.id}</span>}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Claude' }));
+
+    expect(screen.getByText('identity:1')).toBeTruthy();
+    expect(screen.getByText('footer:1')).toBeTruthy();
   });
 
   it('calls onFetchDetails when the details panel opens', async () => {

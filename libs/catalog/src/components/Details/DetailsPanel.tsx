@@ -78,6 +78,8 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   onLoadContentFilePreview,
   renderContentFilePreview,
   renderContentFileTree,
+  renderDetailsIdentity,
+  renderAboutFooter,
   renderCredentials,
   onDelete,
   onUnshare,
@@ -432,6 +434,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
           <>
             <Header
               item={item}
+              renderDetailsIdentity={renderDetailsIdentity}
               onUseInChat={onUseInChat}
               isPrimaryActionVisible={isPrimaryActionVisible}
               onShare={onShare}
@@ -495,6 +498,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
               isDetailsLoading={isDetailsLoading}
               contentFile={contentFile}
               renderContentFileTree={renderContentFileTree}
+              renderAboutFooter={renderAboutFooter}
               texts={texts}
               detailsStyles={detailsStyles}
               limitsFooterNote={limitsFooterNote}

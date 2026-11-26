@@ -196,8 +196,10 @@ vi.mock('../Header/Header', () => ({
     hasPublishedFolders,
     isPublishHistoryResolved,
     onRequestPublishHistory,
+    renderDetailsIdentity,
   }: {
     item: CatalogItem;
+    renderDetailsIdentity?: (props: { item: CatalogItem }) => React.ReactNode;
     onOpenPublish?: () => void;
     onDownload?: (item: CatalogItem) => void;
     isDownloadVisible?: (item: CatalogItem) => boolean;
@@ -214,6 +216,7 @@ vi.mock('../Header/Header', () => ({
     onRequestPublishHistory?: () => void;
   }) => (
     <>
+      {renderDetailsIdentity?.({ item })}
       {isPublishHistoryResolved && <span>PublishHistorySettled</span>}
       <button onClick={onOpenPublish}>Publish</button>
       {/* Stands in for hovering/opening the real Manage menu, which is what
@@ -277,7 +280,12 @@ vi.mock(
   }),
 );
 vi.mock('../TabsContent/About', () => ({
-  AboutTab: () => <div>about content</div>,
+  AboutTab: ({ footer }: { footer?: React.ReactNode }) => (
+    <div>
+      about content
+      {footer}
+    </div>
+  ),
 }));
 vi.mock('../TabsContent/Overview', () => ({
   Overview: () => <div>Overview</div>,
@@ -3180,6 +3188,64 @@ describe('DetailsPanel — empty tabs', () => {
     // AboutTab is mocked in this file as 'about content'.
     expect(screen.getByText('about content')).toBeTruthy();
     expect(screen.queryByText('No data')).toBeNull();
+  });
+});
+
+describe('DetailsPanel — host slots', () => {
+  it('passes renderDetailsIdentity on to the header', () => {
+    renderPanel({
+      renderDetailsIdentity: ({ item: shown }) => (
+        <span>Identity of {shown.name}</span>
+      ),
+    });
+
+    expect(screen.getByText('Identity of GPT-4o')).toBeTruthy();
+  });
+
+  it('renders the About footer slot inside the About tab', () => {
+    renderPanel({
+      item: makeItem({ description: 'A capable model' }),
+      renderAboutFooter: ({ item: shown }) => (
+        <span>Footer of {shown.name}</span>
+      ),
+    });
+
+    expect(screen.getByText('Footer of Claude')).toBeTruthy();
+  });
+
+  it('does not show the empty state for a bare item whose About footer renders something', () => {
+    renderPanel({
+      item: makeItem({ description: '', topics: [] }),
+      renderAboutFooter: () => <span>Capabilities</span>,
+    });
+
+    expect(screen.getByText('Capabilities')).toBeTruthy();
+    expect(screen.queryByText('No data')).toBeNull();
+  });
+
+  it('shows the empty state for a bare item whose About footer renders nothing', () => {
+    renderPanel({
+      item: makeItem({ description: '', topics: [] }),
+      renderAboutFooter: () => null,
+    });
+
+    expect(screen.getByText('No data')).toBeTruthy();
+  });
+
+  it('does not call the About footer slot for another tab', async () => {
+    const renderAboutFooter = vi.fn(() => <span>Capabilities</span>);
+    renderPanel({
+      item: makeItem({
+        description: 'A capable model',
+        details: { overview: { sections: [] } },
+      }),
+      renderAboutFooter,
+    });
+    renderAboutFooter.mockClear();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Overview' }));
+
+    expect(renderAboutFooter).not.toHaveBeenCalled();
   });
 });
 

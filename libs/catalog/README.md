@@ -411,6 +411,58 @@ const renderCard = ({ item, onClick }: CatalogCardRenderProps) => (
 />;
 ```
 
+#### Drawing the details header and the About footer
+
+The details panel's header identity block and the About tab's footer are built
+in. A host that needs a different design passes either of two slots:
+
+- `renderDetailsIdentity` draws the identity block (icon, caption, name,
+  version, Featured chip, limit-status badge and folder path) in place of the
+  built-in one. It receives `{ item, statusBadge, footer }`: `statusBadge` is
+  the panel's "Running low" / "Limit reached" node (absent without a limit
+  status) and `footer` the folder-path node (absent outside a folder). Place
+  them where the host's design wants them; the Featured chip is the host's to
+  draw from `item.isFeatured`. The action row under the identity (primary
+  action, Share, Manage, credentials) stays the panel's own and still starts at
+  the 60px text inset of a 52px icon plus its gap;
+- `renderAboutFooter` draws the footer under the description on the About tab
+  in place of the topic tags. It receives `{ item }`. Return `null` to show
+  nothing; the tab shows its empty state when the item has no description and
+  the slot returns nothing. The slot is called only while About is the active
+  tab.
+
+Without a slot the built-in block renders and nothing changes.
+
+```tsx
+import {
+  Catalog,
+  type CatalogAboutFooterRenderProps,
+  type CatalogDetailsIdentityRenderProps,
+} from '@epam/ai-dial-catalog';
+
+const renderDetailsIdentity = ({
+  item,
+  statusBadge,
+  footer,
+}: CatalogDetailsIdentityRenderProps) => (
+  <MyIdentity item={item} statusBadge={statusBadge} footer={footer} />
+);
+
+const renderAboutFooter = ({ item }: CatalogAboutFooterRenderProps) => (
+  <CapabilityTags item={item} />
+);
+
+<Catalog
+  items={items}
+  favorites={favoriteItems}
+  renderDetailsIdentity={renderDetailsIdentity}
+  renderAboutFooter={renderAboutFooter}
+/>;
+```
+
+`DetailsPanel` accepts the same two props, so a host that mounts the panel
+itself can pass them there.
+
 #### Mobile browse settings
 
 Below 768px (`useIsPhone` from `@epam/ai-dial-chat-shared`)

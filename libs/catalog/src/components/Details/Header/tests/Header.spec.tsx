@@ -1852,6 +1852,69 @@ describe('Header', () => {
   });
 });
 
+describe('Header — renderDetailsIdentity', () => {
+  it('renders the host identity in place of the built-in one and keeps the action row', () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Model)}
+        renderDetailsIdentity={({ item }) => (
+          <div>Host identity of {item.name}</div>
+        )}
+      />,
+    );
+
+    expect(screen.getByText('Host identity of Claude')).toBeTruthy();
+    expect(screen.queryByText(CatalogEntityType.Model)).toBeNull();
+    expect(screen.getByRole('button', { name: 'Use in chat' })).toBeTruthy();
+  });
+
+  it('hands the host the limit status badge', () => {
+    render(
+      <Header
+        item={{
+          ...makeItem(CatalogEntityType.Model),
+          details: {
+            limits: { groups: [], status: CatalogLimitStatus.RunningLow },
+          },
+        }}
+        renderDetailsIdentity={({ statusBadge }) => <div>{statusBadge}</div>}
+      />,
+    );
+
+    expect(screen.getByText('Running low')).toBeTruthy();
+  });
+
+  it('hands the host a folder path node only for an item in a folder', () => {
+    const renderDetailsIdentity = vi.fn(() => <div />);
+    const { rerender } = render(
+      <Header
+        item={makeItem(CatalogEntityType.Model)}
+        renderDetailsIdentity={renderDetailsIdentity}
+      />,
+    );
+
+    expect(renderDetailsIdentity).toHaveBeenLastCalledWith({
+      item: expect.objectContaining({ id: '1' }),
+      statusBadge: undefined,
+      footer: undefined,
+    });
+
+    rerender(
+      <Header
+        item={{
+          ...makeItem(CatalogEntityType.Model),
+          folder: ['Team', 'Docs'],
+        }}
+        renderDetailsIdentity={renderDetailsIdentity}
+      />,
+    );
+
+    expect(renderDetailsIdentity).toHaveBeenLastCalledWith(
+      expect.objectContaining({ footer: expect.anything() }),
+    );
+  });
+});
+
 /*
  * Which of Share and Publish sits in the action row and which sits in the
  * Manage menu is host-configurable. The defaults are the historical
