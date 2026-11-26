@@ -1,11 +1,13 @@
-import { buildCssVars, ItemHeader } from '@epam/ai-dial-chat-shared';
+import {
+  buildCssVars,
+  ItemHeader,
+  SortMenuButton,
+} from '@epam/ai-dial-chat-shared';
 import {
   ButtonAppearance,
-  ButtonDropdown,
   ButtonVariant,
   ElementSize,
   mergeClasses,
-  MenuItemMark,
   NeutralButton,
   NoDataContent,
   Popup,
@@ -13,7 +15,6 @@ import {
   PrimaryButton,
   Search,
   Spinner,
-  type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
 import {
   type FC,
@@ -55,7 +56,7 @@ export interface CatalogPickerModalLabels {
   noResults?: string;
   /** Retry button label. Defaults to `'Retry'`. */
   retry?: string;
-  /** Sort button label while no sort option matches. Defaults to `'Sort'`. */
+  /** Accessible name and tooltip of the icon-only sort button. Defaults to `'Sort'`. */
   sort?: string;
   /** "Recently updated" sort option. Defaults to `'Recently Updated'`. */
   sortUpdated?: string;
@@ -253,21 +254,6 @@ export const CatalogPickerModal: FC<CatalogPickerModalProps> = ({
     ],
     [labels.sortUpdated, labels.sortNewest, labels.sortNameAZ],
   );
-  const sortItems = useMemo<DropdownItem[]>(
-    () =>
-      sortOptions.map((option) => ({
-        key: option.value,
-        label: option.label,
-        mark: MenuItemMark.Check,
-        checked: option.value === sortKey,
-        onClick: () => setSortKey(option.value),
-      })),
-    [sortOptions, sortKey],
-  );
-  const activeSortLabel =
-    sortOptions.find((option) => option.value === sortKey)?.label ??
-    labels.sort ??
-    'Sort';
 
   const handleSearchChange = useCallback(
     (next?: string) => setSearch(next ?? ''),
@@ -414,11 +400,11 @@ export const CatalogPickerModal: FC<CatalogPickerModalProps> = ({
             shouldTruncateTitle={false}
           />
           <div className="ms-auto shrink-0">
-            <ButtonDropdown
-              items={sortItems}
-              label={activeSortLabel}
-              variant={ButtonVariant.Primary}
-              appearance={ButtonAppearance.Ghost}
+            <SortMenuButton
+              options={sortOptions}
+              value={sortKey}
+              onChange={setSortKey}
+              label={labels.sort ?? 'Sort'}
             />
           </div>
         </div>

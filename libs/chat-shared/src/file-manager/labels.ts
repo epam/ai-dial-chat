@@ -236,6 +236,30 @@ export interface DialFileManagerShellLabels {
   metadataSizeLabel: string;
   /** Label for the author in the metadata popup. */
   metadataAuthorLabel: string;
+  /** Sort button name and menu labels; omitted, the file manager's English defaults apply. */
+  sort?: DialFileManagerShellSortLabels;
+}
+
+/** Labels of the file manager's icon-only sort button and its menu. */
+export interface DialFileManagerShellSortLabels {
+  /** Accessible name and tooltip of the sort button, e.g. "Sort". */
+  label: string;
+  /** Menu labels of the sort fields. */
+  fieldLabels: {
+    /** "Name" field. */
+    name: string;
+    /** "Modified date" field. */
+    updatedAt: string;
+    /** "Size" field. */
+    size: string;
+  };
+  /** Menu labels of the sort directions. */
+  directionLabels: {
+    /** "Ascending" direction. */
+    asc: string;
+    /** "Descending" direction. */
+    desc: string;
+  };
 }
 
 /**

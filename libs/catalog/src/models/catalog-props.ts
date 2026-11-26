@@ -76,7 +76,7 @@ export interface CatalogTitles {
   myAppsEmptyTitle?: (activeTab: string) => string;
   /** Secondary line of the "My Apps" empty state. Default: "Create your first one, it'll show up right here.". */
   myAppsEmptyDescription?: string;
-  /** The sort control's own name, prepended to its accessible name. Default: 'Sort'. */
+  /** Accessible name and tooltip of the icon-only sort button. Default: 'Sort'. */
   sortLabel?: string;
   /** Label for the "Recently Updated" sort option. Default: 'Recently Updated'. */
   sortRecentlyUpdatedLabel?: string;

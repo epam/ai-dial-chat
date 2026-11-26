@@ -2,25 +2,21 @@ import {
   buildCssVars,
   mergeClasses,
   PanelEmptyState,
+  SortMenuButton,
 } from '@epam/ai-dial-chat-shared';
 import {
-  ButtonAppearance,
-  ButtonDropdown,
-  ButtonVariant,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
-  DropdownItem,
   ElementSize,
   ErrorMessageNotification,
   GhostButton,
-  MenuItemMark,
   PrimaryButton,
   Search,
   Spinner,
   LiveRegion,
   LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
-import { IconArrowsSort, IconPlus } from '@tabler/icons-react';
+import { IconPlus } from '@tabler/icons-react';
 import {
   FC,
   useCallback,
@@ -109,7 +105,6 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
   const cssVars = buildCssVars({
     '--st-bg': colors?.background,
     '--st-subtitle-text': colors?.subtitleText,
-    '--st-sort-text': colors?.sortButtonText,
   });
 
   const handleSearchChange = (value?: string) => {
@@ -148,28 +143,13 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
     }
   }, [isSearchFocused, isSortMenuOpen]);
 
-  /* Falls back to the control's own name so the trigger is never a button with
-   * no accessible name, which is what an unrecognised sortKey would produce —
-   * the kit's `Button` derives its `aria-label` from `label` and overrides any
-   * the caller passes, so the visible label is the only name available. */
-  const activeSortLabel =
-    labels.sortOptions.find((option) => option.value === sortKey)?.label ??
-    labels.sortLabel;
-
-  /*
-   * The host passes the values alone; the marking and the click belong here,
-   * so the trigger and the menu cannot disagree about which order is applied.
-   */
-  const sortItems = useMemo<DropdownItem[]>(
-    () =>
-      labels.sortOptions.map((option) => ({
-        key: option.value,
-        label: option.label,
-        mark: MenuItemMark.Check,
-        checked: option.value === sortKey,
-        onClick: () => onSortChange(option.value as ScheduledTasksSortKey),
-      })),
-    [labels.sortOptions, sortKey, onSortChange],
+  const handleSortChange = useCallback(
+    (value: string) => onSortChange(value as ScheduledTasksSortKey),
+    [onSortChange],
+  );
+  const sortColors = useMemo(
+    () => ({ icon: colors?.sortButtonText }),
+    [colors?.sortButtonText],
   );
 
   const statusMessage = getStatusMessage(
@@ -346,9 +326,6 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
           />
         </div>
         {labels.sortOptions.length > 0 && (
-          /* The trigger shows the applied order and the menu marks it with the
-             design's trailing check. */
-
           /* While the search is focused at phone widths (<768px, see
            * `.sortControlHidden`) the sort control is hidden and the search
            * (flex-1) expands to the full row; from 768px up both controls
@@ -359,23 +336,15 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
               isSearchFocused && styles.sortControlHidden,
             )}
           >
-            <ButtonDropdown
-              items={sortItems}
-              label={activeSortLabel}
-              variant={ButtonVariant.Primary}
-              appearance={ButtonAppearance.Ghost}
-              iconBefore={
-                sortIcon === undefined ? (
-                  <IconArrowsSort
-                    size={DIAL_ICON_SIZE.SM}
-                    aria-hidden
-                    stroke={DIAL_KIT_ICON_STROKE}
-                  />
-                ) : (
-                  sortIcon
-                )
-              }
-              className={styles.sortButton}
+            <SortMenuButton
+              options={labels.sortOptions}
+              value={sortKey}
+              onChange={handleSortChange}
+              label={labels.sortLabel}
+              icon={sortIcon ?? undefined}
+              colors={sortColors}
+              open={isSortMenuOpen}
+              onOpenChange={setIsSortMenuOpen}
             />
           </div>
         )}

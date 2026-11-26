@@ -157,4 +157,9 @@ export enum DialFileManagerI18nKeys {
   UploadArchiveError = 'dialFileManager.uploadArchiveError',
   UploadArchiveFilesError = 'dialFileManager.uploadArchiveFilesError',
   UploadArchivePartialError = 'dialFileManager.uploadArchivePartialError',
+  SortName = 'dialFileManager.sort.name',
+  SortModifiedDate = 'dialFileManager.sort.modifiedDate',
+  SortSize = 'dialFileManager.sort.size',
+  SortAscending = 'dialFileManager.sort.ascending',
+  SortDescending = 'dialFileManager.sort.descending',
 }

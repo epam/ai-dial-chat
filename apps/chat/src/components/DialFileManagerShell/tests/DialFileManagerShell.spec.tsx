@@ -57,6 +57,7 @@ const capturedDialFileManagerProps: {
     toolbarOptions?: {
       newActions?: { uploadArchive?: { label?: string } };
     };
+    sortOptions?: unknown;
     fileMetadataPopupOptions?: {
       fileMetadata?: unknown;
       loading?: boolean;
@@ -137,6 +138,7 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
       toolbarOptions?: {
         newActions?: { uploadArchive?: { label?: string } };
       };
+      sortOptions?: unknown;
       fileMetadataPopupOptions?: {
         fileMetadata?: unknown;
         loading?: boolean;
@@ -1117,6 +1119,41 @@ describe('DialFileManagerShell', () => {
       'utf-8',
     );
     expect(source).not.toContain('react-i18next');
+  });
+
+  describe('sort labels', () => {
+    it('forwards host sort labels as the file manager sortOptions', () => {
+      renderShell(undefined, new Set(), {
+        labels: {
+          ...baseLabels,
+          sort: {
+            label: 'Sort',
+            fieldLabels: {
+              name: 'Name',
+              updatedAt: 'Modified date',
+              size: 'Size',
+            },
+            directionLabels: { asc: 'Ascending', desc: 'Descending' },
+          },
+        },
+      });
+
+      expect(capturedDialFileManagerProps.current?.sortOptions).toEqual({
+        label: 'Sort',
+        fieldLabels: {
+          name: 'Name',
+          updatedAt: 'Modified date',
+          size: 'Size',
+        },
+        directionLabels: { asc: 'Ascending', desc: 'Descending' },
+      });
+    });
+
+    it('passes no sortOptions when the host gives no sort labels', () => {
+      renderShell();
+
+      expect(capturedDialFileManagerProps.current?.sortOptions).toBeUndefined();
+    });
   });
 
   describe('uploadArchive toolbar entry', () => {

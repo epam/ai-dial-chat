@@ -15,7 +15,7 @@ export interface ProjectsLabels {
   searchAriaLabel: string;
   /** Accessible label for the search input's clear action. */
   clearSearchLabel: string;
-  /** Accessible name of the group wrapping the sort control, e.g. "Sort". */
+  /** Accessible name and tooltip of the icon-only sort button, e.g. "Sort". */
   sortLabel: string;
   /** Options the sort menu lists; each `value` is a `ProjectsSortKey`. */
   sortOptions: SelectOption[];
@@ -56,7 +56,7 @@ export interface ProjectsColors {
   background?: string;
   /** Subtitle and status-message text color. Fallback: `--text-secondary`. */
   subtitleText?: string;
-  /** Sort control label/icon color. Fallback: `--text-accent`. */
+  /** Sort button glyph color. Fallback: `--text-secondary`. */
   sortButtonText?: string;
   /** Card background. Fallback: `--bg-layer-raised`. */
   cardBackground?: string;
