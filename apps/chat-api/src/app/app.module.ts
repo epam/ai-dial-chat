@@ -16,6 +16,7 @@ import { ConversationModule } from '../conversations/conversation.module';
 import { CustomApiModule } from '../custom-api/custom-api.module';
 import { DeploymentRouteModule } from '../deployment-route/deployment-route.module';
 import { DeploymentsModule } from '../deployments/deployments.module';
+import { DialAnalyticsModule } from '../dial/dial-analytics.module';
 import { DialCoreModule } from '../dial/dial-core.module';
 import { ExternalServicesModule } from '../external-services/external-services.module';
 import { FilesModule } from '../files/files.module';
@@ -53,6 +54,7 @@ import { createAppCacheOptions } from './cache.config';
       useFactory: createAppCacheOptions,
     }),
     DialCoreModule,
+    DialAnalyticsModule,
     AppConfigModule,
     ApplicationSchemasModule,
     OrgUnitsModule,

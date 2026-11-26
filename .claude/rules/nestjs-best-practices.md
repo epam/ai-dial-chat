@@ -1,5 +1,5 @@
 ---
-description: NestJS conventions for apps/chat-api — controllers thin + Swagger, services use Logger/ConfigService, DIAL Core calls prefer @epam/ai-dial-typescript-sdk, DTOs validated, errors as HTTP exceptions. Source of truth lives in apps/chat-api/AGENTS.md.
+description: NestJS conventions for apps/chat-api — controllers thin + Swagger, services use Logger/ConfigService, DIAL Core and DIAL Analytics calls prefer @epam/ai-dial-typescript-sdk, DTOs validated, errors as HTTP exceptions. Source of truth lives in apps/chat-api/AGENTS.md.
 globs: apps/chat-api/**/*.ts
 alwaysApply: false
 ---
@@ -22,11 +22,12 @@ alwaysApply: false
   DTO Swagger metadata or `@ApiParam`/`@ApiQuery`. After endpoint changes run
   `npm run openapi`, `npm run openapi:check`, and build/lint `chat-api-client`.
 - **Services use Logger + ConfigService**: `private readonly logger = new Logger(X.name)`,
-  `configService.get('VAR', { infer: true })`. DIAL Core integrations prefer
-  `@epam/ai-dial-typescript-sdk` through `apps/chat-api/src/app/app.service.ts`; use raw
-  `fetch` only for non-DIAL upstreams or SDK gaps. No `console.log`, no `process.env`
+  `configService.get('VAR', { infer: true })`. DIAL Core and DIAL Analytics integrations
+  prefer `@epam/ai-dial-typescript-sdk` through the shared clients in
+  `apps/chat-api/src/dial/` (`DialClientService`, `DialAnalyticsClientService`); use raw
+  `fetch` only for other upstreams or SDK gaps. No `console.log`, no `process.env`
   reads, no `as string`.
-  References: `apps/chat-api/src/app/app.service.ts`, `apps/chat-api/src/themes/theme.service.ts`.
+  References: `apps/chat-api/src/dial/dial-client.service.ts`, `apps/chat-api/src/themes/theme.service.ts`.
 - **DTOs are mandatory**: `class-validator` + `@ApiProperty` on every field; `@Matches`
   with an allowlist regex for any string that hits a path / URL / log line.
   Response DTOs are required for JSON success responses; use classes, not interfaces, so

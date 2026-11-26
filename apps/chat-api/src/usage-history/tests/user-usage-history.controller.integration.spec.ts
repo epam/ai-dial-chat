@@ -11,15 +11,15 @@ import { APP_GUARD } from '@nestjs/core';
 import { Test, type TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { AnalyticsClient } from '../analytics/analytics.client';
-import { UsageHistoryService } from '../usage-history.service';
-import { UserUsageHistoryController } from '../user-usage-history.controller';
+import { DialAnalyticsClientService } from '../../dial/dial-analytics-client.service';
 import {
   type FakeAnalyticsServer,
   type FakeResponse,
   type RecordedRequest,
   startFakeAnalytics,
-} from './fake-analytics.server';
+} from '../../dial/tests/fake-analytics.server';
+import { UsageHistoryService } from '../usage-history.service';
+import { UserUsageHistoryController } from '../user-usage-history.controller';
 
 const TEST_USER = {
   sub: 'user-123',
@@ -38,11 +38,12 @@ const HISTORY_PATH = '/api/v1/user/usage/history';
 
 /*
  * ConfigService reads process.env before its constructor config, so the
- * analytics settings are stubbed in the environment itself.
+ * analytics URL is stubbed in the environment itself, and the timeout is unset
+ * there and given to the constructor as the number the validated env yields.
  */
 const configureAnalytics = (url: string | undefined): void => {
   vi.stubEnv('ANALYTICS_URL', url ?? '');
-  vi.stubEnv('ANALYTICS_TIMEOUT_MS', '1000');
+  vi.stubEnv('ANALYTICS_TIMEOUT_MS', undefined);
 };
 
 const buildApp = async ({
@@ -51,9 +52,12 @@ const buildApp = async ({
   const module: TestingModule = await Test.createTestingModule({
     controllers: [UserUsageHistoryController],
     providers: [
-      AnalyticsClient,
+      DialAnalyticsClientService,
       UsageHistoryService,
-      { provide: ConfigService, useValue: new ConfigService({}) },
+      {
+        provide: ConfigService,
+        useValue: new ConfigService({ ANALYTICS_TIMEOUT_MS: 1000 }),
+      },
       ...(hasSession
         ? []
         : [{ provide: APP_GUARD, useClass: RejectingSessionGuard }]),

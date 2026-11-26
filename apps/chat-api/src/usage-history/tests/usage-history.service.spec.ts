@@ -1,15 +1,15 @@
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { AnalyticsClient } from '../analytics/analytics.client';
-import { UsageHistoryPeriod } from '../types/usage-history-period';
-import { UsageHistoryService } from '../usage-history.service';
+import { DialAnalyticsClientService } from '../../dial/dial-analytics-client.service';
 import {
   type FakeAnalyticsServer,
   type FakeResponse,
   type RecordedRequest,
   startFakeAnalytics,
-} from './fake-analytics.server';
+} from '../../dial/tests/fake-analytics.server';
+import { UsageHistoryPeriod } from '../types/usage-history-period';
+import { UsageHistoryService } from '../usage-history.service';
 
 const TOKEN = 'session-token-for-history';
 const NOW = new Date('2026-11-03T10:00:00.000Z');
@@ -183,9 +183,11 @@ describe('UsageHistoryService', () => {
     vi.setSystemTime(NOW);
     analytics = await startFakeAnalytics(adas());
     vi.stubEnv('ANALYTICS_URL', analytics.url);
-    vi.stubEnv('ANALYTICS_TIMEOUT_MS', '1000');
+    vi.stubEnv('ANALYTICS_TIMEOUT_MS', undefined);
     service = new UsageHistoryService(
-      new AnalyticsClient(new ConfigService({})),
+      new DialAnalyticsClientService(
+        new ConfigService({ ANALYTICS_TIMEOUT_MS: 1000 }),
+      ),
     );
     logs = (['log', 'debug', 'warn', 'error', 'verbose'] as const).map(
       (level) =>

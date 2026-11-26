@@ -1,3 +1,4 @@
+import type { AnalyticsComponents } from '@epam/ai-dial-typescript-sdk';
 import {
   BadRequestException,
   ForbiddenException,
@@ -7,7 +8,12 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { AnalyticsClient } from './analytics/analytics.client';
+import { getBearerAuthHeaders } from '../common/utils/auth-header';
+import { DialAnalyticsClientService } from '../dial/dial-analytics-client.service';
+import {
+  handleDialAnalyticsFailure,
+  readDialAnalyticsData,
+} from '../dial/dial-analytics-result';
 import type { UserUsageHistoryResponseDto } from './dto/user-usage-history-response.dto';
 import {
   buildClientSplitQuery,
@@ -16,7 +22,10 @@ import {
   buildModelRankingQuery,
   BUDGET_FIELDS,
   CLIENT_TYPE_FIELD,
+  toStructuredQuery,
+  USAGE_LOG_ENTITY,
   type UsageBudget,
+  type UsageQuery,
 } from './queries/usage-history.queries';
 import type { UsageHistoryPeriod } from './types/usage-history-period';
 import { UsageHistoryUnavailableReason } from './types/usage-history-unavailable-reason';
@@ -26,6 +35,12 @@ import {
   selectTopDeployments,
 } from './usage-history.mapper';
 import { resolveUsageWindow, type UsageWindow } from './usage-period';
+
+type QueryEntitySchemaDto =
+  AnalyticsComponents['schemas']['QueryEntitySchemaDto'];
+
+type StructuredQueryResultDto =
+  AnalyticsComponents['schemas']['StructuredQueryResultDto'];
 
 const FORBIDDEN_HINT =
   'check the ADAS identity providers (issuer, jwk-set-uri, audiences) for the BFF sign-in ' +
@@ -61,25 +76,21 @@ interface SchemaDiscovery {
 const isRefusal = (error: unknown): boolean =>
   error instanceof UnauthorizedException || error instanceof ForbiddenException;
 
-/* The field names the caller's schema of the usage log lists. */
-const schemaFieldNames = (schema: unknown): Set<string> => {
-  const fields =
-    schema != null && typeof schema === 'object'
-      ? (schema as { fields?: unknown }).fields
-      : undefined;
+/*
+ * The field names the caller's schema of the usage log lists. The SDK types
+ * the body but does not validate it, so the list and each name are checked.
+ */
+const schemaFieldNames = (schema: QueryEntitySchemaDto): Set<string> => {
   const names = new Set<string>();
-  if (!Array.isArray(fields)) return names;
-  for (const entry of fields) {
-    const name =
-      entry != null && typeof entry === 'object'
-        ? (entry as { name?: unknown }).name
-        : undefined;
+  if (!Array.isArray(schema.fields)) return names;
+  for (const entry of schema.fields) {
+    const name: unknown = entry?.name;
     if (typeof name === 'string') names.add(name);
   }
   return names;
 };
 
-const discover = (schema: unknown): SchemaDiscovery => {
+const discover = (schema: QueryEntitySchemaDto): SchemaDiscovery => {
   const names = schemaFieldNames(schema);
   return {
     exposed: names.has(CLIENT_TYPE_FIELD),
@@ -95,12 +106,14 @@ const discover = (schema: unknown): SchemaDiscovery => {
  * never an HTTP error, and partial data is never returned. See
  * openspec/changes/archive/2026-11-20-add-user-usage-history-api/design.md (D4, D6) and
  * openspec/changes/archive/2026-11-20-filter-usage-history-own-rows/design.md (D2, D3).
+ * ADAS is reached through the shared DIAL Analytics SDK client
+ * (openspec/changes/archive/2026-11-26-integrate-dial-analytics-sdk/design.md D6).
  */
 @Injectable()
 export class UsageHistoryService {
   private readonly logger = new Logger(UsageHistoryService.name);
 
-  constructor(private readonly analytics: AnalyticsClient) {}
+  constructor(private readonly analytics: DialAnalyticsClientService) {}
 
   /**
    * @param budget narrows every figure to the model calls this budget paid
@@ -126,13 +139,14 @@ export class UsageHistoryService {
      * the queries themselves. Schema discovery starts first; its rejection
      * is captured here so it is never unhandled.
      */
-    const discovery = this.analytics
-      .getUsageLogSchema(accessToken)
-      .then(discover, (error: unknown): SchemaDiscovery => ({
+    const discovery = this.readSchema(accessToken).then(
+      discover,
+      (error: unknown): SchemaDiscovery => ({
         exposed: false,
         budgetColumns: false,
         error,
-      }));
+      }),
+    );
 
     /*
      * Step 1, budget scope only: the budget columns must be visible, or the
@@ -171,14 +185,8 @@ export class UsageHistoryService {
     let hasAcceptedOwnRows = false;
     try {
       const [dailyTotals, ranking] = await Promise.all([
-        this.analytics.executeQuery(
-          accessToken,
-          buildDailyTotalsQuery(window, budget),
-        ),
-        this.analytics.executeQuery(
-          accessToken,
-          buildModelRankingQuery(window, budget),
-        ),
+        this.runQuery(accessToken, buildDailyTotalsQuery(window, budget)),
+        this.runQuery(accessToken, buildModelRankingQuery(window, budget)),
       ]);
       hasAcceptedOwnRows = true;
       const ranked = rankDeployments(ranking);
@@ -189,7 +197,7 @@ export class UsageHistoryService {
       );
       const dailyTopModels =
         topNames.length > 0
-          ? await this.analytics.executeQuery(
+          ? await this.runQuery(
               accessToken,
               buildDailyTopModelsQuery(window, topNames, budget),
             )
@@ -225,6 +233,36 @@ export class UsageHistoryService {
     }
   }
 
+  /* The caller's schema of the usage log; throws the shared mapping of any failure. */
+  private async readSchema(accessToken: string): Promise<QueryEntitySchemaDto> {
+    try {
+      return readDialAnalyticsData(
+        await this.analytics.client.getEntitySchema(USAGE_LOG_ENTITY, {
+          headers: getBearerAuthHeaders(accessToken),
+        }),
+      );
+    } catch (error) {
+      return handleDialAnalyticsFailure(error);
+    }
+  }
+
+  /* One fixed usage query as the caller; throws the shared mapping of any failure. */
+  private async runQuery(
+    accessToken: string,
+    query: UsageQuery,
+  ): Promise<StructuredQueryResultDto> {
+    try {
+      return readDialAnalyticsData(
+        await this.analytics.client.executeQuery({
+          body: toStructuredQuery(query),
+          headers: getBearerAuthHeaders(accessToken),
+        }),
+      );
+    } catch (error) {
+      return handleDialAnalyticsFailure(error);
+    }
+  }
+
   /*
    * The optional client split: never rejects, resolving to undefined (and
    * logging why) when discovery failed, the field is absent or its query failed.
@@ -235,7 +273,7 @@ export class UsageHistoryService {
     window: UsageWindow,
     discovery: Promise<SchemaDiscovery>,
     budget: UsageBudget | undefined,
-  ): Promise<unknown> {
+  ): Promise<StructuredQueryResultDto | undefined> {
     const { exposed, error } = await discovery;
     if (error !== undefined) {
       this.logger.warn(
@@ -245,7 +283,7 @@ export class UsageHistoryService {
     }
     if (!exposed) return undefined;
     try {
-      return await this.analytics.executeQuery(
+      return await this.runQuery(
         accessToken,
         buildClientSplitQuery(window, budget),
       );

@@ -617,7 +617,7 @@ apps/chat-api/src/
 ├── external-services/      # Application external-service metadata + signin/signout proxy
 ├── offline-credentials/    # Long-lived credentials for background runs
 ├── deployments/  models/   # Deployment and model listings
-├── usage-history/          # Caller's own usage history from DIAL Analytics (ADAS), optional (ANALYTICS_URL)
+├── usage-history/          # Caller's own usage history from DIAL Analytics (ADAS) via the shared Analytics SDK client, optional (ANALYTICS_URL)
 ├── text-refinement/        # Bounded draft rewriting with caller credentials
 ├── transcription/          # Speech-to-text proxy for voice input
 ├── rate/                   # Message like/dislike
@@ -626,7 +626,7 @@ apps/chat-api/src/
 ├── celebrations/           # External celebration packs: verified reader, immutable store
 ├── health/                 # Health check
 ├── telemetry/              # OpenTelemetry bootstrap, logger bridge, metrics
-├── dial/                   # DIAL Core client wiring
+├── dial/                   # DIAL Core and DIAL Analytics SDK client wiring (global DialCoreModule, DialAnalyticsModule)
 ├── custom-api/             # Deployment-configured custom Core API bridge (disabled by default)
 ├── content-sources/        # Read-only GitHub/GitLab Markdown and image proxy (no sources unless configured)
 ├── config/                 # class-validator env schema: domain classes in env/, composed in environment.config.ts
@@ -1175,19 +1175,19 @@ Import direction is enforced by lint. Every Nx project carries exactly one `type
 
 ## Key external dependencies
 
-| Package                                 | Role                                                               |
-| --------------------------------------- | ------------------------------------------------------------------ |
-| `@epam/ai-dial-typescript-sdk`          | Server-side DIAL Core client — preferred in `apps/chat-api`        |
-| `@epam/ai-dial-ui-kit`                  | Design system base components — use before creating new primitives |
-| `@tabler/icons-react`                   | Icon set — all icons; no inline SVGs                               |
-| `react-i18next` / `i18next`             | Internationalisation                                               |
-| `class-validator` + `class-transformer` | NestJS DTO validation                                              |
-| `@nestjs/swagger`                       | OpenAPI documentation                                              |
-| `@nestjs/throttler`                     | Rate limiting                                                      |
-| `@nestjs/cache-manager`                 | In-memory cache                                                    |
-| `helmet`                                | Security headers                                                   |
-| `compression`                           | Brotli/gzip for JSON API responses                                 |
-| `jose` + `openid-client`                | OIDC / JWT handling in auth module                                 |
+| Package                                 | Role                                                                            |
+| --------------------------------------- | ------------------------------------------------------------------------------- |
+| `@epam/ai-dial-typescript-sdk`          | Server-side DIAL Core and DIAL Analytics clients — preferred in `apps/chat-api` |
+| `@epam/ai-dial-ui-kit`                  | Design system base components — use before creating new primitives              |
+| `@tabler/icons-react`                   | Icon set — all icons; no inline SVGs                                            |
+| `react-i18next` / `i18next`             | Internationalisation                                                            |
+| `class-validator` + `class-transformer` | NestJS DTO validation                                                           |
+| `@nestjs/swagger`                       | OpenAPI documentation                                                           |
+| `@nestjs/throttler`                     | Rate limiting                                                                   |
+| `@nestjs/cache-manager`                 | In-memory cache                                                                 |
+| `helmet`                                | Security headers                                                                |
+| `compression`                           | Brotli/gzip for JSON API responses                                              |
+| `jose` + `openid-client`                | OIDC / JWT handling in auth module                                              |
 
 ---
 

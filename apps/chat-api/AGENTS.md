@@ -15,12 +15,12 @@ apps/chat-api/src/
 ├── main.ts                       # bootstrap: helmet, global pipes, CORS, versioning, Swagger
 ├── app/
 │   ├── app.module.ts             # root module — global ConfigModule, CacheModule
-│   ├── app.controller.ts
-│   └── app.service.ts
+│   └── app.controller.ts
 ├── config/
 │   ├── env/                      # one class-validator class per domain (<domain>.env.ts)
 │   ├── environment.config.ts     # EnvironmentVariables = IntersectionType of the env/ classes
 │   └── validation.ts             # validate() used by ConfigModule.forRoot
+├── dial/                         # global SDK clients: DialCoreModule (DIAL Core), DialAnalyticsModule (DIAL Analytics)
 ├── common/
 │   └── interceptors/             # cross-cutting: metrics, logging
 ├── health/
@@ -58,7 +58,7 @@ Reference files (read these before adding new code):
 
 - Controller pattern → `apps/chat-api/src/themes/theme.controller.ts`
 - Service pattern → `apps/chat-api/src/themes/theme.service.ts`
-- DIAL SDK client pattern → `apps/chat-api/src/app/app.service.ts`
+- DIAL SDK client pattern → `apps/chat-api/src/dial/dial-client.service.ts` (DIAL Core), `apps/chat-api/src/dial/dial-analytics-client.service.ts` (DIAL Analytics)
 - DTO pattern → `apps/chat-api/src/themes/dto/get-theme-icon.dto.ts`
 - Env validation → `apps/chat-api/src/config/env/*.env.ts` (declarations), `environment.config.ts` (composition) + `validation.ts`
 - Health check → `apps/chat-api/src/health/health.controller.ts`
@@ -227,12 +227,16 @@ Services MUST:
 
   Never cast with `as string`; rely on the validated env schema.
 
-- For DIAL Core integrations, prefer `@epam/ai-dial-typescript-sdk` through the shared
-  SDK client injected via `DialClientService` (`dial/dial-client.service.ts`, exported by
-  the global `DialCoreModule`) rather than each service creating its own `createSDK`
-  instance. Pass per-request auth headers from the BFF session for user-scoped data, and
-  handle the SDK's success/error response shape explicitly.
-- Use raw `fetch` only for non-DIAL upstreams or when the SDK does not expose the required
+- For DIAL Core and DIAL Analytics (ADAS) integrations, prefer `@epam/ai-dial-typescript-sdk`
+  through the shared SDK clients: `DialClientService` (`dial/dial-client.service.ts`, exported
+  by the global `DialCoreModule`) for DIAL Core and `DialAnalyticsClientService`
+  (`dial/dial-analytics-client.service.ts`, exported by the global `DialAnalyticsModule`) for
+  DIAL Analytics, rather than each service creating its own `createSDK` /
+  `createAnalyticsSDK` instance. Pass per-request auth headers from the BFF session for
+  user-scoped data, and handle the SDK's success/error response shape explicitly
+  (`handleDialSdkError` for Core; `readDialAnalyticsData` / `handleDialAnalyticsFailure` for
+  Analytics).
+- Use raw `fetch` only for other upstreams or when the SDK does not expose the required
   DIAL operation. In those cases, use an `AbortController` and the configurable timeout
   env var (e.g. `THEMES_SERVICE_TIMEOUT_MS`). Always `clearTimeout` in both branches and
   document why the SDK is not used.
@@ -242,8 +246,8 @@ Services MUST:
   (`@nestjs/cache-manager`). Cache key naming: `<domain>:<resource>[:<param>]`
   (e.g. `themes:config`, `themes:icon:<name>`).
 
-Follow `DialClientService` as the reference for DIAL SDK client setup. Follow `ThemeService`
-only for non-DIAL fetch + timeout + cache + error mapping.
+Follow `DialClientService` / `DialAnalyticsClientService` as the reference for DIAL SDK client
+setup. Follow `ThemeService` only for non-DIAL fetch + timeout + cache + error mapping.
 
 Bad:
 
@@ -434,7 +438,7 @@ Do not move to the next slice while any of these is red for the project you touc
 - Inlining anonymous types in controllers instead of DTO classes.
 - Returning `null` / `undefined` from a service to signal failure.
 - `console.log` instead of `Logger`.
-- Raw `fetch` for DIAL Core endpoints when `@epam/ai-dial-typescript-sdk` supports the operation.
+- Raw `fetch` for DIAL Core or DIAL Analytics endpoints when `@epam/ai-dial-typescript-sdk` supports the operation.
 - Reading `process.env` directly inside a service.
 - Casting env vars (`as string`) instead of typing through `EnvironmentVariables`.
 - Missing `@ApiResponse` entries for thrown exceptions.

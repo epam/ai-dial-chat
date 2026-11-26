@@ -1,3 +1,4 @@
+import type { AnalyticsComponents } from '@epam/ai-dial-typescript-sdk';
 import type {
   UsageHistoryClientEntryDto,
   UsageHistoryDailyEntryDto,
@@ -50,6 +51,10 @@ interface Usage {
   spend: bigint;
   requests: number;
 }
+
+/** An ADAS query response, as the SDK types it (not validated). */
+type StructuredQueryResultDto =
+  AnalyticsComponents['schemas']['StructuredQueryResultDto'];
 
 type Row = Record<string, unknown>;
 
@@ -131,19 +136,20 @@ const parseUsage = (row: Row): Usage => ({
   requests: parseRequests(row[REQUESTS_ALIAS]),
 });
 
-/** The `rows` of an ADAS query response. */
-export const readRows = (body: unknown): Row[] => {
-  const rows =
-    body != null && typeof body === 'object'
-      ? (body as { rows?: unknown }).rows
-      : undefined;
+/**
+ * The `rows` of an ADAS query response. The SDK types the body but does not
+ * validate it, so the list and each row are checked; cell values are checked
+ * by the parsers that read them.
+ */
+export const readRows = (body: StructuredQueryResultDto): Row[] => {
+  const { rows } = body;
   if (
     !Array.isArray(rows) ||
     !rows.every((row) => row != null && typeof row === 'object')
   ) {
     throw new UsageHistoryMappingError('The query response has no rows');
   }
-  return rows as Row[];
+  return rows;
 };
 
 interface RankedDeployment extends Usage {
@@ -161,7 +167,9 @@ const byUsageThenName = <T extends Usage>(
 };
 
 /** Q2 rows → deployments in rank order. */
-export const rankDeployments = (rankingBody: unknown): RankedDeployment[] =>
+export const rankDeployments = (
+  rankingBody: StructuredQueryResultDto,
+): RankedDeployment[] =>
   readRows(rankingBody)
     .map((row) => ({
       deployment: parseName(row[DEPLOYMENT_FIELD], 'deployment'),
@@ -189,17 +197,17 @@ export interface UsageHistorySources {
   /** The budget every query was narrowed to; absent for the user's whole history. */
   budget?: UsageBudget;
   /** Q1 response. */
-  dailyTotals: unknown;
+  dailyTotals: StructuredQueryResultDto;
   /** Q2 rows, already ranked. */
   ranked: readonly RankedDeployment[];
   /** Q3 response; absent when Q2 returned no deployment. */
-  dailyTopModels?: unknown;
+  dailyTopModels?: StructuredQueryResultDto;
   /** Q4 response; absent when the enrichment is unavailable. */
-  clientSplit?: unknown;
+  clientSplit?: StructuredQueryResultDto;
 }
 
 const mapDailyTotals = (
-  body: unknown,
+  body: StructuredQueryResultDto,
   dates: ReadonlySet<string>,
 ): Map<string, Usage> => {
   const byDate = new Map<string, Usage>();
@@ -211,7 +219,7 @@ const mapDailyTotals = (
 };
 
 const mapDailyTopModels = (
-  body: unknown,
+  body: StructuredQueryResultDto,
   dates: ReadonlySet<string>,
   topNames: ReadonlySet<string>,
 ): Map<string, Map<string, Usage>> => {
@@ -232,7 +240,9 @@ const mapDailyTopModels = (
 };
 
 /** Q4 rows → clients by spend, with missing enrichment values merged into `unknown`. */
-export const mapClientSplit = (body: unknown): UsageHistoryClientEntryDto[] => {
+export const mapClientSplit = (
+  body: StructuredQueryResultDto,
+): UsageHistoryClientEntryDto[] => {
   const byClient = new Map<string, Usage>();
   for (const row of readRows(body)) {
     const raw = row[CLIENT_ALIAS];
