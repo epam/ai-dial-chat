@@ -6,6 +6,7 @@ import {
 import {
   DIAL_ICON_SIZE,
   DropdownItem,
+  DropdownItemType,
   ElementSize,
   Highlight,
   MenuItemMark,
@@ -13,9 +14,8 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { type CSSProperties, type ReactNode, useMemo, useState } from 'react';
 import {
-  MODEL_SELECTOR_SKELETON_ROW_COUNT,
   ModelSelectorSkeletonIcon,
-  ModelSelectorSkeletonLabel,
+  ModelSelectorSkeletonRows,
 } from '../components/ModelSelectorSkeleton/ModelSelectorSkeleton';
 import { CONVERSATION_INPUT_CLASS } from '../constants/public-class-names';
 import type { ModelMenuStyles, ModelSelectorLabels } from '../models/Input';
@@ -115,21 +115,22 @@ export const useModelSelector = ({
 
   const menuItems: DropdownItem[] = useMemo(() => {
     if (isLoading) {
-      return Array.from(
-        { length: MODEL_SELECTOR_SKELETON_ROW_COUNT },
-        (_, index) => ({
-          key: `__loading-${index}`,
-          icon: <ModelSelectorSkeletonIcon />,
+      /* One plain-text item holds the whole shimmer block: a regular item is a
+       * fixed-height, truncating button, and a shimmer per item would run one
+       * wave per row. */
+      return [
+        {
+          key: '__loading',
+          type: DropdownItemType.PlainText,
+          className: 'p-0!',
           label: (
-            <ModelSelectorSkeletonLabel
-              loadingLabel={
-                index === 0 ? modelSelectorLabels?.loading : undefined
-              }
-            />
+            <>
+              <span className="sr-only">{modelSelectorLabels?.loading}</span>
+              <ModelSelectorSkeletonRows />
+            </>
           ),
-          disabled: true,
-        }),
-      );
+        },
+      ];
     }
 
     if (!deployments || deployments.length === 0) {

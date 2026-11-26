@@ -92,13 +92,6 @@
   border-radius: var(--cp-search-radius, 9999px);
 }
 
-:export {
-  skeletonColor: var(
-    --cp-skeleton-color,
-    var(--bg-control-disable-primary, #dce0e8)
-  );
-}
-
 .list {
   font-family: var(--cp-list-font-family, inherit);
 }

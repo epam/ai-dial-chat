@@ -36,12 +36,12 @@ Memoisation: `isDeploymentsLoading` MUST be in the dependency array of the hook'
   variant={SkeletonVariant.Circular}
   width={DIAL_ICON_SIZE.LG}
   height={DIAL_ICON_SIZE.LG}
-  color={styles.skeletonColor}
+  tone={SkeletonTone.Sunken}
   aria-hidden
 />
 ```
 
-`styles.skeletonColor` is exported from `ConversationPanel.module.scss` as `var(--cp-skeleton-color, var(--bg-control-disable-primary, #dce0e8))`, the same value used by `ConversationPanel`'s loading skeleton rows; hosts theme it through the panel's `skeletonColor` colour, which sets `--cp-skeleton-color`. The skeleton keeps the 24 × 24 px avatar footprint, so there is no layout shift when the real icon arrives.
+The skeleton takes its colour from the kit's `SkeletonTone.Sunken` token, so it follows the host theme with no `*Colors` field. It keeps the 24 × 24 px avatar footprint, so there is no layout shift when the real icon arrives.
 
 A host-supplied `item.leadingIcon` takes precedence over both the skeleton and `DeploymentIcon`: when it is set, `iconUrl`, `iconTooltip` and `isIconLoading` are ignored.
 

@@ -6,16 +6,21 @@ import {
 } from './ModelSelectorSkeleton';
 
 describe('ModelSelectorSkeletonRows', () => {
-  it('renders seven placeholder rows hidden from assistive tech, with no status region of its own', () => {
+  it('renders seven placeholder rows in one shimmer container that announces nothing itself', () => {
     const { container } = render(<ModelSelectorSkeletonRows />);
 
-    expect(screen.queryByRole('status')).toBeNull();
-    // The skeleton rows are purely decorative (aria-hidden, no role/text/testid),
-    // so there is no semantic query for "how many placeholder rows rendered".
+    /* The shimmer's own live region stays empty: the parent announces loading. */
+    for (const status of screen.queryAllByRole('status')) {
+      expect(status.textContent).toBe('');
+    }
+    // The placeholders are decorative (no role, text or test id), so the
+    // shimmer container is found by its busy state.
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
+    const root = container.querySelector('[aria-busy="true"]');
+    expect(root).not.toBeNull();
     // eslint-disable-next-line testing-library/no-node-access
-    const root = container.firstElementChild;
-    expect(root?.getAttribute('aria-hidden')).toBe('true');
-    // eslint-disable-next-line testing-library/no-node-access
-    expect(root?.children).toHaveLength(MODEL_SELECTOR_SKELETON_ROW_COUNT);
+    expect(root?.querySelectorAll('.flex.items-center.gap-3')).toHaveLength(
+      MODEL_SELECTOR_SKELETON_ROW_COUNT,
+    );
   });
 });

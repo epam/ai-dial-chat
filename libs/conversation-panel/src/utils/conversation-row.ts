@@ -21,9 +21,6 @@ import { matchesSearch } from './conversation-filter';
 /** Number of skeleton placeholder rows shown while conversations are loading. */
 export const SKELETON_ROW_COUNT = 15;
 
-/** Returns a pseudo-randomised width percentage for the skeleton title bar at index `i`. */
-export const getSkeletonWidth = (i: number) => `${60 + ((i * 23) % 35)}%`;
-
 /**
  * Returns the inline-end padding Tailwind class for the row's ghost button based
  * on action state and row variant. The reserved gutter has to cover every state in which the

@@ -1,5 +1,5 @@
 import type { DeploymentItem } from '@epam/ai-dial-chat-shared';
-import type { DropdownItem } from '@epam/ai-dial-ui-kit';
+import { DropdownItemType } from '@epam/ai-dial-ui-kit';
 import { renderHook } from '@testing-library/react';
 import type { MouseEvent as ReactMouseEvent } from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -111,23 +111,16 @@ describe('useModelSelector — menuItems', () => {
     expect(result.current.menuItems).toEqual([]);
   });
 
-  it('returns seven disabled skeleton items when deployments are loading', () => {
+  it('returns one plain-text item holding the skeleton block when deployments are loading', () => {
     const { result } = renderHook(() =>
       useModelSelector({
         deployments: [],
         modelSelectorLabels: { loading: 'Loading…' },
       }),
     );
-    expect(result.current.menuItems).toHaveLength(7);
-    expect(
-      result.current.menuItems.every((item: DropdownItem) => item.disabled),
-    ).toBe(true);
-    expect(
-      result.current.menuItems.every((item: DropdownItem) => item.icon),
-    ).toBe(true);
-    expect(
-      result.current.menuItems.every((item: DropdownItem) => item.label),
-    ).toBe(true);
+    expect(result.current.menuItems).toHaveLength(1);
+    expect(result.current.menuItems[0].type).toBe(DropdownItemType.PlainText);
+    expect(result.current.menuItems[0].label).toBeTruthy();
   });
 
   it('prefers loading label over error and empty labels', () => {
@@ -141,7 +134,9 @@ describe('useModelSelector — menuItems', () => {
         },
       }),
     );
-    expect(result.current.menuItems).toHaveLength(7);
+    expect(result.current.menuItems.map((item) => item.key)).toEqual([
+      '__loading',
+    ]);
   });
 
   it('shows skeleton items during a reload even when deployments already exist', () => {
@@ -151,7 +146,9 @@ describe('useModelSelector — menuItems', () => {
         modelSelectorLabels: { loading: 'Loading…' },
       }),
     );
-    expect(result.current.menuItems).toHaveLength(7);
+    expect(result.current.menuItems.map((item) => item.key)).toEqual([
+      '__loading',
+    ]);
     expect(result.current.menuHeader).toBeUndefined();
   });
 

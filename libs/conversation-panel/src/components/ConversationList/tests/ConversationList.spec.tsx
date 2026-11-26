@@ -131,7 +131,22 @@ vi.mock('@epam/ai-dial-ui-kit', async () => ({
   ),
   Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   Skeleton: () => null,
-  SkeletonVariant: { Circular: 'circular' },
+  SkeletonShimmer: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="skeleton-shimmer">{children}</div>
+  ),
+  SkeletonTone: { Sunken: 'sunken', Base: 'base' },
+  SkeletonVariant: { Circular: 'circular', Text: 'text' },
+  SKELETON_BAR_CLASS_NAME: 'rounded-xl',
+  SKELETON_BAR_HEIGHT: 20,
+  SKELETON_BAR_WIDTHS: ['70%', '45%', '60%', '85%', '50%'],
+  SKELETON_CIRCLE_SIZE_LIST: 24,
+  useSkeletonTiming: (isLoading: boolean) => ({
+    showPlaceholder: isLoading,
+    showSkeleton: isLoading,
+    showContent: !isLoading,
+    placeholderClassName: '',
+    contentClassName: '',
+  }),
   Button: ({
     onClick,
     label,
@@ -792,6 +807,7 @@ describe('ConversationList', () => {
       'Loading conversations',
     );
     expect(screen.queryByRole('button', { name: 'First chat' })).toBeNull();
+    expect(screen.getByTestId('skeleton-shimmer')).toBeTruthy();
   });
 
   it('marks the active conversation as the current page', () => {

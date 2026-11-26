@@ -26,12 +26,18 @@ describe('ModelSelectorBottomSheet — loading', () => {
   it('announces the loading label through a status region', () => {
     renderSheet({ loadingLabel: 'Loading models' });
 
-    expect(screen.getByRole('status').textContent).toBe('Loading models');
+    const status = screen
+      .getAllByRole('status')
+      .find((element) => element.textContent === 'Loading models');
+    expect(status).toBeTruthy();
   });
 
   it('keeps the status region mounted and empties it once loading ends', () => {
     const { rerender } = renderSheet({ loadingLabel: 'Loading models' });
-    const status = screen.getByRole('status');
+    const status = screen
+      .getAllByRole('status')
+      .find((element) => element.textContent === 'Loading models');
+    expect(status).toBeTruthy();
 
     rerender(
       <ModelSelectorBottomSheet
@@ -44,8 +50,8 @@ describe('ModelSelectorBottomSheet — loading', () => {
       />,
     );
 
-    expect(screen.getByRole('status')).toBe(status);
-    expect(status.textContent).toBe('');
+    expect(screen.getAllByRole('status')).toContain(status);
+    expect(status?.textContent).toBe('');
     expect(screen.getByText('GPT-4o')).toBeTruthy();
   });
 });

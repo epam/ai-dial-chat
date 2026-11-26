@@ -497,7 +497,7 @@ describe('Input — model selector', () => {
     expect(onDeploymentChange).toHaveBeenCalledWith('my-app');
   });
 
-  it('shows seven skeleton rows and a circular trigger skeleton while deployments load', () => {
+  it('shows seven skeleton rows in one block and a circular trigger skeleton while deployments load', () => {
     render(
       <Input
         deployments={[]}
@@ -512,11 +512,8 @@ describe('Input — model selector', () => {
        the trigger are only counted together from the document body. */
     expect(getSkeletonsByVariant(document.body, 'circular')).toHaveLength(8);
     expect(getSkeletonsByVariant(document.body, 'text')).toHaveLength(7);
-    expect(
-      screen
-        .getAllByRole('button')
-        .filter((button) => (button as HTMLButtonElement).disabled),
-    ).toHaveLength(8);
+    /* The rows are one shimmer block, not seven disabled menu buttons. */
+    expect(screen.queryAllByRole('menuitem')).toHaveLength(0);
   });
 
   it('shows error label as disabled item when deployments is empty', () => {
