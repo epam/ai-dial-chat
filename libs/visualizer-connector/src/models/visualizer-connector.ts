@@ -9,12 +9,6 @@ export type VisualizerConnectorLoaderStyles = {
 export interface VisualizerConnectorOptions {
   /** Visualizer URL loaded into the iframe; also the `targetOrigin` of every posted request. */
   domain: string;
-  /**
-   * Ignored. Kept so callers written against npm `0.48.0`, where it was
-   * required, still type-check.
-   * @deprecated Do not pass; the connector never reads it.
-   */
-  hostDomain?: string;
   /** Protocol namespace prefixed to every message; must equal the iframe-side `appName`. */
   visualizerName: string;
   /** Inline styles merged over the loader overlay defaults. */

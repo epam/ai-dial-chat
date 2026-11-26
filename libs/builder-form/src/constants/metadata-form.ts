@@ -47,7 +47,6 @@ export const DEFAULT_AVATAR_PICKER_LABELS: AvatarPickerModalLabels = {
   uploadFilesLabel: 'Files',
   newFolderLabel: 'Folder',
   downloadLabel: 'Download',
-  downloadingLabel: 'Preparing download…',
   deleteLabel: 'Delete',
   deletingLabel: 'Deleting…',
   deleteConfirmTitleSingle: 'Confirm deleting',

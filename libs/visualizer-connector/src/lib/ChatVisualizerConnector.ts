@@ -104,24 +104,6 @@ export class ChatVisualizerConnector {
     });
   }
 
-  /**
-   * Posts an application-editor message as is — no `${appName}/` prefix — to every configured host,
-   * or only to `dialHost` when given. Fields go where the host reads them (see `AppsEditorMessages`).
-   * @deprecated Use `AppsEditorClient` for direction-safe messages and validated incoming requests.
-   */
-  sendEditorMessage(
-    message: { type: AppsEditorMessages } & Record<string, unknown>,
-    dialHost?: string,
-  ): void {
-    if (!window?.parent) {
-      throw new Error(
-        `[${this.appName}] There is no parent window to send requests`,
-      );
-    }
-    const targets = dialHost ? [dialHost] : this.dialHosts;
-    targets.forEach((target) => window.parent.postMessage(message, target));
-  }
-
   /** Acknowledges a host request: posts `${type}/RESPONSE` with its `requestId` back to `dialHost`. */
   sendPMResponse({
     type,

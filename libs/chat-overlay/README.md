@@ -85,8 +85,7 @@ const overlay = new ChatOverlay('#chat-root', {
 ```
 
 `autoSignInProvider` names the provider whose login the embedded app starts on
-its own while the session is unauthenticated — the successor to the legacy
-`signInOptions.autoSignIn` + `signInProvider` pair. Its presence enables the
+its own while the session is unauthenticated. Its presence enables the
 behavior; there is no separate boolean.
 
 The provider must also be mapped to `OverlayAuthUiMode.SameWindow`, because
@@ -97,23 +96,10 @@ it already started one for the same URL in the last 60 seconds — a guard
 against an identity provider that returns the user still unauthenticated. Every
 skip logs one console warning and leaves the normal login gate in place.
 
-The deprecated legacy shape is still accepted, so an existing host keeps
-working after upgrading the package:
-
-```ts
-const overlay = new ChatOverlay('#chat-root', {
-  domain: 'https://chat.example.com',
-  signInOptions: { autoSignIn: true, signInProvider: 'keycloak' },
-});
-```
-
-It is translated into `auth.autoSignInProvider: 'keycloak'` plus a
-`providerUiModes` entry of `SameWindow` — or `External` when
-`signInInNewWindow: true` is also set, in which case the app skips the
-automatic start as described above. A mode the host already set for that
-provider in `auth.providerUiModes` is kept, and an explicit
-`auth.autoSignInProvider` always wins over the legacy pair. Only
-`autoSignIn`, `signInProvider`, and `signInInNewWindow` are read.
+The legacy `signInOptions` shape is no longer accepted. Move
+`signInOptions: { autoSignIn: true, signInProvider: 'keycloak' }` to
+`auth: { autoSignInProvider: 'keycloak', providerUiModes: { keycloak: OverlayAuthUiMode.SameWindow } }`
+(see the [migration guide](../../docs/chat-overlay-migration-guide.md#migrating-a-legacy-signinoptions-block)).
 
 Notes:
 
@@ -242,7 +228,6 @@ manager.destroy();
 | `modelId`               | `string?`                                                                               | Deployment/model id to select in the embedded app.                                                                                                                                                                      |
 | `overlayConversationId` | `string?`                                                                               | Conversation id the embedded app should load and display.                                                                                                                                                               |
 | `auth`                  | `{ providerUiModes?: Record<string, OverlayAuthUiMode>; autoSignInProvider?: string }?` | Per-provider login UI modes; unconfigured providers default to external login. `autoSignInProvider` starts that provider's login without user interaction, and requires the same provider to be mapped to `SameWindow`. |
-| `signInOptions`         | `LegacySignInOptions?`                                                                  | Deprecated. Legacy `{ autoSignIn, signInProvider, signInInNewWindow }` shape, translated into `auth`; explicit `auth.autoSignInProvider` wins.                                                                          |
 
 `ChatOverlayManagerOptions` extends `ChatOverlayOptions` with `overlayId` (required), `position` (`OverlayPosition`, default `RightBottom`), `width`/`height` (default `380`/`600`), `zIndex` (default `999999`), `allowFullscreen`, and `toggleButtonAriaLabel`/`closeButtonAriaLabel`/`fullscreenButtonAriaLabel`.
 
