@@ -600,7 +600,6 @@ const defaultProps = {
   uploadFilesLabel: 'Upload files',
   newFolderLabel: 'New folder',
   downloadLabel: 'Download',
-  downloadingLabel: 'Preparing download…',
   deleteLabel: 'Delete',
   deletingLabel: 'Deleting…',
   deleteConfirmTitle: (names: string[]) =>

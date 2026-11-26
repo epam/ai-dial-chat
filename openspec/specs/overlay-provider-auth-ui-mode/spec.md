@@ -10,8 +10,6 @@ Per-provider auth UI modes for the overlay and the provider-picker login gate th
 
 `libs/chat-overlay/src/protocol/overlay-protocol.ts` (published as `@epam/ai-dial-chat-overlay`, which the chat app imports `OverlayAuthUiMode` from) SHALL export a string enum `OverlayAuthUiMode` with members `External = 'external'` and `SameWindow = 'sameWindow'`. `ChatOverlayOptions` SHALL have an optional `auth` field of type `{ providerUiModes?: Record<string, OverlayAuthUiMode>; autoSignInProvider?: string }`. `SetOverlayOptionsPayload` SHALL have an optional `authProviderUiModes` field of type `Record<string, string>` (opaque strings on the wire) and an optional `authAutoSignInProvider?: string`. All of these fields are optional; existing callers compile and behave identically when they are absent.
 
-`ChatOverlayOptions` also accepts a deprecated `signInOptions?: LegacySignInOptions` (`{ autoSignIn?, signInProvider?, signInInNewWindow? }`). `ChatOverlay` folds it into `auth` via `resolveOverlayAuth` (`libs/chat-overlay/src/lib/internal/legacy-sign-in.ts`): when `autoSignIn` is `true` and `signInProvider` is non-blank, and `auth.autoSignInProvider` is not set, the provider becomes `autoSignInProvider` and is added to `providerUiModes` as `SameWindow` (or `External` when `signInInNewWindow` is `true`); a mode the host already set for that provider in `auth.providerUiModes` wins.
-
 The protocol file has no imports; it contains only enums, interfaces, and type guards.
 
 FEATURE GATE: This capability is not gated behind `ENABLED_FEATURES`/`ENABLED_FEATURES_ROLES`. It is an overlay integration option.
@@ -37,11 +35,6 @@ RTL: not applicable to type definitions.
 
 - **WHEN** `SetOverlayOptionsPayload` is inspected
 - **THEN** the `authProviderUiModes` field is optional (`authProviderUiModes?: Record<string, string>`)
-
-#### Scenario: Legacy signInOptions are folded into auth
-
-- **WHEN** a host passes `signInOptions: { autoSignIn: true, signInProvider: 'keycloak' }` and no `auth.autoSignInProvider`
-- **THEN** `ChatOverlay` sends `authAutoSignInProvider: 'keycloak'` and `authProviderUiModes` containing `keycloak: 'sameWindow'`
 
 ---
 

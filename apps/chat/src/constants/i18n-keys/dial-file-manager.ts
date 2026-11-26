@@ -9,7 +9,6 @@ export enum DialFileManagerI18nKeys {
   ItemsSelected = 'dialFileManager.itemsSelected',
   Upload = 'dialFileManager.upload',
   NewFolder = 'dialFileManager.newFolder',
-  Downloading = 'dialFileManager.downloading',
   UploadQueueTitle = 'dialFileManager.uploadQueueTitle',
   UploadQueueCancelFileAriaLabel = 'dialFileManager.uploadQueueCancelFileAriaLabel',
   UploadQueueFileProgressAriaLabel = 'dialFileManager.uploadQueueFileProgressAriaLabel',

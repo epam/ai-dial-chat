@@ -194,7 +194,7 @@ Both adapters deliver messages only from the configured sender window and normal
 
 ### ChatVisualizerConnector
 
-Use this class for visualizers and existing integrations. For new editor integrations, use `AppsEditorClient`; the loose `sendEditorMessage` and `AppsEditorMessage` APIs are deprecated but retain their behavior.
+Use this class for visualizers and existing integrations. For new editor integrations, use `AppsEditorClient`; the loose `AppsEditorMessage` type is deprecated but retains its behavior.
 
 ```ts
 import { ChatVisualizerConnector } from '@epam/ai-dial-visualizer-connector';
@@ -219,7 +219,6 @@ connector.destroy();
 | `sendReady()` / `sendReadyToInteract()`                     | Post `${appName}/READY` / `${appName}/READY_TO_INTERACT`.                                                                                                                                                                                   |
 | `sendReadyToSave()` / `sendLoggedOut()`                     | Post `${appName}/readyToSave` / `${appName}/loggedOut` for DIAL Chat's application editor.                                                                                                                                                  |
 | `sendMessage(content)`                                      | Posts `${appName}/SEND_MESSAGE` with `{ message: content }`.                                                                                                                                                                                |
-| `sendEditorMessage(message, dialHost?)`                     | Posts an `AppsEditorMessages` message as is, with no `${appName}/` prefix, to every host or only to `dialHost`.                                                                                                                             |
 | `destroy()`                                                 | Stops listening. A second call is a no-op.                                                                                                                                                                                                  |
 
 Inbound `${appName}/SEND_VISUALIZE_DATA` and `${appName}/SEND_GROUPED_VISUALIZE_DATA` from an allowed origin are acknowledged with `/RESPONSE` and the same `requestId`. `onData` runs when the payload has `visualizerData` (`mimeType` is optional: Chat 0.x's application editor sends a layout alone), `onGroupedData` when it has `attachments` and `layout`. Any other `${appName}/…` request with a `requestId` is acknowledged too, so the host never waits out its timeout. Messages the connector posted itself (`event.source === window`, outside a frame) are ignored. An unprefixed `AppsEditorMessages` message from an allowed origin, such as `TRIGGER_SAVE`, goes to `onEditorMessage(message, origin)` whether or not it has a `payload`. Origins are matched exactly; a trailing `/` on a configured host is ignored. Unlike the dedicated editor adapters, this legacy receiver does not restrict incoming messages to one configured source window.
@@ -303,7 +302,6 @@ const options: VisualizerConnectorOptions = {
   - `loaderStyles?`
   - `loaderClass?`
   - `loaderInnerHTML?`
-  - `hostDomain?`, which is deprecated and ignored.
 - `VisualizerConnectorRequest` is the `{ type, requestId?, payload? }` shape of every posted message.
 - `VisualizerConnectorLoaderStyles` is a partial map of CSS declarations, merged over the loader defaults.
 - `ChatVisualizerCallbacks` is `{ onData?, onGroupedData?, onEditorMessage? }`. The callbacks receive `VisualizerAttachmentData` (`{ mimeType, visualizerData }`) and `VisualizerGroupedAttachmentsData` (`{ attachments: VisualizerGroupedAttachmentItem[], layout }`).
@@ -328,7 +326,7 @@ The wire format remains compatible with existing editor deployments. The old loo
 This package replaces the `0.48.0` release that was published from the legacy Chat line together with `@epam/ai-dial-shared`. The wire protocol is unchanged, so deployed visualizers keep working. In TypeScript:
 
 - Import `VisualizerConnectorRequests` and `VisualizerConnectorEvents` from this package instead of `@epam/ai-dial-shared`. Their members are now PascalCase: `sendVisualizeData` → `SendVisualizeData`, `readyToInteract` → `ReadyToInteract`, and so on.
-- `hostDomain` is optional. Drop it.
+- `hostDomain` is removed. Drop it.
 - `destroy()` can now be called twice safely, and it no longer logs to `console.error`.
 
 ## Migrating from `@epam/ai-dial-chat-visualizer-connector` 0.49.0
@@ -341,4 +339,4 @@ This package replaces the `0.48.0` release that was published from the legacy Ch
 - `onData` also receives a payload without `mimeType`, so `VisualizerAttachmentData.mimeType` is optional. `0.49.0` acknowledged such a request but dropped its data.
 - Any `${appName}/…` request with a `requestId` gets a `/RESPONSE`; `0.49.0` answered only `SEND_VISUALIZE_DATA` and `SEND_GROUPED_VISUALIZE_DATA`.
 - Messages from the connector's own window are ignored, so an unframed iframe does not hear itself.
-- `sendReadyToSave()`, `sendLoggedOut()`, `sendEditorMessage()` and `onEditorMessage` were added for editor compatibility. They remain available; use the dedicated `AppsEditorClient` for new typed editor integrations, as described above.
+- `sendReadyToSave()`, `sendLoggedOut()` and `onEditorMessage` were added for editor compatibility. They remain available; use the dedicated `AppsEditorClient` for new typed editor integrations, as described above.
