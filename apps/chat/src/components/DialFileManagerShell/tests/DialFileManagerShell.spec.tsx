@@ -645,12 +645,12 @@ describe('DialFileManagerShell', () => {
       expect(screen.getByLabelText('Destination').textContent).toBe('reports');
     });
 
-    it('loads the folder Move opens on and keeps Move disabled until it is loaded', () => {
+    it('loads the source folder Move opens on and keeps Move disabled', () => {
       const onFolderPopupPathChange = vi.fn();
       renderShell({ items: [root], onFolderPopupPathChange });
       startRequest(DestinationFolderMode.Move);
 
-      expect(onFolderPopupPathChange).toHaveBeenCalledWith('/My files');
+      expect(onFolderPopupPathChange).toHaveBeenCalledWith('/My files/reports');
       expect(
         (
           screen.getByRole('button', {
@@ -660,17 +660,17 @@ describe('DialFileManagerShell', () => {
       ).toBe(true);
     });
 
-    it('starts Move on a folder it accepts, not on the disabled source folder', () => {
+    it('starts Move on the source folder and keeps Move disabled there', () => {
       renderShell({ items: [root], loadedPaths: loadedFolders });
       startRequest(DestinationFolderMode.Move);
-      expect(screen.getByLabelText('Destination').textContent).toBe('');
+      expect(screen.getByLabelText('Destination').textContent).toBe('reports');
       expect(
         (
           screen.getByRole('button', {
             name: baseLabels.moveDestinationButton,
           }) as HTMLButtonElement
         ).disabled,
-      ).toBe(false);
+      ).toBe(true);
     });
 
     it('disables Move once the source folder is picked', async () => {
