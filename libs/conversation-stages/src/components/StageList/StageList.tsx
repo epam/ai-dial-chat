@@ -34,6 +34,10 @@ interface StageLevelProps {
   labels?: StagesPanelLabels;
   /** Called when a stage attachment tile is clicked/activated. See {@link StagesPanelProps.onAttachmentClick}. */
   onAttachmentClick?: StagesPanelProps['onAttachmentClick'];
+  /** Called when a stage attachment tile's download button is activated. See {@link StagesPanelProps.onAttachmentDownload}. */
+  onAttachmentDownload?: StagesPanelProps['onAttachmentDownload'];
+  /** Whether a stage attachment can be downloaded. See {@link StagesPanelProps.isAttachmentDownloadable}. */
+  isAttachmentDownloadable?: StagesPanelProps['isAttachmentDownloadable'];
   /** Host-owned URL resolvers for stage attachment tiles. See {@link StagesPanelProps.attachmentDisplayResolvers}. */
   attachmentDisplayResolvers?: StagesPanelProps['attachmentDisplayResolvers'];
   /** Host-owned renderer for `<cit>` elements in stage content. See {@link StagesPanelProps.renderCitation}. */
@@ -85,6 +89,8 @@ const StageNodeItem: FC<StageNodeItemProps> = ({
   typography,
   labels,
   onAttachmentClick,
+  onAttachmentDownload,
+  isAttachmentDownloadable,
   attachmentDisplayResolvers,
   renderCitation,
 }) => {
@@ -99,6 +105,8 @@ const StageNodeItem: FC<StageNodeItemProps> = ({
       typography={typography}
       labels={labels}
       onAttachmentClick={onAttachmentClick}
+      onAttachmentDownload={onAttachmentDownload}
+      isAttachmentDownloadable={isAttachmentDownloadable}
       attachmentDisplayResolvers={attachmentDisplayResolvers}
       renderCitation={renderCitation}
       isExpanded={expansion.isExpanded(key)}
@@ -114,6 +122,8 @@ const StageNodeItem: FC<StageNodeItemProps> = ({
             typography={typography}
             labels={labels}
             onAttachmentClick={onAttachmentClick}
+            onAttachmentDownload={onAttachmentDownload}
+            isAttachmentDownloadable={isAttachmentDownloadable}
             attachmentDisplayResolvers={attachmentDisplayResolvers}
             renderCitation={renderCitation}
           />
@@ -132,6 +142,8 @@ const StageGroupRow: FC<StageGroupRowProps> = ({
   typography,
   labels,
   onAttachmentClick,
+  onAttachmentDownload,
+  isAttachmentDownloadable,
   attachmentDisplayResolvers,
   renderCitation,
 }) => {
@@ -216,6 +228,8 @@ const StageGroupRow: FC<StageGroupRowProps> = ({
                 typography={typography}
                 labels={labels}
                 onAttachmentClick={onAttachmentClick}
+                onAttachmentDownload={onAttachmentDownload}
+                isAttachmentDownloadable={isAttachmentDownloadable}
                 attachmentDisplayResolvers={attachmentDisplayResolvers}
                 renderCitation={renderCitation}
               />

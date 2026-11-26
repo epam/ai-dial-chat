@@ -93,6 +93,8 @@ export interface StagesPanelLabels {
   attemptLabel?: (attemptNumber: number) => string;
   /** Accessible label for a stage attachment tile's interactive click action. Defaults to `'Preview search result'`. */
   attachmentClickLabel?: string;
+  /** Accessible label for a stage attachment tile's download button. Defaults to `'Download attachment'`. */
+  attachmentDownloadLabel?: string;
 }
 
 /** Props accepted by the `StagesPanel` component. */
@@ -109,6 +111,10 @@ export interface StagesPanelProps {
   labels?: StagesPanelLabels;
   /** Called when a stage attachment tile is clicked/activated. Receives the mapped display attachment. */
   onAttachmentClick?: (attachment: DisplayAttachment) => void;
+  /** Called when a stage attachment tile's download button is activated. Receives the mapped display attachment; the button renders only when this is given. */
+  onAttachmentDownload?: (attachment: DisplayAttachment) => void;
+  /** Whether a stage attachment can be downloaded; `false` hides that tile's download button. Defaults to every attachment being downloadable. */
+  isAttachmentDownloadable?: (attachment: DisplayAttachment) => boolean;
   /** Host-owned URL resolvers applied when mapping stage attachments; without them an image tile previews its raw `url`. */
   attachmentDisplayResolvers?: AttachmentDisplayResolvers;
   /** Host-owned renderer for `<cit data-id="…">` elements in stage content; without it they render as literal text. */
