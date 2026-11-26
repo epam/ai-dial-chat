@@ -1,7 +1,7 @@
 # resource-save-panel Specification
 
 ## Purpose
-TBD - created by archiving change resource-save-panel. Update Purpose after archive.
+The Save panel lets a user save an edited resource in place or as a new version and choose its destination, a Personal folder, an Organization folder (a publication request) or an org-unit folder the user may write to (a direct write), with one flow for every in-scope editor.
 
 ## Requirements
 
