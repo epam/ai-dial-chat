@@ -16,6 +16,10 @@ import type {
 } from '../types/toolset-auth';
 import type { CatalogItem } from './catalog-item';
 import type {
+  CatalogAboutFooterRenderProps,
+  CatalogDetailsIdentityRenderProps,
+} from './details-slots';
+import type {
   CatalogContentFilePreview,
   CatalogContentFileTreeRenderProps,
 } from './item-details-data';
@@ -792,6 +796,22 @@ export interface DetailsPanelProps {
   renderContentFileTree?: (
     props: CatalogContentFileTreeRenderProps,
   ) => ReactNode;
+  /**
+   * Draws the header's identity block (icon, caption, name, version, featured
+   * chip, status badge and folder path) in place of the built-in one, e.g. so
+   * a host can show its own caption row. The action row stays the panel's own;
+   * omitted, the built-in block renders. Forwarded to `Header`.
+   */
+  renderDetailsIdentity?: (
+    props: CatalogDetailsIdentityRenderProps,
+  ) => ReactNode;
+  /**
+   * Draws the About tab's footer, under the description, in place of the
+   * built-in topic tags. Return `null` to show nothing there. The tab counts
+   * as empty when the item has no description and the slot returns nothing.
+   * Omitted, the topic tags render.
+   */
+  renderAboutFooter?: (props: CatalogAboutFooterRenderProps) => ReactNode;
   /**
    * Called immediately when the "Delete" button is clicked, with no
    * confirmation step. Shown only when the item's `isMyApp` is `true` and

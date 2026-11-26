@@ -32,6 +32,7 @@ export type { HeaderProps } from '../../../models/details-header';
 /** Details panel header bar: entity identity (icon + name + version), action buttons (primary action, Share, a "Manage" menu for Edit, Publish or Unpublish, and Delete — or that action as a button of its own where filtering leaves only one), and inline credentials section. For Toolsets, the credentials action (Log in / Log out / manage) renders first and styled as the primary action, since Toolsets have no "Use in chat" action. Shows a "Running low"/"Limit reached" badge from `item.details?.limits?.status`, disabling "Use in chat" once a limit is reached. */
 export const Header: FC<HeaderProps> = ({
   item,
+  renderDetailsIdentity,
   onUseInChat,
   isPrimaryActionVisible,
   onShare,
@@ -287,6 +288,15 @@ export const Header: FC<HeaderProps> = ({
     detailsStyles,
   };
 
+  const folderPath =
+    item.folder.length > 0 ? (
+      <FolderPath
+        segments={item.folder}
+        labelClassName={folderLabelClassName}
+        leafClassName={folderLeafClassName}
+      />
+    ) : undefined;
+
   /*
    * The action row renders only when it has content: an empty flex child
    * would still hold the parent's `gap-3` open, leaving dead space between
@@ -305,24 +315,20 @@ export const Header: FC<HeaderProps> = ({
 
   return (
     <div className="flex flex-col gap-3 px-6 py-4">
-      <EntityHeader
-        item={item}
-        iconSize={52}
-        nameClassName={mergeClasses(nameClassName, styles.name)}
-        featuredLabel={texts?.featuredLabel ?? 'Featured'}
-        typeLabel={texts?.entityTypeLabels?.[item.type]}
-        featuredChipStyle={detailsStyles?.colors?.featuredChipStyle}
-        statusBadge={statusBadge}
-        footer={
-          item.folder.length > 0 ? (
-            <FolderPath
-              segments={item.folder}
-              labelClassName={folderLabelClassName}
-              leafClassName={folderLeafClassName}
-            />
-          ) : undefined
-        }
-      />
+      {renderDetailsIdentity != null ? (
+        renderDetailsIdentity({ item, statusBadge, footer: folderPath })
+      ) : (
+        <EntityHeader
+          item={item}
+          iconSize={52}
+          nameClassName={mergeClasses(nameClassName, styles.name)}
+          featuredLabel={texts?.featuredLabel ?? 'Featured'}
+          typeLabel={texts?.entityTypeLabels?.[item.type]}
+          featuredChipStyle={detailsStyles?.colors?.featuredChipStyle}
+          statusBadge={statusBadge}
+          footer={folderPath}
+        />
+      )}
       {hasActionRowContent && (
         <div className="flex flex-wrap items-center gap-2 ps-[60px]">
           {isCredentialsActionPrimary && (

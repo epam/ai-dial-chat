@@ -2,7 +2,7 @@ import {
   MarkdownRenderer,
   type MarkdownRendererClassNames,
 } from '@epam/ai-dial-chat-shared';
-import { FC } from 'react';
+import { FC, ReactNode } from 'react';
 import type {
   CatalogMarkdownLabels,
   ItemDetailsStyles,
@@ -11,6 +11,11 @@ import { TopicTag } from '../../TopicTag/TopicTag';
 
 export interface AboutTabProps {
   topics?: string[];
+  /**
+   * Replaces the topic tags under the description. `null` shows nothing there;
+   * `undefined` keeps the topic tags.
+   */
+  footer?: ReactNode;
   /** Markdown text to render, typically `item.description`. */
   content: string;
   detailsStyles?: ItemDetailsStyles;
@@ -18,9 +23,10 @@ export interface AboutTabProps {
   markdownLabels?: CatalogMarkdownLabels;
 }
 
-/** Renders a catalog item's description as markdown, followed by its topic tags. */
+/** Renders a catalog item's description as markdown, followed by its topic tags, or by the host's `footer` in their place. */
 export const AboutTab: FC<AboutTabProps> = ({
   topics,
+  footer,
   content,
   detailsStyles,
   markdownLabels,
@@ -50,13 +56,16 @@ export const AboutTab: FC<AboutTabProps> = ({
         classNames={classNames}
         {...markdownLabels}
       />
-      {topics && topics.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {topics.map((p) => (
-            <TopicTag key={p} label={p} />
-          ))}
-        </div>
-      )}
+      {footer !== undefined
+        ? footer
+        : topics &&
+          topics.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {topics.map((p) => (
+                <TopicTag key={p} label={p} />
+              ))}
+            </div>
+          )}
     </div>
   );
 };

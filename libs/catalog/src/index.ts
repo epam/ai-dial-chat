@@ -100,6 +100,10 @@ export type {
   CardStyles,
   CardTypography,
 } from './models/card-props';
+export type {
+  CatalogAboutFooterRenderProps,
+  CatalogDetailsIdentityRenderProps,
+} from './models/details-slots';
 
 export { CardGrid } from './components/CardGrid/CardGrid';
 export { CardRowRenderer } from './components/CardGrid/CardRowRenderer';

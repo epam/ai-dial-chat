@@ -125,6 +125,8 @@ export const Catalog: FC<CatalogProps> = ({
   onLoadContentFilePreview,
   renderContentFilePreview,
   renderContentFileTree,
+  renderDetailsIdentity,
+  renderAboutFooter,
   onDelete,
   onUnshare,
   isUnshareVisible,
@@ -1012,6 +1014,8 @@ export const Catalog: FC<CatalogProps> = ({
           onLoadContentFilePreview={onLoadContentFilePreview}
           renderContentFilePreview={renderContentFilePreview}
           renderContentFileTree={renderContentFileTree}
+          renderDetailsIdentity={renderDetailsIdentity}
+          renderAboutFooter={renderAboutFooter}
           onDelete={onDelete}
           onUnshare={onUnshare}
           isUnshareVisible={isUnshareVisible}

@@ -2,6 +2,7 @@ import type { TablerIcon } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import type { CredentialsLevel } from '../types/toolset-auth';
 import type { CatalogItem } from './catalog-item';
+import type { CatalogDetailsIdentityRenderProps } from './details-slots';
 import type { ItemDetailsStyles, ItemDetailsTexts } from './item-details-props';
 
 /**
@@ -34,6 +35,14 @@ export interface ManageAction {
 export interface HeaderProps {
   /** The item whose identity, folder and actions are shown. */
   item: CatalogItem;
+  /**
+   * Draws the identity block (icon, caption, name, version, featured chip,
+   * status badge and folder path) in place of the built-in one. The action
+   * row below it stays the panel's own. Omitted, the built-in block renders.
+   */
+  renderDetailsIdentity?: (
+    props: CatalogDetailsIdentityRenderProps,
+  ) => ReactNode;
   /** Called by the primary "Use in chat" action. The action is hidden when absent. */
   onUseInChat?: (item: CatalogItem) => void;
   /** Returns `false` to hide the primary action for an item. */

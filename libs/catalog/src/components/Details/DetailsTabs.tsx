@@ -27,6 +27,7 @@ export interface DetailsTabsProps extends Pick<
   | 'item'
   | 'isDetailsLoading'
   | 'renderContentFileTree'
+  | 'renderAboutFooter'
   | 'texts'
   | 'limitsFooterNote'
 > {
@@ -51,6 +52,7 @@ export const DetailsTabs: FC<DetailsTabsProps> = ({
   isDetailsLoading = false,
   contentFile,
   renderContentFileTree,
+  renderAboutFooter,
   texts,
   detailsStyles,
   limitsFooterNote,
@@ -94,8 +96,21 @@ export const DetailsTabs: FC<DetailsTabsProps> = ({
   }, [texts]);
 
   const emptyTabLabel = texts?.emptyTabLabel ?? 'No data';
-  const isAboutEmpty =
-    !item.description?.trim() && (item.topics?.length ?? 0) === 0;
+  /*
+   * The footer slot is asked only while About is showing, so a host's
+   * footer work is not repeated for tabs that never draw it. A slot that
+   * returns nothing leaves a tab without a description empty; without a slot
+   * the topic tags decide.
+   */
+  const aboutFooter =
+    activeTab === CatalogDetailsTab.About
+      ? renderAboutFooter?.({ item })
+      : undefined;
+  const isAboutFooterEmpty =
+    renderAboutFooter != null
+      ? aboutFooter == null || aboutFooter === false
+      : (item.topics?.length ?? 0) === 0;
+  const isAboutEmpty = !item.description?.trim() && isAboutFooterEmpty;
   const isOverviewEmpty = !item.details?.overview?.sections?.length;
   const emptyTabState = (
     <div className="flex size-full items-center justify-center py-6">
@@ -157,6 +172,7 @@ export const DetailsTabs: FC<DetailsTabsProps> = ({
           <AboutTab
             content={item.description}
             topics={item.topics}
+            footer={renderAboutFooter != null ? aboutFooter : undefined}
             detailsStyles={detailsStyles}
             markdownLabels={markdownLabels}
           />
