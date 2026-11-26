@@ -105,6 +105,15 @@ const DELIVERY = {
   folder: 'public/Delivery/',
   permissions: { applications: ['read', 'write'] },
 };
+/* A unit below `EPAM` keeps that folder listed (an ancestor of a unit) while it stays outside every unit. */
+const EPAM_RISK = {
+  id: 'EPAM/Risk',
+  name: 'Risk',
+  displayName: 'Risk',
+  path: 'public/EPAM/Risk',
+  folder: 'public/EPAM/Risk/',
+  permissions: {},
+};
 
 const organizationFolders = {
   folderItems: [],
@@ -135,7 +144,7 @@ const renderSchemaAppSave = async (
   vi.mocked(listOrgUnits).mockResolvedValue({
     enabled: true,
     hasAdminAccess: false,
-    units: [{ ...DELIVERY, permissions }],
+    units: [{ ...DELIVERY, permissions }, EPAM_RISK],
   });
   const adapter: ResourceSaveAdapter = createEmbeddedApplicationSaveAdapter({
     applicationsApi: {

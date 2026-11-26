@@ -101,6 +101,8 @@ const unit = (name: string, permissions: Record<string, string[]>) => ({
 
 const DELIVERY = unit('Delivery', { applications: ['read', 'write'] });
 const SALES = unit('Sales', { applications: ['read'] });
+/* Keeps `Shared/Reports` listed (an ancestor of a unit) while it stays outside every unit. */
+const SHARED_RISK = unit('Shared/Reports/Risk', {});
 
 const organizationFolders = {
   folderItems: [],
@@ -130,7 +132,7 @@ const RightsProbe = () => {
 };
 
 const renderEditorSave = async ({
-  units = [DELIVERY, SALES],
+  units = [DELIVERY, SALES, SHARED_RISK],
   hasAdminAccess = false,
   isFlagOn = true,
   isListFailing = false,
@@ -359,15 +361,23 @@ describe('ResourceSavePanelContainer with org units', () => {
       );
     });
 
-    it('keeps a unit folder the user may write to, and a plain public folder, enabled', async () => {
+    it('keeps a unit folder the user may write to, and an ancestor of a unit, enabled', async () => {
       await renderEditorSave();
 
       expect(
         lastPanel().getDisabledReason?.(organization('Delivery', 'Teams')),
       ).toBeUndefined();
       expect(
-        lastPanel().getDisabledReason?.(organization('Plain', 'Folder')),
+        lastPanel().getDisabledReason?.(organization('Shared', 'Reports')),
       ).toBeUndefined();
+    });
+
+    it('disables a plain public folder the org-unit tree hides, such as one picked before the units loaded', async () => {
+      await renderEditorSave();
+
+      expect(
+        lastPanel().getDisabledReason?.(organization('Plain', 'Folder')),
+      ).toBe(OrgUnitAccessI18nKeys.FolderOutsideOrgUnits);
     });
 
     it('keeps a Personal folder named like a unit without write enabled', async () => {

@@ -363,22 +363,25 @@ const CatalogView: FC<Props> = ({
 
   const publishEntityType =
     publishOpenItem && toPublishEntityType(publishOpenItem.type);
-  const { isDestinationUsable, getDisabledReason: getPublishFolderReason } =
-    useOrgUnitFolderGuards({
-      purpose: OrgUnitFolderGuardPurpose.Publish,
-      namespace: publishEntityType
-        ? getOrgUnitNamespace(publishEntityType)
-        : undefined,
-      isActive: !isSelectorMode && publishOpenItem != null,
-      shouldRefreshOnOpen: true,
-      isQuickApp:
-        publishOpenItem != null &&
-        resolveCatalogItemEntity(
-          publishOpenItem.type,
-          findDeploymentByIdOrReference(deployments, publishOpenItem.id),
-          schemas,
-        ) === NotifiableEntity.QuickApp,
-    });
+  const {
+    isDestinationUsable,
+    getDisabledReason: getPublishFolderReason,
+    canCreateFolderIn: canCreatePublishFolderIn,
+  } = useOrgUnitFolderGuards({
+    purpose: OrgUnitFolderGuardPurpose.Publish,
+    namespace: publishEntityType
+      ? getOrgUnitNamespace(publishEntityType)
+      : undefined,
+    isActive: !isSelectorMode && publishOpenItem != null,
+    shouldRefreshOnOpen: true,
+    isQuickApp:
+      publishOpenItem != null &&
+      resolveCatalogItemEntity(
+        publishOpenItem.type,
+        findDeploymentByIdOrReference(deployments, publishOpenItem.id),
+        schemas,
+      ) === NotifiableEntity.QuickApp,
+  });
 
   const {
     folderItems: publishFolderItems,
@@ -787,6 +790,7 @@ const CatalogView: FC<Props> = ({
         getPublishDisabledReason={toPublishDisabledReason(
           getPublishFolderReason,
         )}
+        canCreatePublishFolderIn={canCreatePublishFolderIn}
         onCreatePublishFolder={onCreatePublishFolder}
         hasPublishWriteAccess={hasPublishWriteAccess}
         publishDefaultAuthor={displayName}

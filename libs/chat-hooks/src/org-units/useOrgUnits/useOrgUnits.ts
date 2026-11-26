@@ -3,6 +3,8 @@ import {
   canSaveToFolderAt,
   canWriteIntoOrgUnitAt,
   canRequestPublicationAt,
+  findOwningOrgUnit,
+  isOrgUnitTreeFolder,
   type OrgUnitAccess,
   type OrgUnitNamespace,
 } from '@epam/ai-dial-chat-shared';
@@ -40,6 +42,10 @@ export interface UseOrgUnitsResult {
   hasAdminAccess: boolean;
   /** Whether a publish panel may write straight into the path instead of filing a request: it lies inside an org unit, the user may write the namespace there and may approve publications (`read` and `write` on `publications`, or DIAL admin). `false` until the status is `Ready`. */
   canPublishDirectlyAt: OrgUnitRightCheck;
+  /** Whether a public folder stays listed: it is a unit, lies inside one or is an ancestor of one. `true` until the status is `Ready`, so missing data never hides a folder. */
+  isPublicFolderVisible: (publicPath: string) => boolean;
+  /** Whether a new public folder created inside the path would stay listed by `isPublicFolderVisible`: the path lies inside an org unit. `false` for the public root and an ancestor-only folder once the status is `Ready`; `true` until then. */
+  canCreatePublicFolderIn: (publicPath: string) => boolean;
 }
 
 const NO_UNITS: OrgUnitAccess = { hasAdminAccess: false, units: [] };
@@ -140,6 +146,18 @@ export const useOrgUnits = ({
     [isReady, access],
   );
 
+  const isPublicFolderVisible = useCallback(
+    (publicPath: string): boolean =>
+      !isReady || isOrgUnitTreeFolder(access.units, publicPath),
+    [isReady, access],
+  );
+
+  const canCreatePublicFolderIn = useCallback(
+    (publicPath: string): boolean =>
+      !isReady || findOwningOrgUnit(access.units, publicPath) != null,
+    [isReady, access],
+  );
+
   return useMemo(
     () => ({
       status,
@@ -150,6 +168,8 @@ export const useOrgUnits = ({
       canPublishAt,
       canPublishDirectlyAt,
       hasAdminAccess: isReady && access.hasAdminAccess,
+      isPublicFolderVisible,
+      canCreatePublicFolderIn,
     }),
     [
       status,
@@ -161,6 +181,8 @@ export const useOrgUnits = ({
       canPublishDirectlyAt,
       isReady,
       access.hasAdminAccess,
+      isPublicFolderVisible,
+      canCreatePublicFolderIn,
     ],
   );
 };

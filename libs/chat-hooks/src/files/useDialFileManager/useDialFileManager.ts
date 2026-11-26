@@ -56,6 +56,7 @@ export const useDialFileManager = ({
   activeTab = DialFileManagerTabs.MyFiles,
   isActive,
   sessionKey,
+  isPublicFolderVisible,
   onNotification,
   onOperationSuccess,
   forbiddenSymbolsRegExp,
@@ -77,6 +78,7 @@ export const useDialFileManager = ({
     onNotification,
     isActive,
     sessionKey,
+    isPublicFolderVisible,
   });
 
   const upload = useDialFileUploadBatch({

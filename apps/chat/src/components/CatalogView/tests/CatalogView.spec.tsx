@@ -739,6 +739,7 @@ describe('CatalogView', () => {
       isDestinationUsable: undefined,
       getDisabledReason: undefined,
       canSaveDirectlyTo: undefined,
+      canCreateFolderIn: () => true,
     });
     vi.mocked(usePublishFolders).mockReturnValue({
       folderItems: [],
@@ -820,6 +821,7 @@ describe('CatalogView', () => {
       isDestinationUsable,
       getDisabledReason: undefined,
       canSaveDirectlyTo: undefined,
+      canCreateFolderIn: () => true,
     });
 
     render(<CatalogView />);
@@ -842,6 +844,7 @@ describe('CatalogView', () => {
       isDestinationUsable: vi.fn(),
       getDisabledReason,
       canSaveDirectlyTo: undefined,
+      canCreateFolderIn: () => true,
     });
 
     render(<CatalogView />);

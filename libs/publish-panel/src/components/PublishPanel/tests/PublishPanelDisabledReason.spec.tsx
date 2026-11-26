@@ -42,4 +42,29 @@ describe('PublishPanel getDisabledReason', () => {
       expect.objectContaining({ getDisabledReason }),
     );
   });
+
+  it('forwards canCreateFolderIn to the folder view body', () => {
+    const canCreateFolderIn = vi.fn(() => false);
+
+    render(
+      <PublishPanel
+        view={PublishPanelView.ChangeFolder}
+        resource={{ title: 'Agent', version: '1.0.0' }}
+        folderItems={[]}
+        onChangeFolderClick={vi.fn()}
+        onPendingFolderPathChange={vi.fn()}
+        onCreateFolder={vi.fn()}
+        canCreateFolderIn={canCreateFolderIn}
+        hasExistingPublicationInFolder={false}
+        hasWriteAccess
+        isSubmitting={false}
+        author=""
+        onAuthorChange={vi.fn()}
+      />,
+    );
+
+    expect(bodyProps).toHaveBeenLastCalledWith(
+      expect.objectContaining({ canCreateFolderIn }),
+    );
+  });
 });

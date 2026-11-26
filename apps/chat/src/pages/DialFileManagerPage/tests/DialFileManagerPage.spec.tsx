@@ -35,6 +35,18 @@ vi.mock('../../../hooks/files/useDialFilePreview', () => ({
   useDialFilePreview: mockUseDialFilePreview,
 }));
 
+const { mockEnsureUnits, mockIsPublicFolderVisible } = vi.hoisted(() => ({
+  mockEnsureUnits: vi.fn(),
+  mockIsPublicFolderVisible: vi.fn(() => true),
+}));
+
+vi.mock('../../../context/OrgUnitsContext', () => ({
+  useOrgUnitsContext: () => ({
+    ensureUnits: mockEnsureUnits,
+    isPublicFolderVisible: mockIsPublicFolderVisible,
+  }),
+}));
+
 vi.mock('../../../context/NotificationContext', () => ({
   useNotification: () => createNotificationContextValue(vi.fn()),
 }));
@@ -353,6 +365,15 @@ describe('DialFileManagerPage', () => {
         actionProfile: DialFileManagerActionProfile.Full,
       }),
     );
+  });
+
+  it('starts the org-unit read and hands the org-unit folder rule to the file manager', () => {
+    render(<DialFileManagerPage />);
+
+    expect(mockEnsureUnits).toHaveBeenCalled();
+    expect(
+      vi.mocked(chatHooksModule.useDialFileManagerSections).mock.lastCall?.[0],
+    ).toMatchObject({ isPublicFolderVisible: mockIsPublicFolderVisible });
   });
 
   it('does not render an Attach button or attach footer', () => {

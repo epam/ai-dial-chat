@@ -1,9 +1,14 @@
 import { ListFilesItemDtoNodeTypeEnum } from '@epam/ai-dial-chat-api-client';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { useOrgUnitsContext } from '../../../context/OrgUnitsContext';
 import { createFolder, listPublicFiles } from '../../../server-api/files.api';
 import { StorageKey } from '../../../types/storage-key';
 import { usePublishFolders } from '../usePublishFolders';
+
+vi.mock('../../../context/OrgUnitsContext', () => ({
+  useOrgUnitsContext: vi.fn(),
+}));
 
 vi.mock('../../../server-api/files.api', () => ({
   listPublicFiles: vi.fn(),
@@ -14,6 +19,9 @@ describe('usePublishFolders', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
+    vi.mocked(useOrgUnitsContext).mockReturnValue({
+      isPublicFolderVisible: () => true,
+    } as unknown as ReturnType<typeof useOrgUnitsContext>);
     vi.mocked(listPublicFiles).mockResolvedValue({
       bucket: 'public',
       path: '',
@@ -304,5 +312,38 @@ describe('usePublishFolders', () => {
       result.current.hasPublishWriteAccess(['Organization', 'Production']),
     ).toBe(true);
     expect(canPublishTo).toHaveBeenCalledWith(['Organization', 'Production']);
+  });
+
+  it('hides a public folder the org-unit rule refuses, including a remembered one', async () => {
+    const isPublicFolderVisible = vi.fn(
+      (publicPath: string) => !publicPath.startsWith('Shared'),
+    );
+    vi.mocked(useOrgUnitsContext).mockReturnValue({
+      isPublicFolderVisible,
+    } as unknown as ReturnType<typeof useOrgUnitsContext>);
+    localStorage.setItem(
+      StorageKey.PublishDestinationFolders,
+      JSON.stringify(['Shared/Reports']),
+    );
+    vi.mocked(listPublicFiles).mockResolvedValue({
+      bucket: 'public',
+      path: '',
+      items: ['Acme', 'Shared'].map((name) => ({
+        name,
+        path: `${name}/`,
+        folderId: `public:${name}/`,
+        nodeType: ListFilesItemDtoNodeTypeEnum.Folder,
+        bucket: 'public',
+      })),
+    });
+
+    const { result } = renderHook(() => usePublishFolders());
+
+    await waitFor(() =>
+      expect(result.current.folderItems.map((item) => item.name)).toEqual([
+        'Acme',
+      ]),
+    );
+    expect(isPublicFolderVisible).toHaveBeenCalledWith('Shared');
   });
 });

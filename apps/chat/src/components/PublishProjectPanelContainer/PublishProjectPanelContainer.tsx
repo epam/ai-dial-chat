@@ -94,12 +94,13 @@ const PublishProjectPanelContainer: FC<Props> = ({
   /* The publish panel pre-fills its author field with this; the lib cannot read the session itself. */
   const { displayName } = useUserProfile();
 
-  const { isDestinationUsable, getDisabledReason } = useOrgUnitFolderGuards({
-    purpose: OrgUnitFolderGuardPurpose.Publish,
-    namespace: OrgUnitNamespace.Projects,
-    isActive: isOpen,
-    shouldRefreshOnOpen: true,
-  });
+  const { isDestinationUsable, getDisabledReason, canCreateFolderIn } =
+    useOrgUnitFolderGuards({
+      purpose: OrgUnitFolderGuardPurpose.Publish,
+      namespace: OrgUnitNamespace.Projects,
+      isActive: isOpen,
+      shouldRefreshOnOpen: true,
+    });
 
   const {
     folderItems,
@@ -236,6 +237,7 @@ const PublishProjectPanelContainer: FC<Props> = ({
       onSelectedFolderPathChange={publishFlow.setSelectedFolderPath}
       onCreateFolder={publishFlow.handleCreateFolder}
       getDisabledReason={toPublishDisabledReason(getDisabledReason)}
+      canCreateFolderIn={canCreateFolderIn}
       expandedPaths={expandedPaths}
       onExpandedPathsChange={onExpandedPathsChange}
       loadingPaths={loadingPaths}

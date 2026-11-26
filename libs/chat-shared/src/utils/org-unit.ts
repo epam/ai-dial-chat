@@ -83,6 +83,29 @@ export const findOwningOrgUnit = (
 };
 
 /**
+ * Whether `publicPath` belongs to the org-unit structure of the public bucket,
+ * i.e. should stay listed when org units are on: the public root, a unit's own
+ * folder, a folder inside a unit (see {@link findOwningOrgUnit}), or an
+ * ancestor of a unit folder at a segment boundary (`Acme/` when only
+ * `Acme/Risk/` is a unit). Any other public folder — and so its subtree — is a
+ * plain folder no unit owns. Describes the folder kind, not a right, so admin
+ * access is not consulted. `publicPath` is decoded and public-relative.
+ * @param units - units as returned by DIAL Core
+ * @param publicPath - decoded path relative to the public bucket, e.g. `Acme/Reports`
+ */
+export const isOrgUnitTreeFolder = (
+  units: readonly OrgUnit[],
+  publicPath: string,
+): boolean => {
+  const pathFolder = joinFolder(toSegments(publicPath));
+  if (pathFolder === '') return true;
+  if (findOwningOrgUnit(units, publicPath)) return true;
+  return getUnitFolders(units).some(
+    ({ folder }) => folder !== '' && folder.startsWith(pathFolder),
+  );
+};
+
+/**
  * Whether the caller may do `action` on `namespace` at `publicPath`. A DIAL
  * admin may anywhere; otherwise only the owning unit's `permissions` decide, so
  * a path under no unit, a missing namespace or an empty list is `false`. Role

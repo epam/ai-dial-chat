@@ -1370,6 +1370,17 @@ a valid state that never blocks submit; what it means is the host's decision
 (`apps/chat` omits the field from the request so the backend attributes the
 publication to the caller's own session name).
 
+Two optional props shape the publish panel's folder tree, both called with a
+`FolderDestination` whose `rootKey` is `''`.
+`getPublishDisabledReason(destination)` returns a reason for a folder that is
+unavailable as a destination; that row is disabled with the reason and no
+folder is created under it. `canCreatePublishFolderIn(destination)` keeps a
+folder selectable but, when it returns `false`, offers no "Create new folder"
+or "Add child" for it and no "Add sibling" on its children. Use it for a folder
+where the host would not list a newly created child. Both are forwarded to
+`PublishPanel` as `getDisabledReason` and `canCreateFolderIn`. Without them,
+every folder is usable and accepts new folders.
+
 The catalog no longer offers publication access rules: `onPublish` has no
 `rules` argument, and the former `hidePublishAccessRules`,
 `ruleSourceOptions` and `onFetchExistingRules` props are gone, so a host
