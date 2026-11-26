@@ -57,7 +57,7 @@ const hostAdapter: McpAppHostAdapter = {
 };
 
 describe('McpAppInlinePreview — header', () => {
-  it('shows the tool and app names but not the app version', async () => {
+  it('shows no tool or app name, only the action buttons', async () => {
     render(
       <McpAppInlinePreview
         match={match}
@@ -72,7 +72,10 @@ describe('McpAppInlinePreview — header', () => {
       />,
     );
 
-    expect(await screen.findByText('entity-card')).toBeTruthy();
-    expect(screen.queryByText('9.9.9')).toBeNull();
+    expect(await screen.findByText('mounted app')).toBeTruthy();
+    expect(screen.queryByText('weather')).toBeNull();
+    expect(screen.queryByText('entity-card')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Reload' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Expand' })).toBeTruthy();
   });
 });
