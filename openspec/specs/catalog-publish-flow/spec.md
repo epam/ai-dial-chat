@@ -103,6 +103,18 @@ Publishing creates a DIAL Core publication *request*, so a destination folder pi
 - **WHEN** `onPublish` rejects
 - **THEN** the destination is not remembered
 
+### Requirement: No folder creation under the Organization root in the chat app
+Organization folders, org units and the folders inside them included, are managed in DIAL Admin. The chat app's publish panels (catalog, conversation, project) and the Save panel SHALL pass `FolderDestinationTree` a `canCreateFolderIn` that is `false` for every Organization destination — `rootKey` `''` in a publish tree and `SaveDestinationRoot.Organization` in the Save tree — whatever the `features.orgUnitsEnabled` flag and the org-unit status. The tree then offers neither the trailing "Create new folder" button nor the "Add child"/"Add sibling" context-menu items there. The rule lives in `useOrgUnitFolderGuards` (`apps/chat/src/hooks/publish/useOrgUnitFolderGuards.ts`); the Personal root of the Save tree keeps folder creation.
+
+#### Scenario: User opens the publish destination tree
+- **GIVEN** `Acme/Risk` is an org unit
+- **WHEN** the user opens the Publish panel
+- **THEN** the destination tree shows no "Create new folder" button, and no folder row — the root, `Acme`, `Acme/Risk` or a folder inside it — offers "Add child" or "Add sibling"
+
+#### Scenario: User opens the Save panel
+- **WHEN** the user opens the Save panel of a resource editor
+- **THEN** folder creation is offered under the Personal root only
+
 ### Requirement: Per-row "Add sibling" / "Add child" folder creation
 In addition to the trailing "Create new folder" button, the file manager's `FolderDestinationTree` SHALL expose a per-row context menu (`DialFoldersTree`'s `getContextMenuItems` prop) with two actions: "Add child" (creates the new folder inside the clicked folder) and "Add sibling" (creates the new folder as a sibling of the clicked folder, one level up). This mirrors the file manager's own "Add sibling"/"Add child" folder-creation actions (`useFolderCreation`'s `startTreeSiblingFolderCreation`/`startTreeChildFolderCreation` internal to `@epam/ai-dial-react-file-manager`'s `FileManager`, not exported from the package) — reimplemented against the tree's public context-menu API rather than importing the internal hook. "Add sibling" SHALL be omitted for the root node, which has no parent to create a sibling under. Both actions resolve a unique default name and validate exactly like the trailing button (see the two requirements above) — there is no separate code path.
 
