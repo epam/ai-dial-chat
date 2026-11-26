@@ -134,6 +134,11 @@ reaching this entry.
 The package declares only CSS/SCSS side effects so unused UI can be tree-shaken.
 Continue importing `@epam/ai-dial-chat-shared/styles.css` once in the host.
 
+`DialFileManagerShellLabels.sort` (`DialFileManagerShellSortLabels`) is optional: it carries the
+sort button's name and the menu's field (`name`, `updatedAt`, `size`) and direction (`asc`,
+`desc`) labels, which the shell forwards as the file manager's `sortOptions`. Omitted, the
+shell passes no `sortOptions` and the file manager shows its English defaults.
+
 ```tsx
 import {
   DialFileManagerShell,
@@ -814,6 +819,30 @@ import { ItemHeader } from '@epam/ai-dial-chat-shared';
   titleClassName="dial-small-semi-text"
   postfixClassName="dial-tiny-text"
   colors={{ title: 'var(--text-primary)', count: 'var(--text-secondary)' }}
+/>;
+```
+
+### SortMenuButton
+
+Icon-only sort trigger (`IconArrowsSort` with a tooltip) that opens a menu of
+orders and marks the applied one with a trailing check. The trigger is named by
+`label` (default `'Sort'`) whichever order is applied, and it renders nothing
+when `options` is empty. It holds no sort state of its own: it shows `value` and
+reports picks through `onChange`. `colors.icon` sets the glyph color (default
+`--text-secondary`); `open` / `onOpenChange` control the menu when the host
+needs to close it.
+
+```tsx
+import { SortMenuButton } from '@epam/ai-dial-chat-shared';
+
+<SortMenuButton
+  label="Sort"
+  options={[
+    { value: 'newest', label: 'Newest' },
+    { value: 'oldest', label: 'Oldest' },
+  ]}
+  value={sortKey}
+  onChange={setSortKey}
 />;
 ```
 
