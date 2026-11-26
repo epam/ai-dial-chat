@@ -145,3 +145,15 @@ export interface McpAppInlinePreviewTypography {
   /** Typography class of the "opened in canvas" and load-error messages. Defaults to `'dial-body-text'`. */
   messageClassName?: string;
 }
+
+/** A tool call recovered from a message by a tool-call adapter, paired with its result text once known. */
+export interface McpAppToolCall {
+  /** The tool name as the producing agent reports it (prefixed or raw, depending on the adapter). */
+  name: string;
+  /** The call's arguments. */
+  args: Record<string, unknown>;
+  /** The call's result as plain text; undefined while the call is running or when it failed. */
+  result?: string;
+  /** The result parsed as a JSON object, when the adapter can tell it is the tool's structured result. */
+  structuredResult?: Record<string, unknown>;
+}

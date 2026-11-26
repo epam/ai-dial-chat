@@ -165,4 +165,17 @@ describe('resolveMcpAppToolResult', () => {
     expect(result).toBeUndefined();
     expect(callTool).not.toHaveBeenCalled();
   });
+
+  it('keeps the seed result and never re-calls a configured (DIAL loop) match', async () => {
+    const callTool = vi.fn();
+
+    const result = await resolveMcpAppToolResult(
+      makeMatch({ discovery: McpAppToolDiscovery.Configured }),
+      seed,
+      callTool,
+    );
+
+    expect(callTool).not.toHaveBeenCalled();
+    expect(result).toBe(seedResult);
+  });
 });

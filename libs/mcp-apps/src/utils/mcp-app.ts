@@ -1,9 +1,6 @@
-import {
-  MessageRole,
-  type Message,
-  type MessageState,
-} from '@epam/ai-dial-chat-shared';
+import { MessageRole, type Message } from '@epam/ai-dial-chat-shared';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import { extractMessageToolCalls } from '../adapters/tool-calls';
 import type {
   CallMcpAppTool,
   McpAppToolCallSeed,
@@ -20,104 +17,6 @@ const LIVE_CALL_RETRY_JITTER_MS = 500;
  */
 const waitFor = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));
-
-/** A tool-call request paired with its result content, keyed by `tool_call_id`. */
-interface ResolvedToolCall {
-  name: string;
-  args: Record<string, unknown>;
-  result?: string;
-}
-
-/** Parses an OpenAI tool call's raw JSON-encoded `function.arguments` string, tolerating a malformed/non-object payload. */
-const parseOpenAiToolArgs = (raw: string): Record<string, unknown> => {
-  try {
-    const parsed = JSON.parse(raw);
-    return typeof parsed === 'object' && parsed !== null
-      ? (parsed as Record<string, unknown>)
-      : {};
-  } catch {
-    return {};
-  }
-};
-
-/**
- * Pairs each tool-call request with its result, by `tool_call_id`, across
- * whichever of `state`'s two known orchestrator-specific shapes is present:
- * `tool_messages` (LangChain-style, `type: 'ai'|'tool'`) or
- * `tool_execution_history` (OpenAI chat-completion-style, `role:
- * 'assistant'|'tool'`, `tool_calls[].function.{name,arguments}`).
- */
-const resolveToolCalls = (
-  state: MessageState | undefined,
-): Map<string, ResolvedToolCall> => {
-  const calls = new Map<string, ResolvedToolCall>();
-
-  for (const toolMessage of state?.tool_messages ?? []) {
-    for (const call of toolMessage.tool_calls ?? []) {
-      calls.set(call.id, { name: call.name, args: call.args });
-    }
-    if (toolMessage.type === 'tool' && toolMessage.tool_call_id) {
-      const call = calls.get(toolMessage.tool_call_id);
-      if (call) call.result = toolMessage.content;
-    }
-  }
-
-  for (const historyMessage of state?.tool_execution_history ?? []) {
-    for (const call of historyMessage.tool_calls ?? []) {
-      calls.set(call.id, {
-        name: call.function.name,
-        args: parseOpenAiToolArgs(call.function.arguments),
-      });
-    }
-    if (historyMessage.role === 'tool' && historyMessage.tool_call_id) {
-      const call = calls.get(historyMessage.tool_call_id);
-      if (call) call.result = historyMessage.content;
-    }
-  }
-
-  return calls;
-};
-
-const INVALID_TOOL_NAME_CHARS = /[^a-zA-Z0-9_-]+/g;
-const MAX_TOOL_NAME_LENGTH = 64;
-
-/**
- * Reproduces the tool-name sanitization QuickApps applies to
- * `${toolsetName}_${toolName}` before sending a tool to the LLM
- * (`sanitize_toolname` in `epam/ai-dial-quickapps-backend`,
- * `src/quickapp/common/utils.py`): every run of characters outside
- * `[a-zA-Z0-9_-]` becomes a single `_`, a name not starting with a letter or `_`
- * gets a leading `_`, and the result is cut to 64 characters.
- *
- * Temporary heuristic: the host has no toolset id on a tool call, so it can only
- * correlate a call with a toolset by guessing this name. Replace it once MCP Apps
- * are fully supported and the orchestrator reports the toolset a call belongs to.
- * @param input - raw `${toolsetName}_${toolName}` (or `${toolsetName}_` prefix)
- */
-export const sanitizeToolName = (input: string): string => {
-  let sanitized = input.replace(INVALID_TOOL_NAME_CHARS, '_');
-  if (sanitized !== '' && !/^[a-zA-Z_]/.test(sanitized)) {
-    sanitized = `_${sanitized}`;
-  }
-  return sanitized.slice(0, MAX_TOOL_NAME_LENGTH);
-};
-
-/**
- * Collects every real tool-call name seen across `messages`' `custom_content.state`
- * (in whichever known orchestrator shape is present). Used to discover an MCP-capable
- * toolset that a non-MCP application delegates to internally.
- */
-export const collectToolCallNames = (messages: Message[]): Set<string> => {
-  const names = new Set<string>();
-  for (const message of messages) {
-    for (const call of resolveToolCalls(
-      message.custom_content?.state,
-    ).values()) {
-      names.add(call.name);
-    }
-  }
-  return names;
-};
 
 /**
  * Returns the `mcpAppTools` entry that best matches this message: the one
@@ -153,7 +52,7 @@ export const findMcpAppForMessage = (
     return undefined;
   }
   const finishedNames = new Set(
-    [...resolveToolCalls(message.custom_content?.state).values()]
+    extractMessageToolCalls(message)
       .filter((call) => call.result != null)
       .map((call) => call.name),
   );
@@ -195,10 +94,7 @@ export const resolveMcpAppToolCallSeed = (
   message: Message,
   toolName: string,
 ): McpAppToolCallSeed | undefined => {
-  const state = message.custom_content?.state;
-  if (!state) return undefined;
-
-  const matched = [...resolveToolCalls(state).values()]
+  const matched = extractMessageToolCalls(message)
     .reverse()
     .find((call) => call.name === toolName);
   if (!matched) return undefined;
@@ -207,7 +103,12 @@ export const resolveMcpAppToolCallSeed = (
     toolInput: matched.args,
     toolResult:
       matched.result != null
-        ? { content: [{ type: 'text', text: matched.result }] }
+        ? {
+            content: [{ type: 'text', text: matched.result }],
+            ...(matched.structuredResult && {
+              structuredContent: matched.structuredResult,
+            }),
+          }
         : undefined,
   };
 };
@@ -235,6 +136,11 @@ export const resolveMcpAppToolCallSeed = (
  *   Once a real call is confirmed, re-calling it with the exact same `toolsetId`/args it was
  *   really invoked with carries no more risk than the direct case.
  *
+ * A `McpAppToolDiscovery.Configured` match is never re-called: its arguments
+ * were recovered from a stage's display Markdown (escaped characters, decoded
+ * percent-escapes), so replaying them can hit a different resource. It keeps
+ * `seed?.toolResult`, which carries the stage's parsed `structuredContent`.
+ *
  * An `indirect` match with no seed is skipped — that toolset/tool pairing
  * is unconfirmed, and re-calling it could hit the wrong tool or re-trigger a
  * non-idempotent side effect; it keeps `seed?.toolResult` as-is. Falls back to
@@ -248,7 +154,9 @@ export const resolveMcpAppToolResult = async (
   callTool: CallMcpAppTool,
 ): Promise<CallToolResult | undefined> => {
   const isConfirmed =
-    match.discovery === McpAppToolDiscovery.Direct || seed?.toolInput != null;
+    match.discovery === McpAppToolDiscovery.Direct ||
+    (match.discovery === McpAppToolDiscovery.Indirect &&
+      seed?.toolInput != null);
   if (!isConfirmed) {
     return seed?.toolResult;
   }

@@ -1,4 +1,5 @@
 import type {
+  DeploymentDetailsDto,
   DeploymentItemDto,
   DialToolsetDto,
 } from '@epam/ai-dial-chat-api-client';
@@ -127,5 +128,79 @@ describe('useMcpAppTools indirect discovery', () => {
     await Promise.resolve();
     expect(client.listAppTools).not.toHaveBeenCalled();
     expect(result.current).toEqual([]);
+  });
+});
+
+describe('useMcpAppTools DIAL loop discovery', () => {
+  const LOOP_ID = 'applications/bucket/loop__1.0.0';
+  const loopApp = {
+    id: LOOP_ID,
+    type: 'application',
+    features: { mcp: false },
+  } as unknown as DeploymentItemDto;
+  const makeDetails = (id: string): DeploymentDetailsDto =>
+    ({
+      id,
+      applicationDetails: {
+        applicationTypeSchemaId:
+          'https://core.example.com/custom_application_schemas/dial-loop',
+        applicationProperties: { toolsets: [TOOLSET_ID] },
+      },
+    }) as unknown as DeploymentDetailsDto;
+  const stageMessages = [
+    {
+      role: 'assistant',
+      content: '',
+      custom_content: {
+        stages: [
+          {
+            index: 0,
+            name: 'show_entity_card (0.04s, Start: 12:45:41)',
+            status: 'completed',
+            content: '**Request**\n\n- `id`: x\n\n**Response**\n\n```\n{}\n```',
+          },
+        ],
+      },
+    },
+  ] as unknown as Message[];
+
+  it('lists the configured toolsets once a message reports a stage tool call', async () => {
+    const client = makeClient();
+    const { result } = renderHook(() =>
+      useMcpAppTools(client, loopApp, stageMessages, [], makeDetails(LOOP_ID)),
+    );
+
+    await waitFor(() => expect(result.current).toHaveLength(1));
+    expect(client.listAppTools).toHaveBeenCalledWith(TOOLSET_ID, 'toolset');
+    expect(result.current[0]).toMatchObject({
+      toolName: 'show_entity_card',
+      discovery: McpAppToolDiscovery.Configured,
+    });
+  });
+
+  it('ignores details that belong to another deployment', async () => {
+    const client = makeClient();
+    renderHook(() =>
+      useMcpAppTools(
+        client,
+        loopApp,
+        stageMessages,
+        [],
+        makeDetails('applications/bucket/other__1.0.0'),
+      ),
+    );
+
+    await Promise.resolve();
+    expect(client.listAppTools).not.toHaveBeenCalled();
+  });
+
+  it('does not query toolsets before any stage tool call exists', async () => {
+    const client = makeClient();
+    renderHook(() =>
+      useMcpAppTools(client, loopApp, [], [], makeDetails(LOOP_ID)),
+    );
+
+    await Promise.resolve();
+    expect(client.listAppTools).not.toHaveBeenCalled();
   });
 });
