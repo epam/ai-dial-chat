@@ -14,6 +14,7 @@ import {
   findSchemaDisplayName,
   getOrgUnitNamespace,
   getCatalogPublishDirectAvailability,
+  NO_DIRECT_AVAILABILITY,
   OrgUnitFolderGuardPurpose,
   resolveFavoriteEntityType,
   toPublishDisabledReason,
@@ -509,10 +510,10 @@ const CatalogView: FC<Props> = ({
         ? getCatalogPublishDirectAvailability(
             item.type,
             folderPath,
-            dependencies.map(({ type }) => type),
+            dependencies,
             orgUnits,
           )
-        : { isDirect: false, missingNamespaces: [], missingTypes: [] },
+        : NO_DIRECT_AVAILABILITY,
     [isOrgUnitsEnabled, orgUnits],
   );
 
@@ -532,11 +533,11 @@ const CatalogView: FC<Props> = ({
       folderPath: string[],
       dependencies: PublishDependency[],
     ) => {
-      const { missingTypes } = getPublishDirectAvailabilityFor(
-        item,
-        folderPath,
-        dependencies,
-      );
+      const { missingTypes, hasFolderReference } =
+        getPublishDirectAvailabilityFor(item, folderPath, dependencies);
+      if (hasFolderReference) {
+        return t(CatalogI18nKeys.PublishDirectUnavailableFolder);
+      }
       if (missingTypes.length === 0) return undefined;
       const { typeLabels } = getApplicationPublishDependenciesLabels(t);
       return t(CatalogI18nKeys.PublishDirectUnavailableDependencies, {

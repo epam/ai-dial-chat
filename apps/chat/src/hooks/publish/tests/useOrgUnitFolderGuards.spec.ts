@@ -40,6 +40,7 @@ describe('useOrgUnitFolderGuards', () => {
       canSaveDirectlyAt,
       canPublishDirectlyAt: vi.fn(() => false),
       canPublishAt,
+      hasAdminAccess: false,
     });
   });
 

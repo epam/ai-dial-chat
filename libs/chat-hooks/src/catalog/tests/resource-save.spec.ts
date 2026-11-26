@@ -1,3 +1,4 @@
+import { OrgUnitCopyErrorCode } from '@epam/ai-dial-chat-api-client';
 import { SaveVersionMode } from '@epam/ai-dial-publish-panel';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -303,6 +304,134 @@ describe('runResourceSave', () => {
         error,
       });
       expect(publish).not.toHaveBeenCalled();
+    });
+
+    describe('the folder-reference refusal', () => {
+      const refusal = (code: string, status = 422) =>
+        Object.assign(new Error('refused'), {
+          response: new Response(
+            JSON.stringify({
+              statusCode: status,
+              error: 'Unprocessable Entity',
+              message: 'refers to a folder',
+              code,
+            }),
+            {
+              status,
+              headers: { 'Content-Type': 'application/json' },
+            },
+          ),
+        });
+      const refusedAdapter = (code: string, status?: number) =>
+        makeDirectAdapter({
+          saveIntoOrgUnit: vi.fn().mockRejectedValue(refusal(code, status)),
+        });
+
+      it('continues with the publication request for the saved id and reports it as published', async () => {
+        const adapter = refusedAdapter(
+          OrgUnitCopyErrorCode.FolderReferenceNeedsRequest,
+        );
+
+        const result = await runResourceSave(adapter, directChoice(), publish);
+
+        expect(adapter.saveInPlace).toHaveBeenCalledOnce();
+        expect(publish).toHaveBeenCalledWith(
+          'application',
+          ID,
+          ['Acme', 'Teams'],
+          '1.0.0',
+        );
+        expect(result).toMatchObject({
+          outcome: ResourceSaveOutcome.Saved,
+          savedId: ID,
+          isPublished: true,
+          isWrittenToOrgUnit: false,
+        });
+        expect(result.error).toBeUndefined();
+      });
+
+      it('publishes the new version when a new version was saved', async () => {
+        const adapter = refusedAdapter(
+          OrgUnitCopyErrorCode.FolderReferenceNeedsRequest,
+        );
+
+        await runResourceSave(
+          adapter,
+          directChoice({
+            versionMode: SaveVersionMode.New,
+            newVersion: '1.1.0',
+          }),
+          publish,
+        );
+
+        expect(publish).toHaveBeenCalledWith(
+          'application',
+          'applications/b1/Design/agent__1.1.0',
+          ['Acme', 'Teams'],
+          '1.1.0',
+        );
+      });
+
+      it('reports a failed publication request as SavedButPublishFailed', async () => {
+        const error = new Error('publish down');
+        publish.mockRejectedValue(error);
+        const adapter = refusedAdapter(
+          OrgUnitCopyErrorCode.FolderReferenceNeedsRequest,
+        );
+
+        const result = await runResourceSave(adapter, directChoice(), publish);
+
+        expect(result).toMatchObject({
+          outcome: ResourceSaveOutcome.SavedButPublishFailed,
+          savedId: ID,
+          isPublished: false,
+          error,
+        });
+      });
+
+      it('keeps every other refusal a failed direct write', async () => {
+        const adapter = refusedAdapter('some-other-code', 403);
+
+        const result = await runResourceSave(adapter, directChoice(), publish);
+
+        expect(result).toMatchObject({
+          outcome: ResourceSaveOutcome.SavedButOrgUnitWriteFailed,
+          isPublished: false,
+        });
+        expect(publish).not.toHaveBeenCalled();
+      });
+
+      it('does not read the error body of a failure that is not a 422', async () => {
+        const failure = refusal(
+          OrgUnitCopyErrorCode.FolderReferenceNeedsRequest,
+          403,
+        );
+        const readBody = vi.spyOn(
+          (failure as unknown as { response: Response }).response,
+          'clone',
+        );
+        const adapter = makeDirectAdapter({
+          saveIntoOrgUnit: vi.fn().mockRejectedValue(failure),
+        });
+
+        await runResourceSave(adapter, directChoice(), publish);
+
+        expect(readBody).not.toHaveBeenCalled();
+      });
+
+      it('does not treat the code on another status as the refusal', async () => {
+        const adapter = refusedAdapter(
+          OrgUnitCopyErrorCode.FolderReferenceNeedsRequest,
+          409,
+        );
+
+        const result = await runResourceSave(adapter, directChoice(), publish);
+
+        expect(result.outcome).toBe(
+          ResourceSaveOutcome.SavedButOrgUnitWriteFailed,
+        );
+        expect(publish).not.toHaveBeenCalled();
+      });
     });
 
     it('keeps the publish rows when the choice is not a direct write (unknown rights)', async () => {

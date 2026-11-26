@@ -27,6 +27,7 @@ export enum ResourceSavePanelI18nKeys {
   SavedButOrgUnitWriteFailedReason = 'resourceSavePanel.savedButOrgUnitWriteFailedReason',
   DependenciesEmbeddedNote = 'resourceSavePanel.dependenciesEmbeddedNote',
   IconNotCopiedNotice = 'resourceSavePanel.iconNotCopiedNotice',
+  DirectUnavailableFolder = 'resourceSavePanel.directUnavailableFolder',
   TargetTaken = 'resourceSavePanel.targetTaken',
   TargetTakenVersion = 'resourceSavePanel.targetTakenVersion',
 }

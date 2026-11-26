@@ -10,7 +10,11 @@ import {
 } from '@epam/ai-dial-publish-panel';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getApiErrorDetails } from '../../api-error/api-error';
-import { getDependencyOrgUnitNamespaces } from '../../org-units/org-unit-guards';
+import {
+  getDependencyOrgUnitNamespaces,
+  getOrgUnitNamespace,
+  hasBlockingFolderReference,
+} from '../../org-units/org-unit-guards';
 import type { PublishApiClient } from '../create-publish-api';
 import {
   createPublishSavedResource,
@@ -90,6 +94,10 @@ export interface UseResourceSavePanelParams {
   getMissingNamespacesReason?: (missing: OrgUnitNamespace[]) => string;
   /** One sentence for the dependencies section while the panel cannot list them (an application whose form state is inside an embedded editor); passed through only under the Organization root. */
   dependenciesNote?: string;
+  /** Whether the user is a DIAL admin, the only caller DIAL Core lets copy an application that refers to a folder of files; omit while the org-unit rule does not apply, which leaves the direct-write decision as it is. With it, a listed folder dependency of a user who is not a DIAL admin takes an Organization destination off the direct write and onto the publication request. */
+  hasAdminAccess?: boolean;
+  /** One sentence shown under the committed destination, instead of the icon notice, when a direct-write folder takes the publication request because the application refers to a folder of files; without it nothing is shown. */
+  folderReferenceNote?: string;
   /** Notice about the application's uploaded icon, shown under the committed destination when it is a unit folder where the user may not write `files`; pass it only when the saved resource has an uploaded icon. */
   iconNote?: string;
   /** Reason shown, and Save disabled, while the committed direct-write folder already holds the name this save would write; receives that folder and, for "Save as new version", the typed version. It is returned through `getDisabledReason`, so it needs that parameter too; without it, or without `publishClient.checkPublishTarget`, no target check is made. */
@@ -152,6 +160,8 @@ export const useResourceSavePanel = ({
   getMissingNamespaces,
   getMissingNamespacesReason,
   dependenciesNote,
+  hasAdminAccess,
+  folderReferenceNote,
   iconNote,
   getTargetTakenReason,
   labels,
@@ -183,14 +193,29 @@ export const useResourceSavePanel = ({
   /* Organization folders created in this session; nothing can be in them yet, so they are never asked about. */
   const createdFolderKeysRef = useRef(new Set<string>());
 
+  const [dependencies, setDependencies] =
+    useState<PublishDependency[]>(EMPTY_DEPENDENCIES);
+
+  /* DIAL Core copies an application that refers to a folder of files only for a DIAL admin, so anyone else goes through a publication request. */
+  const entityNamespace = getOrgUnitNamespace(adapter.publishEntityType);
+  const hasFolderReference =
+    hasAdminAccess != null &&
+    entityNamespace != null &&
+    hasBlockingFolderReference(entityNamespace, dependencies, hasAdminAccess);
+
   /* Only an Organization folder can be a unit; a Personal folder named like one never matches. */
-  const isDirectDestination = useCallback(
+  const isUnitDestination = useCallback(
     (candidate: FolderDestination): boolean =>
       candidate.rootKey === SaveDestinationRoot.Organization &&
       adapter.saveIntoOrgUnit != null &&
       canSaveDirectlyTo?.(candidate.path, SaveDestinationRoot.Organization) ===
         true,
     [adapter.saveIntoOrgUnit, canSaveDirectlyTo],
+  );
+  const isDirectDestination = useCallback(
+    (candidate: FolderDestination): boolean =>
+      !hasFolderReference && isUnitDestination(candidate),
+    [hasFolderReference, isUnitDestination],
   );
 
   const setPendingDestination = useCallback(
@@ -217,8 +242,6 @@ export const useResourceSavePanel = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
-  const [dependencies, setDependencies] =
-    useState<PublishDependency[]>(EMPTY_DEPENDENCIES);
   /* The host may pass a new function each render; only an open or a move into the Organization root reads. */
   const loadDependenciesRef = useRef(loadDependencies);
   useEffect(() => {
@@ -381,12 +404,16 @@ export const useResourceSavePanel = ({
   const isDirectWrite = isDirectDestination(destination);
   const isOrganizationDestination =
     destination.rootKey === SaveDestinationRoot.Organization;
-  const destinationNote =
+  const iconDestinationNote =
     iconNote != null &&
     isDirectWrite &&
     getMissingNamespaces?.(destination.path, [OrgUnitNamespace.Files]).length
       ? iconNote
       : undefined;
+  const destinationNote =
+    hasFolderReference && isUnitDestination(destination)
+      ? folderReferenceNote
+      : iconDestinationNote;
 
   const setNewVersion = useCallback((version: string) => {
     setNewVersionValue(version);

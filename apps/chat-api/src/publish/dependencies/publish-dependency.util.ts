@@ -120,6 +120,21 @@ export const collectDependencies = (
 };
 
 /**
+ * Whether any dependency is a folder of files: a `file` whose id ends with
+ * `/`. DIAL Core refuses a copy of an application that refers to one when the
+ * caller is not a DIAL admin.
+ * @param dependencies - every dependency the application refers to, before any is filtered out
+ */
+export const hasFolderDependency = (
+  dependencies: readonly ResourceDependencyDto[],
+): boolean =>
+  dependencies.some(
+    (dependency) =>
+      dependency.type === ResourceDependencyType.File &&
+      dependency.id.endsWith('/'),
+  );
+
+/**
  * The dependencies that are added to the request and rewritten. A `file` is
  * left out on purpose: DIAL Core copies and relinks every FILE-typed value a
  * schema marks when it copies the application, so adding it here as well would

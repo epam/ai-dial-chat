@@ -314,7 +314,8 @@
       "credentialsHint": "Members will use this without signing in themselves. Your credential itself is never shown to them.",
       "versionAlreadyPublishedWarning": "Version {version} is already published in {folder}. Change the version to publish it again.",
       "directCredentialsNote": "Credentials are not shared when it is saved directly to the folder.",
-      "directUnavailableDependencies": "You can’t save this directly to the folder because you lack write access to its {{types}} there. A publication request is sent instead."
+      "directUnavailableDependencies": "You can’t save this directly to the folder because you lack write access to its {{types}} there. A publication request is sent instead.",
+      "directUnavailableFolder": "A direct save isn’t possible: the application uses a folder of files."
     },
     "skillsLoadError": "Failed to load skills",
     "promptsLoadError": "Failed to load prompts",
@@ -2161,6 +2162,7 @@
     "savedButOrgUnitWriteFailedReason": "“{{name}}” was saved, but it could not be written to {{folder}}: {{reason}}",
     "dependenciesEmbeddedNote": "The prompts, skills, toolsets and applications this application uses will be saved to the folder together with it.",
     "iconNotCopiedNotice": "The application's icon will not be copied to this folder: you have no write access to files in it.",
+    "directUnavailableFolder": "A direct save isn’t possible: the application uses a folder of files. A publication request is sent instead.",
     "targetTaken": "“{{name}}” already exists in {{folder}}. Choose another folder or save as a new version.",
     "targetTakenVersion": "Version {{version}} of “{{name}}” already exists in {{folder}}. Choose another folder or version."
   },

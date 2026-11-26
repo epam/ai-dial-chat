@@ -223,7 +223,7 @@ export interface PublishPanelProps {
    * The host passes the publish flow's `isDirectWrite`. Default: `false`.
    */
   isDirectWrite?: boolean;
-  /** A finished sentence shown as an information callout when the host knows why a direct write is unavailable (a request is filed instead). Default: none. */
+  /** A finished sentence for when the host knows why a direct write is unavailable (a request is filed instead). It continues the text of the admin-approval callout while that callout shows. When another callout replaces it and submit is still possible (a retry, or a replace that is allowed) it is an information callout of its own; when submit is blocked it is hidden. Never rendered for a direct write. Default: none. */
   directUnavailableNote?: string;
   /** Text overrides for all user-visible strings. */
   labels?: PublishPanelLabels;
@@ -566,7 +566,11 @@ export const PublishPanel: FC<PublishPanelProps> = ({
               type={NotificationType.SectionMessage}
               variant={NotificationVariant.Info}
               title={adminApprovalTitle}
-              message={adminApprovalMessage}
+              message={
+                directUnavailableNote == null
+                  ? adminApprovalMessage
+                  : `${adminApprovalMessage} ${directUnavailableNote}`
+              }
             />
           </div>
         )}
@@ -591,18 +595,22 @@ export const PublishPanel: FC<PublishPanelProps> = ({
             </div>
           )}
 
-        {/* Sits with the destination rather than in its own section: the
-            folder and the author together say what this publication is. An empty author is a valid
-            state, so nothing here can block submit. */}
-        {directUnavailableNote != null && !isDirectWrite && (
-          <div className="mt-4">
-            <Notification
-              type={NotificationType.SectionMessage}
-              variant={NotificationVariant.Info}
-              message={directUnavailableNote}
-            />
-          </div>
-        )}
+        {/* The host sentence continues the admin-approval callout's text in the same
+            block. When another callout replaces it and submit stays possible (a retry, or a
+            replace that is allowed), it stands alone; when submit is blocked it is hidden, since the
+            user has to change something first. */}
+        {directUnavailableNote != null &&
+          !isDirectWrite &&
+          derived.calloutKind !== PublishCalloutKind.Info &&
+          !derived.isSubmitDisabled && (
+            <div className="mt-4">
+              <Notification
+                type={NotificationType.SectionMessage}
+                variant={NotificationVariant.Info}
+                message={directUnavailableNote}
+              />
+            </div>
+          )}
 
         {onAuthorChange != null && !isDirectWrite && (
           <div className="mt-4">

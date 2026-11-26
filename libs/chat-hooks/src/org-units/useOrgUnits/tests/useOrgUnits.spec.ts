@@ -266,6 +266,45 @@ describe('useOrgUnits', () => {
     consoleError.mockRestore();
   });
 
+  describe('hasAdminAccess', () => {
+    it('is false until the status is Ready', () => {
+      const listOrgUnits = vi.fn(() => new Promise<never>(() => undefined));
+      const { result } = renderHook(() => useOrgUnits({ listOrgUnits }));
+
+      act(() => result.current.ensureUnits());
+
+      expect(result.current.hasAdminAccess).toBe(false);
+    });
+
+    it('follows the loaded access for a DIAL admin and for a unit-only role', async () => {
+      const load = async (overrides: Record<string, unknown>) => {
+        const listOrgUnits = vi
+          .fn()
+          .mockResolvedValue(listResult([ACME], overrides));
+        const { result } = renderHook(() => useOrgUnits({ listOrgUnits }));
+        act(() => result.current.ensureUnits());
+        await waitFor(() =>
+          expect(result.current.status).toBe(OrgUnitsStatus.Ready),
+        );
+        return result.current.hasAdminAccess;
+      };
+
+      await expect(load({ hasAdminAccess: true })).resolves.toBe(true);
+      await expect(load({ hasAdminAccess: false })).resolves.toBe(false);
+    });
+
+    it('is false when org units are off or the read fails', async () => {
+      const off = vi.fn().mockResolvedValue({ enabled: false });
+      const { result } = renderHook(() => useOrgUnits({ listOrgUnits: off }));
+      act(() => result.current.ensureUnits());
+      await waitFor(() =>
+        expect(result.current.status).toBe(OrgUnitsStatus.Disabled),
+      );
+
+      expect(result.current.hasAdminAccess).toBe(false);
+    });
+  });
+
   describe('canPublishDirectlyAt', () => {
     const ready = async (
       units: unknown[],

@@ -1,5 +1,5 @@
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ComponentProps, ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -258,21 +258,85 @@ describe('PublishPanel', () => {
 
   describe('direct path unavailable note', () => {
     const NOTE = 'A request is sent instead of a direct save.';
+    const selected = ['Shared', 'Data Science'];
 
-    it('shows the host sentence next to the request callout', () => {
+    it('merges the host sentence into the text of the admin-approval callout', () => {
       renderPanel({
-        selectedFolderPath: ['Shared', 'Data Science'],
+        selectedFolderPath: selected,
         directUnavailableNote: NOTE,
       });
 
-      expect(screen.getByText(NOTE)).toBeTruthy();
-      expect(screen.getByText('Admin approval required')).toBeTruthy();
+      const callout = screen.getByRole('status');
+      expect(within(callout).getByText('Admin approval required')).toBeTruthy();
+      expect(callout.textContent).toContain(NOTE);
+      expect(screen.getAllByRole('status')).toHaveLength(1);
+      expect(screen.getAllByText('Admin approval required')).toHaveLength(1);
     });
 
-    it('shows nothing when the host supplies none', () => {
-      renderPanel({ selectedFolderPath: ['Shared', 'Data Science'] });
+    it('keeps the approval message and puts the note after it', () => {
+      renderPanel({
+        selectedFolderPath: selected,
+        directUnavailableNote: NOTE,
+      });
+
+      const text = screen.getByRole('status').textContent ?? '';
+      expect(text.indexOf(NOTE)).toBeGreaterThan(
+        text.indexOf('Admin approval required'),
+      );
+      expect(text.endsWith(NOTE)).toBe(true);
+    });
+
+    it('shows the note on its own when another callout takes the place of the approval one and submit stays possible', () => {
+      renderPanel({
+        selectedFolderPath: ['Shared', 'Data Science', 'Published models'],
+        hasExistingPublicationInFolder: true,
+        allowReplace: true,
+        directUnavailableNote: NOTE,
+      });
+
+      expect(screen.queryByText('Admin approval required')).toBeNull();
+      expect(screen.getByText(NOTE)).toBeTruthy();
+    });
+
+    it('shows the note on its own after a failed submit', () => {
+      renderPanel({
+        selectedFolderPath: selected,
+        hasSubmitError: true,
+        directUnavailableNote: NOTE,
+      });
+
+      expect(screen.queryByText('Admin approval required')).toBeNull();
+      expect(screen.getByText(NOTE)).toBeTruthy();
+    });
+
+    it('hides the note when another callout blocks submit', () => {
+      renderPanel({
+        selectedFolderPath: ['Shared', 'Data Science', 'Published models'],
+        hasExistingPublicationInFolder: true,
+        allowReplace: false,
+        directUnavailableNote: NOTE,
+      });
+
+      expect(screen.queryByText('Admin approval required')).toBeNull();
+      expect(screen.queryByText(NOTE)).toBeNull();
+    });
+
+    it('renders no note for a direct write', () => {
+      renderPanel({
+        selectedFolderPath: selected,
+        isDirectWrite: true,
+        directUnavailableNote: NOTE,
+      });
 
       expect(screen.queryByText(NOTE)).toBeNull();
+    });
+
+    it('shows only the approval callout when the host supplies no note', () => {
+      renderPanel({ selectedFolderPath: selected });
+
+      expect(screen.queryByText(NOTE)).toBeNull();
+      expect(screen.getAllByRole('status')).toHaveLength(1);
+      expect(screen.getByText('Admin approval required')).toBeTruthy();
     });
   });
 

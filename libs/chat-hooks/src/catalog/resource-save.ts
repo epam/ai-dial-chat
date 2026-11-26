@@ -1,8 +1,10 @@
+import { OrgUnitCopyErrorCode } from '@epam/ai-dial-chat-api-client';
 import {
   SaveVersionMode,
   toFolderPathKey,
   type FolderDestination,
 } from '@epam/ai-dial-publish-panel';
+import { getApiErrorDetails, getApiErrorStatus } from '../api-error/api-error';
 import type { PublishApiClient } from './create-publish-api';
 import type { CatalogPublishEntityType } from './publish';
 import {
@@ -91,6 +93,18 @@ export interface ResourceSaveResult {
   error?: unknown;
 }
 
+/**
+ * Whether a failed direct write is the server's refusal of an application that
+ * refers to a folder of files (`422`, code `folderReferenceNeedsRequest`),
+ * which a publication request carries instead.
+ * @param error - the rejection of the adapter's direct write
+ */
+const isFolderReferenceRefusal = async (error: unknown): Promise<boolean> => {
+  if (getApiErrorStatus(error) !== 422) return false;
+  const { code } = await getApiErrorDetails(error);
+  return code === OrgUnitCopyErrorCode.FolderReferenceNeedsRequest;
+};
+
 const isSameFolder = (a: string[], b: string[]): boolean =>
   toFolderPathKey(a) === toFolderPathKey(b);
 
@@ -174,18 +188,23 @@ export const runResourceSave = async (
     }
   }
 
+  let isRequestedInstead = false;
   if (isOrganization && isDirectWrite) {
     try {
       await adapter.saveIntoOrgUnit?.(result.savedId, choice.destination.path);
       result.isWrittenToOrgUnit = true;
     } catch (error) {
-      return {
-        ...result,
-        outcome: ResourceSaveOutcome.SavedButOrgUnitWriteFailed,
-        error,
-      };
+      if (!(await isFolderReferenceRefusal(error))) {
+        return {
+          ...result,
+          outcome: ResourceSaveOutcome.SavedButOrgUnitWriteFailed,
+          error,
+        };
+      }
+      isRequestedInstead = true;
     }
-  } else if (isOrganization) {
+  }
+  if (isOrganization && (!isDirectWrite || isRequestedInstead)) {
     try {
       await publish(
         adapter.publishEntityType,
