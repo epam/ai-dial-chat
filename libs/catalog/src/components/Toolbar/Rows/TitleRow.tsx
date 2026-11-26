@@ -1,18 +1,14 @@
 import {
   ItemHeader,
   mergeClasses,
+  SortMenuButton,
   useIsPhone,
 } from '@epam/ai-dial-chat-shared';
 import {
-  ButtonAppearance,
-  ButtonDropdown,
-  ButtonVariant,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
-  DropdownItem,
   ElementSize,
   GhostIconButton,
-  MenuItemMark,
   Search,
   SegmentedControl,
   SegmentedControlItem,
@@ -27,6 +23,7 @@ import {
   FC,
   ReactNode,
   Ref,
+  useCallback,
   useMemo,
   useState,
   useLayoutEffect,
@@ -75,7 +72,7 @@ interface TitleRowProps {
 /* Shared, never mutated: the filter components copy before editing. */
 const EMPTY_FILTERS = new Set<string>();
 
-/** Browse section header: title + view toggle + sort, then search + filter row below. */
+/** Browse section header: the title row, then search + view toggle + sort + filter (or the phone settings button). */
 export const TitleRow: FC<TitleRowProps> = ({
   totalCount,
   viewMode,
@@ -172,27 +169,9 @@ export const TitleRow: FC<TitleRowProps> = ({
     onQueryChange(nextValue ?? '');
   };
 
-  /* Falls back to the control's own name so the trigger is never a button with
-   * no accessible name, which is what an unrecognised sortKey would produce —
-   * the kit's `Button` derives its `aria-label` from `label` and overrides any
-   * the caller passes, so the visible label is the only name available. */
-  const activeSortLabel =
-    sortOptions?.find((option) => option.value === sortKey)?.label ?? sortLabel;
-
-  /*
-   * The host passes the values alone; the marking and the click belong here,
-   * so the trigger and the menu cannot disagree about which order is applied.
-   */
-  const sortItems = useMemo<DropdownItem[]>(
-    () =>
-      (sortOptions ?? []).map((option) => ({
-        key: option.value,
-        label: option.label,
-        mark: MenuItemMark.Check,
-        checked: option.value === sortKey,
-        onClick: () => onSortChange?.(option.value),
-      })),
-    [sortOptions, sortKey, onSortChange],
+  const handleSortChange = useCallback(
+    (nextSortKey: string) => onSortChange?.(nextSortKey),
+    [onSortChange],
   );
 
   return (
@@ -211,9 +190,8 @@ export const TitleRow: FC<TitleRowProps> = ({
       }}
       className="flex flex-col gap-3"
     >
-      {/* Row 1: title | view toggle | divider | sort. Below the phone-menu
-          breakpoint the controls move into the browse-settings sheet, so the
-          row holds the title alone. */}
+      {/* Row 1 holds the title alone; the view toggle and the sort sit in the
+          search row next to the controls they work with. */}
       <div className="flex flex-wrap items-center gap-x-2 gap-y-3">
         {browseHeaderRenderer ?? (
           <ItemHeader
@@ -228,47 +206,6 @@ export const TitleRow: FC<TitleRowProps> = ({
               count: browseStyles?.colors?.countText,
             }}
           />
-        )}
-
-        {!isPhone && (
-          <div
-            ref={desktopControlsRef}
-            className="ms-auto flex shrink-0 items-center gap-2"
-          >
-            {/* `contents` keeps the toggle a direct flex child; the wrapper
-                only reports intent so the hidden list view can be prepared
-                before the click instead of during page load. */}
-            <div
-              className="contents"
-              role="presentation"
-              onPointerEnter={onViewModeIntent}
-              onFocus={onViewModeIntent}
-            >
-              <SegmentedControl
-                aria-label={viewToggleLabel}
-                value={viewMode}
-                onChange={onViewModeChange}
-                items={viewModeItems}
-              />
-            </div>
-
-            {sortOptions != null && sortOptions.length > 0 && (
-              <>
-                <div
-                  className={mergeClasses('h-4 w-px shrink-0', styles.divider)}
-                />
-
-                {/* The trigger shows the applied order and the menu marks it
-                  with the design's trailing check. */}
-                <ButtonDropdown
-                  items={sortItems}
-                  label={activeSortLabel}
-                  variant={ButtonVariant.Primary}
-                  appearance={ButtonAppearance.Ghost}
-                />
-              </>
-            )}
-          </div>
         )}
       </div>
 
@@ -333,19 +270,51 @@ export const TitleRow: FC<TitleRowProps> = ({
             />
           </>
         ) : (
-          <Filter
-            checked={filters ?? EMPTY_FILTERS}
-            onChange={onFiltersChange ?? (() => undefined)}
-            values={filterValues}
-            isMyAppsActive={isMyAppsActive}
-            onMyAppsChange={onMyAppsChange}
-            defaultLabel={filterFromLabel}
-            myAppsLabel={filterMyAppsLabel}
-            topicsLabel={filterTopicsLabel}
-            clearLabel={browseSettingsLabels?.clear}
-            applyLabel={browseSettingsLabels?.apply}
-            typography={browseStyles?.typography}
-          />
+          <>
+            <div
+              ref={desktopControlsRef}
+              className="flex shrink-0 items-center gap-3"
+            >
+              {/* `contents` keeps the toggle a direct flex child; the wrapper
+                  only reports intent so the hidden list view can be prepared
+                  before the click instead of during page load. */}
+              <div
+                className="contents"
+                role="presentation"
+                onPointerEnter={onViewModeIntent}
+                onFocus={onViewModeIntent}
+              >
+                <SegmentedControl
+                  aria-label={viewToggleLabel}
+                  value={viewMode}
+                  onChange={onViewModeChange}
+                  items={viewModeItems}
+                />
+              </div>
+
+              {sortOptions != null && (
+                <SortMenuButton
+                  options={sortOptions}
+                  value={sortKey}
+                  onChange={handleSortChange}
+                  label={sortLabel}
+                />
+              )}
+            </div>
+            <Filter
+              checked={filters ?? EMPTY_FILTERS}
+              onChange={onFiltersChange ?? (() => undefined)}
+              values={filterValues}
+              isMyAppsActive={isMyAppsActive}
+              onMyAppsChange={onMyAppsChange}
+              defaultLabel={filterFromLabel}
+              myAppsLabel={filterMyAppsLabel}
+              topicsLabel={filterTopicsLabel}
+              clearLabel={browseSettingsLabels?.clear}
+              applyLabel={browseSettingsLabels?.apply}
+              typography={browseStyles?.typography}
+            />
+          </>
         )}
       </div>
     </div>
