@@ -89,13 +89,13 @@ Verification: `npm run test:file -- apps/chat/src/components/OnboardingHints/tes
 
 ## 6. File manager (sibling repo, then host; independent of 2–5)
 
-- [ ] 6.1 In `c:\projects\ai-dial-react-file-manager`, change `src/components/FileManager/components/FileManagerSortDropdown/FileManagerSortDropdown.tsx`:
+- [x] 6.1 In `c:\projects\ai-dial-react-file-manager`, change `src/components/FileManager/components/FileManagerSortDropdown/FileManagerSortDropdown.tsx`:
   - the non-compact trigger becomes a ghost `IconButton` with `IconArrowsSort`, a tooltip and `aria-label={label}`;
   - the compact tinted branch is unchanged;
   - the labelled `ButtonDropdown` stays behind a string-enum trigger prop that defaults to the icon (design D5).
 
   Update `FileManagerSortDropdown.spec.tsx`, `__tests__/sort-menu.spec.tsx`, the stories and that repo's README/CHANGELOG, then release a new package version. This follows that repo's own workflow.
-- [ ] 6.2 Bump `@epam/ai-dial-react-file-manager` to the released version, with one range, in the root `package.json` and `libs/chat-shared/package.json`. Install, and run `npm run docs:install-matrix`.
+- [x] 6.2 Bump `@epam/ai-dial-react-file-manager` to the released version, with one range, in the root `package.json` and `libs/chat-shared/package.json`. Install, and run `npm run docs:install-matrix`.
 - [x] 6.3 Add the optional `sort` field to `DialFileManagerShellLabels` in `libs/chat-shared/src/file-manager/labels.ts`, and forward it as memoised `sortOptions` in `libs/chat-shared/src/file-manager/DialFileManagerShell/DialFileManagerShell.tsx`. Update the chat-shared README file-manager section.
 - [x] 6.4 i18n: grep `apps/chat/src/i18n/locales/en.json` for exact "Name", "Size", "Modified date", "Ascending" and "Descending" values and reuse those keys. Add only the missing ones under `dialFileManager.sort.*`, with matching members in the `DialFileManagerI18nKeys` module under `apps/chat/src/constants/i18n-keys/`.
 - [x] 6.5 Fill `labels.sort` with `t()` in `apps/chat/src/pages/DialFileManagerPage/DialFileManagerPage.tsx` (`label: t(ButtonsI18nKeys.Sort)`).
