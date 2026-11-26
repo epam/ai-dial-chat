@@ -7,7 +7,7 @@ export const MANAGED_CONFIG_APP_ID = CHAT_APP_ID;
  * The version of the managed contract this build generates. It is the
  * contract's own semantic version, independent of Chat's release version.
  */
-export const MANAGED_CONFIG_SCHEMA_VERSION = '1.2.0';
+export const MANAGED_CONFIG_SCHEMA_VERSION = '1.3.0';
 
 /**
  * The exact schema versions this build accepts. A future reader accepts a
@@ -17,6 +17,7 @@ export const SUPPORTED_MANAGED_CONFIG_SCHEMA_VERSIONS: readonly string[] = [
   '1.0.0',
   '1.1.0',
   '1.2.0',
+  '1.3.0',
 ];
 
 /**
@@ -32,6 +33,7 @@ export const PINNED_MANAGED_CONFIG_SCHEMA_SHA256: Readonly<
   '1.0.0': 'edbe9267f6663eb7768ae7e2033e20b0b3c842994224a774968d348e3b9be71f',
   '1.1.0': 'd1b5d59e7fbefad252109ef504d1ff9955403d94b84be937beb7da1b895113df',
   '1.2.0': '5761c06c65b9846e965b02074f7291e92d651ffff074c6ad7653b25376fef2e1',
+  '1.3.0': 'cf11cb878aeedfbfdb4b8d38254dabe1542de7a0abfab1cf8817800d128c4a41',
 };
 
 /** Config Studio's limit on the canonical bytes of an uploaded schema (56 KiB). */

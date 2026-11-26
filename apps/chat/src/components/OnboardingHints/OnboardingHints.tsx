@@ -31,6 +31,7 @@ import {
   ScheduledTasksI18nKeys,
   SettingsI18nKeys,
   SidebarI18nKeys,
+  TextRefinementI18nKeys,
   ToolsI18nKeys,
   VoiceRecordingI18nKeys,
 } from '../../constants/translation-keys';
@@ -134,6 +135,18 @@ const OnboardingHints: FC = () => {
     scheduledTaskConfiguration: t(
       ScheduledTasksI18nKeys.CreateConfigurationSectionTitle,
     ),
+    scheduledTaskDetails: t(ScheduledTasksI18nKeys.CreateDetailsSectionTitle),
+    scheduledTaskSkills: t(ScheduledTasksI18nKeys.CreateSkillLabel),
+    scheduledTaskInstructions: t(
+      ScheduledTasksI18nKeys.CreateInstructionsLabel,
+    ),
+    scheduledTaskRefine: [
+      t(TextRefinementI18nKeys.Action),
+      t(TextRefinementI18nKeys.Refining),
+      t(ButtonsI18nKeys.Regenerate),
+    ],
+    scheduledTaskTimezone: t(ScheduledTasksI18nKeys.CreateTimezoneChangeLabel),
+    scheduledTaskStartDate: t(ScheduledTasksI18nKeys.CreateStartDateLabel),
     scheduledTaskRepeat: t(ScheduledTasksI18nKeys.CreateRepeatLabel),
     scheduledTaskModel: t(ScheduledTasksI18nKeys.CreateModelOrAgentLabel),
     scheduledTaskStartNow: t(ScheduledTasksI18nKeys.DetailStartNow),
@@ -177,6 +190,8 @@ const OnboardingHints: FC = () => {
     projectsCreate: t(ProjectsI18nKeys.PageNewProject),
     projectsSearch: t(ProjectsI18nKeys.SearchAriaLabel),
     projectChats: t(ProjectsI18nKeys.ViewMainContent),
+    projectOutputs: t(ProjectsI18nKeys.OutputsTitle),
+    projectChatList: t(ProjectsI18nKeys.ChatsTitle),
     projectDetails: t(ProjectsI18nKeys.ViewDetails),
     scheduledTasksCreate: t(ScheduledTasksI18nKeys.CreateButtonLabel),
     scheduledTasksSearch: t(ScheduledTasksI18nKeys.SearchAriaLabel),

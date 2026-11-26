@@ -881,7 +881,7 @@ describe('AppConfigController managed configuration (integration)', () => {
         instanceId: 'chat-dev',
         state: 'fresh',
         revisionId: '20261120T095500000Z-0123456789abcdef',
-        schemaVersion: '1.2.0',
+        schemaVersion: '1.3.0',
         publishedAt: '2026-11-20T09:55:00.000Z',
       },
     });

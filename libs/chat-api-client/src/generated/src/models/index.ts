@@ -7752,6 +7752,14 @@ export const OnboardingHintTarget = {
   EditorSetup: 'editor-setup',
   ActiveChat: 'active-chat',
   ActiveChatActions: 'active-chat-actions',
+  ProjectOutputs: 'project-outputs',
+  ProjectChatList: 'project-chat-list',
+  ScheduledTaskDetails: 'scheduled-task-details',
+  ScheduledTaskSkills: 'scheduled-task-skills',
+  ScheduledTaskInstructions: 'scheduled-task-instructions',
+  ScheduledTaskRefineInstructions: 'scheduled-task-refine-instructions',
+  ScheduledTaskTimezone: 'scheduled-task-timezone',
+  ScheduledTaskStartDate: 'scheduled-task-start-date',
 } as const;
 export type OnboardingHintTarget =
   (typeof OnboardingHintTarget)[keyof typeof OnboardingHintTarget];
