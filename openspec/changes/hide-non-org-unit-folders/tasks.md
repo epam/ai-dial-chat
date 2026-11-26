@@ -40,7 +40,7 @@ Architecture guard for every slice that touches `libs/*`: the lib receives only 
   - `StandaloneSaveToFolderPanel` (`libs/publish-panel/src/components/SaveToFolderPanel/`).
 
   The tree behaviour ("Create new folder" disabled, "Add child" and "Add sibling" omitted for a refused parent) is tested in the file-manager package; publish-panel adds forwarding cases.
-  - [x] Bump `@epam/ai-dial-react-file-manager` to `0.5.0-dev.6`, the release with `canCreateFolderIn` (epam/ai-dial-react-file-manager#109): root `package.json`, the `^` ranges in the libs and their READMEs.
+  - [x] Depend on `@epam/ai-dial-react-file-manager` `0.5.0`, the first stable release with `canCreateFolderIn` (epam/ai-dial-react-file-manager#109); `development` already pins it in the root `package.json`, the `^` ranges in the libs and their READMEs.
 - [x] 3.2 `libs/catalog`: add `canCreatePublishFolderIn` next to `getPublishDisabledReason`:
   - in `libs/catalog/src/models/catalog-props.ts` and `libs/catalog/src/models/item-details-props.ts`;
   - forwarded by `Catalog` → `DetailsPanel` → `DetailsPublishContent` to `PublishPanel` as `canCreateFolderIn`.
