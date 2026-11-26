@@ -8,7 +8,7 @@
     },
     {
       "reference": "tools/call",
-      "spec": ["mcp-app-*"],
+      "spec": ["chat-cold-load-performance", "mcp-app-*"],
       "reason": "MCP JSON-RPC method name, not a repo path under tools/."
     },
     {
