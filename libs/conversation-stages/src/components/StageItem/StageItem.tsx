@@ -32,6 +32,10 @@ export interface StageItemProps {
   nameOverride?: string;
   /** Called when a stage attachment tile is clicked/activated. Receives the mapped display attachment. */
   onAttachmentClick?: (attachment: DisplayAttachment) => void;
+  /** Called when a stage attachment tile's download button is activated. See {@link StagesPanelProps.onAttachmentDownload}. */
+  onAttachmentDownload?: StagesPanelProps['onAttachmentDownload'];
+  /** Whether a stage attachment can be downloaded. See {@link StagesPanelProps.isAttachmentDownloadable}. */
+  isAttachmentDownloadable?: StagesPanelProps['isAttachmentDownloadable'];
   /** Host-owned URL resolvers applied when mapping this stage's attachments. See {@link StagesPanelProps.attachmentDisplayResolvers}. */
   attachmentDisplayResolvers?: StagesPanelProps['attachmentDisplayResolvers'];
   /** Host-owned renderer for `<cit>` elements in this stage's content. See {@link StagesPanelProps.renderCitation}. */
@@ -52,6 +56,12 @@ interface StageAttachmentRowProps {
   clickLabel?: string;
   /** Called when a tile is clicked/activated. Receives the mapped display attachment. */
   onAttachmentClick?: StageItemProps['onAttachmentClick'];
+  /** Accessible label for each tile's download button. */
+  downloadLabel?: string;
+  /** Called when a tile's download button is activated. Receives the mapped display attachment. */
+  onAttachmentDownload?: StageItemProps['onAttachmentDownload'];
+  /** Whether an attachment can be downloaded; `false` hides its tile's download button. */
+  isAttachmentDownloadable?: StageItemProps['isAttachmentDownloadable'];
 }
 
 /** Renders a stage's attachments as a wrapping row of attachment tiles. */
@@ -59,6 +69,9 @@ const StageAttachmentRow: FC<StageAttachmentRowProps> = ({
   attachments,
   clickLabel,
   onAttachmentClick,
+  downloadLabel,
+  onAttachmentDownload,
+  isAttachmentDownloadable,
 }) => {
   const handleClick = useCallback(
     (id: string) => {
@@ -66,6 +79,13 @@ const StageAttachmentRow: FC<StageAttachmentRowProps> = ({
       if (attachment) onAttachmentClick?.(attachment);
     },
     [attachments, onAttachmentClick],
+  );
+  const handleDownload = useCallback(
+    (id: string) => {
+      const attachment = attachments.find((a) => a.id === id);
+      if (attachment) onAttachmentDownload?.(attachment);
+    },
+    [attachments, onAttachmentDownload],
   );
 
   return (
@@ -75,7 +95,13 @@ const StageAttachmentRow: FC<StageAttachmentRowProps> = ({
           <AttachmentCard
             attachment={attachment}
             onClick={onAttachmentClick && handleClick}
-            labels={{ clickLabel }}
+            onDownload={
+              onAttachmentDownload &&
+              isAttachmentDownloadable?.(attachment) !== false
+                ? handleDownload
+                : undefined
+            }
+            labels={{ clickLabel, downloadLabel }}
           />
         </div>
       ))}
@@ -91,6 +117,8 @@ export const StageItem: FC<StageItemProps> = ({
   labels,
   nameOverride,
   onAttachmentClick,
+  onAttachmentDownload,
+  isAttachmentDownloadable,
   attachmentDisplayResolvers,
   renderCitation,
   childList,
@@ -115,6 +143,7 @@ export const StageItem: FC<StageItemProps> = ({
     runningAriaLabel,
     failedAriaLabel,
     attachmentClickLabel = 'Preview search result',
+    attachmentDownloadLabel = 'Download attachment',
   } = labels ?? {};
   const displayAttachments = useMemo(
     () =>
@@ -233,6 +262,9 @@ export const StageItem: FC<StageItemProps> = ({
               attachments={displayAttachments}
               clickLabel={attachmentClickLabel}
               onAttachmentClick={onAttachmentClick}
+              downloadLabel={attachmentDownloadLabel}
+              onAttachmentDownload={onAttachmentDownload}
+              isAttachmentDownloadable={isAttachmentDownloadable}
             />
           )}
         </div>

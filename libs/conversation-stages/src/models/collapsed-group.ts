@@ -57,6 +57,8 @@ export interface CollapsedGroupLabels {
   attemptLabel?: (attemptNumber: number) => string;
   /** Accessible label for a stage attachment tile's interactive click action. Defaults to `'Preview search result'`. */
   attachmentClickLabel?: string;
+  /** Accessible label for a stage attachment tile's download button. Defaults to `'Download attachment'`. */
+  attachmentDownloadLabel?: string;
 }
 
 /** Props accepted by the `CollapsedGroup` component. */
@@ -73,6 +75,10 @@ export interface CollapsedGroupProps {
   styles?: CollapsedGroupStyles;
   /** Called when a stage attachment tile is clicked/activated. Forwarded unchanged to the inner `StagesPanel`. */
   onAttachmentClick?: (attachment: DisplayAttachment) => void;
+  /** Called when a stage attachment tile's download button is activated. Forwarded unchanged to the inner `StagesPanel`. */
+  onAttachmentDownload?: (attachment: DisplayAttachment) => void;
+  /** Whether a stage attachment can be downloaded. Forwarded unchanged to the inner `StagesPanel`. */
+  isAttachmentDownloadable?: (attachment: DisplayAttachment) => boolean;
   /** Host-owned URL resolvers for stage attachment tiles. Forwarded unchanged to the inner `StagesPanel`. */
   attachmentDisplayResolvers?: AttachmentDisplayResolvers;
   /** Host-owned renderer for `<cit data-id="…">` elements in stage content. Forwarded unchanged to the inner `StagesPanel`. */
