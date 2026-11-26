@@ -20,11 +20,6 @@ export interface ToolbarColors {
   titleText?: string;
   /** Total count text color. Fallback: `--text-secondary`. */
   countText?: string;
-  /**
-   * Vertical divider color that used to sit between the view toggle and the sort dropdown.
-   * @deprecated Not read: the toolbar no longer draws that divider.
-   */
-  divider?: string;
   /** Dot on the mobile browse-settings button while a filter is applied. Fallback: `--bg-control-accent`. */
   settingsActiveDot?: string;
 }

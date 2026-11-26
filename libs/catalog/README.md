@@ -473,7 +473,6 @@ From 768px the title row holds the title alone, and the search row reads
 search, view toggle, sort button, filter. The sort button is icon-only
 (`SortMenuButton` from `@epam/ai-dial-chat-shared`), named and tooltipped by
 `sortLabel` whichever order is applied; its menu checks the applied order.
-`ToolbarColors.divider` is deprecated and no longer read.
 
 - View and sort apply as soon as they are picked.
 - Filters stay buffered until Apply, as on desktop.
