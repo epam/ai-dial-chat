@@ -114,7 +114,6 @@ export class ScheduledTasksService {
     await this.preconditions.validateConfiguration(body, accessToken, bucket);
     const payload = toUpstreamSchedulePayload(
       body,
-      this.dialClient.baseUrl,
       this.dialClient.dialApiVersion,
       this.upstream.getSchedulerServiceId(),
     );
@@ -202,7 +201,6 @@ export class ScheduledTasksService {
     );
     const payload = toUpstreamSchedulePayload(
       effectiveBody,
-      this.dialClient.baseUrl,
       this.dialClient.dialApiVersion,
       serviceId,
     );
