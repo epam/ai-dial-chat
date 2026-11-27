@@ -16,6 +16,7 @@ import type {
   ToolsetAuthActions,
   ToolsetAuthFormData,
   ToolsetFormData,
+  ToolsetPersistReason,
 } from './toolset-form';
 import type { ToolsetOAuthLoginHandler } from './toolset-oauth-login';
 
@@ -119,11 +120,14 @@ export interface ToolsetEditorProps {
    * Persists the form — creating the toolset when `toolsetId` is empty,
    * updating it otherwise. The host owns the request mapping and its own
    * failure notification; resolves the persisted toolset id, or `null` when
-   * the request failed.
+   * the request failed. `reason` tells a Save apart from the draft persist
+   * Log In runs first, so a host can open its own save step for the one and
+   * not the other.
    */
   onPersist: (
     form: ToolsetFormData,
     toolsetId: string,
+    reason: ToolsetPersistReason,
   ) => Promise<string | null>;
   /**
    * Runs the post-save automatic login for an API-key toolset configured

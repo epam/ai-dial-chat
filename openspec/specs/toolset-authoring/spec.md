@@ -141,6 +141,8 @@ The editor SHALL persist the toolset via the backend write API on save and SHALL
 
 A toolset shared with the user saves in place without the panel. A toolset created through the panel in this session (including the draft the editor saves before a Log In) is then edited as the user's own.
 
+The editor passes `onPersist` a `ToolsetPersistReason`: `Save` for the primary action, `LogIn` for the draft it persists before a Log In. For an existing toolset, a `LogIn` persist SHALL update the toolset in place and SHALL NOT open the Save panel, so Log In never shows a save step or leaves the OAuth popup blank behind one. Only a Log In in create mode, where no toolset exists yet, goes through the panel.
+
 On a successful save the panel raises the success notification and the editor navigates to the return URL (the catalog, `ROUTES.Catalog`). When the save itself fails, the panel shows the error, stays open, and the editor stays put.
 
 The success notification SHALL be raised through `useOperationNotification` with `NotifiableEntity.Toolset` and `EntityOperation.Created` (create) or `EntityOperation.Edited` (edit, keep version), passing the toolset's name. Navigation SHALL NOT be delayed to keep the notification on screen.
@@ -156,6 +158,10 @@ The success notification SHALL be raised through `useOperationNotification` with
 #### Scenario: Save as new version
 - **WHEN** a user editing toolset `search@1.0.0` confirms "Save as new version" `1.1.0` in the Save panel
 - **THEN** the system calls the create endpoint with the edited values, `version: "1.1.0"` and `createOnly: true`, makes no update request for `search__1.0.0`, and navigates to the return URL
+
+#### Scenario: Log In on an existing toolset does not open the Save panel
+- **WHEN** a user editing their own toolset with a static OAuth client changes a field and clicks Log In
+- **THEN** the system updates the toolset in place, no Save panel opens, and the OAuth popup continues to the provider
 
 #### Scenario: Version is read-only in edit mode
 - **WHEN** a user opens an existing toolset in the editor

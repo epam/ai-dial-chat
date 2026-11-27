@@ -16,6 +16,7 @@ import type {
   ToolsetAuthFormData,
   ToolsetFormData,
 } from '../../../models/toolset-form';
+import { ToolsetPersistReason } from '../../../models/toolset-form';
 import { getDefaultToolsetForm } from '../../../utils/toolsets';
 import { ToolsetEditor } from '../ToolsetEditor';
 
@@ -476,6 +477,7 @@ describe('ToolsetEditor', () => {
       expect(onPersist).toHaveBeenCalledWith(
         expect.objectContaining({ name: 'Renamed', version: '1.0.0' }),
         '',
+        ToolsetPersistReason.Save,
       ),
     );
   });
@@ -506,6 +508,7 @@ describe('ToolsetEditor', () => {
       expect(onPersist).toHaveBeenCalledWith(
         expect.objectContaining({ iconUrl: 'files/bucket/avatar.png' }),
         '',
+        ToolsetPersistReason.Save,
       ),
     );
   });
@@ -652,6 +655,11 @@ describe('ToolsetEditor', () => {
       await screen.findByText(`ensure-saved-result-${NEW_TOOLSET_ID}`),
     ).toBeTruthy();
     expect(onPersist).toHaveBeenCalledOnce();
+    expect(onPersist).toHaveBeenCalledWith(
+      expect.anything(),
+      '',
+      ToolsetPersistReason.LogIn,
+    );
     /* Persisting through Log In does not report a save success. */
     expect(onSaveSuccess).not.toHaveBeenCalled();
   });
@@ -698,6 +706,7 @@ describe('ToolsetEditor', () => {
           }),
         }),
         '',
+        ToolsetPersistReason.Save,
       ),
     );
     expect(onSaveSuccess).toHaveBeenCalledOnce();
@@ -918,6 +927,7 @@ describe('ToolsetEditor — shared editor shell', () => {
           endpoint: 'https://example.com/mcp',
         }),
         '',
+        ToolsetPersistReason.Save,
       ),
     );
   });
