@@ -23,7 +23,7 @@ export {
   collectToolCallNames,
   sanitizeToolName,
 } from './adapters/quick-app/quick-app-tool-calls';
-export { collectDialLoopToolCallNames } from './adapters/dial-loop/dial-loop-tool-calls';
+export { hasDialLoopToolCalls } from './adapters/dial-loop/dial-loop-tool-calls';
 export {
   findMcpAppForMessage,
   mcpAppCanvasKey,

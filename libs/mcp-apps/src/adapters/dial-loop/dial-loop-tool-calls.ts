@@ -36,6 +36,13 @@ const parseStageArgValue = (raw: string): unknown => {
 };
 
 /**
+ * Whether a stage reports a tool call: its content starts with a `**Request**` section.
+ * @param stage - a message stage
+ */
+const isToolStage = (stage: Stage): boolean =>
+  (stage.content ?? '').startsWith(STAGE_REQUEST_MARKER);
+
+/**
  * Reads the tool calls a DIAL loop reported as stages. A stage without a `**Request**` section is not a tool call, and `result` stays undefined until the `**Response**` block arrives or when the stage failed.
  * @param stages - stages of one assistant message
  */
@@ -44,8 +51,8 @@ const resolveStageToolCalls = (
 ): McpAppToolCall[] => {
   const calls: McpAppToolCall[] = [];
   for (const stage of stages ?? []) {
+    if (!isToolStage(stage)) continue;
     const content = stage.content ?? '';
-    if (!content.startsWith(STAGE_REQUEST_MARKER)) continue;
 
     const requestEnd = content.indexOf(STAGE_RESPONSE_MARKER);
     const requestText = content.slice(
@@ -66,6 +73,7 @@ const resolveStageToolCalls = (
       name: (stage.name ?? '').replace(STAGE_TIMING_SUFFIX, ''),
       args,
       result: response,
+      isDisplayDerived: true,
       structuredResult:
         response == null ? undefined : parseJsonObject(response),
     });
@@ -81,17 +89,8 @@ export const extractDialLoopToolCalls = (message: Message): McpAppToolCall[] =>
   resolveStageToolCalls(message.custom_content?.stages);
 
 /**
- * Collects every tool name a DIAL loop reported across `messages`, used to decide whether the application's configured toolsets must be inspected.
+ * Whether any message carries a stage that reports a tool call. Exits at the first one without parsing, so it is cheap enough to run on every streamed chunk.
  * @param messages - conversation messages
  */
-export const collectDialLoopToolCallNames = (
-  messages: Message[],
-): Set<string> => {
-  const names = new Set<string>();
-  for (const message of messages) {
-    for (const call of extractDialLoopToolCalls(message)) {
-      names.add(call.name);
-    }
-  }
-  return names;
-};
+export const hasDialLoopToolCalls = (messages: Message[]): boolean =>
+  messages.some((message) => message.custom_content?.stages?.some(isToolStage));

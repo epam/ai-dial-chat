@@ -98,7 +98,7 @@ A DIAL loop application (its `applicationTypeSchemaId` ends in `dial-loop`) has 
 
 ### Requirement: A stage-reported tool call seeds the app from its printed response and is never re-called live
 
-For a DIAL loop, a tool call is recovered from a stage whose content starts with a `**Request**` section (a bulleted list of `` `key`: value `` lines), optionally followed by a `**Response**` code block, with the tool's name being the stage name without its trailing ` (<seconds>s, Start: <time>)`. A stage with no `**Request**` section SHALL NOT be treated as a tool call, and a stage whose status is `failed` SHALL have no result. Request values that are valid JSON keep their type; other values are strings with Markdown escapes removed. The seed SHALL be `toolInput` from the request values and `toolResult` whose text `content` is the response block, plus `structuredContent` when the block parses as a JSON object. A `discovery: 'configured'` match SHALL NOT trigger a live re-call of the tool, because the stage text is display Markdown (escaped characters, decoded percent-escapes) and replaying it can address a different resource; the mounted app SHALL be seeded from the stage response instead. The stage text is not a contract, so `toolInput` is informational only.
+For a DIAL loop, a tool call is recovered from a stage whose content starts with a `**Request**` section (a bulleted list of `` `key`: value `` lines), optionally followed by a `**Response**` code block, with the tool's name being the stage name without its trailing ` (<seconds>s, Start: <time>)`. A stage with no `**Request**` section SHALL NOT be treated as a tool call, and a stage whose status is `failed` SHALL have no result. Request values that are valid JSON keep their type; other values are strings with Markdown escapes removed. The seed SHALL be `toolInput` from the request values and `toolResult` whose text `content` is the response block, plus `structuredContent` when the block parses as a JSON object. A `discovery: 'configured'` match SHALL NOT trigger a live re-call of the tool, because the stage text is display Markdown (escaped characters, decoded percent-escapes) and replaying it can address a different resource; the mounted app SHALL be seeded from the stage response instead. The stage text is not a contract, so `toolInput` is informational only: the seed SHALL be marked as display-derived, and a display-derived seed SHALL never supply arguments for a live re-call of any match, whatever its discovery kind. A `discovery: 'direct'` match with a display-derived seed SHALL be re-called with empty input, as when it has no seed, and a `discovery: 'indirect'` match with one SHALL NOT be re-called.
 
 #### Scenario: Stage request and response seed the app
 
@@ -113,6 +113,16 @@ For a DIAL loop, a tool call is recovered from a stage whose content starts with
 #### Scenario: A configured match never calls the tool
 
 - **WHEN** `resolveMcpAppToolResult` receives a `discovery: 'configured'` match and a seed
+- **THEN** it does not call `callTool` and returns the seed's `toolResult`
+
+#### Scenario: A direct match never replays display-derived arguments
+
+- **WHEN** `resolveMcpAppToolResult` receives a `discovery: 'direct'` match and a seed marked display-derived with `toolInput` `{ id: 'a' }`
+- **THEN** it calls `callTool` with empty input `{}`, not with `{ id: 'a' }`
+
+#### Scenario: An indirect match with display-derived arguments is not re-called
+
+- **WHEN** `resolveMcpAppToolResult` receives a `discovery: 'indirect'` match and a display-derived seed
 - **THEN** it does not call `callTool` and returns the seed's `toolResult`
 
 #### Scenario: A non-tool stage is ignored

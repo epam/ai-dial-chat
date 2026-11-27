@@ -97,8 +97,9 @@ Specs: [`mcp-app-canvas`](../openspec/specs/mcp-app-canvas/spec.md), [`mcp-app-t
 
 Before mounting, `resolveMcpAppToolResult` decides which tool result the app gets:
 
-- For a `direct` match, or an `indirect` match with a real tool call in `custom_content.state`, it **calls the tool again live** with the seed's arguments (or `{}` for a direct match with no seed) and hands the app the fresh `CallToolResult`. The transcript's text result is often not what the app's UI expects.
-- For a `configured` (DIAL loop) match it **never re-calls**: the arguments come from a stage's display Markdown and can differ from what the tool received (escaped underscores, decoded `%20`), so replaying them looked up a different entity. The app is seeded from the stage's `**Response**` block instead, passed as both text `content` and, when the text is a JSON object, `structuredContent`.
+- For a `direct` match, or an `indirect` match with real arguments from a tool call in `custom_content.state`, it **calls the tool again live** with the seed's arguments (or `{}` for a direct match with no seed) and hands the app the fresh `CallToolResult`. The transcript's text result is often not what the app's UI expects.
+- Arguments are replayed only when they are the real ones. A seed marked `isDisplayDerived` — arguments recovered from a DIAL loop stage's display Markdown, which can differ from what the tool received (escaped underscores, decoded `%20`) — never supplies them, whatever the discovery kind: a `direct` match is re-called with `{}`, and an `indirect` match is not re-called. This follows where the data came from, not which adapter found the tool.
+- A `configured` (DIAL loop) match **never re-calls**. The app is seeded from the stage's `**Response**` block instead, passed as both text `content` and, when the text is a JSON object, `structuredContent`.
 - For an indirect match with no seed (matching no longer produces one), it passes the transcript result through unchanged.
 - If the live call throws, it is retried once after a short randomized delay (500–1000 ms), so a transient connection drop — typical when many cards re-mount together after a page reload — does not cost the card its data. If the retry throws too, it falls back to the transcript result.
 

@@ -118,7 +118,7 @@ const colors: McpAppInlinePreviewColors = {
 - `resolveMcpAppToolResult(match, seed, callTool)` — resolves the tool result an app should be seeded with, live-re-calling `callTool` when the match is unambiguous.
 - `computeMcpAppSeedKey(toolCall)` — identifies which seed a cache entry was resolved from.
 - `collectToolCallNames(messages)` — collects every real tool-call name seen across a conversation's messages.
-- `collectDialLoopToolCallNames(messages)` — collects every tool name a DIAL loop reported as a stage across a conversation's messages. Temporary adapter; see `docs/mcp-apps.md`, "Temporary adapters".
+- `hasDialLoopToolCalls(messages)` — whether any message carries a stage that reports a tool call (a DIAL loop does this), stopping at the first one. Temporary adapter; see `docs/mcp-apps.md`, "Temporary adapters".
 - `sanitizeToolName(input)` — reproduces the orchestrator's tool-name sanitization (runs of characters outside `[a-zA-Z0-9_-]` become `_`, a leading `_` is added when the name does not start with a letter or `_`, capped at 64 characters), so a toolset display name such as `Entity MCP Server` can be matched against the tool-call name `Entity_MCP_Server_<tool>`. Temporary heuristic until MCP Apps are fully supported.
 - `mcpAppCanvasKey(messageIndex)` — stable per-message cache/canvas key.
 
@@ -131,7 +131,7 @@ import { McpAppToolDiscovery, McpDeploymentKind } from '@epam/ai-dial-mcp-apps';
 McpDeploymentKind.Toolset; // 'toolset'
 McpDeploymentKind.Application; // 'application' — an application that is itself an MCP server
 
-// How a tool was discovered; only a `Direct` match is live-re-called.
+// How a tool was discovered. A `Direct` match, and an `Indirect` match with real tool-call arguments, are live-re-called; a `Configured` match never is.
 McpAppToolDiscovery.Direct; // 'direct' — the active deployment is this MCP server
 McpAppToolDiscovery.Indirect; // 'indirect' — matched by a toolset display-name prefix guess
 McpAppToolDiscovery.Configured; // 'configured' — a toolset listed in a DIAL loop application's configuration, matched by the real tool name

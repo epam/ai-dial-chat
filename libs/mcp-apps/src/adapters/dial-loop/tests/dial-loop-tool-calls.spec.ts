@@ -14,7 +14,7 @@ import {
   findMcpAppForMessage,
   resolveMcpAppToolCallSeed,
 } from '../../../utils/mcp-app';
-import { collectDialLoopToolCallNames } from '../dial-loop-tool-calls';
+import { hasDialLoopToolCalls } from '../dial-loop-tool-calls';
 
 const configuredTool: McpAppToolRef = {
   toolsetId: 'toolsets/public/example/Entity%20Lookup%20MCP%20Server__2.0.0',
@@ -41,20 +41,29 @@ const makeMessage = (stages: Stage[]): Message =>
   }) as Message;
 
 describe('stage-based tool calls (DIAL loop)', () => {
-  it('collects the tool name without the timing suffix and ignores non-tool stages', () => {
-    const names = collectDialLoopToolCallNames([
-      makeMessage([
-        {
-          index: 0,
-          name: 'Staging (1.86s, Start: 12:45:28)',
-          status: StageStatus.Completed,
-          content: 'done',
-        },
-        toolStage,
-      ]),
-    ]);
+  it('reports a tool call when a stage starts with a request section', () => {
+    expect(hasDialLoopToolCalls([makeMessage([toolStage])])).toBe(true);
+  });
 
-    expect([...names]).toEqual(['show_entity_card']);
+  it('reports no tool call for stages without a request section', () => {
+    expect(
+      hasDialLoopToolCalls([
+        makeMessage([
+          {
+            index: 0,
+            name: 'Staging (1.86s, Start: 12:45:28)',
+            status: StageStatus.Completed,
+            content: 'done',
+          },
+        ]),
+      ]),
+    ).toBe(false);
+  });
+
+  it('matches the tool name without its timing suffix', () => {
+    expect(
+      resolveMcpAppToolCallSeed(makeMessage([toolStage]), 'show_entity_card'),
+    ).toBeDefined();
   });
 
   it('matches a configured tool whose stage has a response', () => {
@@ -88,6 +97,7 @@ describe('stage-based tool calls (DIAL loop)', () => {
       resolveMcpAppToolCallSeed(makeMessage([toolStage]), 'show_entity_card'),
     ).toEqual({
       toolInput: { id: 'dial-rag', limit: 3 },
+      isDisplayDerived: true,
       toolResult: {
         content: [{ type: 'text', text: '{"entity":{"name":"DIAL RAG"}}' }],
         structuredContent: { entity: { name: 'DIAL RAG' } },
@@ -106,6 +116,7 @@ describe('stage-based tool calls (DIAL loop)', () => {
       resolveMcpAppToolCallSeed(makeMessage([escaped]), 'show_entity_card'),
     ).toEqual({
       toolInput: { id: 'Entity Card__1.0.0' },
+      isDisplayDerived: true,
       toolResult: { content: [{ type: 'text', text: 'plain text' }] },
     });
   });

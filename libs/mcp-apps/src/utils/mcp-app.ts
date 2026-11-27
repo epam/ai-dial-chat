@@ -101,6 +101,7 @@ export const resolveMcpAppToolCallSeed = (
 
   return {
     toolInput: matched.args,
+    ...(matched.isDisplayDerived && { isDisplayDerived: true }),
     toolResult:
       matched.result != null
         ? {
@@ -136,10 +137,13 @@ export const resolveMcpAppToolCallSeed = (
  *   Once a real call is confirmed, re-calling it with the exact same `toolsetId`/args it was
  *   really invoked with carries no more risk than the direct case.
  *
- * A `McpAppToolDiscovery.Configured` match is never re-called: its arguments
- * were recovered from a stage's display Markdown (escaped characters, decoded
- * percent-escapes), so replaying them can hit a different resource. It keeps
- * `seed?.toolResult`, which carries the stage's parsed `structuredContent`.
+ * Arguments are replayed only when they are the real ones. A seed marked
+ * `isDisplayDerived` (arguments recovered from a stage's display Markdown:
+ * escaped characters, decoded percent-escapes) never supplies them, whatever
+ * the discovery kind: a `Direct` match is then re-called with `{}`, and an
+ * `Indirect` match is not re-called. A `McpAppToolDiscovery.Configured` match
+ * is never re-called; it keeps `seed?.toolResult`, which carries the stage's
+ * parsed `structuredContent`.
  *
  * An `indirect` match with no seed is skipped — that toolset/tool pairing
  * is unconfirmed, and re-calling it could hit the wrong tool or re-trigger a
@@ -153,21 +157,17 @@ export const resolveMcpAppToolResult = async (
   seed: McpAppToolCallSeed | undefined,
   callTool: CallMcpAppTool,
 ): Promise<CallToolResult | undefined> => {
+  const replayInput =
+    seed?.isDisplayDerived === true ? undefined : seed?.toolInput;
   const isConfirmed =
     match.discovery === McpAppToolDiscovery.Direct ||
-    (match.discovery === McpAppToolDiscovery.Indirect &&
-      seed?.toolInput != null);
+    (match.discovery === McpAppToolDiscovery.Indirect && replayInput != null);
   if (!isConfirmed) {
     return seed?.toolResult;
   }
 
   const liveCall = () =>
-    callTool(
-      match.toolsetId,
-      match.mcpToolName,
-      seed?.toolInput ?? {},
-      match.kind,
-    );
+    callTool(match.toolsetId, match.mcpToolName, replayInput ?? {}, match.kind);
 
   try {
     return await liveCall();

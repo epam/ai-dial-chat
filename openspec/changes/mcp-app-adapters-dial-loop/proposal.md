@@ -15,7 +15,7 @@ MCP App widgets render in quick-app chats but not in DIAL loop chats, even thoug
 - Adapter priority: the first adapter that finds tool calls in a message wins, so a quick app's structured `state` is never overridden by text recovered from stages.
 - Reuse over new utilities: the loop check joins the existing schema helpers (`isQuickAppSchema` pattern), and one shared JSON-object parser serves both adapters.
 - Document the adapters (applies to, assumption, remove when) in `docs/mcp-apps.md`.
-- No **BREAKING** changes: quick-app and direct behavior is unchanged, public exports of `@epam/ai-dial-mcp-apps` are kept, and two are added (`collectDialLoopToolCallNames`, the `McpAppToolCall` type) plus one enum member (`McpAppToolDiscovery.Configured`).
+- No **BREAKING** changes: quick-app and direct behavior is unchanged, public exports of `@epam/ai-dial-mcp-apps` are kept, and two are added (`hasDialLoopToolCalls`, the `McpAppToolCall` type) plus one enum member (`McpAppToolDiscovery.Configured`).
 
 Alternatives considered:
 

@@ -215,4 +215,37 @@ describe('useMcpAppTools DIAL loop discovery', () => {
     await Promise.resolve();
     expect(client.listAppTools).not.toHaveBeenCalled();
   });
+
+  it('combines the listing of the loop itself and the configured listing when the loop declares mcp', async () => {
+    const mcpLoopApp = {
+      ...loopApp,
+      features: { mcp: true },
+    } as unknown as DeploymentItemDto;
+    const client = {
+      listAppTools: vi.fn(async (id: string) =>
+        id === TOOLSET_ID
+          ? [
+              {
+                toolName: 'show_entity_card',
+                resourceUri: 'ui://entity-card/index.html',
+              },
+            ]
+          : [],
+      ),
+    } as unknown as McpAppsApiClient;
+    const details = makeDetails(LOOP_ID);
+
+    const { result } = renderHook(() =>
+      useMcpAppTools(client, mcpLoopApp, stageMessages, [], details),
+    );
+
+    await waitFor(() => expect(result.current).toHaveLength(1));
+    expect(client.listAppTools).toHaveBeenCalledTimes(2);
+    expect(client.listAppTools).toHaveBeenCalledWith(LOOP_ID, 'application');
+    expect(client.listAppTools).toHaveBeenCalledWith(TOOLSET_ID, 'toolset');
+    expect(result.current[0]).toMatchObject({
+      toolsetId: TOOLSET_ID,
+      discovery: McpAppToolDiscovery.Configured,
+    });
+  });
 });

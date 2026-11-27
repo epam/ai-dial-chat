@@ -20,8 +20,8 @@ export enum McpDeploymentKind {
  *   non-idempotent side effect.
  * - `Configured`: a toolset the active application lists in its own
  *   configuration, matched to a tool call recovered from the message's
- *   stages by the tool's real (unprefixed) name. Treated like `Indirect`: a
- *   live re-call needs a parsed tool call to confirm it.
+ *   stages by the tool's real (unprefixed) name. Never live-re-called; the
+ *   app is seeded from the stage response.
  */
 export enum McpAppToolDiscovery {
   Direct = 'direct',

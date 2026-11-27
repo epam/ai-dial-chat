@@ -13,28 +13,36 @@ import type { McpAppsApiClient } from '../../mcp-apps-api-client';
  * toolsets (a DIAL loop) also reports `features.mcp` and lists none of them.
  */
 
+/** The fields of the active deployment that decide direct discovery. */
+export interface DirectDiscoveryTarget {
+  /** Deployment id. */
+  id: string | undefined;
+  /** Deployment type. */
+  type: DeploymentItemDto['type'] | undefined;
+  /** Whether the deployment declares `features.mcp`. */
+  hasMcp: boolean;
+}
+
 /**
  * Lists the MCP Apps tools the deployment itself exposes, or none when it is not an MCP server.
  * @param client - MCP Apps API client
- * @param deployment - the active deployment
+ * @param target - id, type and MCP capability of the active deployment
  */
 export const discoverDirectTools = async (
   client: Pick<McpAppsApiClient, 'listAppTools'>,
-  deployment: DeploymentItemDto | undefined,
+  { id, type, hasMcp }: DirectDiscoveryTarget,
 ): Promise<McpAppToolRef[]> => {
-  if (deployment?.features?.mcp !== true) return [];
-  if (deployment.type !== 'toolset' && deployment.type !== 'application') {
-    return [];
-  }
+  if (!hasMcp || id == null) return [];
+  if (type !== 'toolset' && type !== 'application') return [];
   const kind =
-    deployment.type === 'toolset'
+    type === 'toolset'
       ? McpDeploymentKind.Toolset
       : McpDeploymentKind.Application;
 
   try {
-    const tools = await client.listAppTools(deployment.id, kind);
+    const tools = await client.listAppTools(id, kind);
     return tools.map(({ resourceUri, toolName }) => ({
-      toolsetId: deployment.id,
+      toolsetId: id,
       resourceUri,
       toolName,
       mcpToolName: toolName,

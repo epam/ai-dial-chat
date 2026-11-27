@@ -25,6 +25,14 @@ Slicing strategy: vertical, risk-first. The adapter split (group 1) lands first 
 - [x] 4.2 Replace the duplicated JSON-object parsers with `libs/mcp-apps/src/utils/json.ts` (`parseJsonObject`), and remove Markdown escapes from string request values. Verification: `npm run test:file -- libs/mcp-apps/src/utils/tests/json.spec.ts` passes, and the quick-app seed specs still pass.
 - [x] 4.3 Document the nested code fence limit with a test. Verification: the spec "reads a response only up to its first closing code fence" passes.
 
+## 4b. Review follow-ups (PR review)
+
+- [x] 4b.1 Mark stage-derived tool calls and seeds as display-derived and gate the live re-call on that mark in `libs/mcp-apps/src/utils/mcp-app.ts` (a `direct` match is re-called with `{}`, an `indirect` one is not re-called). Verification: `npm run test:file -- libs/mcp-apps/src/utils/tests/mcp-app.resolveMcpAppToolResult.spec.ts libs/mcp-apps/src/adapters/dial-loop/tests/dial-loop-tool-calls.spec.ts` covers both cases and the seed mark.
+- [x] 4b.2 Reword the `Configured` JSDoc in `libs/mcp-apps/src/types/mcp-apps.ts` and the live-re-call comment in `libs/mcp-apps/README.md`. Verification: `npm run validate:docs` passes.
+- [x] 4b.3 Replace the stage-name collection with the early-exit `hasDialLoopToolCalls`, and pass id, type and the MCP flag as primitives to `discoverDirectTools` (no `eslint-disable`). Verification: `npm run test:file -- libs/chat-hooks/src/mcp-apps/useMcpAppTools/tests/useMcpAppTools.spec.ts libs/mcp-apps/src/adapters/dial-loop/tests/dial-loop-tool-calls.spec.ts` passes and `npm exec nx lint @epam/ai-dial-chat-hooks` has no `eslint-disable` in the hook.
+- [x] 4b.4 Add the hook test for a loop that declares `features.mcp` (direct and configured listings together). Verification: the spec "combines the listing of the loop itself and the configured listing when the loop declares mcp" passes.
+- [x] 4b.5 Update `docs/mcp-apps.md`, the delta spec and design D1 and D6 for the rules above. Verification: `npm run validate:docs` and `openspec validate mcp-app-adapters-dial-loop --strict` pass.
+
 ## 5. Integration and closing
 
 - [x] 5.1 Run `npm exec nx run-many -- -t typecheck lint -p @epam/ai-dial-mcp-apps @epam/ai-dial-chat-hooks chat` and verify 0 errors.
@@ -35,4 +43,4 @@ Slicing strategy: vertical, risk-first. The adapter split (group 1) lands first 
 
 - [ ] 6.1 Ask the loop team for a structured tool-call record in `custom_content.state` (`tool_execution_history` shape), so the stage adapter can be deleted. Verification: the loop emits the record and the DIAL loop adapter folders are removed with the quick-app path unchanged.
 - [ ] 6.2 Decide, with the loop team, whether the widget needs a live re-call once the loop reports arguments reliably. Verification: a recorded decision; the live re-call rule in `mcp-app-trigger` is updated if it changes.
-- [ ] 6.3 Memoize the stage scan per message if streaming shows lag in a loop chat. Verification: a profile of a long loop reply shows the scan below one millisecond per chunk.
+- [ ] 6.4 Stop a quick-app discovery result that resolves after a deployment switch from being appended to the new deployment's tools (existing behavior, noted in review). A plain cancel flag cannot be used because the effect re-runs on every message update; use a generation counter bumped on deployment change. Verification: a hook test switches deployment while a listing is pending and the late result is ignored.

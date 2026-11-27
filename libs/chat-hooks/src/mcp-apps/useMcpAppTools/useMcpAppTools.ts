@@ -5,8 +5,8 @@ import type {
 } from '@epam/ai-dial-chat-api-client';
 import type { Message } from '@epam/ai-dial-chat-shared';
 import {
-  collectDialLoopToolCallNames,
   collectToolCallNames,
+  hasDialLoopToolCalls,
   type McpAppToolRef,
 } from '@epam/ai-dial-mcp-apps';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -50,22 +50,28 @@ export const useMcpAppTools = (
   const [dialLoopTools, setDialLoopTools] = useState<McpAppToolRef[]>([]);
   const fetchedToolsetIdsRef = useRef<Set<string>>(new Set());
 
+  const deploymentId = deployment?.id;
+  const deploymentType = deployment?.type;
+  const hasMcp = deployment?.features?.mcp === true;
+
   useEffect(() => {
     fetchedToolsetIdsRef.current = new Set();
     setQuickAppTools([]);
 
     let isCancelled = false;
     const load = async () => {
-      const tools = await discoverDirectTools(client, deployment);
+      const tools = await discoverDirectTools(client, {
+        id: deploymentId,
+        type: deploymentType,
+        hasMcp,
+      });
       if (!isCancelled) setDirectTools(tools);
     };
     void load();
     return () => {
       isCancelled = true;
     };
-    /* Only the fields discovery reads: a new `deployment` object with the same id, type and flag must not refetch. */
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deployment?.id, deployment?.type, deployment?.features?.mcp, client]);
+  }, [deploymentId, deploymentType, hasMcp, client]);
 
   const toolCallNames = useMemo(
     () => collectToolCallNames(messages),
@@ -102,15 +108,13 @@ export const useMcpAppTools = (
       dialLoopToolsetIdsKey === '' ? [] : dialLoopToolsetIdsKey.split('\n'),
     [dialLoopToolsetIdsKey],
   );
-  const hasDialLoopToolCalls = useMemo(
-    () =>
-      dialLoopToolsetIds.length > 0 &&
-      collectDialLoopToolCallNames(messages).size > 0,
+  const hasStageToolCalls = useMemo(
+    () => dialLoopToolsetIds.length > 0 && hasDialLoopToolCalls(messages),
     [dialLoopToolsetIds, messages],
   );
 
   useEffect(() => {
-    if (!hasDialLoopToolCalls || dialLoopToolsetIds.length === 0) {
+    if (!hasStageToolCalls || dialLoopToolsetIds.length === 0) {
       setDialLoopTools([]);
       return;
     }
@@ -124,7 +128,7 @@ export const useMcpAppTools = (
     return () => {
       isCancelled = true;
     };
-  }, [hasDialLoopToolCalls, dialLoopToolsetIds, client]);
+  }, [hasStageToolCalls, dialLoopToolsetIds, client]);
 
   /* Stable identity between renders so memoized message rows don't re-render. */
   return useMemo(
