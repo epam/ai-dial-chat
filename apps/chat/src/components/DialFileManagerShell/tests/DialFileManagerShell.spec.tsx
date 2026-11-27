@@ -106,6 +106,14 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
         >
           Pick reports
         </button>
+        <button
+          type="button"
+          onClick={() =>
+            props.onDestinationChange?.({ rootKey: 'files', path: [] })
+          }
+        >
+          Pick root
+        </button>
         <button type="button" onClick={props.onClose}>
           Close panel
         </button>
@@ -693,14 +701,12 @@ describe('DialFileManagerShell', () => {
       renderShell({ items: [root], loadedPaths: loadedFolders });
       const request = startRequest(DestinationFolderMode.Copy);
 
+      await userEvent.click(screen.getByRole('button', { name: 'Pick root' }));
       await userEvent.click(
         screen.getByRole('button', { name: baseLabels.copyDestinationButton }),
       );
 
-      expect(request.confirm).toHaveBeenCalledWith(
-        '/My files/reports',
-        root.items[0].items,
-      );
+      expect(request.confirm).toHaveBeenCalledWith('/My files', root.items);
       expect(screen.queryByRole('dialog')).toBeNull();
     });
 
