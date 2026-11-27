@@ -7752,12 +7752,20 @@ export const OnboardingHintTarget = {
   EditorSetup: 'editor-setup',
   ActiveChat: 'active-chat',
   ActiveChatActions: 'active-chat-actions',
+  ProjectOutputs: 'project-outputs',
+  ProjectChatList: 'project-chat-list',
+  ScheduledTaskDetails: 'scheduled-task-details',
+  ScheduledTaskSkills: 'scheduled-task-skills',
+  ScheduledTaskInstructions: 'scheduled-task-instructions',
+  ScheduledTaskRefineInstructions: 'scheduled-task-refine-instructions',
+  ScheduledTaskTimezone: 'scheduled-task-timezone',
+  ScheduledTaskStartDate: 'scheduled-task-start-date',
 } as const;
 export type OnboardingHintTarget =
   (typeof OnboardingHintTarget)[keyof typeof OnboardingHintTarget];
 
 /**
- * `folderReferenceNeedsRequest`: the application refers to a folder of files and the caller is not a DIAL admin, so it has to go through a publication request.
+ * `folderReferenceNeedsRequest`: the application, or an application dependency to be copied, refers to a folder of files and the caller is not a DIAL admin, so it has to go through a publication request.
  * @export
  */
 export const OrgUnitCopyErrorCode = {
@@ -7791,7 +7799,7 @@ export interface OrgUnitCopyErrorDto {
    */
   message: string;
   /**
-   * `folderReferenceNeedsRequest`: the application refers to a folder of files and the caller is not a DIAL admin, so it has to go through a publication request.
+   * `folderReferenceNeedsRequest`: the application, or an application dependency to be copied, refers to a folder of files and the caller is not a DIAL admin, so it has to go through a publication request.
    * @type {OrgUnitCopyErrorCode}
    * @memberof OrgUnitCopyErrorDto
    */

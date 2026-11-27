@@ -103,7 +103,7 @@ In single mode with `onItemClick` set, pressing Enter on a focused cell SHALL ca
 
 `ListView` SHALL style the table frame, header, row dividers, row background and selected-row tint only through the `Grid` theme and its documented props (`appearance`, `wrapperBorder`, `withoutHeaderBorders`, `alternateOddRowColors`). It SHALL pass `appearance={GridAppearance.Chat}`, so the kit draws the borderless 12px card with the MD shadow and the inset row dividers. `libs/catalog/src/components/ListView/ListView.module.scss` SHALL NOT target ag-grid's internal `.ag-*` classes, except to right-align the Favorite column header and to draw the single-mode selected row's outline-only look (see "Single-mode highlight uses the `Grid` row selection").
 
-`ListViewColors` SHALL contain only `starFilled`, `folderIcon`, `nameText`, `versionText` and the deprecated, no-op `selectedRowCheckIcon`. It SHALL NOT contain `background`, `border`, `headerBackground`, `rowDivider`, `rowEvenBackground`, `selectedRowBorder` or `selectedRowBackground`.
+`ListViewColors` SHALL contain only `starFilled`, `folderIcon`, `nameText` and `versionText`. It SHALL NOT contain `selectedRowCheckIcon`, `background`, `border`, `headerBackground`, `rowDivider`, `rowEvenBackground`, `selectedRowBorder` or `selectedRowBackground`.
 
 #### Scenario: Removed colour members are rejected
 

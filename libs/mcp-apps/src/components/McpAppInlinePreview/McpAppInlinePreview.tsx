@@ -4,14 +4,12 @@ import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   ElementSize,
-  EllipsisTooltip,
   GhostIconButton,
   Spinner,
   mergeClasses,
   LiveRegion,
   LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
-import type { Implementation } from '@modelcontextprotocol/sdk/types.js';
 import {
   IconAlertTriangle,
   IconArrowsMaximize,
@@ -92,9 +90,9 @@ export interface McpAppInlinePreviewProps {
   onRendererError?: (error: Error) => void;
   /**
    * Whether this message's MCP App is currently open in the full-width
-   * canvas. When `true`, the header stays (so the tool/app identity is still
-   * visible) but the body shows `openedInCanvasLabel` centered instead of
-   * mounting the app — only one live app instance exists at a time.
+   * canvas. When `true`, the header's actions stay but the body shows
+   * `openedInCanvasLabel` centered instead of mounting the app — only one
+   * live app instance exists at a time.
    */
   isOpenedInCanvas?: boolean;
   /** Message shown centered in the body when `isOpenedInCanvas` is `true`. */
@@ -124,15 +122,7 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
   colors,
   typography,
 }) => {
-  const {
-    headerNameClassName = 'dial-tiny-lead-semi-text',
-    messageClassName = 'dial-body-text',
-  } = typography ?? {};
-  /* Populated once `ui/initialize` completes; reset per `cacheKey` — see mcp-app-trigger spec.md. */
-  const [appInfo, setAppInfo] = useState<Implementation | undefined>(undefined);
-  useEffect(() => {
-    setAppInfo(undefined);
-  }, [cacheKey]);
+  const { messageClassName = 'dial-body-text' } = typography ?? {};
 
   /* Maps an app's `ui/request-display-mode` to `onExpand` for 'fullscreen' — see mcp-app-trigger spec.md. */
   const handleRequestDisplayMode = useCallback(
@@ -150,7 +140,6 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
     '--mcpapp-preview-bg': colors?.previewBackground,
     '--mcpapp-preview-border': colors?.previewBorder,
     '--mcpapp-preview-header-border': colors?.previewHeaderBorder,
-    '--mcpapp-header-text': colors?.headerText,
     '--mcpapp-placeholder-text': colors?.placeholderText,
     '--mcpapp-error-icon': colors?.errorIcon,
     '--mcpapp-error-text': colors?.errorText,
@@ -217,27 +206,10 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
       <div
         className={mergeClasses(
           styles.previewHeader,
-          'flex min-h-10 items-center justify-between gap-2 border-b px-4 py-2',
+          'flex min-h-10 items-center justify-end gap-2 border-b px-4 py-2',
           MCP_APPS_CLASS.previewHeader,
         )}
       >
-        <EllipsisTooltip
-          text={
-            appInfo != null ? (
-              <>
-                <span className={headerNameClassName}>{match.mcpToolName}</span>
-                <span
-                  aria-hidden
-                  className="mx-1.5 inline-block h-3 w-0 border-s border-current align-middle"
-                />
-                <span className={headerNameClassName}>{appInfo.name}</span>
-              </>
-            ) : (
-              <span className={headerNameClassName}>{match.mcpToolName}</span>
-            )
-          }
-          className={styles.headerText}
-        />
         <div
           role="toolbar"
           aria-label={actionsGroupAriaLabel}
@@ -324,7 +296,6 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
                     <McpAppCanvasRenderer
                       content={content}
                       errorLabel={loadErrorLabel}
-                      onAppInfo={setAppInfo}
                     />
                   </Suspense>
                 </RendererLoadBoundary>

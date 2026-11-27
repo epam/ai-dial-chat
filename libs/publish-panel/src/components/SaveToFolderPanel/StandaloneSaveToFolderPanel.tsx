@@ -30,6 +30,7 @@ export const StandaloneSaveToFolderPanel: FC<
   onDestinationChange,
   onPendingDestinationChange,
   getDisabledReason,
+  canCreateFolderIn,
   onCreateFolder,
   onCreateFolderError,
   version,
@@ -227,6 +228,7 @@ export const StandaloneSaveToFolderPanel: FC<
       onCreateFolder={handleCreateFolder}
       onCreateFolderError={handleCreateFolderError}
       getDisabledReason={getDisabledReason}
+      canCreateFolderIn={canCreateFolderIn}
       mainSections={mainSections}
       isSubmitting={isSubmitting}
       submitError={submitError ?? createFolderError}

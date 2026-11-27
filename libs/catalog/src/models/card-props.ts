@@ -31,10 +31,6 @@ export interface CardColors {
   selectedBorder?: string;
   /** Background color of a selected card. Fallback: `--bg-layer-raised` (the card's regular background). */
   selectedBackground?: string;
-  /**
-   * @deprecated No effect: a selected card is marked by its border only and no longer renders a checkmark.
-   */
-  checkIcon?: string;
   /** Top border color of the footer row (folder path / star button). Fallback: `--stroke-tertiary`. */
   footerBorder?: string;
   /** Keyboard focus outline of a clickable card. Fallback: `--stroke-focus`. */

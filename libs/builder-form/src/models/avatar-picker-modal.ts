@@ -29,8 +29,6 @@ export interface AvatarPickerModalLabels {
   newFolderLabel: string;
   /** Label for the download action. */
   downloadLabel: string;
-  /** Label shown while a download is in progress. */
-  downloadingLabel: string;
   /** Label for the delete action. */
   deleteLabel: string;
   /** Label shown while a delete is in progress. */
@@ -91,8 +89,6 @@ export interface AvatarPickerFileManagerModalProps {
   newFolderLabel: string;
   /** Label for the download action. */
   downloadLabel: string;
-  /** Label shown while a download is in progress. */
-  downloadingLabel: string;
   /** Label for the delete action. */
   deleteLabel: string;
   /** Label shown while a delete is in progress. */

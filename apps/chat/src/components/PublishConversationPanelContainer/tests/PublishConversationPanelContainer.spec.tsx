@@ -156,6 +156,7 @@ describe('PublishConversationPanelContainer', () => {
       isDestinationUsable: undefined,
       getDisabledReason: undefined,
       canSaveDirectlyTo: undefined,
+      canCreateFolderIn: () => true,
     });
     vi.mocked(useNotification).mockReturnValue(
       createNotificationContextValue(mockShowNotification),
@@ -173,6 +174,7 @@ describe('PublishConversationPanelContainer', () => {
       isDestinationUsable,
       getDisabledReason: undefined,
       canSaveDirectlyTo: undefined,
+      canCreateFolderIn: () => true,
     });
 
     await renderContainer();
@@ -205,6 +207,7 @@ describe('PublishConversationPanelContainer', () => {
       isDestinationUsable: vi.fn(),
       getDisabledReason,
       canSaveDirectlyTo: undefined,
+      canCreateFolderIn: () => true,
     });
 
     await renderContainer();

@@ -430,5 +430,53 @@
     "page": "Any page with the sidebar open and a conversation open",
     "element": "The open conversation's \"More actions\" menu (pin, duplicate, export, share…); its button shows on hover",
     "lookup": "The button named \"More actions\" in the same list item as the open conversation's row"
+  },
+  {
+    "target": "project-outputs",
+    "page": "Project view, once its chats produced files",
+    "element": "The project's \"Outputs\" section: the files its chats produced",
+    "lookup": "The `section` named \"Outputs\" inside the `section` named \"Project chats\""
+  },
+  {
+    "target": "project-chat-list",
+    "page": "Project view",
+    "element": "The project's \"Chats\" list",
+    "lookup": "The `section` named \"Chats\" inside the `section` named \"Project chats\""
+  },
+  {
+    "target": "scheduled-task-details",
+    "page": "New scheduled task, task edit",
+    "element": "The form's \"Details\" section: name, description, agent and schedule",
+    "lookup": "The `role=\"group\"` named \"Details\" inside `#main-content`"
+  },
+  {
+    "target": "scheduled-task-skills",
+    "page": "New scheduled task, task edit",
+    "element": "The \"Skills\" picker",
+    "lookup": "The `role=\"combobox\"` named \"Skills\" inside the `role=\"group\"` named \"Configuration\""
+  },
+  {
+    "target": "scheduled-task-instructions",
+    "page": "New scheduled task, task edit",
+    "element": "The \"Instructions\" editor",
+    "lookup": "The `role=\"group\"` or `textarea` whose name starts with \"Instructions\" inside the `role=\"group\"` named \"Configuration\""
+  },
+  {
+    "target": "scheduled-task-refine-instructions",
+    "page": "New scheduled task, task edit, when text refinement is available",
+    "element": "The instructions' \"Refine with AI\" button",
+    "lookup": "A button named \"Refine with AI\", \"Refining\" or \"Regenerate\" inside the `role=\"group\"` named \"Configuration\""
+  },
+  {
+    "target": "scheduled-task-timezone",
+    "page": "New scheduled task, task edit, for an hourly task",
+    "element": "The \"Change timezone\" button",
+    "lookup": "A button named \"Change timezone\" inside the `role=\"group\"` named \"Details\""
+  },
+  {
+    "target": "scheduled-task-start-date",
+    "page": "New scheduled task, task edit, for a repeating task",
+    "element": "The \"Start date\" picker; the \"End date\" picker sits next to it",
+    "lookup": "A button whose name starts with \"Start date\" inside the `role=\"group\"` named \"Details\""
   }
 ]

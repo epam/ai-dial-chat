@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -567,14 +567,27 @@ describe('ScheduledTasks', () => {
     });
   });
   describe('sort control', () => {
-    const openSortMenu = async (activeLabel: string) => {
-      await userEvent.click(screen.getByRole('button', { name: activeLabel }));
+    const openSortMenu = async () => {
+      await userEvent.click(screen.getByRole('button', { name: 'Sort' }));
     };
+
+    it('renders an icon-only trigger named after the sort label', () => {
+      renderScheduledTasks({ sortKey: ScheduledTasksSortKey.FirstToRun });
+
+      const trigger = screen.getByRole('button', { name: 'Sort' });
+      expect(trigger.textContent).toBe('');
+      expect(screen.queryByRole('button', { name: 'First to run' })).toBeNull();
+    });
 
     it('marks the active sort option as checked and leaves the others unchecked', async () => {
       renderScheduledTasks({ sortKey: ScheduledTasksSortKey.LastToRun });
-      await openSortMenu('Last to run');
+      await openSortMenu();
 
+      expect(
+        screen
+          .getByRole('button', { name: 'Sort' })
+          .getAttribute('aria-expanded'),
+      ).toBe('true');
       const options = screen.getAllByRole('menuitemradio');
 
       expect(
@@ -591,7 +604,7 @@ describe('ScheduledTasks', () => {
     it('reports the chosen sort key and closes the menu', async () => {
       const onSortChange = vi.fn();
       renderScheduledTasks({ onSortChange });
-      await openSortMenu('First to run');
+      await openSortMenu();
 
       await userEvent.click(
         screen.getByRole('menuitemradio', { name: 'Last to run' }),
@@ -603,20 +616,36 @@ describe('ScheduledTasks', () => {
       expect(screen.queryByRole('menuitemradio')).toBeNull();
     });
 
-    it('shows the applied order on the trigger', () => {
-      renderScheduledTasks({ sortKey: ScheduledTasksSortKey.FirstToRun });
-
-      expect(screen.getByRole('button', { name: 'First to run' })).toBeTruthy();
-    });
-
-    /* The kit's `Button` derives its accessible name from `label`, so an
-       unrecognised sortKey would leave the trigger nameless without this. */
-    it('names the trigger after the control when the sort key matches no option', () => {
+    it('keeps the trigger named after the sort label when the sort key matches no option', () => {
       renderScheduledTasks({
         sortKey: 'unknown-key' as ScheduledTasksSortKey,
       });
 
       expect(screen.getByRole('button', { name: 'Sort' })).toBeTruthy();
+    });
+
+    /* jsdom lays nothing out, so `offsetParent` is always null: the same
+       signal the phone layout gives once `.sortControlHidden` hides it. */
+    it('closes the open sort menu when a phone search focus hides the trigger', async () => {
+      renderScheduledTasks();
+      await openSortMenu();
+      expect(screen.getAllByRole('menuitemradio')).toHaveLength(2);
+
+      act(() => {
+        screen.getByPlaceholderText('Search scheduled tasks...').focus();
+      });
+
+      await waitFor(() =>
+        expect(screen.queryByRole('menuitemradio')).toBeNull(),
+      );
+    });
+
+    it('draws a host glyph in place of the default one', () => {
+      renderScheduledTasks({ sortIcon: <span>custom glyph</span> });
+
+      expect(screen.getByRole('button', { name: 'Sort' }).textContent).toBe(
+        'custom glyph',
+      );
     });
   });
 

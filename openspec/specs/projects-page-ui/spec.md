@@ -175,12 +175,12 @@ The lib SHALL filter `projects` client-side to those whose `name` contains the t
 
 ### Requirement: Sort defaults to Newest and offers Oldest and Name A–Z
 
-The lib SHALL expose `ProjectsSortKey` (`Newest = 'newest'`, `Oldest = 'oldest'`, `NameAsc = 'name-asc'`) through a kit `ButtonDropdown`:
+The lib SHALL expose `ProjectsSortKey` (`Newest = 'newest'`, `Oldest = 'oldest'`, `NameAsc = 'name-asc'`) through the icon-only `SortMenuButton` from `@epam/ai-dial-chat-shared`:
 
-- The dropdown uses the `IconArrowsSort` trigger icon.
-- The trigger's accessible name is the applied option's label, falling back to `labels.sortLabel` for an unknown key.
-- The trigger sits inside a `role="group"` whose accessible name is `labels.sortLabel`.
-- `labels.sortOptions` lists the options, and the applied option is marked with `MenuItemMark`, following `libs/scheduled-tasks/src/components/ScheduledTasks/ScheduledTasks.tsx`.
+- The trigger is an icon button with the `IconArrowsSort` glyph and no visible text.
+- The trigger's accessible name and tooltip are `labels.sortLabel`, whichever option is applied.
+- The trigger is not wrapped in a named `role="group"`.
+- `labels.sortOptions` lists the options, and the applied option is marked with `MenuItemMark.Check`.
 
 Sorting applies after filtering. Pinned projects (`isPinned: true`) come before unpinned ones in every order. Within each group:
 
@@ -193,7 +193,12 @@ Sorting applies after filtering. Pinned projects (`isPinned: true`) come before 
 #### Scenario: Default order is Newest
 
 - **WHEN** the page first renders unpinned projects updated at t=1, t=3 and t=2
-- **THEN** the cards render in the order t=3, t=2, t=1, and the sort control shows Newest as applied
+- **THEN** the cards render in the order t=3, t=2, t=1, and the opened sort menu marks Newest as checked
+
+#### Scenario: Sort trigger is icon-only
+
+- **WHEN** the page renders with `labels.sortLabel` "Sort" and Newest applied
+- **THEN** the toolbar has one button named "Sort" with no visible text, and no element is named "Newest" until the menu opens
 
 #### Scenario: Oldest reverses the date order and keeps undated last
 
@@ -368,7 +373,7 @@ The Projects lib and page SHALL meet the layout, RTL, accessibility and memoisat
 
 - The lib layout SHALL be mobile-first. Cards use one column with a 16px gap by default and, under the `desktop:` variant from `tools/tailwind/theme.css`, three columns with a 20px gap in a centred grid at most 1116px wide.
 - Under `desktop:`, the header, the toolbar and the content area have 32px inline padding; the header has 16px block padding, the toolbar 16px above and 20px below, and the content area 24px above. On mobile, the toolbar has 16px padding on every side, the content area 16px inline padding and none above, and 80px below so the floating **New project** button never covers the last card.
-- On mobile, the toolbar keeps the search and the sort control on one row with an 8px gap: the search at `ElementSize.Standard` and the sort control at `ElementSize.Small` with a 16px icon. Under `desktop:`, the gap is 12px, the search is `ElementSize.Large`, and the sort control is `ElementSize.Standard` with a 20px icon and 12px inline padding. The sort control's text uses `--text-accent`. The component branches with `useIsMobile` from `@epam/ai-dial-chat-shared`.
+- On mobile, the toolbar keeps the search and the sort button on one row with an 8px gap: the search at `ElementSize.Standard` and the sort button at `ElementSize.Small` with a 16px icon. Under `desktop:`, the gap is 12px, the search is `ElementSize.Large`, and the sort button is `ElementSize.Standard` with a 20px icon. The sort glyph's colour is `ProjectsColors.sortButtonText`, passed to `SortMenuButton` as `colors.icon` (fallback `--text-secondary`). The component branches with `useIsMobile` from `@epam/ai-dial-chat-shared`.
 - No `sm:`/`md:`/`lg:`/`xl:` prefixes are used.
 - Long names truncate to one line with a tooltip, and the folder path collapses or truncates inside the card, so the page never scrolls horizontally at a 320 px viewport.
 
@@ -391,7 +396,7 @@ The Projects lib and page SHALL meet the layout, RTL, accessibility and memoisat
   - the incomplete label, which takes precedence over the result count.
   It announces nothing while loading.
 - Every Tabler outline icon passes `stroke={DIAL_KIT_ICON_STROKE}`. Decorative icons, including icons inside labelled controls, carry `aria-hidden`.
-- The sort dropdown, the pin toggles and the retry button are reachable and operable by keyboard.
+- The sort button, the pin toggles and the retry button are reachable and operable by keyboard. The sort button is named by `labels.sortLabel`.
 - Text colors use theme tokens whose fallbacks meet a 7:1 contrast ratio.
 
 **Memoisation:**

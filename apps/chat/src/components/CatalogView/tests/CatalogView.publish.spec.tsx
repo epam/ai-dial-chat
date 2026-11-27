@@ -293,6 +293,7 @@ const setupDefaults = () => {
     isDestinationUsable: undefined,
     getDisabledReason: undefined,
     canSaveDirectlyTo: undefined,
+    canCreateFolderIn: () => true,
   });
   vi.mocked(usePublishFolders).mockReturnValue({
     folderItems: [],

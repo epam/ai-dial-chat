@@ -45,7 +45,7 @@ Peers:
 - `react` ^19.2.8
 - `react-dom` ^19.2.8 (`NotificationStack` portals into `document.body`)
 - `@epam/ai-dial-ui-kit` ^0.17.0
-- `@epam/ai-dial-react-file-manager` ^0.5.0
+- `@epam/ai-dial-react-file-manager` ^0.5.1
 
 Installed for you as dependencies: `ag-grid-community`, `@tabler/icons-react`, `react-markdown`,
 `react-syntax-highlighter`, `remark-breaks`, `remark-gfm`, `remark-math`, `rehype-katex`,
@@ -133,6 +133,11 @@ grid. Their headless contracts — `FileManagerController`, both label interface
 reaching this entry.
 The package declares only CSS/SCSS side effects so unused UI can be tree-shaken.
 Continue importing `@epam/ai-dial-chat-shared/styles.css` once in the host.
+
+`DialFileManagerShellLabels.sort` (`DialFileManagerShellSortLabels`) is optional: it carries the
+sort button's name and the menu's field (`name`, `updatedAt`, `size`) and direction (`asc`,
+`desc`) labels, which the shell forwards as the file manager's `sortOptions`. Omitted, the
+shell passes no `sortOptions` and the file manager shows its English defaults.
 
 ```tsx
 import {
@@ -725,10 +730,18 @@ is `true` for an admin and outside units (Core's folder rules decide there) and
 needs `read` on the owner inside a unit. A unit listed without its parents still
 owns its own folders; missing parents are not guessed.
 
+`isOrgUnitTreeFolder(units, publicPath)` tells whether a public folder belongs
+to the org-unit tree, i.e. stays listed while org units are on: the public root,
+a unit's own folder, a folder inside a unit, or an ancestor of a unit folder at a
+segment boundary (`Acme` when only `Acme/Risk/` is a unit; `Ac` is not). Any
+other public folder, and so its subtree, is a plain folder no unit owns. It
+describes the folder kind, not a right, so admin access is not consulted.
+
 ```ts
 import {
   canWriteAt,
   findOwningOrgUnit,
+  isOrgUnitTreeFolder,
   OrgUnitNamespace,
   type OrgUnitAccess,
 } from '@epam/ai-dial-chat-shared';
@@ -736,6 +749,8 @@ import {
 const access: OrgUnitAccess = { hasAdminAccess: false, units };
 findOwningOrgUnit(access.units, 'Acme/US Risk/Reports'); // the `Acme/US Risk/` unit
 canWriteAt(access, 'Acme/US Risk/Reports', OrgUnitNamespace.Applications);
+isOrgUnitTreeFolder(access.units, 'Acme'); // true: an ancestor of `Acme/US Risk/`
+isOrgUnitTreeFolder(access.units, 'Drafts'); // false: no unit owns or lies under it
 ```
 
 ### NewVersionAlert
@@ -804,6 +819,30 @@ import { ItemHeader } from '@epam/ai-dial-chat-shared';
   titleClassName="dial-small-semi-text"
   postfixClassName="dial-tiny-text"
   colors={{ title: 'var(--text-primary)', count: 'var(--text-secondary)' }}
+/>;
+```
+
+### SortMenuButton
+
+Icon-only sort trigger (`IconArrowsSort` with a tooltip) that opens a menu of
+orders and marks the applied one with a trailing check. The trigger is named by
+`label` (default `'Sort'`) whichever order is applied, and it renders nothing
+when `options` is empty. It holds no sort state of its own: it shows `value` and
+reports picks through `onChange`. `colors.icon` sets the glyph color (default
+`--text-secondary`); `open` / `onOpenChange` control the menu when the host
+needs to close it.
+
+```tsx
+import { SortMenuButton } from '@epam/ai-dial-chat-shared';
+
+<SortMenuButton
+  label="Sort"
+  options={[
+    { value: 'newest', label: 'Newest' },
+    { value: 'oldest', label: 'Oldest' },
+  ]}
+  value={sortKey}
+  onChange={setSortKey}
 />;
 ```
 

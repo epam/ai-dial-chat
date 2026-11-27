@@ -25,6 +25,8 @@ export const StagesPanelView: FC<StagesPanelViewProps> = ({
   styles: panelStyles,
   labels,
   onAttachmentClick,
+  onAttachmentDownload,
+  isAttachmentDownloadable,
   attachmentDisplayResolvers,
   renderCitation,
   expansion,
@@ -70,6 +72,8 @@ export const StagesPanelView: FC<StagesPanelViewProps> = ({
         typography={typography}
         labels={labels}
         onAttachmentClick={onAttachmentClick}
+        onAttachmentDownload={onAttachmentDownload}
+        isAttachmentDownloadable={isAttachmentDownloadable}
         attachmentDisplayResolvers={attachmentDisplayResolvers}
         renderCitation={renderCitation}
       />

@@ -54,6 +54,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   onPublishExpandedPathsChange,
   publishLoadingPaths,
   getPublishDisabledReason,
+  canCreatePublishFolderIn,
   hasPublishWriteAccess,
   publishDefaultAuthor,
   onPublish,
@@ -422,6 +423,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
             onPublishExpandedPathsChange={onPublishExpandedPathsChange}
             publishLoadingPaths={publishLoadingPaths}
             getPublishDisabledReason={getPublishDisabledReason}
+            canCreatePublishFolderIn={canCreatePublishFolderIn}
             hidePublishAuthor={hidePublishAuthor}
             publishLabels={publishLabels}
             resolvePublishDependenciesLabels={resolvePublishDependenciesLabels}

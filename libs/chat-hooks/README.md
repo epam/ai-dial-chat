@@ -224,7 +224,7 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-projects` \*
 - `@epam/ai-dial-publish-panel` \*
 - `@epam/ai-dial-quotations` \*
-- `@epam/ai-dial-react-file-manager` ^0.5.0
+- `@epam/ai-dial-react-file-manager` ^0.5.1
 - `@epam/ai-dial-scheduled-tasks` \*
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
@@ -1183,7 +1183,14 @@ approve publications (`read` and `write` on `publications`, or DIAL admin), whic
 what lets a publish panel write directly instead of filing a request. Each takes a decoded public-relative path and an `OrgUnitNamespace` from
 `@epam/ai-dial-chat-shared`. `hasAdminAccess` is a boolean, `false` until `Ready`: whether the user is a
 DIAL admin, the global role. A unit's own `admin` role does not count, and DIAL Core lets only a DIAL admin
-copy an application that refers to a folder of files. Available from the root and `./utils`.
+copy an application that refers to a folder of files. Two answers take the path alone and describe the
+org-unit tree rather than a right: `isPublicFolderVisible(publicPath)` is
+`isOrgUnitTreeFolder` from `@epam/ai-dial-chat-shared` (a unit, a folder inside
+one, or an ancestor of one), and `canCreatePublicFolderIn(publicPath)` is `true`
+only when the path lies inside a unit, so a folder created there stays listed
+(`false` for the public root and an ancestor-only folder). Both are `true` until
+the status is `Ready`, so a folder is never hidden or locked while the units are
+unknown. Available from the root and `./utils`.
 
 ```tsx
 import { OrgUnitsStatus, useOrgUnits } from '@epam/ai-dial-chat-hooks';
@@ -3161,7 +3168,7 @@ const FileManagerHost = ({
 
 #### API
 
-**Parameters** (`UseDialFileManagerOptions`): `filesApi`, `bucket`, `labels`, `locale`, `disabledNewButtonTooltip`, `downloadDestination`, and `buildValidationErrorMessage` are required; `rootLabel` (default `'My files'`), `activeTab` (default `MyFiles`), `isActive` (default `true`; `false` issues no request), `sessionKey` (a change resets navigation like a tab switch), `variant` (default `Attach`), `actionProfile`, `forbiddenSymbolsRegExp`, `onNotification`, and `onOperationSuccess` are optional. See the exported `UseDialFileManagerOptions` type for the complete shape.
+**Parameters** (`UseDialFileManagerOptions`): `filesApi`, `bucket`, `labels`, `locale`, `disabledNewButtonTooltip`, `downloadDestination`, and `buildValidationErrorMessage` are required; `rootLabel` (default `'My files'`), `activeTab` (default `MyFiles`), `isActive` (default `true`; `false` issues no request), `sessionKey` (a change resets navigation like a tab switch), `variant` (default `Attach`), `actionProfile`, `forbiddenSymbolsRegExp`, `isPublicFolderVisible`, `onNotification`, and `onOperationSuccess` are optional. `isPublicFolderVisible(publicPath)` (a decoded path relative to the public bucket, `Acme/Reports`) applies only on the Organization tab: a folder it refuses is dropped with its subtree from the tree, the grid and the Copy/Move destination, search results inside it are dropped, and a current folder inside it falls back to the root. `useDialFileListing` takes the same option, and `useDialFileManagerSections` passes it to every section. See the exported `UseDialFileManagerOptions` type for the complete shape.
 
 **Returns** (`UseDialFileManagerResult`): the full set of props `DialFileManager` needs — `items`, `isLoading`, `path`/`onPathChange`, search (`onSearchFiles`/`searchResults`/`isSearching`), tree expand state, upload (`onUploadFiles`/`onUploadArchive`/`uploadBatchState`), create/rename/move/copy/delete callbacks and their `isXxx` flags, sharing (`onUnshareFiles`/`onRemoveFilesAccess`), metadata (`onGetInfo`/`fileMetadata`), `actionLabels`, `visibleColumns`, and the aggregate `isAnyOperationInProgress`. See the exported `UseDialFileManagerResult` type for the complete shape.
 
@@ -5548,7 +5555,12 @@ already first); a stored value that is not an array of strings is ignored.
 `Production` segment; it is the fallback `usePublishFolders` returns as
 `hasPublishWriteAccess` until the host passes `canPublishTo` (for example from
 `buildFolderGuards`), which then replaces it and also hides a remembered
-destination the rule refuses. Available from the root and `./catalog`.
+destination the rule refuses. `usePublishFolders` also takes an optional
+`isFolderVisible(folderPath)`: a folder it refuses is dropped from
+`folderItems` with its whole subtree, also when it comes from a remembered key
+or a folder created in this session, so it never comes back through them (for
+example `isPublicFolderVisible` of `useOrgUnits`, with the path joined by `/`).
+Without it every folder is listed. Available from the root and `./catalog`.
 
 ```ts
 import {
@@ -5676,7 +5688,7 @@ when `choice.isDirectWrite` is `true` and the adapter has `saveIntoOrgUnit`
 `saveIntoOrgUnit(savedId, folderPath)` replaces `publish`, and the result's
 `isWrittenToOrgUnit` is `true`. When that direct write fails with the server's `422` code
 `folderReferenceNeedsRequest` (`OrgUnitCopyErrorCode` of the generated client, read through
-`getApiErrorDetails`; the application refers to a folder of files and the user is not a DIAL
+`getApiErrorDetails`; the application, or an application dependency the server would copy, refers to a folder of files and the user is not a DIAL
 admin), the save continues with `publish` for the saved id instead, the result's `isPublished` is
 `true` and `isWrittenToOrgUnit` stays `false`; a failed `publish` then gives
 `SavedButPublishFailed`, and any other direct-write failure stays
@@ -6268,7 +6280,6 @@ const { results, batchErrors, manifestCandidate } =
 ### Supporting types and constants
 
 - **`SkillSource`** — which skill namespace a catalog skill item came from: `Personal`, `SharedWithMe`, `Public`.
-- **`PUBLIC_SKILL_BUCKET`** — the DIAL Core bucket holding organisation-wide skills. Deprecated: an alias of `PUBLIC_BUCKET` from `@epam/ai-dial-chat-shared`.
 - **`SKILL_MANIFEST_MAX_BYTES`** / **`SKILL_LISTING_PAGE_SIZE`** / **`SKILL_LISTING_MAX_PAGES`** — size/pagination bounds for skill manifest reads and skill listings.
 - **`SkillEntityDetails`** — a skill's parsed manifest details (`{ about?: SkillAboutDetails }`).
 - **`ParsedSkillResourceUrl`** / **`parseSkillResourceUrl`** — splits a `skills/{bucket}/{path}` resource URL into its bucket and path, or `null` if it doesn't match that shape.

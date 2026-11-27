@@ -76,7 +76,7 @@ export interface CatalogTitles {
   myAppsEmptyTitle?: (activeTab: string) => string;
   /** Secondary line of the "My Apps" empty state. Default: "Create your first one, it'll show up right here.". */
   myAppsEmptyDescription?: string;
-  /** The sort control's own name, prepended to its accessible name. Default: 'Sort'. */
+  /** Accessible name and tooltip of the icon-only sort button. Default: 'Sort'. */
   sortLabel?: string;
   /** Label for the "Recently Updated" sort option. Default: 'Recently Updated'. */
   sortRecentlyUpdatedLabel?: string;
@@ -302,6 +302,8 @@ export interface CatalogProps {
   getPublishDisabledReason?: (
     destination: FolderDestination,
   ) => string | undefined;
+  /** Whether a new folder may be created inside a publish destination (`rootKey` is `''`); forwarded to the panel's tree as `canCreateFolderIn`. Without it creation follows `getPublishDisabledReason` only. */
+  canCreatePublishFolderIn?: (destination: FolderDestination) => boolean;
   /** Resolves whether the current user can publish to a given folder path. */
   hasPublishWriteAccess?: (folderPath: string[]) => boolean;
   /**

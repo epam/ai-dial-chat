@@ -154,6 +154,18 @@ vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
   };
 });
 
+const { mockEnsureUnits, mockIsPublicFolderVisible } = vi.hoisted(() => ({
+  mockEnsureUnits: vi.fn(),
+  mockIsPublicFolderVisible: vi.fn(() => true),
+}));
+
+vi.mock('../../../context/OrgUnitsContext', () => ({
+  useOrgUnitsContext: () => ({
+    ensureUnits: mockEnsureUnits,
+    isPublicFolderVisible: mockIsPublicFolderVisible,
+  }),
+}));
+
 vi.mock('../../../context/NotificationContext', () => ({
   useNotification: () => createNotificationContextValue(mockShowNotification),
 }));
@@ -588,7 +600,6 @@ const defaultProps = {
   uploadFilesLabel: 'Upload files',
   newFolderLabel: 'New folder',
   downloadLabel: 'Download',
-  downloadingLabel: 'Preparing download…',
   deleteLabel: 'Delete',
   deletingLabel: 'Deleting…',
   deleteConfirmTitle: (names: string[]) =>

@@ -8,7 +8,7 @@ The pure postMessage protocol types in `libs/chat-overlay` (`@epam/ai-dial-chat-
 
 ### Requirement: Protocol types are pure and live in libs/chat-overlay
 
-`libs/chat-overlay/src/protocol/overlay-protocol.ts` SHALL export (re-exported by `libs/chat-overlay/src/protocol.ts` and the package root `@epam/ai-dial-chat-overlay`, which `apps/chat` imports from; `libs/chat-shared` has no overlay types): the namespace constant `DIAL_OVERLAY_NAMESPACE` (`@DIAL_OVERLAY`), an `OverlayRequestType` enum covering exactly the v1 requests (`GET_MESSAGES`, `SEND_MESSAGE`, `SET_INPUT_CONTENT`, `SET_SYSTEM_PROMPT`, `SET_TEMPERATURE`, `SET_OVERLAY_OPTIONS`) plus the conversation-list requests (`GET_CONVERSATIONS`, `GET_SELECTED_CONVERSATIONS`, `SELECT_CONVERSATION`, `CREATE_CONVERSATION`, `CREATE_LOCAL_CONVERSATION`, `DELETE_CONVERSATION`, `RENAME_CONVERSATION`), an `OverlayEventType` enum covering exactly the v1 events (`INIT_READY`, `READY`, `READY_TO_INTERACT`, `SELECTED_CONVERSATION_LOADED`, `GPT_START_GENERATING`, `GPT_END_GENERATING`, `STOP_GENERATING`, `CONVERSATIONS_UPDATED`) — no new event types are introduced by this change — the `ChatOverlayOptions` interface (including the optional `auth` field and the deprecated `signInOptions` field), the `OverlayAuthUiMode` enum, the deprecated `LegacySignInOptions` interface, `OverlayRequestErrorCode`, `OverlayRequestError`, and one response payload interface per implemented request. The `SetOverlayOptionsPayload` interface SHALL include the new optional `authProviderUiModes?: Record<string, string>` field. This module SHALL have no imports at all (nothing from `apps/*`, `libs/chat-api-client`, or any other lib/app). It contains enums, interfaces, and constants, and its only functions are the pure helpers `resolveOverlayFeature` and the type guards `isOverlayMessageRequest`, `isOverlayMessageResponse`, and `isOverlayMessageEvent`.
+`libs/chat-overlay/src/protocol/overlay-protocol.ts` SHALL export (re-exported by `libs/chat-overlay/src/protocol.ts` and the package root `@epam/ai-dial-chat-overlay`, which `apps/chat` imports from; `libs/chat-shared` has no overlay types): the namespace constant `DIAL_OVERLAY_NAMESPACE` (`@DIAL_OVERLAY`), an `OverlayRequestType` enum covering exactly the v1 requests (`GET_MESSAGES`, `SEND_MESSAGE`, `SET_INPUT_CONTENT`, `SET_SYSTEM_PROMPT`, `SET_TEMPERATURE`, `SET_OVERLAY_OPTIONS`) plus the conversation-list requests (`GET_CONVERSATIONS`, `GET_SELECTED_CONVERSATIONS`, `SELECT_CONVERSATION`, `CREATE_CONVERSATION`, `CREATE_LOCAL_CONVERSATION`, `DELETE_CONVERSATION`, `RENAME_CONVERSATION`), an `OverlayEventType` enum covering exactly the v1 events (`INIT_READY`, `READY`, `READY_TO_INTERACT`, `SELECTED_CONVERSATION_LOADED`, `GPT_START_GENERATING`, `GPT_END_GENERATING`, `STOP_GENERATING`, `CONVERSATIONS_UPDATED`) — no new event types are introduced by this change — the `ChatOverlayOptions` interface (including the optional `auth` field), the `OverlayAuthUiMode` enum, `OverlayRequestErrorCode`, `OverlayRequestError`, and one response payload interface per implemented request. The `SetOverlayOptionsPayload` interface SHALL include the new optional `authProviderUiModes?: Record<string, string>` field. This module SHALL have no imports at all (nothing from `apps/*`, `libs/chat-api-client`, or any other lib/app). It contains enums, interfaces, and constants, and its only functions are the pure helpers `resolveOverlayFeature` and the type guards `isOverlayMessageRequest`, `isOverlayMessageResponse`, and `isOverlayMessageEvent`.
 
 #### Scenario: Overlay types module has no runtime logic imports
 
@@ -349,7 +349,7 @@ The host-facing field SHALL NOT be accompanied by a separate enable/disable bool
 
 Both fields are optional. Existing callers SHALL compile and behave identically when they are absent. The module SHALL remain import-free, consistent with the "Protocol types are pure" requirement.
 
-`ChatOverlayOptions` SHALL also accept a deprecated `signInOptions?: LegacySignInOptions` (`{ autoSignIn?: boolean; signInProvider?: string; signInInNewWindow?: boolean }`, the old chat's shape). `ChatOverlay` folds it into `auth` through `resolveOverlayAuth` in `libs/chat-overlay/src/lib/internal/legacy-sign-in.ts`: when `autoSignIn === true` and `signInProvider` is non-blank, and `auth.autoSignInProvider` is not set, the effective `auth` gets `autoSignInProvider = signInProvider` and a `providerUiModes` entry for that provider (`External` when `signInInNewWindow` is `true`, otherwise `SameWindow`) unless the host already mapped it. Explicit `auth` values always win; otherwise `auth` is returned unchanged.
+`ChatOverlayOptions` SHALL NOT accept the removed legacy `signInOptions` shape; `auth.autoSignInProvider` is the only way to request an automatic sign-in.
 
 No new endpoint, DTO, or generated-client operation is introduced: the app uses the existing `GET /api/v1/auth/providers` and `GET /api/v1/auth/login/:providerId` exactly as the manual login gate already does.
 
@@ -368,13 +368,6 @@ FEATURE GATE: not gated behind `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES`, an
 
 - **WHEN** a caller constructs `auth: { providerUiModes: { keycloak: OverlayAuthUiMode.SameWindow }, autoSignInProvider: 'keycloak' }`
 - **THEN** the type check passes without error
-
-#### Scenario: Legacy `signInOptions` is translated into `auth`
-
-- **WHEN** a host passes `signInOptions: { autoSignIn: true, signInProvider: 'keycloak' }` and no `auth.autoSignInProvider`
-- **THEN** the effective `auth` has `autoSignInProvider: 'keycloak'` and `providerUiModes.keycloak === OverlayAuthUiMode.SameWindow`
-- **AND WHEN** the host also sets `auth.autoSignInProvider`
-- **THEN** the legacy options are ignored
 
 #### Scenario: `authAutoSignInProvider` is an optional string on `SetOverlayOptionsPayload`
 

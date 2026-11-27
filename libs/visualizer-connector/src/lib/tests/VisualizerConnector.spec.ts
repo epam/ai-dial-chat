@@ -181,27 +181,6 @@ describe('VisualizerConnector', () => {
 
       expect(onSettled).not.toHaveBeenCalled();
     });
-
-    it('behaves the same without hostDomain as with it', async () => {
-      const withHost = createConnector({
-        hostDomain: 'https://chat.example.com',
-      });
-      const withoutHost = createConnector();
-      const readyWith = withHost.ready();
-      const readyWithout = withoutHost.ready();
-
-      root
-        .querySelectorAll('iframe')
-        .forEach((iframe) =>
-          postFromIframe(
-            { type: `${NAME}/${VisualizerConnectorEvents.ReadyToInteract}` },
-            iframe.contentWindow,
-          ),
-        );
-
-      await expect(readyWith).resolves.toBe(true);
-      await expect(readyWithout).resolves.toBe(true);
-    });
   });
 
   describe('send', () => {

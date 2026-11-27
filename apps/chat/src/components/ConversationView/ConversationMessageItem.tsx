@@ -4,6 +4,7 @@ import {
   useAttachmentCanvas,
 } from '@epam/ai-dial-attachment-canvas';
 import {
+  downloadAttachment,
   isMessageStreaming,
   mapStages,
   messageHasStages,
@@ -78,6 +79,7 @@ import { attachmentDisplayResolvers } from '../../utils/attachment-display-resol
 import { loadConversationInput } from '../../utils/conversation-input-loader';
 import {
   isAttachmentDownloadable,
+  isStageAttachmentDownloadable,
   resolveAttachmentDownloadUrl,
   resolveMarkdownUrl,
 } from '../../utils/dial-file';
@@ -426,6 +428,7 @@ const ConversationMessageItem: FC<ConversationMessageItemProps> = ({
       tableScrollRegionAriaLabel: t(ChatI18nKeys.ScrollableTable),
       mathScrollRegionAriaLabel: t(ChatI18nKeys.ScrollableFormula),
       attachmentClickLabel: t(ConversationI18nKeys.StagesPreviewAttachment),
+      attachmentDownloadLabel: t(AttachmentsI18nKeys.Download),
     }),
     [executedLabel, stepsLabel, t],
   );
@@ -466,6 +469,12 @@ const ConversationMessageItem: FC<ConversationMessageItemProps> = ({
 
   const handleStageAttachmentClick = useCallback(
     (attachment: DisplayAttachment) => {
+      /* A stage file opens like a message file: in the canvas when the host
+         wires it, otherwise through the default download action. */
+      if (attachment.url != null) {
+        handleAttachmentClick(attachment);
+        return;
+      }
       if (attachment.data) {
         openCanvas(
           { type: AttachmentContentType.Markdown, text: attachment.data },
@@ -473,16 +482,21 @@ const ConversationMessageItem: FC<ConversationMessageItemProps> = ({
         );
         return;
       }
-      const linkUrl = attachment.url ?? attachment.referenceUrl;
-      if (linkUrl) {
+      if (attachment.referenceUrl) {
         window.open(
-          resolveMarkdownUrl(linkUrl),
+          resolveMarkdownUrl(attachment.referenceUrl),
           '_blank',
           'noopener,noreferrer',
         );
       }
     },
-    [openCanvas],
+    [handleAttachmentClick, openCanvas],
+  );
+  const handleStageAttachmentDownload = useCallback(
+    (attachment: DisplayAttachment) => {
+      downloadAttachment(attachment, resolveAttachmentDownloadUrl);
+    },
+    [],
   );
 
   const handleOpenReferenceInBrowser = useCallback((annotation: Annotation) => {
@@ -691,6 +705,8 @@ const ConversationMessageItem: FC<ConversationMessageItemProps> = ({
                   isStreaming={isStreaming}
                   labels={stageLabels}
                   onAttachmentClick={handleStageAttachmentClick}
+                  onAttachmentDownload={handleStageAttachmentDownload}
+                  isAttachmentDownloadable={isStageAttachmentDownloadable}
                   attachmentDisplayResolvers={attachmentDisplayResolvers}
                   renderCitation={renderStageCitation}
                 />

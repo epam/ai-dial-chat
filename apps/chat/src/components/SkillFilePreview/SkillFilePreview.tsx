@@ -47,7 +47,7 @@ export const SkillFilePreview: FC<Props> = ({ state, onRetry }) => {
   const { t } = useTranslation();
   const loadPdf = usePdfPreviewLoader();
   const { currentTheme } = useTheme();
-  const { content, fileName } = useAttachmentCanvas();
+  const { content, fileName, loadingContentType } = useAttachmentCanvas();
   const isError = state === SkillFilePreviewState.Error;
 
   return (
@@ -77,6 +77,7 @@ export const SkillFilePreview: FC<Props> = ({ state, onRetry }) => {
           <AttachmentCanvasBody
             content={content}
             isLoading={state === SkillFilePreviewState.Loading}
+            loadingContentType={loadingContentType}
             fileName={fileName}
             labels={{
               unsupportedLabel: t(AttachmentCanvasI18nKeys.UnsupportedLabel),
@@ -100,6 +101,13 @@ export const SkillFilePreview: FC<Props> = ({ state, onRetry }) => {
               pdfPageNumberLabel: t(
                 AttachmentCanvasI18nKeys.PdfPageNumberLabel,
               ),
+              pdfContentLoadingLabel: t(
+                AttachmentCanvasI18nKeys.PdfContentLoadingLabel,
+              ),
+              pdfContentErrorLabel: t(
+                AttachmentCanvasI18nKeys.PdfContentErrorLabel,
+              ),
+              pdfContentRetryLabel: t(ButtonsI18nKeys.Retry),
               xlsxFormulaLabel: t(AttachmentCanvasI18nKeys.XlsxFormulaLabel),
               codeBlockCopyLabel: t(ButtonsI18nKeys.Copy),
               codeBlockCopiedLabel: t(ButtonsI18nKeys.Copied),

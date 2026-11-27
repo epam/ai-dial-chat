@@ -36,7 +36,7 @@ The endpoint SHALL:
   description?: string;  // optional, @IsString, @IsOptional, @MaxLength(2000)
   iconUrl?: string;      // optional, @IsString, @IsOptional, @IsValidResourceReference (https?:// URL or a
                          //   DIAL file id "files/{bucket}/{path}", no traversal segments)
-  version?: string;      // optional, @IsString, @IsOptional, @Matches(/^[a-zA-Z0-9._-]+$/)
+  version?: string;      // optional, @IsString, @IsOptional, @Matches(the shared resource version rule, `resource-version-pattern`)
                          //   — defaults to "1.0.0" in the service
   topics?: string[];     // optional, @IsArray, @IsString({ each: true }), @IsOptional
   applicationProperties?: Record<string, unknown>; // optional, @IsObject, @IsOptional

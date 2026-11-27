@@ -67,16 +67,23 @@ describe('getOrgUnitAccessReasonKey', () => {
     ).toBeUndefined();
   });
 
-  it('declares every key in en.json with a non-empty sentence', () => {
+  it('declares every no-access reason key in en.json with a no-access sentence', () => {
     const texts = en.orgUnitAccess as Record<string, string>;
     for (const key of Object.values(OrgUnitAccessI18nKeys).filter(
       (candidate) =>
-        candidate !== OrgUnitAccessI18nKeys.NoWriteAccessDependencies,
+        candidate !== OrgUnitAccessI18nKeys.NoWriteAccessDependencies &&
+        candidate !== OrgUnitAccessI18nKeys.FolderOutsideOrgUnits,
     )) {
       expect(texts[key.replace('orgUnitAccess.', '')]).toMatch(
         /^You have no access to (save|publish) your .+ to this folder\.$/,
       );
     }
+  });
+
+  it('declares the outside-org-units reason in en.json as a sentence', () => {
+    const texts = en.orgUnitAccess as Record<string, string>;
+
+    expect(texts.folderOutsideOrgUnits).toMatch(/^\S.*\.$/);
   });
 });
 

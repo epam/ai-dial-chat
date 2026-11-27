@@ -93,7 +93,6 @@ export const AvatarPickerModal: FC<AvatarPickerModalProps> = ({
           uploadFilesLabel={labels.uploadFilesLabel}
           newFolderLabel={labels.newFolderLabel}
           downloadLabel={labels.downloadLabel}
-          downloadingLabel={labels.downloadingLabel}
           deleteLabel={labels.deleteLabel}
           deletingLabel={labels.deletingLabel}
           deleteConfirmTitle={deleteConfirmTitle}

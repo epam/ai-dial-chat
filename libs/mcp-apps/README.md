@@ -63,7 +63,7 @@ const { status, content, reload } = useMcpAppInlinePreview(
 
 ### `McpAppInlinePreview`
 
-Renders a compact, always-visible preview of a message's matched MCP App, with a header strip above the preview frame (styled like the code block header in `@epam/ai-dial-chat-shared`'s Markdown renderer — a bordered `min-h-10` header) showing the matched tool's `mcpToolName` on the start side, wrapped in `@epam/ai-dial-ui-kit`'s `EllipsisTooltip`, and appending the mounted app's own declared name (its version is intentionally not shown, so it is not mistaken for the version of the entity the app displays) — separated by a vertical divider, not a text character — once its `ui/initialize` handshake completes. With small ghost icon buttons, the end side carries a reload button and an expand-to-canvas button. An app's `ui/request-display-mode` request for `'fullscreen'` expands into the canvas via `onExpand` — the same surface the expand button opens; any other requested mode keeps the preview, and the app is answered with `'inline'`. While `isOpenedInCanvas` is `true`, the header stays but the body shows `openedInCanvasLabel` centered instead of mounting the app.
+Renders a compact, always-visible preview of a message's matched MCP App, with a header strip above the preview frame (styled like the code block header in `@epam/ai-dial-chat-shared`'s Markdown renderer — a bordered `min-h-10` header) showing no title — only controls. With small ghost icon buttons, the header carries a reload button and an expand-to-canvas button. An app's `ui/request-display-mode` request for `'fullscreen'` expands into the canvas via `onExpand` — the same surface the expand button opens; any other requested mode keeps the preview, and the app is answered with `'inline'`. While `isOpenedInCanvas` is `true`, the header's buttons stay but the body shows `openedInCanvasLabel` centered instead of mounting the app.
 
 The preview loads `McpAppCanvasRenderer` (with `@mcp-ui/client`, the MCP SDK and `zod`) on demand from `@epam/ai-dial-attachment-canvas/mcp-app-renderer`, so importing this package keeps that stack out of the host's eager graph. The download starts when the preview mounts, alongside the resource fetch, and the preview shows its loading spinner (`loadingAriaLabel`) until both are in. If the renderer fails to load or throws while rendering, the preview shows its error state (`loadErrorLabel`) and passes the error to the optional `onRendererError` callback so the host can log it; the reload button loads the renderer again.
 
@@ -88,7 +88,7 @@ import { McpAppInlinePreview } from '@epam/ai-dial-mcp-apps';
 
 #### Colors
 
-The preview's surface, its two borders, the header text, the "opened in canvas" placeholder and the load-error icon and message are themable through
+The preview's surface, its two borders, the "opened in canvas" placeholder and the load-error icon and message are themable through
 `McpAppInlinePreviewColors`, applied as CSS custom properties on the preview's
 root. Each falls back to this design system's token, and then to the light
 literal, so passing nothing keeps the stock look:
@@ -100,7 +100,6 @@ const colors: McpAppInlinePreviewColors = {
   previewBackground: 'var(--my-surface)', // --bg-layer-raised
   previewBorder: 'var(--my-border)', // --stroke-tertiary
   previewHeaderBorder: 'var(--my-border-soft)', // --stroke-tertiary
-  headerText: 'var(--my-muted)', // --text-secondary
   placeholderText: 'var(--my-muted)', // --text-secondary
   errorIcon: 'var(--my-danger)', // --text-error
   errorText: 'var(--my-text)', // --text-primary
@@ -110,7 +109,6 @@ const colors: McpAppInlinePreviewColors = {
 ```
 
 `typography` (`McpAppInlinePreviewTypography`) sets the type steps:
-`headerNameClassName` (default `'dial-tiny-lead-semi-text'`) and
 `messageClassName` (`'dial-body-text'`, the "opened in canvas" and load-error messages).
 
 ## Utilities

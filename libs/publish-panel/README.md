@@ -218,7 +218,7 @@ import { PublishFooter } from '@epam/ai-dial-publish-panel';
 
 ### Folder tree
 
-The destination folder tree, with search, lazy expansion and inline folder creation, is the file manager's `FolderDestinationTree` (`@epam/ai-dial-react-file-manager`). `PublishPanel` renders it through `FolderDestinationPanelBody` and `StandaloneSaveToFolderPanel` through `FolderDestinationPanel`, and this library no longer exports its own tree. A host that needs the tree on its own imports it from the file manager; `getDisabledReason(destination)` on both panels is forwarded to it (`rootKey` is `''` for `PublishPanel`, whose one root has an empty key, and `path: []` is the root itself).
+The destination folder tree, with search, lazy expansion and inline folder creation, is the file manager's `FolderDestinationTree` (`@epam/ai-dial-react-file-manager`). `PublishPanel` renders it through `FolderDestinationPanelBody` and `StandaloneSaveToFolderPanel` through `FolderDestinationPanel`, and this library no longer exports its own tree. A host that needs the tree on its own imports it from the file manager; `getDisabledReason(destination)` on both panels is forwarded to it (`rootKey` is `''` for `PublishPanel`, whose one root has an empty key, and `path: []` is the root itself). So is `canCreateFolderIn(destination)` on `PublishPanel`, `StandalonePublishPanel` and `StandaloneSaveToFolderPanel`: where it returns `false`, the folder stays selectable but the tree offers no "Create new folder" or "Add child" for it and no "Add sibling" on its children. Use it where the host would not list a newly created folder. Without it, creation follows `getDisabledReason` only.
 
 ### StandaloneSaveToFolderPanel
 

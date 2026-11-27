@@ -487,6 +487,135 @@ describe('useDialFileListing', () => {
     });
   });
 
+  describe('isPublicFolderVisible', () => {
+    const ORG = 'Organization';
+    /* `Shared` and everything under it is a plain public folder. */
+    const isPublicFolderVisible = vi.fn(
+      (publicPath: string) => !publicPath.startsWith('Shared'),
+    );
+    const publicItem = (
+      relativePath: string,
+      nodeType: ListFilesItemDtoNodeTypeEnum = ListFilesItemDtoNodeTypeEnum.Folder,
+    ): ListFilesItemDto => {
+      const name = relativePath.replace(/\/$/, '').split('/').at(-1) ?? '';
+      return {
+        name,
+        path: `files/public/${relativePath}`,
+        url: `files/public/${relativePath}`,
+        folderId: 'public:',
+        nodeType,
+        bucket: 'public',
+      };
+    };
+    const renderOrganization = (
+      overrides: Partial<UseDialFileListingOptions> = {},
+    ) =>
+      renderListing({
+        rootLabel: ORG,
+        activeTab: DialFileManagerTabs.Organization,
+        isPublicFolderVisible,
+        ...overrides,
+      });
+    const rootNames = (items: { items?: { name: string }[] }[]) =>
+      items[0]?.items?.map((file) => file.name);
+
+    beforeEach(() => {
+      vi.mocked(filesApi.listPublicFiles).mockResolvedValue({
+        bucket: 'public',
+        path: '',
+        items: [
+          publicItem('Acme/'),
+          publicItem('Shared/'),
+          publicItem('root.txt', ListFilesItemDtoNodeTypeEnum.Item),
+        ],
+      });
+    });
+
+    it('drops a hidden public folder and keeps files and visible folders', async () => {
+      const { result } = renderOrganization();
+
+      await waitFor(() =>
+        expect(rootNames(result.current.items)).toEqual(
+          expect.arrayContaining(['Acme', 'root.txt']),
+        ),
+      );
+      expect(rootNames(result.current.items)).not.toContain('Shared');
+      expect(isPublicFolderVisible).toHaveBeenCalledWith('Shared');
+    });
+
+    it('lists every folder of another tab', async () => {
+      vi.mocked(filesApi.listFiles).mockResolvedValue({
+        bucket: BUCKET,
+        path: '',
+        items: [
+          {
+            name: 'Shared',
+            path: 'Shared/',
+            folderId: `${BUCKET}:`,
+            nodeType: ListFilesItemDtoNodeTypeEnum.Folder,
+            bucket: BUCKET,
+          },
+        ],
+        nextToken: undefined,
+      });
+
+      const { result } = renderListing({ isPublicFolderVisible });
+
+      await waitFor(() =>
+        expect(rootNames(result.current.items)).toEqual(['Shared']),
+      );
+    });
+
+    it('shows the root instead of a current folder inside a hidden one', async () => {
+      const { result } = renderOrganization();
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      act(() => result.current.onPathChange(`/${ORG}/Shared/Reports`));
+
+      expect(result.current.folderPath).toBe('');
+      expect(result.current.path).toBe(`/${ORG}`);
+    });
+
+    it('drops search results inside a hidden folder', async () => {
+      const { result } = renderOrganization();
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      vi.mocked(filesApi.listPublicFiles).mockResolvedValue({
+        bucket: 'public',
+        path: '',
+        items: [
+          publicItem('Acme/report.pdf', ListFilesItemDtoNodeTypeEnum.Item),
+          publicItem('Shared/report.pdf', ListFilesItemDtoNodeTypeEnum.Item),
+          publicItem('Shared/Old/'),
+        ],
+      });
+
+      vi.useFakeTimers();
+      try {
+        act(() => result.current.onSearchFiles('/', 'report'));
+        act(() => {
+          vi.advanceTimersByTime(300);
+        });
+        await act(() => Promise.resolve());
+
+        expect(result.current.searchResults?.map((r) => r.path)).toEqual([
+          `/${ORG}/Acme/report.pdf`,
+        ]);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('lists every public folder without the rule', async () => {
+      const { result } = renderOrganization({
+        isPublicFolderVisible: undefined,
+      });
+
+      await waitFor(() =>
+        expect(rootNames(result.current.items)).toContain('Shared'),
+      );
+    });
+  });
+
   describe('sharedWithMeIds', () => {
     const sharedRootItem: ListFilesItemDto = {
       name: 'team-docs',

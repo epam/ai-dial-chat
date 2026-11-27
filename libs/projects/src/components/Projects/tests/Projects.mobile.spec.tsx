@@ -62,6 +62,15 @@ describe('Projects on mobile', () => {
     expect(screen.queryByText('All projects available to you')).toBeNull();
   });
 
+  it('keeps the icon-only sort button beside the search', () => {
+    renderProjects();
+
+    const search = screen.getByRole('search');
+    const trigger = screen.getByRole('button', { name: 'Sort' });
+    expect(trigger.textContent).toBe('');
+    expect(search.parentElement?.contains(trigger)).toBe(true);
+  });
+
   it('replaces the header button with one floating New project button', async () => {
     const onCreateProject = vi.fn();
     renderProjects(onCreateProject);

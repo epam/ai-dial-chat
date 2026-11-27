@@ -103,6 +103,18 @@ Publishing creates a DIAL Core publication *request*, so a destination folder pi
 - **WHEN** `onPublish` rejects
 - **THEN** the destination is not remembered
 
+### Requirement: No folder creation under the Organization root in the chat app
+Organization folders, org units and the folders inside them included, are managed in DIAL Admin. The chat app's publish panels (catalog, conversation, project) and the Save panel SHALL pass `FolderDestinationTree` a `canCreateFolderIn` that is `false` for every Organization destination — `rootKey` `''` in a publish tree and `SaveDestinationRoot.Organization` in the Save tree — whatever the `features.orgUnitsEnabled` flag and the org-unit status. The tree then offers neither the trailing "Create new folder" button nor the "Add child"/"Add sibling" context-menu items there. The rule lives in `useOrgUnitFolderGuards` (`apps/chat/src/hooks/publish/useOrgUnitFolderGuards.ts`); the Personal root of the Save tree keeps folder creation.
+
+#### Scenario: User opens the publish destination tree
+- **GIVEN** `Acme/Risk` is an org unit
+- **WHEN** the user opens the Publish panel
+- **THEN** the destination tree shows no "Create new folder" button, and no folder row — the root, `Acme`, `Acme/Risk` or a folder inside it — offers "Add child" or "Add sibling"
+
+#### Scenario: User opens the Save panel
+- **WHEN** the user opens the Save panel of a resource editor
+- **THEN** folder creation is offered under the Personal root only
+
 ### Requirement: Per-row "Add sibling" / "Add child" folder creation
 In addition to the trailing "Create new folder" button, the file manager's `FolderDestinationTree` SHALL expose a per-row context menu (`DialFoldersTree`'s `getContextMenuItems` prop) with two actions: "Add child" (creates the new folder inside the clicked folder) and "Add sibling" (creates the new folder as a sibling of the clicked folder, one level up). This mirrors the file manager's own "Add sibling"/"Add child" folder-creation actions (`useFolderCreation`'s `startTreeSiblingFolderCreation`/`startTreeChildFolderCreation` internal to `@epam/ai-dial-react-file-manager`'s `FileManager`, not exported from the package) — reimplemented against the tree's public context-menu API rather than importing the internal hook. "Add sibling" SHALL be omitted for the root node, which has no parent to create a sibling under. Both actions resolve a unique default name and validate exactly like the trailing button (see the two requirements above) — there is no separate code path.
 
@@ -508,11 +520,11 @@ i18n keys: `publish.dependenciesTitle`, `publish.dependenciesDescription`, `publ
 ### Requirement: The catalog Publish panel writes directly into a unit folder the user may approve
 `DetailsPanel`'s publish flow SHALL receive from the host `canPublishDirectlyTo(item, folderPath, dependencies)` (backed by `useOrgUnitsContext` and the entity's namespace; `useDetailsPublish` adapts it to the flow's `canPublishDirectlyTo(folderPath)` and passes the loaded dependency list), `getPublishDirectUnavailableNote(item, folderPath, dependencies)` for the information note, and `onPublishDirectly(item, folderPath)`. When the selected folder satisfies `canPublishDirectlyTo`, submit SHALL call `onPublishDirectly`, which the host implements with the generated client's `copyCatalogEntityToOrgUnit` sending `{ folderPath, version }` with the item's version (no `version` for an unversioned type), and SHALL NOT call `onPublish`. Otherwise submit calls `onPublish` as before. The org-unit rights load and refresh when the panel becomes active, as they do today for the folder guards. `isPublishVisible` and the entity-type gate are unchanged: the panel is still offered for the user's own source item only.
 
-For a direct destination the panel SHALL hide the author field and the credentials checkbox, and SHALL show one neutral line (`catalog.publish.directCredentialsNote`) for a toolset that would otherwise offer credentials. The item's publish-history marker is ignored for a direct destination (a direct write leaves no history), a credentials choice made on an earlier request folder is cleared on entering a direct one. The submit button keeps its label. The dependencies section keeps its source (`getPublishDependencies`, DIAL Core, no iframe special case) and its wording; when the user would otherwise write directly but lacks `write` on the namespace of a listed dependency, the folder stays usable, submit files a publication request, and the panel shows an information note (`catalog.publish.directUnavailableDependencies`) naming the missing types and saying a request is sent instead of a direct save. The direct path is chosen only after the dependency list has settled (success or failure): the panel shows the request layout while the list loads and switches at most once, to direct, after it settles. A failed dependency read leaves an empty list, so direct is offered and the server's namespace check is the backstop. The taken-name check SHALL be the existing `onCheckTargetExists` with the item's version: it asks the path the direct copy writes, and a `409` of the copy SHALL be recognised by `isTargetTakenError` so the same callout shows.
+For a direct destination the panel SHALL hide the author field and the credentials checkbox, and SHALL show one neutral line (`catalog.publish.directCredentialsNote`) for a toolset that would otherwise offer credentials. The item's publish-history marker is ignored for a direct destination (a direct write leaves no history), a credentials choice made on an earlier request folder is cleared on entering a direct one. The submit button keeps its label. The dependencies section keeps its source (`getPublishDependencies`, DIAL Core, no iframe special case) and its wording; when the user would otherwise write directly but lacks `write` on the namespace of a listed dependency, the folder stays usable, submit files a publication request, and the panel shows a note (`catalog.publish.directUnavailableDependencies`) naming the missing types and saying a request is sent instead of a direct save. The same holds for an application whose listed dependencies include a folder of files when the user is not a DIAL admin: the folder stays usable, submit files a publication request, and the panel shows the note `catalog.publish.directUnavailableFolder`, saying a direct save is not possible because the application uses a folder of files. A DIAL admin is unaffected by it. When both reasons apply, the folder note is shown. Either note is the host's `directUnavailableNote`, which `PublishPanel` renders as the continuation of the text of the admin-approval callout (one callout), or as a callout of its own when another callout kind is shown. The direct path is chosen only after the dependency list has settled (success or failure): the panel shows the request layout while the list loads and switches at most once, to direct, after it settles. A failed dependency read leaves an empty list, so direct is offered and the server's namespace check and folder-reference check are the backstop. The taken-name check SHALL be the existing `onCheckTargetExists` with the item's version: it asks the path the direct copy writes, and a `409` of the copy SHALL be recognised by `isTargetTakenError` so the same callout shows.
 
-On success the host SHALL report a save into the folder (not "publish requested") with the Save panel's `resourceSavePanel.savedToFolder` text shown as a success notification, and keep the folder in the recent publish folders; like every other publish path it SHALL NOT refetch the catalog. On failure the panel SHALL stay open with the error announced assertively and submit enabled for a retry, which completes the copy and reuses what exists.
+On success the host SHALL report a save into the folder (not "publish requested") with the Save panel's `resourceSavePanel.savedToFolder` text shown as a success notification, and keep the folder in the recent publish folders; like every other publish path it SHALL NOT refetch the catalog. On failure the panel SHALL stay open with the error announced assertively and submit enabled for a retry, which completes the copy and reuses what exists. The server's `folderReferenceNeedsRequest` refusal, which can reach the panel only when the dependency read failed, is such a failure: it is shown as an error and the panel does not file the request by itself; the user chooses again.
 
-New strings: `catalog.publish.directCredentialsNote` and `catalog.publish.directUnavailableDependencies`; success and failure reuse the Save panel's `resourceSavePanel.savedToFolder` and the existing publish error notification. A missing `publications` right never disables a folder: the panel falls back to the request, so it has no reason string. RTL: no new directional UI. The feature stays gated by `features.orgUnitsEnabled`; with the flag off the panel never takes the direct path.
+New strings: `catalog.publish.directCredentialsNote`, `catalog.publish.directUnavailableDependencies` and `catalog.publish.directUnavailableFolder`; success and failure reuse the Save panel's `resourceSavePanel.savedToFolder` and the existing publish error notification. A missing `publications` right never disables a folder: the panel falls back to the request, so it has no reason string. RTL: no new directional UI. The feature stays gated by `features.orgUnitsEnabled`; with the flag off the panel never takes the direct path.
 
 #### Scenario: Approver publishes directly
 - **WHEN** the user holds the approval right in the unit and publishes their application to `Delivery/Teams`
@@ -537,3 +549,81 @@ New strings: `catalog.publish.directCredentialsNote` and `catalog.publish.direct
 #### Scenario: Mid-copy failure
 - **WHEN** a dependency copy fails
 - **THEN** the panel stays open with the error and submit enabled, and submitting again completes the copy
+
+#### Scenario: Folder reference, regular user
+- **GIVEN** a user who holds the approval right in the unit but is not a DIAL admin, and an application whose dependencies include a folder of files
+- **WHEN** they select `Delivery/Teams`
+- **THEN** the panel shows the `directUnavailableFolder` note, submit calls `onPublish` and a publication request is created
+
+#### Scenario: Folder reference, DIAL admin
+- **WHEN** a DIAL admin publishes the same application to a unit folder
+- **THEN** `onPublishDirectly` is called and no note is shown
+
+### Requirement: The catalog and project publish panels pre-check the target in the selected folder
+
+The catalog publish panel (applications, toolsets, prompts, skills) and the project publish panel SHALL supply `usePublishFlow` an `onCheckTargetExists` that calls the target-check endpoint of the publish API with the item's entity type and id, the selected folder and, for applications and toolsets, the item's version. The panel has no version field of its own: the version is the saved resource's, so the user resolves a collision by renaming or re-versioning the resource itself, not in the panel. When the folder is selected, the panel SHALL ask; while the request runs Publish SHALL be disabled; when the target is taken the panel SHALL show a warning callout under the destination row and keep Publish disabled; when the check fails Publish SHALL stay enabled. If the item's version changes while a folder is selected, the check SHALL run again. The conversation publish panel is not changed.
+
+The callout text SHALL say that a resource with this name already exists in the folder and tell the user to rename it or choose another folder. For applications and toolsets it SHALL also tell the user to change the version. Prompts, skills and projects have no version, so their text SHALL NOT mention one. Each text SHALL be a translation key of its own.
+
+#### Scenario: Another author's agent holds the name and version
+- **GIVEN** another author already published an agent with the same name and version to folder `F`
+- **WHEN** the user selects `F` in the publish panel
+- **THEN** the callout says the agent name and version are taken and to rename it, change its version or choose another folder, and Publish is disabled
+
+#### Scenario: Item version changes while the panel is open
+- **GIVEN** the callout is shown for the item's version `1.0.0`
+- **WHEN** the item's version changes to one that is free in the folder
+- **THEN** the check runs again, the callout disappears and Publish is enabled
+
+#### Scenario: A prompt or skill holds the name
+- **GIVEN** another author's prompt with the same name is in the selected folder
+- **WHEN** the user selects the folder
+- **THEN** the callout tells the user to rename it or choose another folder and does not mention a version
+
+#### Scenario: A project holds the name
+- **GIVEN** another author's project with the same name is in the selected folder
+- **WHEN** the user selects the folder in the project publish panel
+- **THEN** the same callout without a version part is shown and Publish is disabled
+
+#### Scenario: Check in flight
+- **WHEN** the user selects a folder and the check has not answered yet
+- **THEN** Publish is disabled until it answers
+
+#### Scenario: Check fails
+- **WHEN** the target-check request fails
+- **THEN** no callout is shown and Publish stays enabled
+
+#### Scenario: Freshly created folder is not checked
+- **WHEN** the user creates a new folder in the panel and selects it
+- **THEN** no check request is sent
+
+### Requirement: A publish rejected as target-exists explains how to resolve it
+
+When the publish endpoint answers `409` with `code: "target-exists"`, the catalog and project publish flows SHALL treat it as a taken target: the panel SHALL show the same callout as after the pre-check instead of the generic "Publishing failed. Please try again." callout, and the error notification SHALL carry the same text instead of Core's raw message. The notification text SHALL follow the same version/no-version split as the callout.
+
+Any other publish failure SHALL keep the generic callout and the existing notification behaviour.
+
+#### Scenario: Taken target found only on submit
+- **GIVEN** the pre-check answered that the target is free (for example the copy is hidden from the user, or another publication landed in between)
+- **WHEN** the user submits and the endpoint answers `409` `target-exists`
+- **THEN** the panel shows the target-taken callout, the notification tells the user to rename it (or change its version) or choose another folder, and the raw Core message is not shown
+
+#### Scenario: Other failures are unchanged
+- **WHEN** the publish endpoint answers `502`
+- **THEN** the generic submit-error callout and the existing notification are shown
+
+### Requirement: The catalog Details publish panel passes the Versions history section through
+
+For an application or a toolset, the catalog Details publish panel (`DetailsPublishContent` in `libs/catalog`, which renders `PublishPanel` inside `DetailsPanel`) SHALL accept the Versions history props as resolved data and callbacks (rows, labels, colors, loading and error flags, a retry callback) and SHALL forward them to `PublishPanel` unchanged, so the section appears at the bottom of the panel as in the mockups. The catalog lib SHALL NOT import `@epam/ai-dial-chat-hooks`, call an API client or build the rows; the host builds them with the history hook (`CatalogView` in `apps/chat`). The panel and `Catalog` also accept `onPublishOpenChange(isOpen, item)`, called with `true` and the open item when the publish sub-view opens and with `false` when it closes or the panel unmounts, so the host builds the history for that item and loads statuses only while the sub-view is open. When the host passes no history props, the panel SHALL render exactly as it does today. The section SHALL NOT add a version input to the publish panel: publishing still uses the saved version.
+
+#### Scenario: Application publish panel shows the section
+- **WHEN** the user opens Publish for an application from its catalog details and the host supplies history rows
+- **THEN** a Versions history section is the last section of the publish panel
+
+#### Scenario: Host passes no history props
+- **WHEN** the host omits the history props
+- **THEN** the publish panel renders as before, without the section
+
+#### Scenario: Publishing still uses the saved version
+- **WHEN** the user publishes with the section visible
+- **THEN** the saved version is published and no version field is offered

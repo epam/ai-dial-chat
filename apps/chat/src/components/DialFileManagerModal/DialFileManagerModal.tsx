@@ -61,7 +61,6 @@ export interface Props {
   uploadFilesLabel: string;
   newFolderLabel: string;
   downloadLabel: string;
-  downloadingLabel: string;
   deleteLabel: string;
   deletingLabel: string;
   /** Delete confirmation title. Omitted titles one item "Delete folder" or "Delete file" by its `nodeType`, and several "Delete items". */
@@ -103,7 +102,6 @@ const DialFileManagerModal: FC<Props> = ({
   uploadFilesLabel,
   newFolderLabel,
   downloadLabel,
-  downloadingLabel,
   deleteLabel,
   deletingLabel,
   deleteConfirmTitle,
@@ -344,7 +342,6 @@ const DialFileManagerModal: FC<Props> = ({
       uploadArchiveAction: t(DialFileManagerI18nKeys.UploadArchiveAction),
       newFolderLabel,
       downloadLabel,
-      downloadingLabel,
       deleteLabel,
       deletingLabel,
       renameLabel: t(ButtonsI18nKeys.Rename),
@@ -404,6 +401,18 @@ const DialFileManagerModal: FC<Props> = ({
       ),
       metadataSizeLabel: t(DialFileManagerI18nKeys.MetadataSizeLabel),
       metadataAuthorLabel: t(DialFileManagerI18nKeys.MetadataAuthorLabel),
+      sort: {
+        label: t(ButtonsI18nKeys.Sort),
+        fieldLabels: {
+          name: t(DialFileManagerI18nKeys.SortName),
+          updatedAt: t(DialFileManagerI18nKeys.SortModifiedDate),
+          size: t(DialFileManagerI18nKeys.SortSize),
+        },
+        directionLabels: {
+          asc: t(DialFileManagerI18nKeys.SortAscending),
+          desc: t(DialFileManagerI18nKeys.SortDescending),
+        },
+      },
     }),
     [
       title,
@@ -418,7 +427,6 @@ const DialFileManagerModal: FC<Props> = ({
       uploadFilesLabel,
       newFolderLabel,
       downloadLabel,
-      downloadingLabel,
       deleteLabel,
       deletingLabel,
       deleteConfirmTitle,

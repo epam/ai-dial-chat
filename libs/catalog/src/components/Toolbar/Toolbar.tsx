@@ -29,7 +29,6 @@ export const Toolbar: FC<ToolbarProps> = ({
   ...innerProps
 }) => {
   const cssVars = {
-    '--cat-browse-divider': browseStyles?.colors?.divider,
     '--cat-browse-settings-dot': browseStyles?.colors?.settingsActiveDot,
   } as CSSProperties;
 

@@ -158,6 +158,8 @@ export interface PublishPanelProps {
   onCreateFolder: (parentPath: string[], name: string) => Promise<void>;
   /** Reason a folder is unavailable as a destination, or `undefined` when it is usable; forwarded to the folder view's tree (`rootKey` is `''`), see `FolderDestinationTreeProps.getDisabledReason`. */
   getDisabledReason?: (destination: FolderDestination) => string | undefined;
+  /** Whether a new folder may be created inside `destination`; forwarded to the folder tree, see `FolderDestinationTreeProps.canCreateFolderIn` in `@epam/ai-dial-react-file-manager`. */
+  canCreateFolderIn?: (destination: FolderDestination) => boolean;
   /**
    * Externally-controlled set of expanded folder path keys. Pass this
    * together with `onExpandedPathsChange` when the host lazily fetches a
@@ -255,6 +257,7 @@ export const PublishPanel: FC<PublishPanelProps> = ({
   onPendingFolderPathChange,
   onCreateFolder,
   getDisabledReason,
+  canCreateFolderIn,
   expandedPaths,
   onExpandedPathsChange,
   loadingPaths,
@@ -480,6 +483,7 @@ export const PublishPanel: FC<PublishPanelProps> = ({
           onPendingDestinationChange={handlePendingDestinationChange}
           onCreateFolder={handleCreateFolder}
           getDisabledReason={getDisabledReason}
+          canCreateFolderIn={canCreateFolderIn}
           isSubmitting={isSubmitting}
           panelLabels={folderPanelLabels}
           panelStyles={{ folderTree: folderTreeStyles }}

@@ -1,4 +1,3 @@
-import { PUBLIC_BUCKET } from '@epam/ai-dial-chat-shared';
 import type { SkillAboutDetails } from './skill-manifest';
 
 /** Which skill namespace a catalog skill item came from. */
@@ -10,13 +9,6 @@ export enum SkillSource {
   /** An organisation-wide skill; read-only for every user. */
   Public = 'public',
 }
-
-/**
- * DIAL Core bucket holding organisation-wide skills.
- *
- * @deprecated Use `PUBLIC_BUCKET` from `@epam/ai-dial-chat-shared`.
- */
-export const PUBLIC_SKILL_BUCKET = PUBLIC_BUCKET;
 
 /** Prefix of every skill resource URL. */
 const SKILL_RESOURCE_PREFIX = 'skills/';

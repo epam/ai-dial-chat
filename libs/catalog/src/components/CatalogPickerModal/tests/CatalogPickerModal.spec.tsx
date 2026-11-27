@@ -104,6 +104,40 @@ describe('CatalogPickerModal', () => {
     expect(list.textContent).toBe('Beta');
   });
 
+  it('offers an icon-only sort button named after the sort label', () => {
+    renderPicker({
+      labels: {
+        title: 'Change model',
+        catalog: 'Models catalog',
+        sort: 'Order',
+      },
+    });
+
+    expect(screen.getByRole('button', { name: 'Order' }).textContent).toBe('');
+    expect(
+      screen.queryByRole('button', { name: 'Recently Updated' }),
+    ).toBeNull();
+  });
+
+  it('re-sorts the rows by name when Name A-Z is picked', async () => {
+    renderPicker({ items: [makeItem('b', 'Beta'), makeItem('a', 'Alpha')] });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Sort' }));
+    await userEvent.click(
+      screen.getByRole('menuitemradio', { name: 'Name A-Z' }),
+    );
+
+    expect(screen.getByRole('list', { name: 'Rows for ""' }).textContent).toBe(
+      'AlphaBeta',
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Sort' }));
+    expect(
+      screen
+        .getByRole('menuitemradio', { name: 'Name A-Z' })
+        .getAttribute('aria-checked'),
+    ).toBe('true');
+  });
+
   it('confirms with Add and cancels with Cancel', async () => {
     const { onConfirm, onClose } = renderPicker();
 

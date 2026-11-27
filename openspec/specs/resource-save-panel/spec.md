@@ -1,7 +1,7 @@
 # resource-save-panel Specification
 
 ## Purpose
-TBD - created by archiving change resource-save-panel. Update Purpose after archive.
+The Save panel lets a user save an edited resource in place or as a new version and choose its destination, a Personal folder, an Organization folder (a publication request) or an org-unit folder the user may write to (a direct write), with one flow for every in-scope editor.
 
 ## Requirements
 
@@ -54,11 +54,12 @@ The panel SHALL be `StandaloneSaveToFolderPanel` from `@epam/ai-dial-publish-pan
 2. a **Save to folder** section showing the committed destination as the kit `FolderName` — the file manager's folder icon, then the root label and folder segments joined with " / " in a secondary text color, truncated with the full path in a tooltip — followed by a small ghost **Change** action;
 3. for versioned resources only (applications, toolsets), a **Version** section rendered as the kit `RadioGroup` with a visible legend:
    - "Keep version {current}", selected by default;
-   - "Save as new version", which reveals a required Version input;
+   - "Save as new version", which reveals a required Version input that starts empty;
 4. for an application, while the committed destination is under the Organization root, a **Dependencies** section (below);
-5. a footer with Cancel and Save.
+5. for versioned resources only, a **Versions history** section (`resource-version-history`), the last section of the body;
+6. a footer with Cancel and Save.
 
-Prompts SHALL render no Version section. The panel SHALL NOT render a Versions history list.
+Prompts and skills SHALL render no Version section and no Versions history section.
 
 The **Dependencies** section is informational and SHALL NOT change `isSubmitDisabled` or any submit behavior. For a schema-form application it lists the private dependencies of the current form values, worded as dependencies that are saved or published together with the application (the `Published` appearance and the `publish.dependenciesPublished*` keys of the application's Publish panel). For an application with an embedded editor (for example a Quick App) it shows one neutral sentence and no list, because the current values exist only inside the editor: `resourceSavePanel.dependenciesEmbeddedNote`, "The prompts, skills, toolsets and applications this application uses will be saved to the folder together with it." For every other resource, and for a Personal destination, it renders nothing.
 
@@ -68,7 +69,7 @@ The initial destination SHALL be the Personal root with the resource's current f
 
 i18n keys:
 
-- `ResourceSavePanelI18nKeys.Title` (with `{type}`), `SaveToFolderHeading`, `ChangeFolder`, `KeepVersion` (with `{version}`), `SaveAsNewVersion`, `NewVersionLabel`, `NewVersionPlaceholder`, `PersonalRoot`;
+- `ResourceSavePanelI18nKeys.Title` (with `{type}`), `SaveToFolderHeading`, `ChangeFolder`, `KeepVersion` (with `{version}`), `SaveAsNewVersion`, `NewVersionLabel`, `NewVersionPlaceholder`, `PersonalRoot`, plus the keys of the Versions history section;
 - `ResourceSavePanelI18nKeys.DependenciesEmbeddedNote` (`resourceSavePanel.dependenciesEmbeddedNote`) and `ResourceSavePanelI18nKeys.IconNotCopiedNotice` (`resourceSavePanel.iconNotCopiedNotice`);
 - `EditorI18nKeys.VersionLabel` for the Version heading;
 - `ButtonsI18nKeys.Save`, `ButtonsI18nKeys.Cancel`.
@@ -78,7 +79,7 @@ RTL: logical properties only. Accessibility: the note and the notice are plain t
 #### Scenario: Default state for a versioned resource
 
 - **WHEN** the panel opens for Quick App `Design Review Agent` at version `1.0.0` in the Personal root
-- **THEN** the summary shows the name with `1.0.0`, Save to folder reads "Personal", and "Keep version 1.0.0" is selected
+- **THEN** the summary shows the name with `1.0.0`, Save to folder reads "Personal", "Keep version 1.0.0" is selected, a Versions history section is the last section of the body, and no Dependencies section is rendered
 
 #### Scenario: Default state for a prompt in a folder
 
@@ -87,8 +88,8 @@ RTL: logical properties only. Accessibility: the note and the notice are plain t
 
 #### Scenario: No history or dependencies
 
-- **WHEN** the panel is open for any resource with a Personal destination
-- **THEN** no Versions history list and no Dependencies section is rendered
+- **WHEN** the panel is open for a prompt or a skill with a Personal destination
+- **THEN** no Versions history section and no Dependencies section is rendered
 
 #### Scenario: Schema-form application to an Organization folder
 
@@ -108,11 +109,19 @@ RTL: logical properties only. Accessibility: the note and the notice are plain t
 
 ### Requirement: New version input validation
 
-When "Save as new version" is selected, Save SHALL stay disabled until the input holds a version that matches `SEMVER_VERSION_PATTERN` (from `@epam/ai-dial-builder-form`) and differs from the current version. The error text SHALL be wired through the kit `Input` `error` prop (`aria-invalid` and `aria-describedby`). It shows after blur or a submit attempt.
+When "Save as new version" is selected, Save SHALL stay disabled until the input holds a version that matches the shared version rule (`resource-version-pattern`) and differs from the current version. The error text SHALL be wired through the kit `Input` `error` prop (`aria-invalid` and `aria-describedby`). It shows after blur or a submit attempt.
 
 When the backend answers 409 (the version already exists in the target folder), the input SHALL show `ResourceSavePanelI18nKeys.VersionExists`, and the panel SHALL stay open with nothing else persisted.
 
 i18n keys: `ResourceSavePanelI18nKeys.VersionInvalid`, `VersionUnchanged`, `VersionExists`.
+
+#### Scenario: Text version passes the format check
+- **WHEN** the user selects "Save as new version" and types `beta-2`
+- **THEN** no format error is shown and Save is enabled
+
+#### Scenario: Invalid version is rejected
+- **WHEN** the user types a version containing a space, ending with a dot, containing `__`, starting with `_`, or longer than 64 characters
+- **THEN** the input shows "VersionInvalid" after blur and Save is disabled
 
 #### Scenario: Unchanged version is rejected
 - **WHEN** the user selects "Save as new version" and types the current version `1.0.0`
@@ -174,7 +183,7 @@ On the panel's Save, `runResourceSave` (`libs/chat-hooks/src/catalog/resource-sa
 | Org-unit folder the user may write to, New | New | `saveAsNewVersion(version, currentPersonalFolder)`, then the direct write of the new id into the unit folder; no `publishCatalogEntity` |
 | Org-unit folder the user may write to (create) | — | `createIn([])`, then the direct write into the unit folder; no `publishCatalogEntity` |
 
-An Organization destination takes a direct-write row only when it lies inside an org unit whose owner grants `write` on the resource type's namespace and the rights are loaded (`org-units-folder-permissions`); every other Organization destination keeps the publish rows. A failure of the direct write after the first step SHALL be reported like a failed publish (`ResourceSavePanelI18nKeys.SavedButPublishFailed` is replaced there by a dedicated key naming the unit folder).
+An Organization destination takes a direct-write row only when it lies inside an org unit whose owner grants `write` on the resource type's namespace and the rights are loaded (`org-units-folder-permissions`), and, for an application that refers to a folder of files, only when the user is a DIAL admin; every other Organization destination keeps the publish rows. A failure of the direct write after the first step SHALL be reported like a failed publish (`ResourceSavePanelI18nKeys.SavedButPublishFailed` is replaced there by a dedicated key naming the unit folder), except the server's `folderReferenceNeedsRequest` refusal, after which the save SHALL continue with the publish step of the same row family (a publication request for the saved id) and report it as a publication request, not as a failure.
 The Save panel SHALL NOT render an access-rules editor for any destination and SHALL NOT load folder rules. The publish request SHALL carry no `rules`, no `author` and no `publishCredentials`, so DIAL Core keeps the folder's existing rules. After a successful publish the orchestrator SHALL call `rememberPublishFolder(folderPath)`.
 
 Notifications, shown on success through `useOperationNotification` / `useNotification` helpers:
@@ -219,6 +228,11 @@ While a save runs, every panel control SHALL be disabled, and the Save button SH
 #### Scenario: Direct write into a unit
 - **WHEN** the user holds `write` on `applications` in unit `Delivery`, keeps the version and selects `Delivery/Teams`
 - **THEN** the application is saved, written into `Delivery/Teams`, no publication request is created, and the "saved to" notification shows
+
+#### Scenario: Folder reference refused by the server, request follows
+- **GIVEN** a user who is not a DIAL admin with `write` on `applications` in unit `Delivery`, and a DIAL Loop application whose dependencies the panel cannot list
+- **WHEN** they keep the version, select `Delivery/Teams`, and the direct write is answered with `folderReferenceNeedsRequest`
+- **THEN** the application stays saved, a publication request is created for `Delivery/Teams`, and the `EntityOperation.PublishRequested` notification shows with no error
 
 #### Scenario: Publish fails after a successful save
 - **WHEN** the save succeeds and the publish request fails
@@ -334,3 +348,22 @@ While the committed destination of the Save panel is a folder that takes a direc
 
 - **WHEN** the destination is under Personal or sends a publication request
 - **THEN** no check is sent
+
+### Requirement: The Save panel announces a folder reference that sends the save to a request
+
+The panel knows a folder reference when it lists the dependencies (a schema-form application): a listed `File` dependency that is a folder. For such an application and a user who is not a DIAL admin, an Organization destination inside an org unit SHALL take the publish rows of "Save sequencing by destination and version" and the folder SHALL stay selectable. For an application with an embedded editor, such as DIAL Loop opened in its editor, the panel cannot list the dependencies; the direct write is then tried as before and the sequencing requirement's `folderReferenceNeedsRequest` rule applies.
+
+While the direct-write rows are not taken for this reason, the panel SHALL show one information note in the destination note slot saying that the application refers to a folder of files and a publication request is sent instead of a direct save (`resourceSavePanel.directUnavailableFolder`). The note SHALL NOT change which folders are enabled, and a DIAL admin and every application without a folder reference SHALL see no such note.
+
+#### Scenario: Schema-form application with a folder reference
+- **GIVEN** a user who is not a DIAL admin with `write` on applications in the unit, and a form whose dependencies include a folder
+- **WHEN** they choose a folder of the unit
+- **THEN** the note is shown before saving, and saving creates a publication request for that folder
+
+#### Scenario: DIAL admin
+- **WHEN** a DIAL admin saves the same application into a unit folder
+- **THEN** no note is shown, the direct write is used and no publication request is created
+
+#### Scenario: Application without a folder reference
+- **WHEN** a user who is not a DIAL admin saves an application that refers to no folder into a unit folder they may write to
+- **THEN** no note is shown and the direct write is used

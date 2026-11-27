@@ -310,6 +310,80 @@ describe('usePublishFolders', () => {
       result.current.folderItems[0].children?.map((child) => child.name),
     ).toContain('Archive');
   });
+
+  describe('isFolderVisible', () => {
+    beforeEach(() => {
+      listPublicFiles = vi.fn(async ({ path }: { path?: string }) => {
+        if (path == null)
+          return response([makeFolder('Acme'), makeFolder('Shared')]);
+        if (path === 'Acme/')
+          return response([
+            makeFolder('Risk', 'Acme/'),
+            makeFolder('Old', 'Acme/'),
+          ]);
+        return response([]);
+      });
+    });
+
+    /* `Acme/Risk/` is the only unit: `Acme` leads to it, `Acme/Old` and `Shared` are plain. */
+    const isFolderVisible = (folderPath: string[]): boolean => {
+      const key = folderPath.join('/');
+      return (
+        key === 'Acme' || key === 'Acme/Risk' || key.startsWith('Acme/Risk/')
+      );
+    };
+
+    const names = (items: { name: string }[] | undefined) =>
+      items?.map((item) => item.name);
+
+    it('drops a refused folder and keeps the path to a visible one', async () => {
+      const { result } = render({ isFolderVisible });
+      await waitFor(() => expect(result.current.folderItems).toHaveLength(1));
+
+      act(() => result.current.onExpandedPathsChange(new Set(['Acme'])));
+
+      await waitFor(() =>
+        expect(
+          result.current.folderItems[0].children?.map((child) => child.name),
+        ).toEqual(['Risk']),
+      );
+      expect(names(result.current.folderItems)).toEqual(['Acme']);
+    });
+
+    it('does not bring a hidden folder back through a remembered destination', async () => {
+      const { result } = render({
+        isFolderVisible,
+        rememberedFolderKeys: ['Shared/Reports', 'Acme/Risk/Q1'],
+      });
+
+      await waitFor(() => expect(result.current.folderItems).toHaveLength(1));
+      expect(names(result.current.folderItems)).toEqual(['Acme']);
+      expect(
+        result.current.folderItems[0].children
+          ?.find((child) => child.name === 'Risk')
+          ?.children?.map((child) => child.name),
+      ).toEqual(['Q1']);
+    });
+
+    it('does not list a created folder the host hides', async () => {
+      const { result } = render({ isFolderVisible });
+      await waitFor(() => expect(result.current.folderItems).toHaveLength(1));
+
+      await act(async () => {
+        await result.current.onCreatePublishFolder([], 'Drafts');
+      });
+
+      expect(names(result.current.folderItems)).toEqual(['Acme']);
+    });
+
+    it('lists every folder when no rule is given', async () => {
+      const { result } = render();
+
+      await waitFor(() =>
+        expect(names(result.current.folderItems)).toEqual(['Acme', 'Shared']),
+      );
+    });
+  });
 });
 
 describe('rememberPublishFolderKey', () => {

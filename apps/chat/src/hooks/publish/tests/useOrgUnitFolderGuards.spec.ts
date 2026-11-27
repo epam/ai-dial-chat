@@ -27,6 +27,7 @@ const canPublishAt = vi.fn((path: string) => path !== 'Acme/Secret');
 const canSaveDirectlyAt = vi.fn(() => true);
 const ensureUnits = vi.fn();
 const refreshUnits = vi.fn();
+const canCreatePublicFolderIn = vi.fn(() => true);
 
 describe('useOrgUnitFolderGuards', () => {
   beforeEach(() => {
@@ -34,6 +35,8 @@ describe('useOrgUnitFolderGuards', () => {
     vi.mocked(useFeatureFlag).mockReturnValue(true);
     vi.mocked(useOrgUnitsContext).mockReturnValue({
       status: OrgUnitsStatus.Ready,
+      isPublicFolderVisible: vi.fn(() => true),
+      canCreatePublicFolderIn,
       ensureUnits,
       refreshUnits,
       canSaveAt,
@@ -253,5 +256,131 @@ describe('useOrgUnitFolderGuards', () => {
 
       expect(result.current).toBe(first);
     });
+  });
+
+  describe('folder creation in the Organization root', () => {
+    it('refuses creating a folder inside an org unit, next to one and at the root', () => {
+      const guards = getGuards(
+        OrgUnitFolderGuardPurpose.Publish,
+        OrgUnitNamespace.Prompts,
+      );
+
+      expect(
+        guards.canCreateFolderIn({ rootKey: '', path: ['Acme', 'Risk', 'Q1'] }),
+      ).toBe(false);
+      expect(
+        guards.canCreateFolderIn({ rootKey: '', path: ['Acme', 'Risk'] }),
+      ).toBe(false);
+      expect(guards.canCreateFolderIn({ rootKey: '', path: ['Acme'] })).toBe(
+        false,
+      );
+      expect(guards.canCreateFolderIn({ rootKey: '', path: [] })).toBe(false);
+    });
+
+    it.each([
+      ['the org-units flag is off', false, OrgUnitsStatus.Ready],
+      ['the units are loading', true, OrgUnitsStatus.Loading],
+      ['DIAL Core has org units turned off', true, OrgUnitsStatus.Disabled],
+    ])('refuses creating a folder while %s', (_case, isEnabled, status) => {
+      vi.mocked(useFeatureFlag).mockReturnValue(isEnabled);
+      vi.mocked(useOrgUnitsContext).mockReturnValue({
+        ...vi.mocked(useOrgUnitsContext)(),
+        status,
+      });
+      const guards = getGuards(
+        OrgUnitFolderGuardPurpose.Publish,
+        OrgUnitNamespace.Prompts,
+      );
+
+      expect(guards.canCreateFolderIn({ rootKey: '', path: [] })).toBe(false);
+    });
+  });
+
+  describe('a selected folder the visibility rule hides', () => {
+    const hideShared = () =>
+      vi.mocked(useOrgUnitsContext).mockReturnValue({
+        ...vi.mocked(useOrgUnitsContext)(),
+        isPublicFolderVisible: vi.fn((path: string) => path !== 'Shared'),
+      });
+
+    it('is not usable for Publish and carries the hidden-folder reason', () => {
+      hideShared();
+      const guards = getGuards(
+        OrgUnitFolderGuardPurpose.Publish,
+        OrgUnitNamespace.Prompts,
+      );
+
+      expect(guards.isDestinationUsable?.(['Shared'])).toBe(false);
+      expect(guards.getDisabledReason?.(['Shared'])).toBe(
+        OrgUnitAccessI18nKeys.FolderOutsideOrgUnits,
+      );
+      expect(guards.isDestinationUsable?.(['Acme', 'Q1'])).toBe(true);
+      expect(guards.getDisabledReason?.(['Acme', 'Secret'])).toBe(
+        OrgUnitAccessI18nKeys.NoPublishAccessPrompt,
+      );
+    });
+
+    it('disables the Save destination only on the Organization root', () => {
+      hideShared();
+      const guards = getGuards(
+        OrgUnitFolderGuardPurpose.Save,
+        OrgUnitNamespace.Toolsets,
+      );
+
+      expect(
+        guards.getDisabledReason?.(
+          ['Shared'],
+          SaveDestinationRoot.Organization,
+        ),
+      ).toBe(OrgUnitAccessI18nKeys.FolderOutsideOrgUnits);
+      expect(
+        guards.getDisabledReason?.(['Shared'], SaveDestinationRoot.Personal),
+      ).toBeUndefined();
+    });
+
+    it('keeps the Production placeholder for a visible folder when the rights give no guard', () => {
+      hideShared();
+      const guards = getGuards(OrgUnitFolderGuardPurpose.Publish, undefined);
+
+      expect(guards.isDestinationUsable?.(['Shared'])).toBe(false);
+      expect(guards.isDestinationUsable?.(['Acme', 'Production'])).toBe(false);
+      expect(guards.isDestinationUsable?.(['Acme'])).toBe(true);
+      expect(guards.getDisabledReason?.(['Acme'])).toBeUndefined();
+    });
+
+    it('hides nothing while the units are not Ready', () => {
+      vi.mocked(useOrgUnitsContext).mockReturnValue({
+        ...vi.mocked(useOrgUnitsContext)(),
+        status: OrgUnitsStatus.Loading,
+        isPublicFolderVisible: vi.fn(() => false),
+      });
+      const guards = getGuards(
+        OrgUnitFolderGuardPurpose.Publish,
+        OrgUnitNamespace.Prompts,
+      );
+
+      expect(guards.isDestinationUsable).toBeUndefined();
+      expect(guards.getDisabledReason).toBeUndefined();
+    });
+  });
+
+  it('allows creating a folder only in the Personal root of the Save tree', () => {
+    const guards = getGuards(
+      OrgUnitFolderGuardPurpose.Save,
+      OrgUnitNamespace.Toolsets,
+    );
+
+    expect(
+      guards.canCreateFolderIn({
+        rootKey: SaveDestinationRoot.Personal,
+        path: ['Shared'],
+      }),
+    ).toBe(true);
+    expect(
+      guards.canCreateFolderIn({
+        rootKey: SaveDestinationRoot.Organization,
+        path: ['Acme', 'Q1'],
+      }),
+    ).toBe(false);
   });
 });

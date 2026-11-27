@@ -466,9 +466,13 @@ itself can pass them there.
 #### Mobile browse settings
 
 Below 768px (`useIsPhone` from `@epam/ai-dial-chat-shared`)
-the Browse toolbar drops the view toggle, the sort dropdown and the filter
+the Browse toolbar drops the view toggle, the sort button and the filter
 dropdown. In their place, next to the search field, it shows one settings
 button that opens a bottom sheet with View, Sorting and Filtering pages.
+From 768px the title row holds the title alone, and the search row reads
+search, view toggle, sort button, filter. The sort button is icon-only
+(`SortMenuButton` from `@epam/ai-dial-chat-shared`), named and tooltipped by
+`sortLabel` whichever order is applied; its menu checks the applied order.
 
 - View and sort apply as soon as they are picked.
 - Filters stay buffered until Apply, as on desktop.
@@ -704,8 +708,7 @@ renders the kit's `GridAppearance.Chat`, a borderless 12px card with the MD
 shadow and inset row dividers. Outside multi-select, the selected row keeps its
 regular background and is framed with a 1.5px `--stroke-accent` border, the same
 outline-only look as a selected card. `styles.colors` (`ListViewColors`) covers cell content only:
-`starFilled`, `folderIcon`, `nameText` and `versionText` (`selectedRowCheckIcon`
-is deprecated and has no effect). With no items, the grid
+`starFilled`, `folderIcon`, `nameText` and `versionText`. With no items, the grid
 shows its own empty state from `emptyStateTitle` (default `'No results'`) and
 `emptyStateDescription`. The message is announced only with `isEmptyStateLive`
 (default `false`); `Catalog` sets it when a search or topic filter left the tab
@@ -1369,6 +1372,17 @@ the host resolves its own display name and passes it in. An empty `author` is
 a valid state that never blocks submit; what it means is the host's decision
 (`apps/chat` omits the field from the request so the backend attributes the
 publication to the caller's own session name).
+
+Two optional props shape the publish panel's folder tree, both called with a
+`FolderDestination` whose `rootKey` is `''`.
+`getPublishDisabledReason(destination)` returns a reason for a folder that is
+unavailable as a destination; that row is disabled with the reason and no
+folder is created under it. `canCreatePublishFolderIn(destination)` keeps a
+folder selectable but, when it returns `false`, offers no "Create new folder"
+or "Add child" for it and no "Add sibling" on its children. Use it for a folder
+where the host would not list a newly created child. Both are forwarded to
+`PublishPanel` as `getDisabledReason` and `canCreateFolderIn`. Without them,
+every folder is usable and accepts new folders.
 
 The catalog no longer offers publication access rules: `onPublish` has no
 `rules` argument, and the former `hidePublishAccessRules`,

@@ -21,8 +21,10 @@ const EMPTY_CONTENT: AttachmentCanvasContent = {
 export interface AttachmentCanvasContextValue {
   /** Whether the canvas panel is currently open. */
   isOpen: boolean;
-  /** Whether the panel is open but content is still being resolved (shows a spinner). */
+  /** Whether the panel is open but content is still being resolved. */
   isLoading: boolean;
+  /** Content type currently being resolved, when known. */
+  loadingContentType?: AttachmentContentType | undefined;
   /** Content currently displayed in the canvas. */
   content: AttachmentCanvasContent;
   /** File name shown in the canvas header. */
@@ -30,7 +32,11 @@ export interface AttachmentCanvasContextValue {
   /** ID of the attachment currently displayed in the canvas, if any. */
   attachmentId: string | undefined;
   /** Open the canvas immediately in a loading state before content has resolved. */
-  openCanvasLoading: (fileName?: string, attachmentId?: string) => void;
+  openCanvasLoading: (
+    fileName?: string,
+    attachmentId?: string,
+    loadingContentType?: AttachmentContentType,
+  ) => void;
   /** Open the canvas with the given content and optional file name; `onRetry` re-opens it from a load error. */
   openCanvas: (
     content: AttachmentCanvasContent,
@@ -72,6 +78,9 @@ export const AttachmentCanvasProvider = ({
   );
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingContentType, setLoadingContentType] = useState<
+    AttachmentContentType | undefined
+  >(undefined);
   const [content, setContent] =
     useState<AttachmentCanvasContent>(EMPTY_CONTENT);
   const [fileName, setFileName] = useState<string | undefined>(undefined);
@@ -83,9 +92,14 @@ export const AttachmentCanvasProvider = ({
   );
 
   const openCanvasLoading = useCallback(
-    (newFileName?: string, newAttachmentId?: string) => {
+    (
+      newFileName?: string,
+      newAttachmentId?: string,
+      newLoadingContentType?: AttachmentContentType,
+    ) => {
       setFileName(newFileName);
       setAttachmentId(newAttachmentId);
+      setLoadingContentType(newLoadingContentType);
       setRetryCanvas(undefined);
       setIsLoading(true);
       setIsOpen(true);
@@ -106,6 +120,7 @@ export const AttachmentCanvasProvider = ({
       /* A function state value must be wrapped, or React calls it as an updater. */
       setRetryCanvas(onRetry == null ? undefined : () => onRetry);
       setIsLoading(false);
+      setLoadingContentType(undefined);
       setIsOpen(true);
     },
     [],
@@ -115,6 +130,7 @@ export const AttachmentCanvasProvider = ({
     setContent(EMPTY_CONTENT);
     setIsOpen(false);
     setIsLoading(false);
+    setLoadingContentType(undefined);
     setAttachmentId(undefined);
     setRetryCanvas(undefined);
   }, []);
@@ -135,6 +151,7 @@ export const AttachmentCanvasProvider = ({
         () => ({
           isOpen,
           isLoading,
+          loadingContentType,
           content,
           fileName,
           attachmentId,
@@ -146,6 +163,7 @@ export const AttachmentCanvasProvider = ({
         [
           isOpen,
           isLoading,
+          loadingContentType,
           content,
           fileName,
           attachmentId,

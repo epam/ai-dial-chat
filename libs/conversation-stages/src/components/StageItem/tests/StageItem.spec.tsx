@@ -23,13 +23,24 @@ vi.mock('@epam/ai-dial-attachment-input', () => ({
   AttachmentCard: ({
     attachment,
     onClick,
+    onDownload,
+    labels,
   }: {
     attachment: { id: string; name: string };
     onClick?: (id: string) => void;
+    onDownload?: (id: string) => void;
+    labels?: { downloadLabel?: string };
   }) => (
-    <button type="button" onClick={() => onClick?.(attachment.id)}>
-      {attachment.name}
-    </button>
+    <>
+      <button type="button" onClick={() => onClick?.(attachment.id)}>
+        {attachment.name}
+      </button>
+      {onDownload && (
+        <button type="button" onClick={() => onDownload(attachment.id)}>
+          {`${labels?.downloadLabel} ${attachment.name}`}
+        </button>
+      )}
+    </>
   ),
 }));
 
@@ -251,6 +262,59 @@ describe('StageItem — attachment rendering', () => {
         data: 'Some markdown text',
       }),
     );
+  });
+
+  it('renders a download button that calls onAttachmentDownload with the mapped display attachment', async () => {
+    const user = userEvent.setup();
+    const onAttachmentDownload = vi.fn();
+    render(
+      <StageItem
+        stage={{
+          ...baseStage,
+          attachments: [{ title: 'report.pdf', url: 'files/abc/report.pdf' }],
+        }}
+        isLive={false}
+        typography={{}}
+        labels={{ attachmentDownloadLabel: 'Download' }}
+        onAttachmentDownload={onAttachmentDownload}
+      />,
+    );
+    await user.click(
+      screen.getByRole('button', { name: /Parsed user intent/ }),
+    );
+    await user.click(
+      screen.getByRole('button', { name: 'Download report.pdf' }),
+    );
+    expect(onAttachmentDownload).toHaveBeenCalledOnce();
+    expect(onAttachmentDownload).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'report.pdf',
+        url: 'files/abc/report.pdf',
+      }),
+    );
+  });
+
+  it('hides the download button when isAttachmentDownloadable rejects the attachment', async () => {
+    const user = userEvent.setup();
+    render(
+      <StageItem
+        stage={{
+          ...baseStage,
+          attachments: [{ title: 'report.pdf', url: 'files/abc/report.pdf' }],
+        }}
+        isLive={false}
+        typography={{}}
+        onAttachmentDownload={vi.fn()}
+        isAttachmentDownloadable={() => false}
+      />,
+    );
+    await user.click(
+      screen.getByRole('button', { name: /Parsed user intent/ }),
+    );
+    expect(screen.getByRole('button', { name: 'report.pdf' })).toBeTruthy();
+    expect(
+      screen.queryByRole('button', { name: /Download attachment/ }),
+    ).toBeNull();
   });
 
   it('renders a tile for a reference-only attachment (no inline data)', async () => {
