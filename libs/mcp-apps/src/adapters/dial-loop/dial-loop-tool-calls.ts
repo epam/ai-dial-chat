@@ -4,6 +4,7 @@ import {
   type Stage,
 } from '@epam/ai-dial-chat-shared';
 import type { McpAppToolCall } from '../../models/mcp-apps';
+import { parseJsonObject } from '../../utils/json';
 
 /*
  * DIAL loop adapter (tool-call side). TEMPORARY: replace once DIAL Core or the
@@ -31,26 +32,6 @@ const parseStageArgValue = (raw: string): unknown => {
     return JSON.parse(raw);
   } catch {
     return raw.replace(MARKDOWN_ESCAPE, '$1');
-  }
-};
-
-/**
- * Parses the `**Response**` text as a JSON object, or returns undefined when it is anything else.
- * @param response - text of the `**Response**` code block
- */
-const parseStructuredResponse = (
-  response: string | undefined,
-): Record<string, unknown> | undefined => {
-  if (response == null) return undefined;
-  try {
-    const parsed: unknown = JSON.parse(response);
-    return typeof parsed === 'object' &&
-      parsed !== null &&
-      !Array.isArray(parsed)
-      ? (parsed as Record<string, unknown>)
-      : undefined;
-  } catch {
-    return undefined;
   }
 };
 
@@ -85,7 +66,8 @@ const resolveStageToolCalls = (
       name: (stage.name ?? '').replace(STAGE_TIMING_SUFFIX, ''),
       args,
       result: response,
-      structuredResult: parseStructuredResponse(response),
+      structuredResult:
+        response == null ? undefined : parseJsonObject(response),
     });
   }
   return calls;

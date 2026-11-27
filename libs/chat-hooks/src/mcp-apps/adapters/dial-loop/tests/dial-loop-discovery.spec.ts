@@ -7,7 +7,8 @@ import {
   getDialLoopToolsetIds,
 } from '../dial-loop-discovery';
 
-const TOOLSET_ID = 'toolsets/public/example/Entity%20Lookup%20MCP%20Server__2.0.0';
+const TOOLSET_ID =
+  'toolsets/public/example/Entity%20Lookup%20MCP%20Server__2.0.0';
 
 const makeDetails = (
   schemaId: string,

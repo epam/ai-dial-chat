@@ -142,4 +142,17 @@ describe('stage-based tool calls (DIAL loop)', () => {
       toolResult: { content: [{ type: 'text', text: 'state result' }] },
     });
   });
+
+  it('reads a response only up to its first closing code fence', () => {
+    const nested: Stage = {
+      ...toolStage,
+      content:
+        '**Request**\n\n- `id`: x\n\n**Response**\n\n```\nfirst\n```\nmore\n```\nsecond\n```',
+    };
+
+    expect(
+      resolveMcpAppToolCallSeed(makeMessage([nested]), 'show_entity_card')
+        ?.toolResult,
+    ).toEqual({ content: [{ type: 'text', text: 'first' }] });
+  });
 });

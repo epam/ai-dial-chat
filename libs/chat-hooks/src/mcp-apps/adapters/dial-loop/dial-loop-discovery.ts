@@ -4,6 +4,7 @@ import {
   McpDeploymentKind,
   type McpAppToolRef,
 } from '@epam/ai-dial-mcp-apps';
+import { isDialLoopSchema } from '../../../shared/application-schema';
 import type { McpAppsApiClient } from '../../mcp-apps-api-client';
 
 /*
@@ -14,8 +15,6 @@ import type { McpAppsApiClient } from '../../mcp-apps-api-client';
  * `libs/mcp-apps/src/adapters/dial-loop`.
  */
 
-const DIAL_LOOP_SCHEMA_ID_SEGMENT = 'dial-loop';
-
 /**
  * Returns the toolset ids a DIAL loop application lists in `applicationProperties.toolsets`, or none for any other kind of deployment.
  * @param details - details of the active deployment
@@ -24,8 +23,9 @@ export const getDialLoopToolsetIds = (
   details: DeploymentDetailsDto | null | undefined,
 ): string[] => {
   const application = details?.applicationDetails;
-  const schemaId = application?.applicationTypeSchemaId;
-  if (schemaId?.split('/').pop() !== DIAL_LOOP_SCHEMA_ID_SEGMENT) return [];
+  if (!isDialLoopSchema({ id: application?.applicationTypeSchemaId })) {
+    return [];
+  }
 
   const toolsets = (
     application?.applicationProperties as { toolsets?: unknown } | undefined

@@ -1,5 +1,6 @@
 import type { Message, MessageState } from '@epam/ai-dial-chat-shared';
 import type { McpAppToolCall } from '../../models/mcp-apps';
+import { parseJsonObject } from '../../utils/json';
 
 /*
  * Quick-app adapter (tool-call side). TEMPORARY: replace once DIAL Core
@@ -11,21 +12,6 @@ import type { McpAppToolCall } from '../../models/mcp-apps';
 
 const INVALID_TOOL_NAME_CHARS = /[^a-zA-Z0-9_-]+/g;
 const MAX_TOOL_NAME_LENGTH = 64;
-
-/**
- * Parses an OpenAI tool call's raw JSON-encoded `function.arguments` string, tolerating a malformed/non-object payload.
- * @param raw - the JSON-encoded arguments string
- */
-const parseOpenAiToolArgs = (raw: string): Record<string, unknown> => {
-  try {
-    const parsed = JSON.parse(raw);
-    return typeof parsed === 'object' && parsed !== null
-      ? (parsed as Record<string, unknown>)
-      : {};
-  } catch {
-    return {};
-  }
-};
 
 /**
  * Pairs each tool-call request with its result, by `tool_call_id`, across
@@ -54,7 +40,7 @@ const resolveStateToolCalls = (
     for (const call of historyMessage.tool_calls ?? []) {
       calls.set(call.id, {
         name: call.function.name,
-        args: parseOpenAiToolArgs(call.function.arguments),
+        args: parseJsonObject(call.function.arguments) ?? {},
       });
     }
     if (historyMessage.role === 'tool' && historyMessage.tool_call_id) {
