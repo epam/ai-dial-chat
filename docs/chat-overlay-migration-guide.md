@@ -276,25 +276,25 @@ overlay.destroy();
 
 ### Changes to `ChatOverlayOptions`
 
-| Legacy option              | New option or required action                                                                                              |
-| -------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `domain`                   | Preserved. The library now derives the target origin from this URL.                                                        |
-| `hostDomain`               | Removed. The library automatically sends `window.location.origin`.                                                         |
-| `theme`                    | Preserved.                                                                                                                 |
-| `modelId`                  | Preserved.                                                                                                                 |
-| `overlayConversationId`    | Preserved.                                                                                                                 |
-| `auth.providerUiModes`     | New optional per-provider login mode map; defaults to `External`.                                                          |
-| `requestTimeout`           | Preserved; defaults to `10000` ms.                                                                                         |
-| `loaderStyles`             | Preserved as `Record<string, string>`.                                                                                     |
-| `loaderClass`              | Preserved.                                                                                                                 |
-| `loaderInnerHTML`          | Preserved. Pass trusted HTML only.                                                                                         |
-| `loaderHideEvent`          | Preserved, but now use `OverlayEventType`.                                                                                 |
-| `enabledFeatures`          | Accepts only `OverlayFeature[]`.                                                                                           |
-| `newConversationsFolderId` | Removed because the new chat does not have conversation folders.                                                           |
-| `enabledFeaturesData`      | Not supported.                                                                                                             |
-| `messageButtons`           | Not supported.                                                                                                             |
-| `signInOptions`            | Removed. Move `autoSignIn`/`signInProvider` to `auth.autoSignInProvider` plus a `providerUiModes` entry.               |
-| `signInInSameWindow`       | Removed. Map the provider to `OverlayAuthUiMode.SameWindow` in `auth.providerUiModes`.                                     |
+| Legacy option              | New option or required action                                                                            |
+| -------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `domain`                   | Preserved. The library now derives the target origin from this URL.                                      |
+| `hostDomain`               | Removed. The library automatically sends `window.location.origin`.                                       |
+| `theme`                    | Preserved.                                                                                               |
+| `modelId`                  | Preserved.                                                                                               |
+| `overlayConversationId`    | Preserved.                                                                                               |
+| `auth.providerUiModes`     | New optional per-provider login mode map; defaults to `External`.                                        |
+| `requestTimeout`           | Preserved; defaults to `10000` ms.                                                                       |
+| `loaderStyles`             | Preserved as `Record<string, string>`.                                                                   |
+| `loaderClass`              | Preserved.                                                                                               |
+| `loaderInnerHTML`          | Preserved. Pass trusted HTML only.                                                                       |
+| `loaderHideEvent`          | Preserved, but now use `OverlayEventType`.                                                               |
+| `enabledFeatures`          | Accepts only `OverlayFeature[]`.                                                                         |
+| `newConversationsFolderId` | Removed because the new chat does not have conversation folders.                                         |
+| `enabledFeaturesData`      | Not supported.                                                                                           |
+| `messageButtons`           | Not supported.                                                                                           |
+| `signInOptions`            | Removed. Move `autoSignIn`/`signInProvider` to `auth.autoSignInProvider` plus a `providerUiModes` entry. |
+| `signInInSameWindow`       | Removed. Map the provider to `OverlayAuthUiMode.SameWindow` in `auth.providerUiModes`.                   |
 
 `setOverlayOptions()` now accepts only fields that can be changed dynamically:
 `theme`, `modelId`, `overlayConversationId`, `enabledFeatures`, and `auth`. Do
