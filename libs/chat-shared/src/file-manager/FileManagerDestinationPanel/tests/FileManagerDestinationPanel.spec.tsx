@@ -105,8 +105,15 @@ const makeNode = (
 });
 
 const file = makeNode('/My files/reports/a.txt', DialFileNodeType.ITEM);
-const reports = makeNode('/My files/reports', DialFileNodeType.FOLDER, [file]);
-const archive = makeNode('/My files/archive', DialFileNodeType.FOLDER, []);
+/* Folder paths from the listing end with a slash. */
+const reports: DialFile = {
+  ...makeNode('/My files/reports/', DialFileNodeType.FOLDER, [file]),
+  name: 'reports',
+};
+const archive: DialFile = {
+  ...makeNode('/My files/archive/', DialFileNodeType.FOLDER, []),
+  name: 'archive',
+};
 const root = makeNode('/My files', DialFileNodeType.FOLDER, [reports, archive]);
 
 const labels: FileManagerDestinationPanelLabels = {
@@ -283,7 +290,7 @@ describe('FileManagerDestinationPanel', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Pick archive' }));
     await userEvent.click(screen.getByRole('button', { name: 'Copy here' }));
 
-    expect(request.confirm).toHaveBeenCalledWith('/My files/archive', []);
+    expect(request.confirm).toHaveBeenCalledWith('/My files/archive/', []);
     expect(onFinish).toHaveBeenCalledOnce();
   });
 

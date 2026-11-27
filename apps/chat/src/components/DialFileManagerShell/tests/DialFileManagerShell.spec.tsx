@@ -566,7 +566,8 @@ describe('DialFileManagerShell', () => {
         {
           id: 'reports',
           name: 'reports',
-          path: '/My files/reports',
+          /* Folder paths from the listing end with a slash. */
+          path: '/My files/reports/',
           parentPath: '/My files',
           folderId: 'reports',
           nodeType: DialFileNodeType.FOLDER,
