@@ -421,4 +421,48 @@ describe('CredentialsApiKeyOverlay', () => {
     expect(input.getAttribute('aria-describedby')).toBeNull();
     expect(screen.queryByText(/header$/)).toBeNull();
   });
+
+  it('closes without logging in when Cancel is clicked', async () => {
+    const user = userEvent.setup();
+    const onLogin = vi.fn();
+    const onClose = vi.fn();
+    render(
+      <CredentialsApiKeyOverlay
+        item={item}
+        level={CredentialsLevel.User}
+        status={CredentialStatus.SignedOut}
+        onLogin={onLogin}
+        onClose={onClose}
+        texts={{ cancelLabel: 'Abort' }}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Abort' }));
+
+    expect(onClose).toHaveBeenCalledOnce();
+    expect(onLogin).not.toHaveBeenCalled();
+  });
+
+  it('disables Cancel while the key is being added', async () => {
+    const user = userEvent.setup();
+    const { promise, resolve } = deferred<void>();
+    render(
+      <CredentialsApiKeyOverlay
+        item={item}
+        level={CredentialsLevel.User}
+        status={CredentialStatus.SignedOut}
+        onLogin={() => promise}
+        onClose={vi.fn()}
+      />,
+    );
+
+    await user.type(screen.getByRole('textbox', { name: 'API key' }), 'k');
+    await user.click(screen.getByRole('button', { name: 'Add' }));
+
+    expect(
+      (screen.getByRole('button', { name: 'Cancel' }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+    await act(async () => resolve());
+  });
 });

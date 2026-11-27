@@ -817,8 +817,14 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
             <Popup
               open
               header={t(ApplicationCredentialsI18nKeys.Title)}
-              closeAriaLabel={t(ButtonsI18nKeys.Close)}
+              hideClose
               onClose={() => setCredentialsAppId(null)}
+              mainButtons={[
+                {
+                  label: t(ButtonsI18nKeys.Cancel),
+                  onClick: () => setCredentialsAppId(null),
+                },
+              ]}
             >
               <ApplicationCredentials
                 key={credentialsAppId}

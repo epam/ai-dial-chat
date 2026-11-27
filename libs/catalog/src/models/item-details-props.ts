@@ -361,7 +361,7 @@ export interface ItemDetailsTexts {
   unpublishingStatusLabel?: string;
   /** Status text announced to assistive tech while a logout is in progress. Default: `'Logging out'`. */
   loggingOutStatusLabel?: string;
-  /** Generic "Cancel" label, used by every confirmation step. Default: `'Cancel'`. */
+  /** Generic "Cancel" label, used by every confirmation step and the personal API key popover. Default: `'Cancel'`. */
   cancelLabel?: string;
   /** Status text announced to assistive tech while the primary Download action is in progress. Default: `'Downloading'`. */
   downloadingStatusLabel?: string;
