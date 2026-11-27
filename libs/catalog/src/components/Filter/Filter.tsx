@@ -14,7 +14,7 @@ import {
   MenuItem,
   MenuItemMark,
 } from '@epam/ai-dial-ui-kit';
-import { IconFilter } from '@tabler/icons-react';
+import { IconFilter2 } from '@tabler/icons-react';
 import {
   FC,
   KeyboardEvent,
@@ -31,7 +31,7 @@ import styles from './Filter.module.scss';
 
 /** Color overrides for `Filter`, applied as CSS custom properties. */
 export interface FilterColors {
-  /** Funnel icon color in the trigger button. Fallback: `--text-secondary`. */
+  /** Filter icon color in the trigger button. Fallback: `--text-secondary`. */
   buttonFunnel?: string;
   /** Dot on the trigger while a topic is applied. Fallback: `--bg-control-accent`. */
   activeDot?: string;
@@ -246,7 +246,7 @@ export const Filter: FC<FilterProps> = ({
           aria-expanded={isOpen}
           onKeyDown={handleTriggerKeyDown}
           icon={
-            <IconFilter
+            <IconFilter2
               size={DIAL_ICON_SIZE.LG}
               stroke={DIAL_KIT_ICON_STROKE}
               className={styles.filterBtnFunnel}

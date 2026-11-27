@@ -2,7 +2,7 @@
 
 ### Requirement: The desktop topic filter is an icon button that applies on toggle
 
-`Filter` (`libs/catalog/src/components/Filter/Filter.tsx`) SHALL render a kit `GhostIconButton` (`ElementSize.Large`, `IconFilter` with `stroke={DIAL_KIT_ICON_STROKE}`) as its trigger:
+`Filter` (`libs/catalog/src/components/Filter/Filter.tsx`) SHALL render a kit `GhostIconButton` (`ElementSize.Large`, `IconFilter2` with `stroke={DIAL_KIT_ICON_STROKE}`) as its trigger:
 
 - It is named by `triggerLabel` (default 'Filter by topic') and carries `aria-haspopup="dialog"` and `aria-expanded`.
 - It shows no text label.
@@ -28,7 +28,7 @@ Keyboard behaviour:
 
 Colours keep the existing `--cat-filter-*` custom properties for the overlay, rows and section label. The `buttonLabel`, `buttonChevron`, `buttonBorder*`, `buttonBackground`, `divider` and `footerBorder` fields are removed with the pill and the footer, and `activeDot` is added.
 
-RTL impact: the "Clear all" button sits at the inline end, through flex and `ms-auto`, and the dot uses `inset-e-*`. The funnel icon is not directional.
+RTL impact: the "Clear all" button sits at the inline end, through flex and `ms-auto`, and the dot uses `inset-e-*`. The filter icon is not directional.
 
 #### Scenario: Checking a topic applies it immediately
 

@@ -19,7 +19,7 @@ The design (Figma "DIAL Chat 2.0 – Catalog", nodes 2038-35477, 2038-44293, 204
 
 **Topics filter**
 
-- The desktop trigger becomes an icon-only `GhostIconButton` (funnel icon) with an active dot.
+- The desktop trigger becomes an icon-only `GhostIconButton` (`IconFilter2`, the three-line filter icon) with an active dot.
 - Its dropdown has a "Topics" heading with a "Clear all" link, then one checkbox row per topic.
 - Each toggle applies at once. There is no footer and no Apply. A press outside closes the list.
 - The phone Filtering page works the same way: header "Clear all", immediate apply, no footer. Its Root row summary becomes `selected of total-topics`.

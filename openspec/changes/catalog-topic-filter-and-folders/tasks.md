@@ -160,7 +160,3 @@ Every slice leaves `apps/chat` compiling. Removed props are dropped in the same 
 
   Then run `npm run validate:docs`.
 - [ ] 7.4 Run `npm run validate:specs`. Close with a single `npm run verify:full`, run through the `lean-verification` skill, plus `npm run build:quiet`, because the lib's public entry points change.
-
-## Follow-ups (out of scope)
-
-- [ ] F.1 If design asks for empty DIAL Core folders in the tree, add a host-supplied `extraFolderPaths` merge into `buildCatalogFolderTree`.

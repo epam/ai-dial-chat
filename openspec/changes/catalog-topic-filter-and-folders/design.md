@@ -74,7 +74,7 @@ export interface CatalogFolderSelection {
 ### D4. The topic filter applies immediately and is icon-only
 
 - `Filter` is rewritten:
-  - The trigger is a kit `GhostIconButton` (`ElementSize.Large`, `IconFilter`). Its name is `triggerLabel` ("Filter by topic"). It carries `aria-haspopup="dialog"`, `aria-expanded`, and a decorative dot while topics are applied. The dot reuses the `--cat-browse-settings-dot` colour token through a new `FilterColors.activeDot` (`--cat-filter-active-dot`).
+  - The trigger is a kit `GhostIconButton` (`ElementSize.Large`, `IconFilter2`). Its name is `triggerLabel` ("Filter by topic"). It carries `aria-haspopup="dialog"`, `aria-expanded`, and a decorative dot while topics are applied. The dot reuses the `--cat-browse-settings-dot` colour token through a new `FilterColors.activeDot` (`--cat-filter-active-dot`).
   - The overlay stays a kit `Dropdown` with `DropdownOverlayRole.Dialog`. Its header row holds the "Topics" heading (`dial-tiny-lead-semi-text`, uppercase via token) and a `LinkButton` "Clear all", enabled only while topics are applied.
   - Below the header, a `role="menu"` list holds `menuitemcheckbox` rows with roving focus, kept from today's code. Each click calls `onChange(toggleTopic(...))` straight away.
   - The pending state, the effect that syncs it, the footer and `getFilterButtonLabel` / `getFromLabel` are deleted.
