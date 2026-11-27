@@ -292,6 +292,40 @@ const scan = (diff, typography) => {
     const isSpec = isSpecFile(path);
     const entry = `${path}:${line}  ${text.trim().slice(0, 140)}`;
 
+    const nearby = (from, to) =>
+      lines
+        .slice(Math.max(0, index + from), index + to)
+        .filter((other) => other.path === path)
+        .map((other) => other.text)
+        .join('\n');
+
+    /* A literal fake-timer advance in a spec that also deals with a skeleton:
+       the delay and minimum duration are kit constants, never numbers. */
+    if (
+      isSpec &&
+      /advanceTimersByTime(?:Async)?\(\s*\d/.test(text) &&
+      /skeleton/i.test(nearby(-40, 40))
+    ) {
+      add(
+        'hardcoded-skeleton-timing',
+        'literal timer value in a skeleton test — import SKELETON_DELAY_MS / SKELETON_MIN_DURATION_MS from the kit',
+        entry,
+      );
+    }
+
+    /* A timer next to loading state is usually a hand-rolled skeleton delay. */
+    if (
+      !isSpec &&
+      /\bsetTimeout\(/.test(text) &&
+      /skeleton|isLoading|isFetching|isPending|loading/i.test(nearby(-15, 15))
+    ) {
+      add(
+        'hand-rolled-loading-timer',
+        'setTimeout beside loading state — use useSkeletonTiming for the show delay and minimum display time',
+        entry,
+      );
+    }
+
     for (const signal of SIGNALS) {
       if ((signal.scope === SPEC) !== isSpec) continue;
       const match = text.match(signal.re);
@@ -317,13 +351,6 @@ const scan = (diff, typography) => {
         );
       }
     }
-
-    const nearby = (from, to) =>
-      lines
-        .slice(Math.max(0, index + from), index + to)
-        .filter((other) => other.path === path)
-        .map((other) => other.text)
-        .join('\n');
 
     if (/\brenderOverlay=/.test(text) && !/overlayRole=/.test(nearby(-25, 5))) {
       add(
