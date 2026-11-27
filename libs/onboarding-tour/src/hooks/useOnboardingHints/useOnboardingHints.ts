@@ -27,12 +27,10 @@ export const useOnboardingHints = ({
   isHintOnPage = isOnEveryPage,
 }: UseOnboardingHintsOptions): UseOnboardingHintsResult => {
   const [steps, setSteps] = useState<OnboardingTourStep[]>(NO_STEPS);
-  /* Taken when a tour starts, so a reload mid-tour keeps the step number:
-   * the hints of this page passed earlier count before the first new one. */
-  const [completedStepCount, setCompletedStepCount] = useState(0);
   /* Closing a tour (the close button, Escape) puts the onboarding off until
-   * the host remounts the hook, usually the next visit: the hints not passed
-   * stay unseen, but no card opens again on this page or the next one. */
+   * the host remounts the hook, usually the next visit: the hint it was
+   * closed on and the ones after it stay unseen, so the next visit opens on
+   * that hint again, but no card opens again on this page or the next one. */
   const [isClosed, setIsClosed] = useState(false);
 
   /* The latest seen ids, including the ones just reported: two quick Next
@@ -70,9 +68,6 @@ export const useOnboardingHints = ({
         })),
     [pageHints, seenIds, resolveTarget],
   );
-  const seenOnPageCount = pageHints.filter((hint) =>
-    seenIds.includes(hint.id),
-  ).length;
 
   /* Leaving the page ends a running tour: its remaining steps point at
    * elements the next page does not render. Steps already passed with Next
@@ -100,7 +95,6 @@ export const useOnboardingHints = ({
       }
       const visible = pendingSteps.filter((step) => step.getTarget() != null);
       if (visible.length > 0) {
-        setCompletedStepCount(seenOnPageCount);
         setSteps(visible);
         return;
       }
@@ -111,7 +105,7 @@ export const useOnboardingHints = ({
     };
     timer = window.setTimeout(tryStart, ONBOARDING_START_DELAY_MS);
     return () => window.clearTimeout(timer);
-  }, [isEnabled, isClosed, isRunning, pendingSteps, seenOnPageCount, pageKey]);
+  }, [isEnabled, isClosed, isRunning, pendingSteps, pageKey]);
 
   /* Each Next marks the step just passed, so a tour left halfway (another
    * page, a reload, a closed tab) resumes from the first step not passed. */
@@ -124,23 +118,25 @@ export const useOnboardingHints = ({
     [markSeen],
   );
 
-  /* Done and close mark the hints that were shown; Skip opts out of every
-   * configured hint, so no later page starts a new tour. Close also puts the
-   * remaining hints off until the next visit. */
+  /* Done marks the hints that were shown; Skip opts out of every configured
+   * hint, so no later page starts a new tour. Close marks nothing beyond the
+   * steps already passed with Next, so the hint it was closed on comes back
+   * on the next visit, and puts the remaining hints off until then. */
   const onFinish = useCallback(
     (shownIds: string[], reason: OnboardingTourEndReason) => {
-      markSeen(
-        reason === OnboardingTourEndReason.Skipped
-          ? [...new Set([...shownIds, ...hints.map(({ id }) => id)])]
-          : shownIds,
-      );
       if (reason === OnboardingTourEndReason.Closed) {
         setIsClosed(true);
+      } else {
+        markSeen(
+          reason === OnboardingTourEndReason.Skipped
+            ? [...new Set([...shownIds, ...hints.map(({ id }) => id)])]
+            : shownIds,
+        );
       }
       setSteps(NO_STEPS);
     },
     [hints, markSeen],
   );
 
-  return { steps, onFinish, onStepComplete, completedStepCount };
+  return { steps, onFinish, onStepComplete };
 };

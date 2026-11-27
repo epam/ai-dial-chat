@@ -236,6 +236,7 @@ export const OnboardingTour: FC<OnboardingTourProps> = ({
     ...cardColorVars(colors),
     '--ot-backdrop': colors?.backdrop,
     '--ot-counter-text': colors?.counterText,
+    '--ot-spotlight-ring': colors?.spotlightRing,
   });
 
   return (
