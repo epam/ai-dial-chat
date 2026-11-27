@@ -57,7 +57,7 @@ describe('tablet browse menus', () => {
     const search = screen.getByRole('search');
     const viewToggle = screen.getByRole('radiogroup', { name: 'View mode' });
     const sort = screen.getByRole('button', { name: 'Sort' });
-    const filter = screen.getByRole('button', { name: 'From' });
+    const filter = screen.getByRole('button', { name: 'Filter by topic' });
     const follows = (first: Element, second: Element) =>
       Boolean(
         first.compareDocumentPosition(second) &

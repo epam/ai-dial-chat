@@ -1,4 +1,4 @@
-import { CatalogSortKey } from '@epam/ai-dial-catalog';
+import { CatalogFolderRootKind, CatalogSortKey } from '@epam/ai-dial-catalog';
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { StorageKey } from '../../../types/storage-key';
@@ -13,12 +13,12 @@ describe('useCatalogSortFilterPreference', () => {
     vi.restoreAllMocks();
   });
 
-  it('defaults to RecentlyUpdated, an empty set, and My Apps off when nothing is persisted', () => {
+  it('defaults to RecentlyUpdated, an empty set, and All entities when nothing is persisted', () => {
     const { result } = renderHook(() => useCatalogSortFilterPreference());
 
     expect(result.current.sortKey).toBe(CatalogSortKey.RecentlyUpdated);
     expect(result.current.filterTopics).toEqual(new Set());
-    expect(result.current.isMyAppsActive).toBe(false);
+    expect(result.current.folderSelection).toEqual({ path: [] });
   });
 
   it('restores a persisted sort key', () => {
@@ -102,38 +102,56 @@ describe('useCatalogSortFilterPreference', () => {
     expect(result.current.sortKey).toBe(CatalogSortKey.NameAZ);
   });
 
-  it('restores a persisted My Apps toggle', () => {
+  it('restores a persisted folder selection', () => {
     localStorage.setItem(
-      StorageKey.CatalogIsMyAppsActive,
-      JSON.stringify(true),
+      StorageKey.CatalogFolderSelection,
+      '{"root":"organization","path":["Design Assets"]}',
     );
 
     const { result } = renderHook(() => useCatalogSortFilterPreference());
 
-    expect(result.current.isMyAppsActive).toBe(true);
+    expect(result.current.folderSelection).toEqual({
+      root: CatalogFolderRootKind.Organization,
+      path: ['Design Assets'],
+    });
   });
 
-  it('falls back to false when the persisted My Apps value is not a boolean', () => {
+  it('falls back to All entities when the persisted folder is malformed', () => {
     localStorage.setItem(
-      StorageKey.CatalogIsMyAppsActive,
-      JSON.stringify('not-a-boolean'),
+      StorageKey.CatalogFolderSelection,
+      '{"root":"nope","path":"x"}',
     );
 
     const { result } = renderHook(() => useCatalogSortFilterPreference());
 
-    expect(result.current.isMyAppsActive).toBe(false);
+    expect(result.current.folderSelection).toEqual({ path: [] });
   });
 
-  it('persists the My Apps toggle when setIsMyAppsActive is called', () => {
+  it('persists the folder selection when setFolderSelection is called', () => {
     const { result } = renderHook(() => useCatalogSortFilterPreference());
 
     act(() => {
-      result.current.setIsMyAppsActive(true);
+      result.current.setFolderSelection({
+        root: CatalogFolderRootKind.Personal,
+        path: ['drafts'],
+      });
     });
 
-    expect(result.current.isMyAppsActive).toBe(true);
-    expect(localStorage.getItem(StorageKey.CatalogIsMyAppsActive)).toBe(
-      JSON.stringify(true),
+    expect(result.current.folderSelection).toEqual({
+      root: CatalogFolderRootKind.Personal,
+      path: ['drafts'],
+    });
+    expect(localStorage.getItem(StorageKey.CatalogFolderSelection)).toBe(
+      '{"root":"personal","path":["drafts"]}',
     );
+  });
+
+  it('removes the old "My" filter key on mount', () => {
+    localStorage.setItem('catalogIsMyAppsActive', 'true');
+
+    const { result } = renderHook(() => useCatalogSortFilterPreference());
+
+    expect(localStorage.getItem('catalogIsMyAppsActive')).toBeNull();
+    expect('isMyAppsActive' in result.current).toBe(false);
   });
 });

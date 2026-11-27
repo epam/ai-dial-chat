@@ -1,3 +1,7 @@
+import {
+  CatalogFolderRootKind,
+  DEFAULT_CATALOG_FOLDER_ROOTS,
+} from '@epam/ai-dial-catalog';
 import type {
   DeploymentItemDto,
   DialToolsetDto,
@@ -78,6 +82,9 @@ const makeParams = (
   visibleTypes: new Set(),
   isCatalogHideMyAppsEnabled: false,
   persistedFilterTopics: new Set(),
+  persistedFolderSelection: { path: [] },
+  folderRoots: DEFAULT_CATALOG_FOLDER_ROOTS,
+  isLoading: false,
   ...overrides,
 });
 
@@ -491,6 +498,40 @@ describe('useCatalogItems', () => {
       );
 
       expect(result.current.reconciledFilterTopics).toEqual(new Set());
+    });
+  });
+
+  describe('reconciledFolderSelection', () => {
+    const stale = {
+      root: CatalogFolderRootKind.Organization,
+      path: ['Archived'],
+    };
+
+    it('keeps a persisted folder that exists among the loaded items', () => {
+      const selection = { root: CatalogFolderRootKind.Personal, path: [] };
+      const { result } = renderHook(() =>
+        useCatalogItems(makeParams({ persistedFolderSelection: selection })),
+      );
+
+      expect(result.current.reconciledFolderSelection).toBe(selection);
+    });
+
+    it('falls back to All entities when the persisted folder no longer exists', () => {
+      const { result } = renderHook(() =>
+        useCatalogItems(makeParams({ persistedFolderSelection: stale })),
+      );
+
+      expect(result.current.reconciledFolderSelection).toEqual({ path: [] });
+    });
+
+    it('keeps the persisted folder while the items are loading', () => {
+      const { result } = renderHook(() =>
+        useCatalogItems(
+          makeParams({ persistedFolderSelection: stale, isLoading: true }),
+        ),
+      );
+
+      expect(result.current.reconciledFolderSelection).toBe(stale);
     });
   });
 

@@ -1,6 +1,8 @@
 import {
   Catalog,
   type CatalogContentFileTreeRenderProps,
+  type CatalogFolderRoot,
+  CatalogFolderRootKind,
   type CatalogItem,
   CredentialsLevel,
   ToolsetAuthenticationType,
@@ -97,6 +99,7 @@ import {
   getCatalogSearchPlaceholder,
 } from '../../utils/catalog';
 import { resolveCatalogItemEntity } from '../../utils/entity-notification';
+import { buildDeploymentFolderLabels } from '../../utils/map-deployment-to-catalog-item';
 import {
   getPublishAuthorLabels,
   getPublishApprovalLabels,
@@ -219,8 +222,8 @@ const CatalogView: FC<Props> = ({
     setSortKey,
     filterTopics: persistedFilterTopics,
     setFilterTopics,
-    isMyAppsActive,
-    setIsMyAppsActive,
+    folderSelection: persistedFolderSelection,
+    setFolderSelection,
   } = useCatalogSortFilterPreference();
 
   const isCatalogEnabled = useUiFeature(OverlayFeature.Catalog);
@@ -284,6 +287,20 @@ const CatalogView: FC<Props> = ({
   const isLoading =
     isDeploymentsLoading || isFavoritesLoading || isSkillsLoading;
 
+  /* Labelled like the items' own folder paths, so an item's first segment
+     matches its root. Personal is dropped while owned items are hidden. */
+  const folderRoots = useMemo<CatalogFolderRoot[]>(() => {
+    const labels = buildDeploymentFolderLabels(t);
+    const roots: CatalogFolderRoot[] = [
+      { kind: CatalogFolderRootKind.Personal, label: labels.personal },
+      { kind: CatalogFolderRootKind.Shared, label: labels.shared },
+      { kind: CatalogFolderRootKind.Organization, label: labels.public },
+    ];
+    return isCatalogHideMyAppsEnabled
+      ? roots.filter((root) => root.kind !== CatalogFolderRootKind.Personal)
+      : roots;
+  }, [t, isCatalogHideMyAppsEnabled]);
+
   /*
    * A skill-listing failure is reported once and leaves the rest of the
    * catalog usable — deployments, toolsets, and prompts load independently.
@@ -304,6 +321,7 @@ const CatalogView: FC<Props> = ({
     catalogItems,
     visibleCatalogItems,
     reconciledFilterTopics,
+    reconciledFolderSelection,
     availableTabIds,
     favorites,
     onFetchDetails,
@@ -333,6 +351,9 @@ const CatalogView: FC<Props> = ({
     visibleTypes,
     isCatalogHideMyAppsEnabled,
     persistedFilterTopics,
+    persistedFolderSelection,
+    folderRoots,
+    isLoading,
   });
 
   /*
@@ -741,8 +762,11 @@ const CatalogView: FC<Props> = ({
         onSortChange={isSelectorMode ? undefined : setSortKey}
         filterTopics={isSelectorMode ? undefined : reconciledFilterTopics}
         onFilterTopicsChange={isSelectorMode ? undefined : setFilterTopics}
-        isMyAppsActive={isSelectorMode ? undefined : isMyAppsActive}
-        onMyAppsActiveChange={isSelectorMode ? undefined : setIsMyAppsActive}
+        folderRoots={folderRoots}
+        folderSelection={isSelectorMode ? undefined : reconciledFolderSelection}
+        onFolderSelectionChange={
+          isSelectorMode ? undefined : setFolderSelection
+        }
         activeTab={isSelectorMode ? undefined : activeTab}
         onActiveTabChange={isSelectorMode ? undefined : setActiveTab}
         onFetchDetails={onFetchDetails}
@@ -852,7 +876,7 @@ const CatalogView: FC<Props> = ({
           createMenuBackLabel: t(ButtonsI18nKeys.Back),
           createMenuCloseLabel: t(ButtonsI18nKeys.Close),
           favoritesTitle: t(FavoritesI18nKeys.Title),
-          browseTitle: t(ButtonsI18nKeys.Browse),
+          browseTitle: t(CatalogI18nKeys.AllEntities),
           searchPlaceholder,
           noResultsTitle: (_query, tab) => getCatalogNoResultsTitle(tab, t),
           noResultsDescription: t(BasicI18nKeys.NoResultsDescription),
@@ -869,9 +893,18 @@ const CatalogView: FC<Props> = ({
           gridViewLabel: t(CatalogI18nKeys.GridViewLabel),
           listViewLabel: t(CatalogI18nKeys.ListViewLabel),
           viewToggleLabel: t(CatalogI18nKeys.ViewToggleLabel),
-          filterFromLabel: t(CatalogI18nKeys.BrowseSettingsFrom),
-          filterMyAppsLabel: t(CatalogI18nKeys.BrowseSettingsMy),
           filterTopicsLabel: t(CatalogI18nKeys.BrowseSettingsTopics),
+          filterLabel: t(CatalogI18nKeys.FilterLabel),
+          filterClearAllLabel: t(CatalogI18nKeys.FilterClearAll),
+          appliedTopicsLabel: t(CatalogI18nKeys.FilterAppliedTags),
+          formatRemoveTopicLabel: (topic) =>
+            t(CatalogI18nKeys.FilterRemoveTag, { topic }),
+          folders: {
+            button: t(CatalogI18nKeys.FoldersButton),
+            tree: t(CatalogI18nKeys.FoldersTreeLabel),
+            breadcrumb: t(CatalogI18nKeys.FoldersBreadcrumbLabel),
+            showHiddenSegments: t(CatalogI18nKeys.FoldersShowHiddenSegments),
+          },
           browseSettings: {
             title: t(CatalogI18nKeys.BrowseSettingsTitle),
             view: t(CatalogI18nKeys.BrowseSettingsView),
@@ -879,8 +912,8 @@ const CatalogView: FC<Props> = ({
             filtering: t(CatalogI18nKeys.BrowseSettingsFiltering),
             gridView: t(CatalogI18nKeys.BrowseSettingsCards),
             listView: t(CatalogI18nKeys.BrowseSettingsList),
-            clear: t(ButtonsI18nKeys.Clear),
-            apply: t(ButtonsI18nKeys.Apply),
+            topics: t(CatalogI18nKeys.BrowseSettingsTopics),
+            clearAll: t(CatalogI18nKeys.FilterClearAll),
             back: t(ButtonsI18nKeys.Back),
             close: t(ButtonsI18nKeys.Close),
             formatFilterCount: (selected, total) =>

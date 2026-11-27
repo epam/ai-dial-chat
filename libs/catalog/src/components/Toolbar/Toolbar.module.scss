@@ -13,3 +13,7 @@
 .searchField.searchField {
   height: 48px;
 }
+
+.folderCount {
+  color: var(--cat-toolbar-count, var(--text-secondary, #57647a));
+}

@@ -4,6 +4,7 @@ import {
   CredentialsBadgeState,
   getCredentialsBadgeState,
   getCredentialsUiState,
+  CatalogFolderRootKind,
 } from '@epam/ai-dial-catalog';
 import {
   CatalogCreationType,
@@ -79,8 +80,13 @@ const capturedPublishProps: {
     onSortChange?: (key: string) => void;
     filterTopics?: Set<string>;
     onFilterTopicsChange?: (topics: Set<string>) => void;
-    isMyAppsActive?: boolean;
-    onMyAppsActiveChange?: (isActive: boolean) => void;
+    folderRoots?: { kind: string; label: string }[];
+    folderSelection?: { root?: string; path: string[] };
+    onFolderSelectionChange?: (selection: {
+      root?: string;
+      path: string[];
+    }) => void;
+    titles?: { browseTitle?: string; folders?: Record<string, string> };
     activeTab?: string;
     onActiveTabChange?: (tabId: string) => void;
   } | null;
@@ -159,8 +165,10 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     onSortChange,
     filterTopics,
     onFilterTopicsChange,
-    isMyAppsActive,
-    onMyAppsActiveChange,
+    folderRoots,
+    folderSelection,
+    onFolderSelectionChange,
+    titles,
     activeTab,
     onActiveTabChange,
     isFullWidth,
@@ -231,8 +239,13 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     onSortChange?: (key: string) => void;
     filterTopics?: Set<string>;
     onFilterTopicsChange?: (topics: Set<string>) => void;
-    isMyAppsActive?: boolean;
-    onMyAppsActiveChange?: (isActive: boolean) => void;
+    folderRoots?: { kind: string; label: string }[];
+    folderSelection?: { root?: string; path: string[] };
+    onFolderSelectionChange?: (selection: {
+      root?: string;
+      path: string[];
+    }) => void;
+    titles?: { browseTitle?: string; folders?: Record<string, string> };
     activeTab?: string;
     onActiveTabChange?: (tabId: string) => void;
   }) => {
@@ -257,8 +270,10 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
       onSortChange,
       filterTopics,
       onFilterTopicsChange,
-      isMyAppsActive,
-      onMyAppsActiveChange,
+      folderRoots,
+      folderSelection,
+      onFolderSelectionChange,
+      titles,
       activeTab,
       onActiveTabChange,
     };
@@ -760,8 +775,8 @@ describe('CatalogView', () => {
       setSortKey: vi.fn(),
       filterTopics: new Set(),
       setFilterTopics: vi.fn(),
-      isMyAppsActive: false,
-      setIsMyAppsActive: vi.fn(),
+      folderSelection: { path: [] },
+      setFolderSelection: vi.fn(),
     });
     vi.mocked(useAppConfig).mockReturnValue({
       status: UserConfigStatus.Ready,
@@ -1234,7 +1249,7 @@ describe('CatalogView', () => {
   });
 
   describe('sort/filter persistence wiring', () => {
-    it('passes the persisted sortKey, filterTopics, and isMyAppsActive through to Catalog', () => {
+    it('passes the persisted sortKey and folder selection through to Catalog', () => {
       vi.mocked(useDeployments).mockReturnValue({
         items: [{ id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' }],
         selectedItemId: null,
@@ -1257,14 +1272,17 @@ describe('CatalogView', () => {
         setSortKey: vi.fn(),
         filterTopics: new Set(['nlp']),
         setFilterTopics: vi.fn(),
-        isMyAppsActive: true,
-        setIsMyAppsActive: vi.fn(),
+        folderSelection: { root: CatalogFolderRootKind.Personal, path: [] },
+        setFolderSelection: vi.fn(),
       });
 
       render(<CatalogView />);
 
       expect(capturedPublishProps.current?.sortKey).toBe(CatalogSortKey.Newest);
-      expect(capturedPublishProps.current?.isMyAppsActive).toBe(true);
+      expect(capturedPublishProps.current?.folderSelection).toEqual({
+        root: 'personal',
+        path: [],
+      });
     });
 
     it('forwards Catalog sort changes to the persistence hook setter', () => {
@@ -1274,8 +1292,8 @@ describe('CatalogView', () => {
         setSortKey,
         filterTopics: new Set(),
         setFilterTopics: vi.fn(),
-        isMyAppsActive: false,
-        setIsMyAppsActive: vi.fn(),
+        folderSelection: { path: [] },
+        setFolderSelection: vi.fn(),
       });
 
       render(<CatalogView />);
@@ -1284,24 +1302,30 @@ describe('CatalogView', () => {
       expect(setSortKey).toHaveBeenCalledWith(CatalogSortKey.NameAZ);
     });
 
-    it('forwards Catalog My Apps toggle changes to the persistence hook setter', () => {
-      const setIsMyAppsActive = vi.fn();
+    it('forwards Catalog folder changes to the persistence hook setter', () => {
+      const setFolderSelection = vi.fn();
       vi.mocked(useCatalogSortFilterPreference).mockReturnValue({
         sortKey: CatalogSortKey.RecentlyUpdated,
         setSortKey: vi.fn(),
         filterTopics: new Set(),
         setFilterTopics: vi.fn(),
-        isMyAppsActive: false,
-        setIsMyAppsActive,
+        folderSelection: { path: [] },
+        setFolderSelection,
       });
 
       render(<CatalogView />);
-      capturedPublishProps.current?.onMyAppsActiveChange?.(true);
+      capturedPublishProps.current?.onFolderSelectionChange?.({
+        root: 'shared',
+        path: [],
+      });
 
-      expect(setIsMyAppsActive).toHaveBeenCalledWith(true);
+      expect(setFolderSelection).toHaveBeenCalledWith({
+        root: 'shared',
+        path: [],
+      });
     });
 
-    it('does not forward sort/filter/My-Apps controlled props in selector mode', () => {
+    it('does not forward sort/filter/folder controlled props in selector mode', () => {
       render(<CatalogView isSelectorMode onClose={vi.fn()} />);
 
       expect(capturedPublishProps.current?.sortKey).toBeUndefined();
@@ -1310,10 +1334,36 @@ describe('CatalogView', () => {
       expect(
         capturedPublishProps.current?.onFilterTopicsChange,
       ).toBeUndefined();
-      expect(capturedPublishProps.current?.isMyAppsActive).toBeUndefined();
+      expect(capturedPublishProps.current?.folderSelection).toBeUndefined();
       expect(
-        capturedPublishProps.current?.onMyAppsActiveChange,
+        capturedPublishProps.current?.onFolderSelectionChange,
       ).toBeUndefined();
+      expect(capturedPublishProps.current?.folderRoots).toHaveLength(3);
+    });
+
+    it('passes all three folder roots and the All entities title', () => {
+      render(<CatalogView />);
+
+      expect(
+        capturedPublishProps.current?.folderRoots?.map((root) => root.kind),
+      ).toEqual(['personal', 'shared', 'organization']);
+      expect(capturedPublishProps.current?.titles?.browseTitle).toBe(
+        'catalog.allEntities',
+      );
+    });
+
+    it('drops the Personal root while owned items are hidden', () => {
+      vi.mocked(useUiFeature).mockImplementation(
+        (feature) =>
+          DEFAULT_ENABLED_UI_FEATURES.has(feature) ||
+          feature === OverlayFeature.CatalogHideMyApps,
+      );
+
+      render(<CatalogView />);
+
+      expect(
+        capturedPublishProps.current?.folderRoots?.map((root) => root.kind),
+      ).toEqual(['shared', 'organization']);
     });
   });
 

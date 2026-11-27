@@ -145,10 +145,21 @@
       "filtering": "Filtering",
       "cards": "Cards",
       "list": "List",
-      "from": "From",
-      "my": "My",
       "topics": "Topics",
       "filterCount": "{{selected}} of {{total}}"
+    },
+    "filter": {
+      "label": "Filter by topic",
+      "clearAll": "Clear all",
+      "appliedTags": "Applied topics",
+      "removeTag": "Remove {{topic}}"
+    },
+    "allEntities": "All entities",
+    "folders": {
+      "button": "Folders",
+      "treeLabel": "Folders",
+      "breadcrumbLabel": "Folder path",
+      "showHiddenSegments": "Show hidden path segments"
     },
     "details": {
       "ariaLabel": "Item details",

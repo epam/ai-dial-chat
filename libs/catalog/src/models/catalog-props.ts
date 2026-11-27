@@ -12,10 +12,15 @@ import type {
 import { DropdownItem, TabModel } from '@epam/ai-dial-ui-kit';
 import type { ReactNode } from 'react';
 import type { ListViewColumnVisibility } from '../components/ListView/columns';
+import type {
+  CatalogFolderRoot,
+  CatalogFolderSelection,
+} from '../types/catalog-folders';
 import type { CatalogSortKey } from '../types/sort';
 import type { CredentialsLevel } from '../types/toolset-auth';
 import type { CatalogViewMode } from '../types/view-mode';
 import type { CatalogCardRenderProps } from './card-props';
+import type { CatalogFolderLabels } from './catalog-folders';
 import type { CatalogItem } from './catalog-item';
 import type { CatalogStyles } from './catalog-styles';
 import type {
@@ -41,8 +46,8 @@ export interface CatalogEmptyStateContext {
   activeTab: string;
   /** Whether at least one Topics filter value is currently selected. */
   hasTopicFilters: boolean;
-  /** Current state of the "My Apps" filter toggle. */
-  isMyAppsActive: boolean;
+  /** Current folder selection; `{ path: [] }` for All entities. */
+  folderSelection: CatalogFolderSelection;
 }
 
 /** Text labels used by the `Catalog` surface. */
@@ -53,7 +58,7 @@ export interface CatalogTitles {
   createLabel?: string;
   /** Favorites section heading. Default: 'Your Favorites'. */
   favoritesTitle?: string;
-  /** Browse section heading. Default: 'Browse'. */
+  /** Browse section heading while All entities is selected, and the first breadcrumb segment. An empty string also falls back to the default. Default: 'All entities'. */
   browseTitle?: string;
   /** Search input placeholder. Default: 'Search models, tools, agents…'. */
   searchPlaceholder?: string;
@@ -69,12 +74,13 @@ export interface CatalogTitles {
   /** Secondary line under `emptyTitle`, or a function of the active tab returning it. Omitted when not set. */
   emptyDescription?: string | ((activeTab: string) => string);
   /**
-   * Returns the empty-state heading shown while the "My Apps" filter is on, no
-   * search or topic filter is applied and the active tab has nothing to show.
+   * Returns the empty-state heading shown while the Personal folder is
+   * selected, no search or topic filter is applied and the active tab has
+   * nothing to show.
    * Default: () => 'No personal items yet'.
    */
   myAppsEmptyTitle?: (activeTab: string) => string;
-  /** Secondary line of the "My Apps" empty state. Default: "Create your first one, it'll show up right here.". */
+  /** Secondary line of the Personal folder empty state. Default: "Create your first one, it'll show up right here.". */
   myAppsEmptyDescription?: string;
   /** Accessible name and tooltip of the icon-only sort button. Default: 'Sort'. */
   sortLabel?: string;
@@ -107,12 +113,18 @@ export interface CatalogTitles {
    * Toolset → 'Toolsets', Skill → 'Skills', Prompt → 'Prompts'.
    */
   tabLabels?: Partial<Record<CatalogEntityType, string>>;
-  /** Label for the filter button when nothing is filtered. Default: 'From'. */
-  filterFromLabel?: string;
-  /** Label for the "My Apps" filter checkbox. Default: 'My'. */
-  filterMyAppsLabel?: string;
   /** Label for the Topics section inside the filter dropdown. Default: 'Topics'. */
   filterTopicsLabel?: string;
+  /** Accessible name and tooltip of the icon-only topic filter trigger. Default: 'Filter by topic'. */
+  filterLabel?: string;
+  /** Text of the buttons that clear every topic. Default: 'Clear all'. */
+  filterClearAllLabel?: string;
+  /** Accessible name of the applied-topic tag group. Default: 'Applied topics'. */
+  appliedTopicsLabel?: string;
+  /** Returns the accessible name of a tag's remove button. Default: `` (topic) => `Remove ${topic}` ``. */
+  formatRemoveTopicLabel?: (topic: string) => string;
+  /** Text of the folder navigation, merged field by field over `DEFAULT_CATALOG_FOLDER_LABELS`; `browseTitle` also sets `allEntities`. */
+  folders?: Partial<CatalogFolderLabels>;
   /** Placeholder and accessible name of the Create menu's search field. Default: 'Search'. */
   createSearchPlaceholder?: string;
   /** Accessible name of the Create menu search field's clear button. Default: 'Clear search'. */
@@ -649,20 +661,22 @@ export interface CatalogProps {
   /** Called when the user changes the sort option; required to control `sortKey`. */
   onSortChange?: (key: CatalogSortKey) => void;
   /**
-   * Externally-controlled set of active "From" topic filter values. When
+   * Externally-controlled set of active topic filter values. When
    * omitted, `Catalog` manages its own filter state internally, defaulting to
    * an empty set (no topics filtered).
    */
   filterTopics?: Set<string>;
   /** Called when the user applies a new topic filter selection; required to control `filterTopics`. */
   onFilterTopicsChange?: (topics: Set<string>) => void;
+  /** Folder roots listed under All entities, in display order. Default: `DEFAULT_CATALOG_FOLDER_ROOTS`. */
+  folderRoots?: CatalogFolderRoot[];
   /**
-   * Externally-controlled "My Apps" filter toggle. When omitted, `Catalog`
-   * manages its own state internally, defaulting to `false`.
+   * Externally-controlled folder selection. When omitted, `Catalog` manages
+   * its own state internally, defaulting to All entities (`{ path: [] }`).
    */
-  isMyAppsActive?: boolean;
-  /** Called when the user toggles the "My Apps" filter; required to control `isMyAppsActive`. */
-  onMyAppsActiveChange?: (isActive: boolean) => void;
+  folderSelection?: CatalogFolderSelection;
+  /** Called when the user picks a folder; required to control `folderSelection`. */
+  onFolderSelectionChange?: (selection: CatalogFolderSelection) => void;
   /**
    * Externally-controlled active entity-type tab id. When omitted, `Catalog`
    * manages its own tab state internally, defaulting to the first tab

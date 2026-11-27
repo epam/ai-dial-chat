@@ -16,8 +16,7 @@ const labels: OnboardingTargetLabels = {
   addAttachment: 'Add',
   catalogCreate: 'Create',
   catalogViewMode: 'View mode',
-  catalogFilterFrom: 'From',
-  catalogFilterMy: 'My',
+  catalogFilter: 'Filter by topic',
   catalogBrowseSettings: 'Browse settings',
   addToFavorites: 'Add to favorites',
   removeFromFavorites: 'Remove from favorites',
@@ -246,13 +245,15 @@ describe('resolveOnboardingTarget', () => {
   });
 
   describe('catalog browsing', () => {
-    const CatalogPage = ({ filter = 'From' }: { filter?: string }) => (
+    const CatalogPage = () => (
       <main id="main-content">
         <button type="button">Newest</button>
         <section aria-label="Catalog">
-          <button type="button" aria-expanded="false">
-            {filter}
-          </button>
+          <button
+            type="button"
+            aria-expanded="false"
+            aria-label="Filter by topic"
+          />
           <button type="button" aria-haspopup="menu" aria-label="Sort" />
           <article aria-label="GPT-4o">
             <button type="button" aria-label="Remove from favorites" />
@@ -268,7 +269,7 @@ describe('resolveOnboardingTarget', () => {
       render(<CatalogPage />);
       const catalog = screen.getByRole('region', { name: 'Catalog' });
       expect(resolve(OnboardingHintTarget.CatalogFilter)).toBe(
-        within(catalog).getByRole('button', { name: 'From' }),
+        within(catalog).getByRole('button', { name: 'Filter by topic' }),
       );
       expect(resolve(OnboardingHintTarget.CatalogSort)).toBe(
         within(catalog).getByRole('button', { name: 'Sort' }),
@@ -281,15 +282,18 @@ describe('resolveOnboardingTarget', () => {
       );
     });
 
-    it.each(['From: 2 of 5', 'My', 'My · 2'])(
-      'finds the filter while it reads %s',
-      (filter) => {
-        render(<CatalogPage filter={filter} />);
-        expect(resolve(OnboardingHintTarget.CatalogFilter)).toBe(
-          screen.getByRole('button', { name: filter }),
-        );
-      },
-    );
+    it('falls back to the browse-settings button for filtering on a phone', () => {
+      render(
+        <main id="main-content">
+          <section aria-label="Catalog">
+            <button type="button" aria-label="Browse settings" />
+          </section>
+        </main>,
+      );
+      expect(resolve(OnboardingHintTarget.CatalogFilter)).toBe(
+        screen.getByRole('button', { name: 'Browse settings' }),
+      );
+    });
 
     it('falls back to the browse-settings button for sorting on a phone', () => {
       render(

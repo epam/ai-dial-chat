@@ -44,6 +44,8 @@ installing both is required rather than optional.
 `CredentialsUiState`, `ToolsetAuthenticationType`, `CatalogSortKey`,
 `CatalogItem`, `CatalogItemCredentials`, `filterCatalogItems`,
 `filterCatalogItemsByQuery`, `CatalogItemsQuery`, `getTopicOptions`, `sortCatalogItems`, `buildCatalogTabs`, `CATALOG_TAB_ORDER`, `getCatalogItemTabs`,
+`CatalogFolderRootKind`, `CatalogFolderRoot`, `CatalogFolderSelection`, `CatalogFolderLabels`, `CatalogFolderNode`, `CatalogItemFolderPath`,
+`DEFAULT_CATALOG_FOLDER_ROOTS`, `DEFAULT_CATALOG_FOLDER_LABELS`, `buildCatalogFolderTree`, `filterByFolder`, `getCatalogItemFolderPath`, `isFolderSelectionValid`,
 `applyCatalogSelection`,
 `getCredentialsBadgeState`, `getCredentialsUiState`, `getDirectCredentialsLevel`, and `getSignedInLevel` —
 the headless enums and pure item-mapping functions a host can use (e.g. to
@@ -307,15 +309,62 @@ import {
 />;
 ```
 
+#### Folders and breadcrumbs
+
+The Browse heading reads `titles.browseTitle` (default `'All entities'`, also
+used when it is an empty string)
+next to the item count, followed by a Folders control. The control lists a
+folder tree: "All entities", then one node per `folderRoots` entry
+(default `DEFAULT_CATALOG_FOLDER_ROOTS`: Personal, Shared with me,
+Organization), with the subfolders of the items below. An item's root follows
+its flags (`isMyApp` → Personal, else `sharedWithMe` → Shared, else
+Organization); its subfolders are `folder` without a leading root label. Every
+root is listed, even with no items under it. From 768px the control is a
+"Folders" button opening a popover of at most 700px; below it, a round button
+opening a bottom sheet.
+
+Once a folder is picked, the heading becomes the kit `Breadcrumbs` trail
+(All entities › root › …path) with the count after it; every segment but the
+last steps back up. Below 768px the trail collapses its middle once it has four
+or more segments. The listing narrows to the folder and its subfolders, after
+search and topics and before the tab.
+
+The selection is `folderSelection` / `onFolderSelectionChange` when the host
+controls it, otherwise internal state starting at All entities (`{ path: [] }`).
+Its texts are `titles.folders` (`Partial<CatalogFolderLabels>`, defaults in
+`DEFAULT_CATALOG_FOLDER_LABELS`); a non-empty `browseTitle` also sets
+`allEntities`.
+
+```tsx
+import {
+  Catalog,
+  CatalogFolderRootKind,
+  type CatalogFolderRoot,
+  type CatalogFolderSelection,
+} from '@epam/ai-dial-catalog';
+
+const folderRoots: CatalogFolderRoot[] = [
+  { kind: CatalogFolderRootKind.Shared, label: 'Shared with me' },
+  { kind: CatalogFolderRootKind.Organization, label: 'Organization' },
+];
+const [folder, setFolder] = useState<CatalogFolderSelection>({ path: [] });
+
+<Catalog
+  items={items}
+  favorites={favoriteItems}
+  folderRoots={folderRoots}
+  folderSelection={folder}
+  onFolderSelectionChange={setFolder}
+  titles={{ browseTitle: 'All entities', folders: { button: 'Folders' } }}
+/>;
+```
+
 #### Overriding the Browse heading
 
-By default the Browse section's heading is the plain text label
-`titles.browseTitle` (default `'Browse'`) rendered next to the item count. Pass
-`browseHeaderRenderer` to replace that whole slot with any node — e.g. a clickable
-breadcrumb — instead. When supplied, the item count is not rendered alongside
-it, so include it in the node if needed; the host owns click handling and
-visual composition entirely, since the lib has no notion of the underlying
-navigation (a category tree, etc.).
+Pass `browseHeaderRenderer` to replace the heading — the "All entities" label
+or the breadcrumb trail — with any node. When supplied, the item count is not
+rendered alongside it, so include it in the node if needed. The Folders control
+still follows it.
 
 ```tsx
 <Catalog
@@ -469,19 +518,25 @@ Below 768px (`useIsPhone` from `@epam/ai-dial-chat-shared`)
 the Browse toolbar drops the view toggle, the sort button and the filter
 dropdown. In their place, next to the search field, it shows one settings
 button that opens a bottom sheet with View, Sorting and Filtering pages.
-From 768px the title row holds the title alone, and the search row reads
-search, view toggle, sort button, filter. The sort button is icon-only
-(`SortMenuButton` from `@epam/ai-dial-chat-shared`), named and tooltipped by
-`sortLabel` whichever order is applied; its menu checks the applied order.
+From 768px the title row holds the folder heading and the Folders button, and
+the search row reads search, view toggle, sort button, filter. The sort and
+filter buttons are icon-only: the sort (`SortMenuButton` from
+`@epam/ai-dial-chat-shared`) is named by `sortLabel` whichever order is
+applied, the filter by `titles.filterLabel` (default `'Filter by topic'`).
 
-- View and sort apply as soon as they are picked.
-- Filters stay buffered until Apply, as on desktop.
-- The button shows a dot while a topic or the "My" filter is applied.
+- View and sort apply as soon as they are picked, and close the sheet.
+- Topics apply as soon as they are toggled, on the sheet's Filtering page as in
+  the desktop dropdown. Both have a "Clear all" header button and no footer.
+- The settings button shows a dot while a topic is applied.
+- On every breakpoint, applied topics render as removable tags below the
+  search, with a "Clear all" button from three tags.
 
 Each sheet string is an optional entry of `titles.browseSettings`
-(`BrowseSettingsSheetLabels`). `myApps` and `topics` fall back to
-`titles.filterMyAppsLabel` and `titles.filterTopicsLabel`. On desktop, `clear`
-and `apply` also label the filter dropdown's footer.
+(`BrowseSettingsSheetLabels`). `topics` and `clearAll` fall back to
+`titles.filterTopicsLabel` and `titles.filterClearAllLabel`. The tag group and
+the remove buttons are named by `titles.appliedTopicsLabel` (default
+`'Applied topics'`) and `titles.formatRemoveTopicLabel` (default
+``(topic) => `Remove ${topic}` ``).
 
 ```tsx
 import type { BrowseSettingsSheetLabels } from '@epam/ai-dial-catalog';
@@ -525,7 +580,7 @@ nothing. After a search or a topic filter it shows
 `titles.noResultsTitle(query, activeTab)` with `titles.noResultsDescription`;
 with neither applied it shows `titles.emptyTitle` with `titles.emptyDescription`.
 Each of those two is either a string or a `(activeTab) => string` callback, so
-a host can name the tab's entity ("No models yet"). While the "My Apps" filter is on with no search query and no
+a host can name the tab's entity ("No models yet"). While the Personal folder (at any depth) is selected with no search query and no
 topic filter, it instead renders a personal empty state: the heading from
 `titles.myAppsEmptyTitle(activeTab)`, the `titles.myAppsEmptyDescription` line
 and — unless the catalog is read-only or `hideCreateButton` is set — the same
@@ -558,14 +613,14 @@ import { Catalog, type CatalogEmptyStateContext } from '@epam/ai-dial-catalog';
     query,
     activeTab,
     hasTopicFilters,
-    isMyAppsActive,
+    folderSelection,
   }: CatalogEmptyStateContext) =>
     query ? (
       <NoResultsIllustration query={query} />
     ) : (
       <EmptyCollectionIllustration
         activeTab={activeTab}
-        isMyAppsActive={isMyAppsActive}
+        folderRoot={folderSelection.root}
         hasTopicFilters={hasTopicFilters}
       />
     )
@@ -580,7 +635,7 @@ replaces both views' default empty state in the one content area they share,
 so only one instance of the returned node is ever mounted regardless of the
 current view mode. The context reflects `Catalog`'s live, resolved state,
 whether each field is managed internally or via the corresponding controlled
-prop (`activeTab`, `filterTopics`, `isMyAppsActive`). Returning `null` or
+prop (`activeTab`, `filterTopics`, `folderSelection`). Returning `null` or
 `undefined` — or omitting the prop entirely — keeps the default empty state,
 including `titles.noResultsTitle`. Like `titles.noResultsTitle`, the callback
 runs on every render while the result set stays empty (e.g. on every
@@ -792,8 +847,8 @@ Favorite star) keeps its own keys.
 ### CatalogPickerModal
 
 The shell of a picker dialog over catalog items (Add toolset, Change model):
-the header with sort, search and the From filter, and the loading, failure and
-empty states. The list is a `ListView` of the searched, filtered and sorted
+the header with the folder trail and Folders control, sort, search, the topic
+filter and its applied-topic tags, and the loading, failure and empty states. The list is a `ListView` of the searched, filtered and sorted
 items, given `listProps` (everything but `items` and `query`; `ariaLabel`
 defaults to `labels.catalog`). It fills the body below the search and filters
 and scrolls its own rows, with its column header fixed at the top. Mount it
@@ -833,7 +888,14 @@ receives the searched, filtered and sorted items and the search query.
   `footerStart` takes its color from `colors.footerBorder`
   (`CatalogPickerModalColors`), falling back to `--stroke-tertiary`.
 - `headingClassName` sets the type of the heading above the list, defaulting to
-  `'dial-body-semi-text'`.
+  `'dial-body-semi-text'`, and `countClassName` the type of the item count
+  beside it, defaulting to `'dial-tiny-text'`.
+- The topic filter applies on toggle; `labels.topics`, `labels.filter`,
+  `labels.clearAll`, `labels.appliedTopics` and `labels.formatRemoveTopic` name
+  it and its tags. The folder selection is local, starts at All entities and is
+  listed from `folderRoots` (default `DEFAULT_CATALOG_FOLDER_ROOTS`); while a
+  folder is picked the heading is a trail headed by `labels.catalog`.
+  `labels.folders` overrides the folder texts.
 - Once the default list's rows are scrolled down by the list's own height, a
   floating "Scroll to top" button appears at the list's bottom inline-end
   corner. It returns the rows to the first row and focuses search. It is named
@@ -844,7 +906,7 @@ receives the searched, filtered and sorted items and the search query.
 ### AddOnCatalogModal
 
 A picker over `CatalogPickerModal` for several items at once (Add skill, Add toolset, Add agent): the
-same header, search, From filter and states, with a `ListView` in `CatalogSelectionMode.Multiple`. It
+same header, search, topic filter, Folders control and states, and forwards `folderRoots`, with a `ListView` in `CatalogSelectionMode.Multiple`. It
 opens with the ids in `attachedIds` checked; Add calls `onConfirm` with the new full id list, Cancel
 calls only `onClose`. Mount it only while open.
 
@@ -876,7 +938,7 @@ import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 - `listProps` passes further `ListView` props (`columnVisibility`, `isFavoriteVisible`,
   `credentialsBadgeLoggedOutLabel`, …); the selection props are the picker's own.
 - `labels.selectAll` and `labels.selectRow` default to `'Select all'` and `Select <name>`.
-- `headingClassName` is forwarded to `CatalogPickerModal` (default `'dial-body-semi-text'`).
+- `headingClassName` and `countClassName` are forwarded to `CatalogPickerModal` (defaults `'dial-body-semi-text'` and `'dial-tiny-text'`).
 - The list gets `CatalogPickerModal`'s "Scroll to top" button, named by `labels.scrollToTop`.
 
 ### AddOnListItem
@@ -963,15 +1025,60 @@ the card — `focusOutlineColor` on `FavoriteCard`, `styles.colors.focusOutline`
 on `Card` (vars `--fc-focus-outline` / `--cg-focus-outline`, default
 `--stroke-focus`).
 
-### Filter / TopicTag
+### Filter / AppliedTopicTags / TopicTag
 
-Filter sidebar and topic label components.
+`Filter` is the icon-only topic filter: a `GhostIconButton` named by
+`triggerLabel` (default `'Filter by topic'`) with a dot while a topic is
+applied, opening a dropdown whose rows apply on toggle, with a "Clear all"
+(`clearAllLabel`) header button. `AppliedTopicTags` renders the applied topics
+as closable tags, with "Clear all" from three tags, and moves focus to the next
+tag, the previous one or `fallbackFocusRef` on removal. `FilterColors` has
+`buttonFunnel`, `activeDot`, `overlayBackground`, `overlayBorder`,
+`overlayShadow`, `rowLabel` and `sectionLabel`.
 
 ```tsx
-import { Filter, TopicTag } from '@epam/ai-dial-catalog';
+import { AppliedTopicTags, Filter, TopicTag } from '@epam/ai-dial-catalog';
 
-<Filter filters={activeFilters} onChange={setFilters} />
+const triggerRef = useRef<HTMLButtonElement>(null);
+
+<Filter
+  checked={topics}
+  onChange={setTopics}
+  values={topicOptions}
+  triggerRef={triggerRef}
+/>
+<AppliedTopicTags
+  topics={topics}
+  onChange={setTopics}
+  fallbackFocusRef={triggerRef}
+/>
 <TopicTag label="Vision" />
+```
+
+### CatalogFolderTree / FoldersButton
+
+`CatalogFolderTree` is the accessible folder tree (`role="tree"`, one roving
+tab stop, arrow keys follow the reading direction) with "All entities" as its
+first row. `FoldersButton` opens it in a popover from 768px and in a bottom
+sheet below it. Colors: `FolderTreeColors` (`rowHoverBackground`,
+`rowSelectedBackground`) and `FoldersButtonColors` (`label`,
+`overlayBackground`, `overlayBorder`, `overlayShadow`). `rowClassName`
+defaults to `'dial-small-text'` and the button's `labelClassName` to
+`'dial-small-semi-text'`.
+
+```tsx
+import {
+  buildCatalogFolderTree,
+  DEFAULT_CATALOG_FOLDER_ROOTS,
+  FoldersButton,
+} from '@epam/ai-dial-catalog';
+
+const tree = useMemo(
+  () => buildCatalogFolderTree(items, DEFAULT_CATALOG_FOLDER_ROOTS),
+  [items],
+);
+
+<FoldersButton tree={tree} selection={folder} onChange={setFolder} />;
 ```
 
 For the entity-type badge itself, use `EntityTypeLabel` from
@@ -1954,9 +2061,15 @@ import {
   buildCatalogTabs,
   CATALOG_TAB_ORDER,
   filterCatalogItems,
+  buildCatalogFolderTree,
+  CatalogFolderRootKind,
+  DEFAULT_CATALOG_FOLDER_ROOTS,
+  filterByFolder,
   filterCatalogItemsByQuery,
+  getCatalogItemFolderPath,
   getCatalogItemTabs,
   getTopicOptions,
+  isFolderSelectionValid,
   sortCatalogItems,
 } from '@epam/ai-dial-catalog';
 
@@ -1969,15 +2082,25 @@ const filtered = filterCatalogItems(items, 'gpt');
 const sorted = sortCatalogItems(filtered, CatalogSortKey.NameAZ);
 
 /*
- * A toolbar's search, From filter (topics and "My") and sort at once, in the
- * catalog toolbar's order — what `CatalogPickerModal` applies to its items.
+ * A toolbar's search, topics, folder and sort at once, in the catalog
+ * toolbar's order — what `CatalogPickerModal` applies to its items.
  */
 const rows = filterCatalogItemsByQuery(items, {
   search: 'gpt',
   topics: new Set(['Code']),
-  isMyOnly: false,
+  folder: { root: CatalogFolderRootKind.Personal, path: [] },
   sortKey: CatalogSortKey.NameAZ,
 });
+
+/*
+ * The folder model: an item's root and subpath, the tree under the roots, the
+ * items inside a folder, and whether a stored selection still exists.
+ */
+const roots = DEFAULT_CATALOG_FOLDER_ROOTS;
+const place = getCatalogItemFolderPath(items[0], roots);
+const tree = buildCatalogFolderTree(items, roots);
+const inFolder = filterByFolder(items, { root: place.root, path: [] }, roots);
+const isStillThere = isFolderSelectionValid(storedSelection, tree);
 
 /*
  * The ids a picker commits — what `AddOnCatalogModal` hands `onConfirm`:

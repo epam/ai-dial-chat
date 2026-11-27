@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import type { ToolbarStyles } from './toolbar-props';
 
 /** Color overrides for the Create menu's section rows, applied as CSS custom properties with app theme fallbacks. */
 export interface CreateMenuColors {
@@ -46,4 +47,6 @@ export interface CatalogStyles {
   typography?: CatalogTypography;
   /** Height and vertical padding classes of the page heading row. Replaces the default `'h-[64px]'`. */
   headingRowClassName?: string;
+  /** Style overrides of the built-in Browse toolbar, including the Folders control and its tree. */
+  toolbar?: ToolbarStyles;
 }

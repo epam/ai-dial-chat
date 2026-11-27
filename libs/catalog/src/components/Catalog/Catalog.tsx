@@ -13,6 +13,10 @@ import {
   useRef,
   useState,
 } from 'react';
+import {
+  ALL_ENTITIES_FOLDER_SELECTION,
+  DEFAULT_CATALOG_FOLDER_ROOTS,
+} from '../../constants/catalog-folders';
 import { CATALOG_CLASS } from '../../constants/public-class-names';
 import { useCatalogScrollToTop } from '../../hooks/useCatalogScrollToTop/useCatalogScrollToTop';
 import { CatalogItem } from '../../models/catalog-item';
@@ -20,15 +24,22 @@ import type { CatalogProps } from '../../models/catalog-props';
 import type { CatalogItemDetailsFetchResult } from '../../models/item-details-data';
 import type { ListViewHandle } from '../../models/list-props';
 import type { ToolbarProps } from '../../models/toolbar-props';
+import {
+  CatalogFolderRootKind,
+  type CatalogFolderSelection,
+} from '../../types/catalog-folders';
 import { CatalogSortKey } from '../../types/sort';
 import type { CredentialsLevel } from '../../types/toolset-auth';
 import { CatalogViewMode } from '../../types/view-mode';
 import {
-  filterByMyApp,
   filterByTopics,
   filterCatalogItems,
   getTopicOptions,
 } from '../../utils/catalog-filter';
+import {
+  buildCatalogFolderTree,
+  filterByFolder,
+} from '../../utils/catalog-folders';
 import { sortCatalogItems } from '../../utils/catalog-sort';
 import {
   buildCatalogTabs,
@@ -159,8 +170,9 @@ export const Catalog: FC<CatalogProps> = ({
   onSortChange,
   filterTopics: controlledFilterTopics,
   onFilterTopicsChange,
-  isMyAppsActive: controlledIsMyAppsActive,
-  onMyAppsActiveChange,
+  folderRoots = DEFAULT_CATALOG_FOLDER_ROOTS,
+  folderSelection: controlledFolderSelection,
+  onFolderSelectionChange,
   activeTab: controlledActiveTab,
   onActiveTabChange,
   renderEmptyState,
@@ -173,7 +185,7 @@ export const Catalog: FC<CatalogProps> = ({
   const pageTitle = titles?.pageTitle ?? 'Catalog';
   const createLabel = titles?.createLabel ?? 'Create';
   const favoritesTitle = titles?.favoritesTitle ?? 'Your favorites';
-  const browseTitle = titles?.browseTitle ?? 'Browse';
+  const browseTitle = titles?.browseTitle || 'All entities';
   const searchPlaceholder =
     titles?.searchPlaceholder ?? 'Search models, tools, agents…';
   const noResultsTitle = titles?.noResultsTitle ?? (() => 'No items found');
@@ -219,11 +231,12 @@ export const Catalog: FC<CatalogProps> = ({
   const [internalFilters, setInternalFilters] = useState<Set<string>>(
     new Set(),
   );
-  const [internalIsMyAppsActive, setInternalIsMyAppsActive] = useState(false);
+  const [internalFolderSelection, setInternalFolderSelection] =
+    useState<CatalogFolderSelection>(ALL_ENTITIES_FOLDER_SELECTION);
 
   const sortKey = controlledSortKey ?? internalSortKey;
   const filters = controlledFilterTopics ?? internalFilters;
-  const isMyAppsActive = controlledIsMyAppsActive ?? internalIsMyAppsActive;
+  const folderSelection = controlledFolderSelection ?? internalFolderSelection;
 
   const handleSortChange = useCallback(
     (key: string) => {
@@ -242,12 +255,18 @@ export const Catalog: FC<CatalogProps> = ({
     [onFilterTopicsChange],
   );
 
-  const handleMyAppsActiveChange = useCallback(
-    (isActive: boolean) => {
-      setInternalIsMyAppsActive(isActive);
-      onMyAppsActiveChange?.(isActive);
+  const handleFolderSelectionChange = useCallback(
+    (selection: CatalogFolderSelection) => {
+      setInternalFolderSelection(selection);
+      onFolderSelectionChange?.(selection);
     },
-    [onMyAppsActiveChange],
+    [onFolderSelectionChange],
+  );
+
+  // Built from every item, hidden ones included, so it holds still while the user searches or filters.
+  const folderTree = useMemo(
+    () => buildCatalogFolderTree(items, folderRoots),
+    [items, folderRoots],
   );
 
   const filteredItems = useMemo(
@@ -518,19 +537,19 @@ export const Catalog: FC<CatalogProps> = ({
     [filtered, filters],
   );
 
-  const myAppsFiltered = useMemo(
-    () => (isMyAppsActive ? filterByMyApp(topicFiltered) : topicFiltered),
-    [topicFiltered, isMyAppsActive],
+  const folderFiltered = useMemo(
+    () => filterByFolder(topicFiltered, folderSelection, folderRoots),
+    [topicFiltered, folderSelection, folderRoots],
   );
 
   const tabFiltered = useMemo(
     () =>
       activeTab
-        ? myAppsFiltered.filter((item) =>
+        ? folderFiltered.filter((item) =>
             getCatalogItemTabs(item).includes(activeTab as CatalogEntityType),
           )
-        : myAppsFiltered,
-    [myAppsFiltered, activeTab],
+        : folderFiltered,
+    [folderFiltered, activeTab],
   );
 
   const canPrepareList = !isLoading && tabFiltered.length > 0;
@@ -660,14 +679,14 @@ export const Catalog: FC<CatalogProps> = ({
         query,
         activeTab,
         hasTopicFilters: filters.size > 0,
-        isMyAppsActive,
+        folderSelection,
       })
     : undefined;
   /* A tab missing from `createMenuByTab` has no personal entities at all
      (models), so it keeps the default empty state. */
   const isPersonalEmptyStateVisible =
     isResultSetEmpty &&
-    isMyAppsActive &&
+    folderSelection.root === CatalogFolderRootKind.Personal &&
     !query &&
     filters.size === 0 &&
     (createMenuByTab == null ||
@@ -705,7 +724,7 @@ export const Catalog: FC<CatalogProps> = ({
   }
 
   const toolbarProps: ToolbarProps = {
-    totalCount: myAppsFiltered.length,
+    totalCount: folderFiltered.length,
     viewMode,
     onViewModeChange: handleViewModeChange,
     onViewModeIntent: handleViewModeIntent,
@@ -725,12 +744,17 @@ export const Catalog: FC<CatalogProps> = ({
     filters,
     onFiltersChange: handleFiltersChange,
     filterValues: allFilterValues,
-    isMyAppsActive,
-    onMyAppsChange: handleMyAppsActiveChange,
-    filterFromLabel: titles?.filterFromLabel,
-    filterMyAppsLabel: titles?.filterMyAppsLabel,
     filterTopicsLabel: titles?.filterTopicsLabel,
+    filterLabel: titles?.filterLabel,
+    filterClearAllLabel: titles?.filterClearAllLabel,
+    appliedTopicsLabel: titles?.appliedTopicsLabel,
+    formatRemoveTopicLabel: titles?.formatRemoveTopicLabel,
+    folderTree,
+    folderSelection,
+    onFolderSelectionChange: handleFolderSelectionChange,
+    folderLabels: titles?.folders,
     browseSettingsLabels: titles?.browseSettings,
+    styles: catalogStyles?.toolbar,
   };
 
   return (
@@ -856,7 +880,7 @@ export const Catalog: FC<CatalogProps> = ({
                 id: tab.id,
                 label:
                   typeof tab.label === 'string' ? tab.label : String(tab.label),
-                count: myAppsFiltered.filter((item) =>
+                count: folderFiltered.filter((item) =>
                   getCatalogItemTabs(item).includes(
                     tab.id as CatalogEntityType,
                   ),

@@ -32,10 +32,8 @@ export interface OnboardingTargetLabels {
   catalogCreate: string;
   /** The catalog's grid/list view switch. */
   catalogViewMode: string;
-  /** The catalog filter's label while nothing is filtered ("From"). */
-  catalogFilterFrom: string;
-  /** The catalog filter's label while only the user's own items are shown ("My"). */
-  catalogFilterMy: string;
+  /** The catalog's icon-only topic filter trigger ("Filter by topic"). */
+  catalogFilter: string;
   /** The phone-only button that opens the catalog's view, sort and filter sheet. */
   catalogBrowseSettings: string;
   /** A catalog card's star while the item is not a favorite. */
@@ -377,17 +375,11 @@ const buildResolvers = (
         (element) =>
           element.getAttribute('aria-label') === labels.catalogViewMode,
       ),
-    /* The trigger is named after the applied filter: "From", "From: 2 of 5",
-     * "My" or "My · 2". */
+    /* The icon-only trigger keeps one name whatever is applied; on a phone,
+     * filtering lives in the browse-settings sheet. */
     [OnboardingHintTarget.CatalogFilter]: (labels) =>
-      findControlBy(
-        catalogRegions(labels),
-        (name) =>
-          name === labels.catalogFilterFrom ||
-          name.startsWith(`${labels.catalogFilterFrom}: `) ||
-          name === labels.catalogFilterMy ||
-          name.startsWith(`${labels.catalogFilterMy} · `),
-      ),
+      findControl(catalogRegions(labels), labels.catalogFilter) ??
+      findControl(catalogRegions(labels), labels.catalogBrowseSettings),
     /* The icon-only trigger is named "Sort"; on a phone, sorting lives in the
      * browse-settings sheet. */
     [OnboardingHintTarget.CatalogSort]: (labels) =>

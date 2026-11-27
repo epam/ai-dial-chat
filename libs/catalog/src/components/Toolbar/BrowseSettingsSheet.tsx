@@ -3,10 +3,9 @@ import {
   BottomSheet,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
-  GhostButton,
+  LinkButton,
   MenuItem,
   MenuItemMark,
-  PrimaryButton,
   SelectOption,
 } from '@epam/ai-dial-ui-kit';
 import {
@@ -42,14 +41,10 @@ export interface BrowseSettingsSheetProps {
   onSortChange?: (sortKey: string) => void;
   /** Applied topic filters. */
   filters: Set<string>;
-  /** Called with the topics on Apply or Clear. */
+  /** Called with the topics on every toggle and on "Clear all". */
   onFiltersChange: (filters: Set<string>) => void;
   /** All available topics. */
   filterValues?: Set<string>;
-  /** Whether the "My" filter is applied. */
-  isMyAppsActive?: boolean;
-  /** Called with the "My" state on Apply or Clear. */
-  onMyAppsChange?: (isActive: boolean) => void;
   /** Sheet text. */
   labels: BrowseSettingsSheetLabels;
   /** Typography overrides shared with the desktop filter. */
@@ -66,8 +61,8 @@ const chevron = (
 );
 
 /** Mobile bottom sheet that drills into View, Sorting and Filtering pages for the catalog browse section. */
-/* View and sort apply on pick; filters stay buffered until Apply, like the
-   desktop `Filter` dropdown. */
+/* View and sort apply on pick and close the sheet; topics apply on toggle and
+   keep the Filtering page open, like the desktop `Filter` dropdown. */
 export const BrowseSettingsSheet: FC<BrowseSettingsSheetProps> = ({
   open,
   onClose,
@@ -79,46 +74,24 @@ export const BrowseSettingsSheet: FC<BrowseSettingsSheetProps> = ({
   filters,
   onFiltersChange,
   filterValues,
-  isMyAppsActive,
-  onMyAppsChange,
   labels,
   typography,
 }) => {
   const [page, setPage] = useState(BrowseSettingsPage.Root);
-  const [pendingChecked, setPendingChecked] = useState<Set<string>>(
-    () => new Set(),
-  );
-  const [pendingMyApps, setPendingMyApps] = useState(false);
 
   const topics = useMemo(
     () => (filterValues != null ? [...filterValues].sort() : []),
     [filterValues],
   );
   const hasSort = sortOptions != null && sortOptions.length > 0;
-  const appliedFilterCount = filters.size + (isMyAppsActive ? 1 : 0);
+  const appliedFilterCount = filters.size;
 
   const handleClose = () => {
     setPage(BrowseSettingsPage.Root);
     onClose();
   };
 
-  const openFiltering = () => {
-    setPendingChecked(new Set(filters));
-    setPendingMyApps(isMyAppsActive ?? false);
-    setPage(BrowseSettingsPage.Filtering);
-  };
-
-  const handleApply = () => {
-    onFiltersChange(pendingChecked);
-    onMyAppsChange?.(pendingMyApps);
-    handleClose();
-  };
-
-  const handleClear = () => {
-    onFiltersChange(new Set());
-    onMyAppsChange?.(false);
-    handleClose();
-  };
+  const handleClearAll = () => onFiltersChange(new Set());
 
   const viewOptions = [
     {
@@ -154,7 +127,7 @@ export const BrowseSettingsSheet: FC<BrowseSettingsSheetProps> = ({
       backAriaLabel={labels.back}
       closeAriaLabel={labels.close}
       onClose={handleClose}
-      /* The filter page keeps its Clear/Apply footer pinned while the topics
+      /* The filter page keeps its "Clear all" header pinned while the topics
          scroll, so the body becomes a column with one scrolling child. */
       bodyClassName={mergeClasses(isFiltering && 'flex flex-col')}
     >
@@ -182,14 +155,11 @@ export const BrowseSettingsSheet: FC<BrowseSettingsSheetProps> = ({
             label={labels.filtering}
             description={
               appliedFilterCount > 0
-                ? labels.formatFilterCount(
-                    appliedFilterCount,
-                    topics.length + 1,
-                  )
+                ? labels.formatFilterCount(appliedFilterCount, topics.length)
                 : undefined
             }
             trailing={chevron}
-            onClick={openFiltering}
+            onClick={() => setPage(BrowseSettingsPage.Filtering)}
           />
         </div>
       )}
@@ -241,76 +211,48 @@ export const BrowseSettingsSheet: FC<BrowseSettingsSheetProps> = ({
 
       {isFiltering && (
         <>
+          <div className="flex shrink-0 items-center gap-2 px-[18px] pt-3 pb-1">
+            <span
+              className={mergeClasses(
+                typography?.filterSectionLabelClassName ??
+                  'dial-tiny-lead-semi-text',
+                filterStyles.sectionLabel,
+              )}
+              aria-hidden
+            >
+              {labels.topics}
+            </span>
+            <LinkButton
+              label={labels.clearAll}
+              className="ms-auto"
+              disabled={filters.size === 0}
+              onClick={handleClearAll}
+            />
+          </div>
           <div
             role="menu"
             aria-label={labels.filtering}
             className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-2"
           >
-            <MenuItem
-              role="menuitemcheckbox"
-              aria-checked={pendingMyApps}
-              mark={MenuItemMark.Checkbox}
-              selected={pendingMyApps}
-              label={labels.myApps}
-              labelClassName={filterStyles.rowLabel}
-              className="shrink-0"
-              onClick={() => setPendingMyApps(!pendingMyApps)}
-            />
-            {topics.length > 0 && (
-              <>
-                <div
-                  role="separator"
-                  className={mergeClasses('my-1 h-px', filterStyles.divider)}
-                  aria-hidden
-                />
-                <div
-                  className={mergeClasses(
-                    'px-[10px] pt-[10px] pb-1',
-                    typography?.filterSectionLabelClassName ??
-                      'dial-tiny-lead-semi-text',
-                    filterStyles.sectionLabel,
+            {topics.map((topic) => {
+              const isChecked = filters.has(topic);
+              return (
+                <MenuItem
+                  key={topic}
+                  role="menuitemcheckbox"
+                  aria-checked={isChecked}
+                  mark={MenuItemMark.Checkbox}
+                  selected={isChecked}
+                  label={topic}
+                  labelClassName={mergeClasses(
+                    filterStyles.rowLabel,
+                    typography?.filterButtonClassName,
                   )}
-                  aria-hidden
-                >
-                  {labels.topics}
-                </div>
-                {topics.map((topic) => {
-                  const isChecked = pendingChecked.has(topic);
-                  return (
-                    <MenuItem
-                      key={topic}
-                      role="menuitemcheckbox"
-                      aria-checked={isChecked}
-                      mark={MenuItemMark.Checkbox}
-                      selected={isChecked}
-                      label={topic}
-                      labelClassName={filterStyles.rowLabel}
-                      className="shrink-0"
-                      onClick={() =>
-                        setPendingChecked(toggleTopic(topic, pendingChecked))
-                      }
-                    />
-                  );
-                })}
-              </>
-            )}
-          </div>
-          <div
-            className={mergeClasses(
-              'flex shrink-0 items-center gap-3 px-4 py-3',
-              filterStyles.footer,
-            )}
-          >
-            <GhostButton
-              label={labels.clear}
-              className="flex-1"
-              onClick={handleClear}
-            />
-            <PrimaryButton
-              label={labels.apply}
-              className="flex-1"
-              onClick={handleApply}
-            />
+                  className="shrink-0"
+                  onClick={() => onFiltersChange(toggleTopic(topic, filters))}
+                />
+              );
+            })}
           </div>
         </>
       )}

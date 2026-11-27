@@ -63,7 +63,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
 vi.mock('@tabler/icons-react', () => ({
   IconAdjustmentsHorizontal: () => null,
   IconChevronRight: () => null,
-  IconFilter: () => null,
+  IconFilter2: () => null,
   IconX: () => null,
   IconChevronDown: () => null,
   IconLayoutGrid: () => null,
@@ -129,7 +129,7 @@ describe('Toolbar — public class names', () => {
     renderToolbar();
 
     expect(
-      closestWithClass(screen.getByText('Browse'), CATALOG_CLASS.toolbar),
+      closestWithClass(screen.getByText('All entities'), CATALOG_CLASS.toolbar),
     ).toBeTruthy();
   });
 });
