@@ -95,9 +95,12 @@ export const useMcpAppTools = (
   /* The host's details may still describe a previously selected deployment. */
   const activeDetails =
     deploymentDetails?.id === deployment?.id ? deploymentDetails : undefined;
+  /* Keyed by value: a new but equal `deploymentDetails` object must not re-run discovery. */
+  const dialLoopToolsetIdsKey = getDialLoopToolsetIds(activeDetails).join('\n');
   const dialLoopToolsetIds = useMemo(
-    () => getDialLoopToolsetIds(activeDetails),
-    [activeDetails],
+    () =>
+      dialLoopToolsetIdsKey === '' ? [] : dialLoopToolsetIdsKey.split('\n'),
+    [dialLoopToolsetIdsKey],
   );
   const hasDialLoopToolCalls = useMemo(
     () =>

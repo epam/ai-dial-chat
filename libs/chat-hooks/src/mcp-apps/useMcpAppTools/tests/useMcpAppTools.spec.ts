@@ -166,8 +166,9 @@ describe('useMcpAppTools DIAL loop discovery', () => {
 
   it('lists the configured toolsets once a message reports a stage tool call', async () => {
     const client = makeClient();
+    const details = makeDetails(LOOP_ID);
     const { result } = renderHook(() =>
-      useMcpAppTools(client, loopApp, stageMessages, [], makeDetails(LOOP_ID)),
+      useMcpAppTools(client, loopApp, stageMessages, [], details),
     );
 
     await waitFor(() => expect(result.current).toHaveLength(1));
@@ -176,6 +177,17 @@ describe('useMcpAppTools DIAL loop discovery', () => {
       toolName: 'show_entity_card',
       discovery: McpAppToolDiscovery.Configured,
     });
+  });
+
+  it('queries the configured toolsets once when the details object is recreated on every render', async () => {
+    const client = makeClient();
+    const { result } = renderHook(() =>
+      useMcpAppTools(client, loopApp, stageMessages, [], makeDetails(LOOP_ID)),
+    );
+
+    await waitFor(() => expect(result.current).toHaveLength(1));
+    await Promise.resolve();
+    expect(client.listAppTools).toHaveBeenCalledOnce();
   });
 
   it('ignores details that belong to another deployment', async () => {
