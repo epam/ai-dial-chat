@@ -54,6 +54,14 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => ({
         <button
           type="button"
           onClick={() =>
+            props.onDestinationChange({ rootKey: 'files', path: ['archive'] })
+          }
+        >
+          Pick archive
+        </button>
+        <button
+          type="button"
+          onClick={() =>
             void props
               .onCreateFolder('files', ['reports'], 'archive')
               .catch(() => undefined)
@@ -207,13 +215,14 @@ describe('FileManagerDestinationPanel', () => {
     ).toBe('Source folder');
   });
 
-  it('never disables a Copy destination', () => {
+  it('gives the source folder its own reason for Copy as well', () => {
     renderPanel(makeRequest(DestinationFolderMode.Copy));
+    const { getDisabledReason } = lastPanelProps();
+    expect(getDisabledReason?.({ rootKey: 'files', path: ['reports'] })).toBe(
+      'Source folder',
+    );
     expect(
-      lastPanelProps().getDisabledReason?.({
-        rootKey: 'files',
-        path: ['reports'],
-      }),
+      getDisabledReason?.({ rootKey: 'files', path: ['archive'] }),
     ).toBeUndefined();
   });
 
@@ -238,7 +247,7 @@ describe('FileManagerDestinationPanel', () => {
     ).toBe(true);
   });
 
-  it('disables Move but not Copy while the source folder is the destination', () => {
+  it('disables Move and Copy while the source folder is the destination', () => {
     const { unmount } = renderPanel(makeRequest(DestinationFolderMode.Move));
     expect(
       (screen.getByRole('button', { name: 'Move here' }) as HTMLButtonElement)
@@ -250,7 +259,7 @@ describe('FileManagerDestinationPanel', () => {
     expect(
       (screen.getByRole('button', { name: 'Copy here' }) as HTMLButtonElement)
         .disabled,
-    ).toBe(false);
+    ).toBe(true);
   });
 
   it('keeps the primary button disabled while the destination is loading', () => {
@@ -266,11 +275,15 @@ describe('FileManagerDestinationPanel', () => {
   it('confirms with the destination and its loaded items, then finishes', async () => {
     const request = makeRequest(DestinationFolderMode.Copy);
     const onFinish = vi.fn();
-    renderPanel(request, { onFinish });
+    renderPanel(request, {
+      onFinish,
+      loadedPaths: new Set([...loadedFolders, '/My files/archive/']),
+    });
 
+    await userEvent.click(screen.getByRole('button', { name: 'Pick archive' }));
     await userEvent.click(screen.getByRole('button', { name: 'Copy here' }));
 
-    expect(request.confirm).toHaveBeenCalledWith('/My files/reports', [file]);
+    expect(request.confirm).toHaveBeenCalledWith('/My files/archive', []);
     expect(onFinish).toHaveBeenCalledOnce();
   });
 
