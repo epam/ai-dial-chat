@@ -4526,6 +4526,12 @@ export interface DeploymentFeaturesDetailsDto {
    */
   responsesApi?: boolean;
   /**
+   * Supports Anthropic Messages, derived from DIAL Core declared-interface metadata
+   * @type {boolean}
+   * @memberof DeploymentFeaturesDetailsDto
+   */
+  anthropicMessages?: boolean;
+  /**
    * Supports custom skills in chat requests
    * @type {boolean}
    * @memberof DeploymentFeaturesDetailsDto
@@ -7178,6 +7184,12 @@ export interface ModelCatalogEntryDto {
    * @memberof ModelCatalogEntryDto
    */
   catalogProperties?: ModelCatalogPropertiesDto;
+  /**
+   * Normalized supported API names from DIAL Core declarations, with legacy OpenAI fallback when metadata is unavailable; no interface defaults or headers
+   * @type {Array<string>}
+   * @memberof ModelCatalogEntryDto
+   */
+  supportedInterfaces?: Array<string>;
 }
 /**
  *

@@ -9,6 +9,7 @@ import type {
 import {
   type CatalogDetailsApi,
   type DeploymentLimitsLabels,
+  type DeploymentConnectLabels,
   deriveAvailableTabIds,
   deriveFavoriteItems,
   filterCatalogItemsBySelector,
@@ -155,6 +156,14 @@ export const useCatalogItems = ({
 
   const skillOverviewLabels = useMemo(() => buildSkillOverviewLabels(t), [t]);
   const entityDetailsLabels = useMemo(() => buildEntityDetailsLabels(t), [t]);
+  const deploymentConnectLabels: DeploymentConnectLabels = useMemo(
+    () => ({
+      chatCompletions: t(CatalogI18nKeys.DetailsApiChatCompletions),
+      responses: t(CatalogI18nKeys.DetailsApiResponses),
+      anthropicMessages: t(CatalogI18nKeys.DetailsApiAnthropicMessages),
+    }),
+    [t],
+  );
 
   const deploymentLimitsLabels: DeploymentLimitsLabels = useMemo(
     () => ({
@@ -215,6 +224,7 @@ export const useCatalogItems = ({
       promptOverviewLabels,
       deploymentLimitsLabels,
       entityDetailsLabels,
+      deploymentConnectLabels,
     });
 
   const catalogItems = useMemo(() => {

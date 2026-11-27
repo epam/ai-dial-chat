@@ -1089,6 +1089,17 @@ is not configured, and expose `config.modelCatalogAvailable` on
   the allowlist on any route, so set a model's provider in Core's top-level
   `provider` field instead. Entries without a string `id` are dropped. The BFF
   adds no per-user flag.
+- **Supported APIs.** Each catalog entry has optional `supportedInterfaces`,
+  normalized from object-valued Core `interface_configs` descriptors or
+  equivalent canonical `interfaces` names. Recognized names are
+  `openaiChatCompletions`, `openaiEmbeddings`, `openaiResponses` and
+  `anthropicMessages`, deduplicated in that order. Unknown names and malformed
+  descriptors never activate an API. If declaration metadata is unavailable,
+  boolean legacy `features.chat_completion`/`features.responses_api` provide
+  an OpenAI-only fallback; otherwise the field is omitted. Valid empty metadata
+  stays `[]`. List and cached detail expose identical values without an extra
+  Core lookup. Raw `interface_configs`, defaults, headers and upstream addresses
+  are not copied. The generated client calls the field `supportedInterfaces`.
 - **Hidden models.** Models whose `description_keywords` contain a
   `HIDDEN_ENTITY_TAGS` tag are left out before the list is cached, with the same
   match as `isHidden` on `/api/v1/deployments`, so the catalog and the Chat
@@ -1110,6 +1121,34 @@ is not configured, and expose `config.modelCatalogAvailable` on
 - **Privacy.** Signed-in users see the names, descriptions, features, capabilities,
   attachment types, pricing and limits of models they cannot use. Enable the key
   only where that is acceptable.
+
+### Deployment API discovery and Connect examples
+
+`GET /api/v1/deployments/{deployment}/details` exposes optional
+`modelDetails.features.anthropicMessages` (and the application equivalent)
+from Core's `interface_configs.anthropicMessages` or equivalent declared API
+metadata. A declaration can supply features even when Core omits its legacy
+`features` object. Explicit OpenAI booleans retain their values; missing or
+non-boolean flags fall back only to their own interface declaration. Missing
+Messages metadata never becomes support through an `anthropic.*` ID or
+provider. No raw interface settings are added to this response.
+
+Chat's Connect tab uses the configured `dialCoreExternalUrl` plus
+`/anthropic/v1/messages` and the selected deployment ID in the JSON body:
+
+```sh
+curl -X POST 'https://dial.example.com/anthropic/v1/messages' \
+  -H 'Content-Type: application/json' \
+  -H 'Api-Key: <key>' \
+  -H 'anthropic-version: 2023-06-01' \
+  -d '{"model":"selected-deployment","max_tokens":128,"messages":[{"role":"user","content":"Hello"}]}'
+```
+
+Replace the base, deployment ID and caller's DIAL API key. Do not use
+`MODEL_CATALOG_API_KEY`, a provider key or `X-UPSTREAM-*` headers in this
+example: Core owns upstream authentication and routing. The entry is shown
+only when advertised, including Messages-only deployments; it is not a live
+health/access probe. Conversation generation still uses its existing protocols.
 
 ### Custom Core API operations
 

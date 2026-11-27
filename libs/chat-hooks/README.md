@@ -4660,9 +4660,9 @@ normalizeDeploymentId('applications/bucket/My%20App__1.0');
 // 'applications/bucket/My%20App__1.0'
 ```
 
-### buildChatCompletionsUrl / buildResponsesUrl / buildDeploymentConnectApi
+### buildChatCompletionsUrl / buildResponsesUrl / buildAnthropicMessagesUrl / buildDeploymentConnectApi
 
-Builds the "Connect" tab's Chat Completions and/or Responses API endpoint entries for a model or application deployment, based on which generation APIs it reports supporting.
+Builds the "Connect" tab's independently gated Chat Completions, Responses and Anthropic Messages entries for a model or application deployment. The host supplies the external Core base; the helper reads no configuration, credentials or provider information. Messages-only support produces one endpoint and keeps Connect available; no supported generation API returns `undefined`.
 
 ```ts
 import { buildDeploymentConnectApi } from '@epam/ai-dial-chat-hooks';
@@ -4670,8 +4670,13 @@ import { buildDeploymentConnectApi } from '@epam/ai-dial-chat-hooks';
 const api = buildDeploymentConnectApi(baseUrl, deploymentId, {
   hasChatCompletion: true,
   hasResponsesApi: false,
+  hasAnthropicMessages: true,
 });
 ```
+
+`buildAnthropicMessagesUrl(baseUrl)` appends `/anthropic/v1/messages`, trims the existing trailing slash, and preserves base-relative behavior when the host supplies an empty base. Its cURL example contains the selected deployment ID, `max_tokens: 128`, user `messages`, `Content-Type: application/json`, a caller-owned DIAL `Api-Key` placeholder and `anthropic-version: 2023-06-01`. JSON and shell quoting preserve the supplied ID safely; Core supplies upstream authentication/routing. This does not route Chat conversations through the Messages protocol.
+
+The optional fourth argument is `Partial<DeploymentConnectLabels>`: `chatCompletions`, `responses` and `anthropicMessages`, with the defaults "Chat Completions", "Responses" and "Anthropic Messages". `DEFAULT_DEPLOYMENT_CONNECT_LABELS` exports these English defaults. Hosts pass translated values; existing three-argument calls stay compatible.
 
 ### McpResourceKind / resolveMcpResourceKind / buildConnectApi / buildToolsetMcpUrl / buildApplicationMcpUrl
 
@@ -5241,6 +5246,7 @@ const { onFetchDetails, onLoadContentFile, onLoadSkillDetailsFile } =
     promptOverviewLabels, // PromptOverviewLabels
     deploymentLimitsLabels, // DeploymentLimitsLabels
     entityDetailsLabels, // optional Partial<EntityDetailsLabels>, memoised
+    deploymentConnectLabels, // optional Partial<DeploymentConnectLabels>, memoised
   });
 
 // Fetch full details for a catalog item (returns undefined on failure)
@@ -5259,15 +5265,16 @@ const { bytes, mimeType } = await onLoadSkillDetailsFile(fileId);
 
 **Options** (`UseCatalogItemDetailsOptions`):
 
-| Name                     | Type                          | Description                                                  |
-| ------------------------ | ----------------------------- | ------------------------------------------------------------ |
-| `api`                    | `CatalogDetailsApi`           | Host-configured API adapter.                                 |
-| `skills`                 | `SkillMetadataItemDto[]`      | All skills visible to the user (personal + shared + public). |
-| `isAdmin`                | `boolean`                     | Whether the user has admin privileges.                       |
-| `dialCoreExternalUrl`    | `string \| null \| undefined` | DIAL Core external base URL for the Connect tab.             |
-| `skillOverviewLabels`    | `SkillOverviewLabels`         | Labels for skill overview sections.                          |
-| `promptOverviewLabels`   | `PromptOverviewLabels`        | Labels for prompt overview sections.                         |
-| `deploymentLimitsLabels` | `DeploymentLimitsLabels`      | Labels for the deployment limits table.                      |
+| Name                      | Type                               | Description                                                  |
+| ------------------------- | ---------------------------------- | ------------------------------------------------------------ |
+| `api`                     | `CatalogDetailsApi`                | Host-configured API adapter.                                 |
+| `skills`                  | `SkillMetadataItemDto[]`           | All skills visible to the user (personal + shared + public). |
+| `isAdmin`                 | `boolean`                          | Whether the user has admin privileges.                       |
+| `dialCoreExternalUrl`     | `string \| null \| undefined`      | DIAL Core external base URL for the Connect tab.             |
+| `skillOverviewLabels`     | `SkillOverviewLabels`              | Labels for skill overview sections.                          |
+| `promptOverviewLabels`    | `PromptOverviewLabels`             | Labels for prompt overview sections.                         |
+| `deploymentLimitsLabels`  | `DeploymentLimitsLabels`           | Labels for the deployment limits table.                      |
+| `deploymentConnectLabels` | `Partial<DeploymentConnectLabels>` | Optional translated generation API names; English defaults.  |
 
 **Returns** (`UseCatalogItemDetailsResult`):
 

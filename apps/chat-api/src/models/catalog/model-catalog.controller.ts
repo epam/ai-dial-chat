@@ -31,6 +31,7 @@ export class ModelCatalogController {
       "including models the caller's own roles cannot access. Display data only: " +
       'GET /api/v1/models still decides what the user can use, and Core invocation ' +
       'settings (defaults, responses_defaults, max_retry_attempts, tokenizer_model) are omitted. ' +
+      'supportedInterfaces contains normalized advertised API names, without interface defaults or headers. ' +
       'Models whose description_keywords contain a HIDDEN_ENTITY_TAGS tag are omitted, ' +
       'as in the Chat Catalog. ' +
       'One server-side cache entry, shared by all users, is kept for 5 minutes.',
@@ -67,6 +68,7 @@ export class ModelCatalogController {
     summary: 'Get a model from the catalog',
     description:
       'Returns one model from the cached model catalog, without a separate DIAL Core call. ' +
+      'Includes the same normalized supportedInterfaces metadata as the list entry. ' +
       'A model hidden from the catalog key answers 404, never 403, so its existence is not revealed. ' +
       'A model omitted through HIDDEN_ENTITY_TAGS also answers 404.',
   })

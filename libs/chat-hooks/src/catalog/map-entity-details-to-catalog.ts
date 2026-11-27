@@ -566,6 +566,7 @@ interface DeploymentCapabilities {
   hasConfiguration?: boolean;
   hasChatCompletion?: boolean;
   hasResponsesApi?: boolean;
+  hasAnthropicMessages?: boolean;
   hasSkills?: boolean;
   reasoningEfforts?: string[];
 }
@@ -594,6 +595,7 @@ const mapFeaturesToCapabilities = (
     hasConfiguration: features.hasConfigurationSchema,
     hasChatCompletion: features.chatCompletion,
     hasResponsesApi: features.responsesApi,
+    hasAnthropicMessages: features.anthropicMessages,
     hasSkills: features.skillsSupported,
     reasoningEfforts: features.reasoningEfforts,
   };

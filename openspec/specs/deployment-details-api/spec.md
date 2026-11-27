@@ -199,9 +199,11 @@ This closes a race observed as an unstable toolset login/logout indicator: a det
   - `features?: DeploymentFeaturesDetailsDto`
   - `catalogProperties?: ModelCatalogPropertiesDto`
   - `createdAt?: number`
-- `DeploymentFeaturesDetailsDto` — shared feature-flag shape reused by all three detail types (DIAL Core's runtime `features` payload extends one common schema): `rate`, `mcp`, `tokenize`, `truncatePrompt`, `hasConfigurationSchema` (named to avoid an OpenAPI-generator collision with the generated client's own `Configuration` runtime class — the raw field is `configuration`), `systemPrompt`, `tools`, `seed`, `urlAttachments`, `folderAttachments`, `allowResume`, `accessibleByPerRequestKey`, `contentParts`, `temperature`, `cache`, `autoCaching`, `parallelToolCalls`, `assistantAttachmentsInRequest`, `chatCompletion`, `responsesApi`, `skillsSupported` (from DIAL Core's `skills_supported`, PR #1976 — whether the deployment accepts custom skills), `maxTokensSupported`, `maxCompletionTokensSupported`, `customTemperatureSupported`, `reasoningEfforts?: string[]` — all read defensively off the raw untyped payload (`mapDeploymentFeatures` in `deployments/utils/deployment-mapper.util.ts`) since the SDK's typed `DeploymentFeatures` shape declares fewer flags than DIAL Core actually returns. `skillsSupported` follows the same defensive boolean rule as its neighbors: absent or non-boolean source values map to `undefined`, never throw.
+- `DeploymentFeaturesDetailsDto` — shared feature-flag shape reused by all three detail types (DIAL Core's runtime `features` payload extends one common schema): `rate`, `mcp`, `tokenize`, `truncatePrompt`, `hasConfigurationSchema` (named to avoid an OpenAPI-generator collision with the generated client's own `Configuration` runtime class — the raw field is `configuration`), `systemPrompt`, `tools`, `seed`, `urlAttachments`, `folderAttachments`, `allowResume`, `accessibleByPerRequestKey`, `contentParts`, `temperature`, `cache`, `autoCaching`, `parallelToolCalls`, `assistantAttachmentsInRequest`, `chatCompletion`, `responsesApi`, `anthropicMessages`, `skillsSupported` (from DIAL Core's `skills_supported`, PR #1976 — whether the deployment accepts custom skills), `maxTokensSupported`, `maxCompletionTokensSupported`, `customTemperatureSupported`, `reasoningEfforts?: string[]` — all read defensively off the raw untyped payload (`mapDeploymentFeatures` in `deployments/utils/deployment-mapper.util.ts`) since the SDK's typed `DeploymentFeatures` shape declares fewer flags than DIAL Core actually returns. `skillsSupported` follows the same defensive boolean rule as its neighbors: absent or non-boolean source values map to `undefined`, never throw.
 
 The three model fields `provider`, `deprecationDate` and `endOfService` SHALL be read from the typed `ModelData` of `@epam/ai-dial-typescript-sdk` (`0.3.0-dev.3` or later), with no cast and no defensive `getString` read. Each SHALL be absent from the JSON body when Core omits it. Regenerating `@epam/ai-dial-chat-api-client` SHALL add the three optional properties to `ModelDetailsDto` and remove `provider` from `ModelCatalogPropertiesDto`. `operationId: getDeploymentDetails` and `DeploymentsApi.getDeploymentDetails({ deployment })` do not change. The response still uses the user-scoped details cache (`deployments:details:<userSub>:<deployment>`, 60-second TTL), with unchanged invalidation.
+
+For model/application details, `anthropicMessages` SHALL be derived from declared-interface metadata rather than a legacy features flag. Explicit boolean `chat_completion`/`responses_api` values SHALL remain authoritative for their respective feature fields; when an individual flag is missing or malformed, only that API's own canonical declaration SHALL supply its fallback. If declarations supply any feature value, the features object SHALL exist even when the legacy features object does not. Toolset feature semantics SHALL remain unchanged. The additional generated property is optional `anthropicMessages`?: boolean; `getDeploymentDetails` and its normal generated method remain unchanged.
 
 No `any` types are allowed in the success response shape.
 
@@ -306,3 +308,81 @@ Caching is unchanged: the field rides in the existing `deployments:details:<user
 - **WHEN** the user calls `GET /api/v1/deployments/toolsets%2F<bucket>%2Fgithub_valery__1.0.0/details`
 - **THEN** `toolsetDetails.authSettings.clientSecretHint` is `"d4c6"`
 - **AND** `toolsetDetails.authSettings` has no `clientSecret` or `codeVerifier`
+
+### Requirement: Deployment details expose independently declared API capabilities
+
+GET /api/v1/deployments/{deployment}/details SHALL expose Anthropic Messages support as optional `modelDetails.features.anthropicMessages` (and `applicationDetails.features.anthropicMessages` when an application declares it). Support MUST come from Core's canonical `anthropicMessages` declaration, never from the deployment ID, provider, model type or a hypothetical legacy Messages flag.
+
+An object-valued `interface_configs` SHALL be the primary declaration source. A canonical key SHALL count as declared when its descriptor is an object, including an empty object; null, arrays and primitives SHALL NOT activate an interface. Unknown keys SHALL be ignored. Empty or unknown-only object metadata SHALL report no known declared APIs. When `interface_configs` is absent or not an object, equivalent canonical names in interfaces SHALL be accepted; categorical chat/mcp values and unknown names SHALL NOT count as API declarations. A nonempty array with no canonical names SHALL count as unavailable declaration metadata; an explicitly empty array SHALL count as an empty declaration.
+
+`anthropicMessages` SHALL be true when declared, false when usable metadata excludes it, and omitted when declaration metadata is unavailable. Missing legacy features MUST NOT prevent a declared capability from appearing. Explicit boolean `chat_completion` and `responses_api` flags SHALL retain their own values; absent/non-boolean flags SHALL fall back only to their corresponding `openaiChatCompletions`/`openaiResponses` declarations when usable metadata exists. Anthropic support SHALL NOT enable either OpenAI capability.
+
+The response SHALL NOT expose `interface_configs`, interface defaults, default headers or upstream addresses as part of this metadata addition. All pre-existing detail fields SHALL remain intact.
+
+The request remains authenticated GET with no body, the existing deployment path validation, and the existing error mapping including 400 validation, 401 session, 403 authorization, 404 missing resource, 429 upstream limits, 502 upstream failure and 503 unavailable/timeout. OpenAPI operationId `getDeploymentDetails`, its deployment string request parameter and `DeploymentDetailsDto` response SHALL remain stable; the generated normal `DeploymentsApi.getDeploymentDetails` call SHALL deserialize the optional capability. No Raw method is required.
+
+Existing state ownership, cache and observability SHALL remain unchanged: `useCatalogItemDetails` consumes the details response; the BFF cache key is deployments:details:<userSub>:<deployment>, TTL 60000 ms, invalidated by existing successful application/toolset mutations and toolset auth changes. No new cache/invalidation event, frontend context, i18n string, telemetry event, or `ENABLED_FEATURES`/`ENABLED_FEATURES_ROLES` gate SHALL be introduced by the metadata contract itself.
+
+Example request:
+
+```http
+GET /api/v1/deployments/messages-only/details HTTP/1.1
+Cookie: <session cookie>
+```
+
+Example Core input:
+
+```json
+{"id":"messages-only","object":"model","interface_configs":{"anthropicMessages":{}}}
+```
+
+Relevant response fields:
+
+```json
+{"id":"messages-only","type":"model","modelDetails":{"features":{"chatCompletion":false,"responsesApi":false,"anthropicMessages":true}}}
+```
+
+#### Scenario: Mixed APIs retain independent capabilities
+
+- **WHEN** Core declares `openaiChatCompletions`, `openaiResponses` and `anthropicMessages` and reports both legacy OpenAI flags as true
+- **THEN** the model detail features contain `chatCompletion`: true, `responsesApi`: true and `anthropicMessages`: true
+
+#### Scenario: Messages-only metadata has no legacy features
+
+- **WHEN** Core supplies `interface_configs`: { "`anthropicMessages`": {} } with no features or interfaces field
+- **THEN** `modelDetails.features` exists with `anthropicMessages`: true, `chatCompletion`: false and `responsesApi`: false
+
+#### Scenario: Interface-only mixed metadata recovers each own API
+
+- **WHEN** Core declares all three APIs in `interface_configs` with no legacy features flags
+- **THEN** each corresponding detail feature is true, independently of the other declarations
+
+#### Scenario: Equivalent declared-interface names are accepted
+
+- **WHEN** `interface_configs` is absent and interfaces includes the canonical `anthropicMessages` name
+- **THEN** the details expose `anthropicMessages`: true without consulting the model ID
+
+#### Scenario: Missing metadata preserves legacy OpenAI behavior
+
+- **WHEN** a deployment has no usable declarations and legacy `chat_completion`: true and `responses_api`: false
+- **THEN** details preserve `chatCompletion`: true and `responsesApi`: false and omit `anthropicMessages`
+
+#### Scenario: Explicit OpenAI false is not overridden
+
+- **WHEN** metadata declares `openaiChatCompletions` and `anthropicMessages` but legacy `chat_completion` is false
+- **THEN** `chatCompletion` remains false and `anthropicMessages` is true
+
+#### Scenario: Malformed and unknown metadata cannot manufacture Messages support
+
+- **WHEN** Core sends an unknown-only declaration map, an `anthropicMessages` descriptor that is null/a primitive/an array, or malformed `interface_configs` with no equivalent Messages declaration
+- **THEN** the request succeeds without `anthropicMessages`: true, and explicit legacy OpenAI booleans are unchanged
+
+#### Scenario: Model and provider names are not capabilities
+
+- **WHEN** the model ID begins anthropic. or the provider is Anthropic but neither metadata source advertises `anthropicMessages`
+- **THEN** the detail response does not advertise Messages support
+
+#### Scenario: Private interface configuration does not reach the response
+
+- **WHEN** a declared interface contains defaults, `default_headers` and arbitrary nested settings
+- **THEN** details expose only its capability, not those settings or raw `interface_configs`

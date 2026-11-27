@@ -14,6 +14,84 @@ import {
 } from '../map-entity-details-to-catalog';
 
 describe('mapEntityDetailsToCatalogDetails', () => {
+  describe('generation API capability mapping', () => {
+    it.each(['model', 'application'] as const)(
+      'maps Messages-only %s capabilities independently',
+      (type) => {
+        const features = {
+          anthropicMessages: true,
+          chatCompletion: false,
+          responsesApi: false,
+        };
+        const dto = {
+          id: 'messages-only',
+          type,
+          ...(type === 'model'
+            ? { modelDetails: { features } }
+            : { applicationDetails: { features } }),
+        };
+        expect(mapDeploymentDetailsDtoToEntityDetails(dto)).toMatchObject({
+          data: {
+            capabilities: {
+              hasAnthropicMessages: true,
+              hasChatCompletion: false,
+              hasResponsesApi: false,
+            },
+          },
+        });
+      },
+    );
+
+    it('preserves mixed API capabilities', () => {
+      expect(
+        mapDeploymentDetailsDtoToEntityDetails({
+          id: 'mixed',
+          type: 'model',
+          modelDetails: {
+            features: {
+              chatCompletion: true,
+              responsesApi: true,
+              anthropicMessages: true,
+            },
+          },
+        }),
+      ).toMatchObject({
+        data: {
+          capabilities: {
+            hasChatCompletion: true,
+            hasResponsesApi: true,
+            hasAnthropicMessages: true,
+          },
+        },
+      });
+    });
+
+    it('keeps legacy and missing feature payloads compatible', () => {
+      expect(
+        mapDeploymentDetailsDtoToEntityDetails({
+          id: 'legacy',
+          type: 'model',
+          modelDetails: {
+            features: { chatCompletion: true },
+          },
+        }),
+      ).toMatchObject({
+        data: {
+          capabilities: {
+            hasChatCompletion: true,
+            hasAnthropicMessages: undefined,
+          },
+        },
+      });
+      expect(
+        mapDeploymentDetailsDtoToEntityDetails({
+          id: 'anthropic.claude',
+          type: 'model',
+        }),
+      ).toMatchObject({ data: { capabilities: undefined } });
+    });
+  });
+
   describe('MODEL', () => {
     it('maps the model id into the API resource', () => {
       const result = mapEntityDetailsToCatalogDetails({

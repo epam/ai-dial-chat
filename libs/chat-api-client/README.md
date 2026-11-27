@@ -52,6 +52,12 @@ from the generated source under `src/generated/` — refer to the Swagger UI at
 `/api/docs` (development builds) or the emitted OpenAPI document for the full
 list of endpoints and types.
 
+### Supported API discovery
+
+The normal `DeploymentsApi.getDeploymentDetails({ deployment })` response carries optional `modelDetails.features.anthropicMessages` (and the application detail equivalent) derived from Core's declared interfaces, including Messages-only records without legacy features. Explicit OpenAI capability booleans are preserved; absent flags can fall back only to their own declarations. This is discovery metadata, not a conversation-generation transport switch.
+
+`ModelsApi.listModelCatalog()` and `ModelsApi.getModelCatalogEntry({ modelName })` return optional `supportedInterfaces?: string[]` on catalog entries. The BFF wire field and generated DTO both use `supportedInterfaces`. Normal client methods preserve the JSON object without case conversion. Canonical names are `openaiChatCompletions`, `openaiEmbeddings`, `openaiResponses` and `anthropicMessages`. Missing declarations use only legacy OpenAI flags when available; absent metadata remains optional and an explicit empty declaration remains empty. Raw interface defaults/headers are excluded. These normal methods need no `Raw` access, new singleton or extra request.
+
 ### Scheduled-task operations
 
 `scheduledTasksApi.startScheduledTask({ scheduleId })` is the generated normal

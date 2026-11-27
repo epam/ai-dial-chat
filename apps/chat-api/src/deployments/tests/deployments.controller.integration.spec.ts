@@ -481,6 +481,26 @@ describe('DeploymentsController (integration)', () => {
   });
 
   describe('GET /api/v1/deployments/:deployment/details', () => {
+    it('serializes Messages-only capabilities and keeps details private', async () => {
+      const details = {
+        id: 'messages-only',
+        type: 'model',
+        modelDetails: {
+          features: {
+            anthropicMessages: true,
+            chatCompletion: false,
+            responsesApi: false,
+          },
+        },
+      };
+      service.getDeploymentDetails.mockResolvedValue(details);
+      const response = await request(app.getHttpServer())
+        .get('/api/v1/deployments/messages-only/details')
+        .expect(200);
+      expect(response.body).toEqual(details);
+      expect(response.headers['cache-control']).toBe('private, no-store');
+    });
+
     const mockDetails = {
       id: 'gpt-4o',
       type: DeploymentItemType.Model,

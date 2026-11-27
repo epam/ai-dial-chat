@@ -108,7 +108,7 @@ export class DeploymentsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Fetches the full per-entity payload for a model, application, or toolset by id (dispatching to DIAL Core\'s getModel/getApplication/getToolset based on the resolved deployment type) and maps it into a frontend-safe DeploymentDetailsDto. Results are cached server-side for 60 seconds per user; the response sets Cache-Control to private, no-store so browsers and intermediaries never reuse a stale copy after the active user or toolset credentials change.
+   * Fetches the full per-entity payload for a model, application, or toolset by id (dispatching to DIAL Core\'s getModel/getApplication/getToolset based on the resolved deployment type) and maps it into a frontend-safe DeploymentDetailsDto. Generation API capabilities include declared Anthropic Messages support without exposing interface settings. Results are cached server-side for 60 seconds per user; the response sets Cache-Control to private, no-store so browsers and intermediaries never reuse a stale copy after the active user or toolset credentials change.
    * Get full details for a single deployment
    */
   async getDeploymentDetailsRaw(
@@ -155,7 +155,7 @@ export class DeploymentsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Fetches the full per-entity payload for a model, application, or toolset by id (dispatching to DIAL Core\'s getModel/getApplication/getToolset based on the resolved deployment type) and maps it into a frontend-safe DeploymentDetailsDto. Results are cached server-side for 60 seconds per user; the response sets Cache-Control to private, no-store so browsers and intermediaries never reuse a stale copy after the active user or toolset credentials change.
+   * Fetches the full per-entity payload for a model, application, or toolset by id (dispatching to DIAL Core\'s getModel/getApplication/getToolset based on the resolved deployment type) and maps it into a frontend-safe DeploymentDetailsDto. Generation API capabilities include declared Anthropic Messages support without exposing interface settings. Results are cached server-side for 60 seconds per user; the response sets Cache-Control to private, no-store so browsers and intermediaries never reuse a stale copy after the active user or toolset credentials change.
    * Get full details for a single deployment
    */
   async getDeploymentDetails(

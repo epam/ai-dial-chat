@@ -1,4 +1,8 @@
-import { ConversationsApi, ModelsApi } from '@epam/ai-dial-chat-api-client';
+import {
+  ConversationsApi,
+  DeploymentsApi,
+  ModelsApi,
+} from '@epam/ai-dial-chat-api-client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createApiConfiguration } from '../api-client';
 import {
@@ -44,6 +48,64 @@ const ignoreRejection = async (promise: Promise<unknown>): Promise<void> => {
 };
 
 describe('createApiConfiguration', () => {
+  it.each(['list', 'detail'] as const)(
+    'deserializes normalized supported interfaces through the normal catalog %s method',
+    async (kind) => {
+      const entry = {
+        id: 'mixed',
+        object: 'model',
+        supportedInterfaces: [
+          'openaiChatCompletions',
+          'openaiResponses',
+          'anthropicMessages',
+        ],
+      };
+      global.fetch = vi
+        .fn<typeof fetch>()
+        .mockResolvedValue(
+          makeResponse(200, kind === 'list' ? { data: [entry] } : entry),
+        );
+      const api = new ModelsApi(createApiConfiguration());
+      const result =
+        kind === 'list'
+          ? (await api.listModelCatalog()).data[0]
+          : await api.getModelCatalogEntry({ modelName: 'mixed' });
+      expect(result.supportedInterfaces).toEqual(entry.supportedInterfaces);
+    },
+  );
+
+  it.each([
+    { chatCompletion: true, responsesApi: true, anthropicMessages: true },
+    { chatCompletion: false, responsesApi: false, anthropicMessages: true },
+    { chatCompletion: true },
+  ])('deserializes optional detail capabilities %#', async (features) => {
+    global.fetch = vi.fn<typeof fetch>().mockResolvedValue(
+      makeResponse(200, {
+        id: 'selected',
+        type: 'model',
+        modelDetails: { features },
+      }),
+    );
+    const api = new DeploymentsApi(createApiConfiguration());
+    const result = await api.getDeploymentDetails({ deployment: 'selected' });
+    expect(result.modelDetails?.features).toMatchObject(features);
+    expect(result.modelDetails?.features?.anthropicMessages).toBe(
+      features.anthropicMessages,
+    );
+  });
+
+  it('accepts legacy catalog metadata without supported-interface fields', async () => {
+    global.fetch = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(
+        makeResponse(200, { data: [{ id: 'legacy', object: 'model' }] }),
+      );
+    expect(
+      (await new ModelsApi(createApiConfiguration()).listModelCatalog()).data[0]
+        .supportedInterfaces,
+    ).toBeUndefined();
+  });
+
   afterEach(() => {
     setCsrfToken(null);
     vi.restoreAllMocks();
