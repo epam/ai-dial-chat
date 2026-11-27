@@ -4,6 +4,7 @@ import {
   type Attachment,
   type UploadedAttachmentResult,
 } from '@epam/ai-dial-chat-shared';
+import { SKELETON_DELAY_MS } from '@epam/ai-dial-ui-kit';
 import {
   act,
   fireEvent,
@@ -497,7 +498,7 @@ describe('Input — model selector', () => {
     expect(onDeploymentChange).toHaveBeenCalledWith('my-app');
   });
 
-  it('shows seven skeleton rows and a circular trigger skeleton while deployments load', () => {
+  it('shows seven skeleton rows in one menu item and a circular trigger skeleton while deployments load', () => {
     render(
       <Input
         deployments={[]}
@@ -506,17 +507,44 @@ describe('Input — model selector', () => {
         modelSelectorLabels={{ loading: 'Loading models…' }}
       />,
     );
-    const loadingItem = screen.getByText('Loading models…');
-    expect(loadingItem).toBeTruthy();
     /* The menu overlay is portaled out of the render container, so both it and
        the trigger are only counted together from the document body. */
     expect(getSkeletonsByVariant(document.body, 'circular')).toHaveLength(8);
-    expect(getSkeletonsByVariant(document.body, 'text')).toHaveLength(7);
-    expect(
-      screen
-        .getAllByRole('button')
-        .filter((button) => (button as HTMLButtonElement).disabled),
-    ).toHaveLength(8);
+    const rows = getSkeletonsByVariant(document.body, 'text');
+    expect(rows).toHaveLength(7);
+    /* The mocked Dropdown draws each item as one button, so one shared button
+       proves the rows are a single block, not seven items. */
+    // eslint-disable-next-line testing-library/no-node-access
+    expect(new Set(rows.map((row) => row.closest('button'))).size).toBe(1);
+  });
+
+  it('announces the loading text through a region outside the menu once the skeleton is drawn', () => {
+    vi.useFakeTimers();
+    try {
+      render(
+        <Input
+          deployments={[]}
+          selectedDeploymentId={null}
+          onDeploymentChange={vi.fn()}
+          modelSelectorLabels={{ loading: 'Loading models…' }}
+        />,
+      );
+      expect(screen.queryByText('Loading models…')).toBeNull();
+
+      act(() => {
+        vi.advanceTimersByTime(SKELETON_DELAY_MS);
+      });
+
+      const region = screen
+        .getAllByRole('status')
+        .find((element) => element.textContent === 'Loading models…');
+      expect(region).toBeTruthy();
+      /* The mocked Dropdown renders items as buttons; the text is not in one. */
+      // eslint-disable-next-line testing-library/no-node-access
+      expect(region?.closest('button')).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('shows error label as disabled item when deployments is empty', () => {

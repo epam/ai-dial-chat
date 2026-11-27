@@ -15,11 +15,31 @@ vi.mock('@epam/ai-dial-ui-kit', async () => ({
   /* The real live region: a hand-rolled stub would hide its always-mounted markup. */
   ...(await vi
     .importActual<typeof import('@epam/ai-dial-ui-kit')>('@epam/ai-dial-ui-kit')
-    .then(({ LiveRegion, LiveRegionElement, LiveRegionPoliteness }) => ({
-      LiveRegion,
-      LiveRegionElement,
-      LiveRegionPoliteness,
-    }))),
+    .then(
+      ({
+        LiveRegion,
+        LiveRegionElement,
+        LiveRegionPoliteness,
+        SkeletonShimmer,
+        SkeletonTone,
+        SKELETON_BAR_CLASS_NAME,
+        SKELETON_BAR_HEIGHT,
+        SKELETON_BAR_WIDTHS,
+        SKELETON_CIRCLE_SIZE_LIST,
+        useSkeletonTiming,
+      }) => ({
+        LiveRegion,
+        LiveRegionElement,
+        LiveRegionPoliteness,
+        SkeletonShimmer,
+        SkeletonTone,
+        SKELETON_BAR_CLASS_NAME,
+        SKELETON_BAR_HEIGHT,
+        SKELETON_BAR_WIDTHS,
+        SKELETON_CIRCLE_SIZE_LIST,
+        useSkeletonTiming,
+      }),
+    )),
   DIAL_KIT_ICON_STROKE: 1.5,
   mergeClasses: (...args: (string | undefined | false | null)[]) =>
     args.filter(Boolean).join(' '),
@@ -110,7 +130,7 @@ vi.mock('@epam/ai-dial-ui-kit', async () => ({
   Dropdown: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   Skeleton: () => null,
-  SkeletonVariant: { Circular: 'circular' },
+  SkeletonVariant: { Circular: 'circular', Text: 'text' },
   Search: ({
     onChange,
     placeholder,

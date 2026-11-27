@@ -154,7 +154,7 @@ When `item.iconTooltip` is provided and `item.isIconLoading` is `false` or `unde
 
 ### Requirement: Panel shows a skeleton loader while conversations are loading
 
-`ConversationPanel` SHALL accept an optional `isLoading?: boolean` prop. When `isLoading` is `true`, the panel body SHALL render a column of skeleton placeholder rows instead of the conversation list, empty state, or no-results state. Each skeleton row SHALL display a 24 × 24 px circular avatar placeholder and a title rectangle beside it. Row widths vary deterministically via `60 + (i * 23 % 35)` percent. The skeleton uses `Skeleton` from `@epam/ai-dial-ui-kit` with its color from the stylesheet export `var(--cp-skeleton-color, var(--bg-control-disable-primary, #dce0e8))`, overridable through `styles.colors.skeletonColor`. `ConversationPanelView` in `apps/chat` passes `isLoading` from `ConversationsContext`.
+`ConversationPanel` SHALL accept an optional `isLoading?: boolean` prop. When `isLoading` is `true`, the panel body SHALL render a column of skeleton placeholder rows instead of the conversation list, empty state, or no-results state. Each skeleton row SHALL display a 24 × 24 px circular avatar placeholder and a title rectangle beside it. Row title widths cycle deterministically through the kit's `SKELETON_BAR_WIDTHS`. The rows are kit `Skeleton` circles and bars inside a single `SkeletonShimmer`, toned with `SkeletonTone`, with no colour prop; the list's always-mounted live region announces `loadingLabel`, so the shimmer has no `label`. Timing follows `useSkeletonTiming`: the skeleton appears only after the kit's delay, stays for its minimum display time, and the empty, no-results and list states wait until it is gone. The live region follows the same timing: it is empty during the delay, so a load that ends within it is never announced, it carries `loadingLabel` from the moment the skeleton is drawn until it leaves, and the empty or no-results message is announced only once the skeleton is gone. The state that replaces the skeleton (list, empty or no-results) is rendered in one wrapper that takes the kit's `contentClassName`, so all three fade in the same way. `ConversationPanelView` in `apps/chat` passes `isLoading` from `ConversationsContext`.
 
 #### Scenario: Skeleton is shown while loading
 
@@ -163,8 +163,14 @@ When `item.iconTooltip` is provided and `item.isIconLoading` is `false` or `unde
 
 #### Scenario: Normal content is shown after loading
 
-- **WHEN** `isLoading` is `false` or omitted
+- **WHEN** `isLoading` is `false` or omitted and no skeleton was drawn
 - **THEN** the panel renders conversations (or empty/no-results state) as normal
+
+#### Scenario: Content waits for a drawn skeleton's minimum display time
+
+- **GIVEN** the skeleton has been drawn because loading outlasted the kit's delay
+- **WHEN** `isLoading` becomes `false` before the skeleton's minimum display time has passed
+- **THEN** the skeleton stays until that time has passed, the list, empty or no-results state then replaces it with the fade-in, and the empty or no-results message is announced only at that point
 
 ---
 

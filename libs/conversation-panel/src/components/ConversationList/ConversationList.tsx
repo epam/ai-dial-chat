@@ -4,7 +4,11 @@ import {
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import { PanelEmpty, PanelNoResults } from '@epam/ai-dial-sidebar';
-import { Skeleton, LiveRegion, LiveRegionElement } from '@epam/ai-dial-ui-kit';
+import {
+  LiveRegion,
+  LiveRegionElement,
+  useSkeletonTiming,
+} from '@epam/ai-dial-ui-kit';
 import {
   type FC,
   memo,
@@ -34,15 +38,14 @@ import {
   getConversationIdsInRange,
   getOverscanCount,
   getRowHeight,
-  getSkeletonWidth,
   isProjectExpanded,
   isSameIdSequence,
-  SKELETON_ROW_COUNT,
 } from '../../utils/conversation-row';
 import {
   computeAllowedDropGroups,
   findGroupKeyForItem,
 } from '../../utils/drag';
+import { ConversationListSkeleton } from '../ConversationListSkeleton/ConversationListSkeleton';
 import panelStyles from '../ConversationPanel/ConversationPanel.module.scss';
 import { RowRenderer } from '../RowRenderer/RowRenderer';
 
@@ -216,6 +219,13 @@ export const ConversationList: FC<ConversationListProps> = memo(
       [clearDragState, onMoveConversation],
     );
 
+    const {
+      showPlaceholder,
+      showSkeleton,
+      placeholderClassName,
+      contentClassName,
+    } = useSkeletonTiming(isLoading ?? false);
+
     const cssVars = buildCssVars({
       '--cp-item-hover': colors?.itemHover,
       '--cp-item-active': colors?.itemActive,
@@ -225,7 +235,6 @@ export const ConversationList: FC<ConversationListProps> = memo(
       '--cp-trigger-bg': colors?.triggerBackground,
       '--cp-trigger-icon': colors?.triggerIcon,
       '--cp-trigger-icon-idle': colors?.triggerIconIdle,
-      '--cp-skeleton-color': colors?.skeletonColor,
       '--cp-unread-dot': colors?.unreadDot,
       '--cp-indicator-dot': colors?.indicatorDot,
       '--cp-project-guide-line': colors?.projectGuideLine,
@@ -585,7 +594,7 @@ export const ConversationList: FC<ConversationListProps> = memo(
      * rows under an unchanged range (filtering, collapsing, new titles) is
      * reported too; the callback ref keeps `handleRowsRendered` stable.
      */
-    const isListShown = !isLoading && !isListEmpty;
+    const isListShown = !showPlaceholder && !isListEmpty;
     const visibleRangeRef = useRef<{
       startIndex: number;
       stopIndex: number;
@@ -624,30 +633,18 @@ export const ConversationList: FC<ConversationListProps> = memo(
     }, [isListShown, virtualRows, reportVisibleIds]);
 
     const getStatusMessage = (): string => {
-      if (isLoading) return loadingLabel;
+      /* The announcement follows what is on screen: nothing during the show
+       * delay, the loading text from the moment the skeleton is drawn until it
+       * is gone. A fast load is never announced, and an empty or no-results
+       * message is not read while the skeleton still covers it. */
+      if (showPlaceholder) return showSkeleton ? loadingLabel : '';
       if (isUpdatingTitles) return updatingTitlesLabel;
       if (isEmpty) return emptyLabel;
       if (isNoResults) return currentNoResultsLabel;
       return '';
     };
 
-    const renderBody = () => {
-      if (isLoading) {
-        return (
-          <div className="flex flex-col gap-3 px-2 py-3">
-            {Array.from({ length: SKELETON_ROW_COUNT }, (_, i) => (
-              <Skeleton
-                key={i}
-                avatar={{ size: 24 }}
-                showTitle={{ width: getSkeletonWidth(i) }}
-                paragraph={false}
-                active
-                color={panelStyles.skeletonColor}
-              />
-            ))}
-          </div>
-        );
-      }
+    const renderContent = () => {
       if (isEmpty)
         return <PanelEmpty label={emptyLabel} description={emptyDescription} />;
       if (isNoResults && searchQuery !== '' && isUpdatingTitles)
@@ -673,6 +670,20 @@ export const ConversationList: FC<ConversationListProps> = memo(
           onRowsRendered={handleRowsRendered}
           rowProps={rowProps}
         />
+      );
+    };
+
+    /* Loading, then the skeleton's minimum display time, defers the empty,
+     * no-results and list states: an unloaded list is unknown, not empty. The
+     * state that replaces the skeleton fades in as one block. */
+    const renderBody = () => {
+      if (showPlaceholder) {
+        return <ConversationListSkeleton className={placeholderClassName} />;
+      }
+      return (
+        <div className={mergeClasses('h-full', contentClassName)}>
+          {renderContent()}
+        </div>
       );
     };
 

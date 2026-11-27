@@ -7,6 +7,7 @@ import {
   DIAL_ICON_SIZE,
   Highlight,
   Skeleton,
+  SkeletonTone,
   SkeletonVariant,
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
@@ -141,7 +142,7 @@ const ConversationRowComponent: FC<ConversationRowProps> = ({
         variant={SkeletonVariant.Circular}
         width={DIAL_ICON_SIZE.LG}
         height={DIAL_ICON_SIZE.LG}
-        color={styles.skeletonColor}
+        tone={SkeletonTone.Sunken}
         aria-hidden
       />
     ) : (

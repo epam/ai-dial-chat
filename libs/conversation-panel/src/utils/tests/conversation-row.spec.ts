@@ -16,7 +16,6 @@ import {
   getNestedRowProps,
   getOverscanCount,
   getRowHeight,
-  getSkeletonWidth,
   isProjectExpanded,
   SKELETON_ROW_COUNT,
 } from '../conversation-row';
@@ -24,34 +23,6 @@ import {
 describe('SKELETON_ROW_COUNT', () => {
   it('is 15', () => {
     expect(SKELETON_ROW_COUNT).toBe(15);
-  });
-});
-
-describe('getSkeletonWidth', () => {
-  it('returns 60% for index 0', () => {
-    expect(getSkeletonWidth(0)).toBe('60%');
-  });
-
-  it('returns a percentage string for any index', () => {
-    for (let i = 0; i < SKELETON_ROW_COUNT; i++) {
-      expect(getSkeletonWidth(i)).toMatch(/^\d+%$/);
-    }
-  });
-
-  it('returns values between 60% and 94%', () => {
-    for (let i = 0; i < SKELETON_ROW_COUNT; i++) {
-      const value = parseInt(getSkeletonWidth(i));
-      expect(value).toBeGreaterThanOrEqual(60);
-      expect(value).toBeLessThanOrEqual(94);
-    }
-  });
-
-  it('produces different widths across rows to create visual variation', () => {
-    const widths = Array.from({ length: SKELETON_ROW_COUNT }, (_, i) =>
-      getSkeletonWidth(i),
-    );
-    const unique = new Set(widths);
-    expect(unique.size).toBeGreaterThan(1);
   });
 });
 

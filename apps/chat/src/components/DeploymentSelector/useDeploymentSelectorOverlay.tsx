@@ -16,6 +16,7 @@ import { useLanguage } from '../../hooks/language/useLanguage';
 import { useDeferredOverlayMount } from '../../hooks/useDeferredOverlayMount';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
+import DeploymentSelectorSkeleton from './DeploymentSelectorSkeleton';
 
 const DeploymentSelectorOverlay = lazy(
   () => import('./DeploymentSelectorOverlay'),
@@ -121,7 +122,7 @@ export function useDeploymentSelectorOverlay(): UseDeploymentSelectorOverlayResu
 
   const renderOverlay = useCallback(
     (onClose: () => void): ReactNode => (
-      <Suspense fallback={null}>
+      <Suspense fallback={<DeploymentSelectorSkeleton />}>
         <DeploymentSelectorOverlay
           searchQuery={searchQuery}
           onSearchQueryChange={setSearchQuery}

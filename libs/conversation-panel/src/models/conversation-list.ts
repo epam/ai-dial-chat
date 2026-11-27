@@ -23,8 +23,6 @@ export interface ConversationListColors {
   triggerIcon?: string;
   /** Icon color of the row actions trigger button in its idle state. */
   triggerIconIdle?: string;
-  /** Shimmer color of the loading skeleton avatar. */
-  skeletonColor?: string;
   /** Fill color of the unread indicator dot. Defaults to `--text-accent`. */
   unreadDot?: string;
   /** Border color of the read indicator dot of `Indicator` rows; no effect on `Avatar` rows, so none in `ConversationPanel`. Defaults to `--stroke-secondary`. */

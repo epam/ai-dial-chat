@@ -5,17 +5,31 @@ import {
   ModelSelectorSkeletonRows,
 } from './ModelSelectorSkeleton';
 
-describe('ModelSelectorSkeletonRows', () => {
-  it('renders seven placeholder rows hidden from assistive tech, with no status region of its own', () => {
-    const { container } = render(<ModelSelectorSkeletonRows />);
+/* The placeholders are decorative (no role, text or test id), so the shimmer
+   container is found by its busy state. */
+const getBusyRegion = (): Element | null =>
+  // eslint-disable-next-line testing-library/no-node-access
+  document.querySelector('[aria-busy="true"]');
 
-    expect(screen.queryByRole('status')).toBeNull();
-    // The skeleton rows are purely decorative (aria-hidden, no role/text/testid),
-    // so there is no semantic query for "how many placeholder rows rendered".
-    // eslint-disable-next-line testing-library/no-node-access
-    const root = container.firstElementChild;
-    expect(root?.getAttribute('aria-hidden')).toBe('true');
-    // eslint-disable-next-line testing-library/no-node-access
-    expect(root?.children).toHaveLength(MODEL_SELECTOR_SKELETON_ROW_COUNT);
+/* The shimmer keeps its placeholders in one wrapper, ahead of the band. */
+const getPlaceholderCount = (): number =>
+  // eslint-disable-next-line testing-library/no-node-access
+  getBusyRegion()?.firstElementChild?.childElementCount ?? 0;
+
+describe('ModelSelectorSkeletonRows', () => {
+  it('renders seven placeholder rows in one shimmer container that announces nothing itself', () => {
+    render(<ModelSelectorSkeletonRows />);
+
+    /* The shimmer's own live region stays empty: the parent announces loading. */
+    for (const status of screen.queryAllByRole('status')) {
+      expect(status.textContent).toBe('');
+    }
+    expect(getPlaceholderCount()).toBe(MODEL_SELECTOR_SKELETON_ROW_COUNT);
+  });
+
+  it('merges the timing class onto the shimmer container', () => {
+    render(<ModelSelectorSkeletonRows className="invisible" />);
+
+    expect(getBusyRegion()?.className).toMatch(/invisible/);
   });
 });

@@ -122,7 +122,7 @@ The `Input` component SHALL prevent message submission when `deployments` is def
 
 The `isStreaming === true` stop-button path is unaffected — stopping always works regardless of selection state.
 
-Loading, error, and empty states SHALL NOT widen the toolbar with visible text. While loading, the trigger and the opened menu SHALL show `ModelSelectorSkeleton` placeholders — a circular skeleton on the trigger, and a fixed number of disabled rows each pairing a circular icon skeleton with a text skeleton — and the mobile bottom sheet SHALL use the same presentation. Error and empty states SHALL be represented by a disabled menu item carrying the corresponding label.
+Loading, error, and empty states SHALL NOT widen the toolbar with visible text. While loading, the trigger and the opened menu SHALL show `ModelSelectorSkeleton` placeholders — a circular skeleton on the trigger, and in the menu one `DropdownItemType.PlainText` item holding a single `SkeletonShimmer` block of icon-and-label rows — and the mobile bottom sheet SHALL use the same block. The skeleton SHALL follow `useSkeletonTiming`: it is mounted but invisible (holding its space) during the kit's show delay, so a load that ends within the delay never flashes it; it stays for the kit's minimum display time; and the real items, and the search header, replace it only after that, the items carrying the kit's `contentClassName` fade-in once, for the length of that fade, so reopening the menu or filtering the rows does not replay it. The loading text SHALL be announced from an always-mounted live region outside the menu (`useModelSelector`'s `loadingAnnouncement`, rendered by `ModelSelectorControl`; the sheet's own region on mobile) and only once the skeleton is drawn. Error and empty states SHALL be represented by a disabled menu item carrying the corresponding label.
 
 #### Scenario: Send button disabled when no selection
 
@@ -137,7 +137,7 @@ Loading, error, and empty states SHALL NOT widen the toolbar with visible text. 
 #### Scenario: Loading skeletons displayed
 
 - **WHEN** the loading label is supplied, including on a reload where `deployments` still holds previously loaded items
-- **THEN** the trigger renders a circular skeleton, the opened menu renders disabled skeleton rows, and the loading label remains exposed to assistive technology
+- **THEN** the trigger renders a circular skeleton, the opened menu renders one skeleton block of icon-and-label rows, and the loading label is announced through a live region once the skeleton is drawn
 
 #### Scenario: Error and empty states stay inside the menu
 

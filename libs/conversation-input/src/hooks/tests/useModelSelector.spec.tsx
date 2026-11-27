@@ -1,8 +1,12 @@
 import type { DeploymentItem } from '@epam/ai-dial-chat-shared';
-import type { DropdownItem } from '@epam/ai-dial-ui-kit';
-import { renderHook } from '@testing-library/react';
+import {
+  DropdownItemType,
+  SKELETON_DELAY_MS,
+  SKELETON_MIN_DURATION_MS,
+} from '@epam/ai-dial-ui-kit';
+import { act, renderHook } from '@testing-library/react';
 import type { MouseEvent as ReactMouseEvent } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CONVERSATION_INPUT_CLASS } from '../../constants/public-class-names';
 import { useModelSelector } from '../useModelSelector';
 
@@ -111,23 +115,16 @@ describe('useModelSelector — menuItems', () => {
     expect(result.current.menuItems).toEqual([]);
   });
 
-  it('returns seven disabled skeleton items when deployments are loading', () => {
+  it('returns one plain-text item holding the skeleton block when deployments are loading', () => {
     const { result } = renderHook(() =>
       useModelSelector({
         deployments: [],
         modelSelectorLabels: { loading: 'Loading…' },
       }),
     );
-    expect(result.current.menuItems).toHaveLength(7);
-    expect(
-      result.current.menuItems.every((item: DropdownItem) => item.disabled),
-    ).toBe(true);
-    expect(
-      result.current.menuItems.every((item: DropdownItem) => item.icon),
-    ).toBe(true);
-    expect(
-      result.current.menuItems.every((item: DropdownItem) => item.label),
-    ).toBe(true);
+    expect(result.current.menuItems).toHaveLength(1);
+    expect(result.current.menuItems[0].type).toBe(DropdownItemType.PlainText);
+    expect(result.current.menuItems[0].label).toBeTruthy();
   });
 
   it('prefers loading label over error and empty labels', () => {
@@ -141,7 +138,9 @@ describe('useModelSelector — menuItems', () => {
         },
       }),
     );
-    expect(result.current.menuItems).toHaveLength(7);
+    expect(result.current.menuItems.map((item) => item.key)).toEqual([
+      '__loading',
+    ]);
   });
 
   it('shows skeleton items during a reload even when deployments already exist', () => {
@@ -151,8 +150,94 @@ describe('useModelSelector — menuItems', () => {
         modelSelectorLabels: { loading: 'Loading…' },
       }),
     );
-    expect(result.current.menuItems).toHaveLength(7);
+    expect(result.current.menuItems.map((item) => item.key)).toEqual([
+      '__loading',
+    ]);
     expect(result.current.menuHeader).toBeUndefined();
+  });
+
+  describe('skeleton timing', () => {
+    const renderLoadingHook = () =>
+      renderHook(
+        (props: { isLoading: boolean }) =>
+          useModelSelector({
+            deployments: mockDeployments,
+            modelSelectorLabels: props.isLoading
+              ? { loading: 'Loading…' }
+              : undefined,
+          }),
+        { initialProps: { isLoading: true } },
+      );
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('announces loading only once the skeleton is drawn, and not at all for a fast load', () => {
+      vi.useFakeTimers();
+      const { result, rerender } = renderLoadingHook();
+      expect(result.current.loadingAnnouncement).toBe('');
+
+      rerender({ isLoading: false });
+      act(() => {
+        vi.advanceTimersByTime(SKELETON_DELAY_MS + SKELETON_MIN_DURATION_MS);
+      });
+      expect(result.current.loadingAnnouncement).toBe('');
+
+      rerender({ isLoading: true });
+      act(() => {
+        vi.advanceTimersByTime(SKELETON_DELAY_MS);
+      });
+      expect(result.current.loadingAnnouncement).toBe('Loading…');
+    });
+
+    it('keeps the skeleton item until its minimum display time has passed', () => {
+      vi.useFakeTimers();
+      const { result, rerender } = renderLoadingHook();
+      act(() => {
+        vi.advanceTimersByTime(SKELETON_DELAY_MS);
+      });
+
+      rerender({ isLoading: false });
+      act(() => {
+        vi.advanceTimersByTime(SKELETON_MIN_DURATION_MS - 1);
+      });
+      expect(result.current.menuItems.map((item) => item.key)).toEqual([
+        '__loading',
+      ]);
+
+      act(() => {
+        vi.advanceTimersByTime(1);
+      });
+      expect(result.current.menuItems.map((item) => item.key)).toEqual(
+        mockDeployments.map((item) => item.id),
+      );
+    });
+
+    it('fades the rows in once after the skeleton, not again on later renders', () => {
+      vi.useFakeTimers();
+      const { result, rerender } = renderLoadingHook();
+      act(() => {
+        vi.advanceTimersByTime(SKELETON_DELAY_MS);
+      });
+      rerender({ isLoading: false });
+      act(() => {
+        vi.advanceTimersByTime(SKELETON_MIN_DURATION_MS);
+      });
+      const getRowClassNames = () =>
+        result.current.menuItems.map((item) => item.className ?? '');
+      expect(
+        getRowClassNames().every((c) => /animate-skeleton-reveal/.test(c)),
+      ).toBe(true);
+
+      act(() => {
+        vi.advanceTimersByTime(180);
+      });
+
+      expect(
+        getRowClassNames().some((c) => /animate-skeleton-reveal/.test(c)),
+      ).toBe(false);
+    });
   });
 
   it('falls back to error label when loading is absent', () => {
