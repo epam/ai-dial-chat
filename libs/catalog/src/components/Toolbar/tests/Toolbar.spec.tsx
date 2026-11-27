@@ -129,7 +129,7 @@ describe('Toolbar — public class names', () => {
     renderToolbar();
 
     expect(
-      closestWithClass(screen.getByText('Browse'), CATALOG_CLASS.toolbar),
+      closestWithClass(screen.getByText('All entities'), CATALOG_CLASS.toolbar),
     ).toBeTruthy();
   });
 });

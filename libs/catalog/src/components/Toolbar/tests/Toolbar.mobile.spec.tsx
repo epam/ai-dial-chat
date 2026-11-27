@@ -29,8 +29,6 @@ const setupToolbar = (
     filters: new Set<string>(),
     onFiltersChange: vi.fn(),
     filterValues: new Set(['Business', 'Analysis']),
-    isMyAppsActive: false,
-    onMyAppsChange: vi.fn(),
     ...overrides,
   };
   render(<Toolbar {...props} />);
@@ -52,7 +50,9 @@ describe('Toolbar — mobile', () => {
     expect(
       screen.queryByRole('button', { name: 'Recently Updated' }),
     ).toBeNull();
-    expect(screen.queryByRole('button', { name: 'From' })).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: 'Filter by topic' }),
+    ).toBeNull();
     expect(
       screen.getByRole('button', { name: 'Browse settings' }),
     ).toBeTruthy();
@@ -105,42 +105,71 @@ describe('Toolbar — mobile', () => {
     expect(props.onSortChange).toHaveBeenCalledWith('name');
   });
 
-  it('buffers filter changes until Apply', async () => {
+  it('applies a topic at once and keeps the Filtering page open', async () => {
     const props = setupToolbar();
 
     const sheet = await openSheet();
     await userEvent.click(
       within(sheet).getByRole('menuitem', { name: 'Filtering' }),
     );
+    expect(
+      within(sheet).queryByRole('menuitemcheckbox', { name: 'My' }),
+    ).toBeNull();
     await userEvent.click(
       within(sheet).getByRole('menuitemcheckbox', { name: 'Business' }),
     );
-    await userEvent.click(
-      within(sheet).getByRole('menuitemcheckbox', { name: 'My' }),
-    );
-
-    expect(props.onFiltersChange).not.toHaveBeenCalled();
-
-    await userEvent.click(within(sheet).getByRole('button', { name: 'Apply' }));
 
     expect(props.onFiltersChange).toHaveBeenCalledWith(new Set(['Business']));
-    expect(props.onMyAppsChange).toHaveBeenCalledWith(true);
+    expect(screen.getByRole('dialog', { name: 'Filtering' })).toBeTruthy();
+    expect(within(sheet).queryByRole('button', { name: 'Apply' })).toBeNull();
   });
 
-  it('clears every filter', async () => {
-    const props = setupToolbar({
-      filters: new Set(['Business']),
-      isMyAppsActive: true,
-    });
+  it('clears every topic from the Filtering header', async () => {
+    const props = setupToolbar({ filters: new Set(['Business']) });
 
     const sheet = await openSheet();
     await userEvent.click(
       within(sheet).getByRole('menuitem', { name: /Filtering/ }),
     );
-    await userEvent.click(within(sheet).getByRole('button', { name: 'Clear' }));
+    await userEvent.click(
+      within(sheet).getByRole('button', { name: 'Clear all' }),
+    );
 
     expect(props.onFiltersChange).toHaveBeenCalledWith(new Set());
-    expect(props.onMyAppsChange).toHaveBeenCalledWith(false);
+    expect(screen.getByRole('dialog', { name: 'Filtering' })).toBeTruthy();
+  });
+
+  it('disables "Clear all" while no topic is applied', async () => {
+    setupToolbar();
+
+    const sheet = await openSheet();
+    await userEvent.click(
+      within(sheet).getByRole('menuitem', { name: 'Filtering' }),
+    );
+
+    expect(
+      (
+        within(sheet).getByRole('button', {
+          name: 'Clear all',
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(true);
+  });
+
+  it('shows applied topics as removable tags below the search', () => {
+    setupToolbar({ filters: new Set(['Business', 'Analysis']) });
+
+    const group = screen.getByRole('group', { name: 'Applied topics' });
+    expect(
+      within(group).getByRole('button', { name: 'Remove Business' }),
+    ).toBeTruthy();
+    expect(
+      within(group).getByRole('button', { name: 'Remove Analysis' }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('search').compareDocumentPosition(group) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   it('summarises the applied filters on the Filtering row', async () => {
@@ -155,7 +184,7 @@ describe('Toolbar — mobile', () => {
 
     expect(
       within(sheet).getByRole('menuitem', { name: /Filtering/ }).textContent,
-    ).toContain('2/3');
+    ).toContain('2/2');
   });
 
   it('uses the host-supplied labels', async () => {

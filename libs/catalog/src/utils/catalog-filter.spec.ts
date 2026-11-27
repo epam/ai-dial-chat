@@ -1,6 +1,7 @@
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
 import type { CatalogItem } from '../models/catalog-item';
+import { CatalogFolderRootKind } from '../types/catalog-folders';
 import { CatalogSortKey } from '../types/sort';
 import {
   filterCatalogItems,
@@ -113,7 +114,6 @@ describe('filterCatalogItemsByQuery', () => {
   const query = {
     search: '',
     topics: new Set<string>(),
-    isMyOnly: false,
     sortKey: CatalogSortKey.NameAZ,
   };
 
@@ -125,13 +125,13 @@ describe('filterCatalogItemsByQuery', () => {
     ]);
   });
 
-  it('applies the search, the topics and "My" together', () => {
+  it('applies the search, the topics and the folder together', () => {
     expect(
       filterCatalogItemsByQuery(items, {
         ...query,
         search: 'a',
         topics: new Set(['code']),
-        isMyOnly: true,
+        folder: { root: CatalogFolderRootKind.Personal, path: [] },
       }).map((i) => i.id),
     ).toEqual(['b']);
   });

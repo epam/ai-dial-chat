@@ -1,0 +1,11 @@
+.label {
+  color: var(--cat-folders-btn-label, var(--text-accent, #1d4ed8));
+}
+
+.overlay {
+  background: var(--cat-folders-overlay-bg, var(--bg-layer-raised, #fcfcfc));
+  border: 1px solid
+    var(--cat-folders-overlay-border, var(--stroke-tertiary, #e0e6f0));
+  box-shadow: 1px 10px 25px 12px
+    var(--cat-folders-overlay-shadow, var(--shadow-lg, #2764d914)); /* `shadow-lg` */
+}

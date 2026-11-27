@@ -1,68 +1,9 @@
-/*
- * The trigger is the kit `Button`, whose `.dial-kit-base-button` sets its own
- * border and focus outline at single-class specificity. The doubled class
- * keeps these rules ahead of it whichever stylesheet loads last.
- */
-.filterBtn.filterBtn {
-  background-color: var(
-    --cat-filter-btn-bg,
-    var(--bg-control-neutral, #fcfcfc)
-  );
-  border: 1px solid
-    var(--cat-filter-btn-border, var(--stroke-tertiary, #e0e6f0));
-  transition:
-    border-color 150ms ease,
-    outline-color 150ms ease,
-    box-shadow 150ms ease;
-
-  @media (hover: hover) {
-    &:hover:not(:focus-visible) {
-      border-color: var(
-        --cat-filter-btn-border-hover,
-        var(--stroke-secondary, #d1dbea)
-      );
-    }
-  }
-
-  &:focus-visible {
-    border-color: transparent;
-    outline: 1px solid
-      var(--cat-filter-btn-border-focus, var(--stroke-accent-focus, #6785fb));
-    outline-offset: -1px;
-    box-shadow: none;
-  }
-}
-
-.filterBtn.filterBtnActive {
-  border-color: var(
-    --cat-filter-btn-border-active,
-    var(--stroke-accent, #1d4ed8)
-  );
-}
-
-.filterBtn.filterBtnOpen {
-  border-color: var(
-    --cat-filter-btn-border-open,
-    var(--stroke-accent-alpha, #2764d933)
-  );
-}
-
-/* Matches dial-small-semi-text (14px / 20px, semibold). */
-.filterBtnLabel {
-  color: var(--cat-filter-btn-label, var(--text-primary, #161b2d));
-}
-
 .filterBtnFunnel {
   color: var(--cat-filter-btn-funnel, var(--text-secondary, #57647a));
 }
 
-.filterBtnChevron {
-  color: var(--cat-filter-btn-chevron, var(--text-tertiary, #848e9c));
-  transition: transform 150ms ease;
-
-  @media (prefers-reduced-motion: reduce) {
-    transition: none;
-  }
+.activeDot {
+  background: var(--cat-filter-active-dot, var(--bg-control-accent, #1d4ed8));
 }
 
 .overlay {
@@ -75,20 +16,10 @@
 
 /* Checkbox row — the row itself is the kit's `MenuItem`, which owns the rest,
    hover, focus and checked treatments; only the label colour is themed here. */
-
 .rowLabel {
   color: var(--cat-filter-row-label, var(--text-primary, #161b2d));
 }
 
-.divider {
-  background: var(--cat-filter-divider, var(--stroke-tertiary, #e0e6f0));
-}
-
 .sectionLabel {
   color: var(--cat-filter-section-label, var(--text-tertiary, #848e9c));
-}
-
-.footer {
-  border-top: 1px solid
-    var(--cat-filter-footer-border, var(--stroke-tertiary, #e0e6f0));
 }

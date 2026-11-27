@@ -140,6 +140,18 @@ export type { FavoriteCardProps } from './components/Favorites/FavoriteCard';
 
 export { Filter } from './components/Filter/Filter';
 export type { FilterColors, FilterProps } from './components/Filter/Filter';
+export { AppliedTopicTags } from './components/AppliedTopicTags/AppliedTopicTags';
+export type { AppliedTopicTagsProps } from './components/AppliedTopicTags/AppliedTopicTags';
+export { CatalogFolderTree } from './components/CatalogFolderTree/CatalogFolderTree';
+export type {
+  CatalogFolderTreeProps,
+  FolderTreeColors,
+} from './components/CatalogFolderTree/CatalogFolderTree';
+export { FoldersButton } from './components/FoldersButton/FoldersButton';
+export type {
+  FoldersButtonColors,
+  FoldersButtonProps,
+} from './components/FoldersButton/FoldersButton';
 export { CatalogPickerModal } from './components/CatalogPickerModal/CatalogPickerModal';
 export { AddOnCatalogModal } from './components/AddOnCatalogModal/AddOnCatalogModal';
 export type {

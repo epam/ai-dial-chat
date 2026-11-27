@@ -1,6 +1,8 @@
 import { SelectOption } from '@epam/ai-dial-ui-kit';
 import type { ReactNode, Ref } from 'react';
+import type { CatalogFolderSelection } from '../types/catalog-folders';
 import { CatalogViewMode } from '../types/view-mode';
+import type { CatalogFolderLabels, CatalogFolderNode } from './catalog-folders';
 
 /** Typography class overrides for `Toolbar`. */
 export interface ToolbarTypography {
@@ -10,8 +12,10 @@ export interface ToolbarTypography {
   countClassName?: string;
   /** Typography class for the filter section label. Default: `'dial-tiny-lead-semi-text'`. */
   filterSectionLabelClassName?: string;
-  /** Typography class for the filter checkbox labels. Default: `'dial-small-semi-text'`. */
+  /** Typography class added to the topic checkbox labels. Default: none, so the kit row's own text class applies. */
   filterButtonClassName?: string;
+  /** Typography class for the folder tree rows. Default: `'dial-small-text'`. */
+  folderTreeRowClassName?: string;
 }
 
 /** Color overrides for `Toolbar`, applied via CSS custom properties. */
@@ -46,25 +50,21 @@ export interface BrowseSettingsSheetLabels {
   gridView: string;
   /** List view option. Default: 'List'. */
   listView: string;
-  /** Label of the "My" filter row. Default: 'My'. */
-  myApps: string;
   /** Heading of the topics section. Default: 'Topics'. */
   topics: string;
-  /** Filter footer Clear button. Default: 'Clear'. */
-  clear: string;
-  /** Filter footer Apply button. Default: 'Apply'. */
-  apply: string;
+  /** Filtering page header button that clears every topic. Default: 'Clear all'. */
+  clearAll: string;
   /** Accessible name of the header's back button. Default: 'Back'. */
   back: string;
   /** Accessible name of the header's close button. Default: 'Close'. */
   close: string;
-  /** Formats the applied-filter summary on the root Filtering row. Default: `${selected} of ${total}`. */
+  /** Formats the applied-topic summary on the root Filtering row. Default: `${selected} of ${total}`. */
   formatFilterCount: (selected: number, total: number) => string;
 }
 
 /** Props for Toolbar. */
 export interface ToolbarProps {
-  /** Total item count shown next to the "Browse" heading. */
+  /** Item count shown next to the heading or the breadcrumb trail. */
   totalCount?: number;
   /** Current display mode. */
   viewMode: CatalogViewMode;
@@ -80,12 +80,11 @@ export interface ToolbarProps {
   query: string;
   /** Called when the query changes. */
   onQueryChange: (q: string) => void;
-  /** Section heading text. Default: 'Browse'. */
+  /** Heading text while All entities is selected. Default: 'All entities'. */
   title?: string;
   /**
-   * Renders in place of the `title`/`totalCount` heading when supplied, e.g.
-   * so a host can render a clickable breadcrumb instead of a plain text
-   * label.
+   * Renders in place of the folder heading (`title`/`totalCount` or the
+   * breadcrumb trail) when supplied; the Folders control still follows it.
    */
   browseHeaderRenderer?: ReactNode;
   /** Search input placeholder. Default: 'Search models, tools, agents…'. */
@@ -102,20 +101,20 @@ export interface ToolbarProps {
   styles?: ToolbarStyles;
   /** Currently selected topic filters. Empty set means no topic filter is active. */
   filters?: Set<string>;
-  /** Called when the topic filter selection changes. */
+  /** Called with the new selection on every topic toggle, tag removal or "Clear all". */
   onFiltersChange?: (filters: Set<string>) => void;
   /** All available topic strings shown as checkboxes in the filter dropdown. */
   filterValues?: Set<string>;
-  /** Whether the "My Apps" filter checkbox is active. */
-  isMyAppsActive?: boolean;
-  /** Called when the "My Apps" toggle changes. */
-  onMyAppsChange?: (isActive: boolean) => void;
-  /** Label for the filter button when nothing is filtered. Default: 'From'. */
-  filterFromLabel?: string;
-  /** Label for the "My" filter checkbox. Default: 'My'. */
-  filterMyAppsLabel?: string;
   /** Label for the Topics section inside the filter dropdown. Default: 'Topics'. */
   filterTopicsLabel?: string;
+  /** Accessible name and tooltip of the icon-only topic filter trigger. Default: 'Filter by topic'. */
+  filterLabel?: string;
+  /** Text of the buttons that clear every topic. Default: 'Clear all'. */
+  filterClearAllLabel?: string;
+  /** Accessible name of the applied-topic tag group. Default: 'Applied topics'. */
+  appliedTopicsLabel?: string;
+  /** Returns the accessible name of a tag's remove button. Default: `` (topic) => `Remove ${topic}` ``. */
+  formatRemoveTopicLabel?: (topic: string) => string;
   /** Currently active sort key. */
   sortKey?: string;
   /**
@@ -127,6 +126,14 @@ export interface ToolbarProps {
   onSortChange?: (sortKey: string) => void;
   /** Accessible name and tooltip of the icon-only sort button. Default: 'Sort'. */
   sortLabel?: string;
-  /** Text of the mobile browse-settings button and sheet; `title` also names the button. `myApps`/`topics` fall back to `filterMyAppsLabel`/`filterTopicsLabel`. */
+  /** Text of the mobile browse-settings button and sheet; `title` also names the button. `topics`/`clearAll` fall back to `filterTopicsLabel`/`filterClearAllLabel`. */
   browseSettingsLabels?: Partial<BrowseSettingsSheetLabels>;
+  /** Folder tree listed by the Folders control; the control is hidden when omitted. */
+  folderTree?: CatalogFolderNode[];
+  /** Selected folder. Default: All entities (`{ path: [] }`). */
+  folderSelection?: CatalogFolderSelection;
+  /** Called with the picked folder from the tree or the breadcrumb trail. */
+  onFolderSelectionChange?: (selection: CatalogFolderSelection) => void;
+  /** Text of the folder navigation. Default: `DEFAULT_CATALOG_FOLDER_LABELS`, with `allEntities` taken from `title`. */
+  folderLabels?: Partial<CatalogFolderLabels>;
 }

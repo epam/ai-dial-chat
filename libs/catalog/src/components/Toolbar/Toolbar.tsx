@@ -5,31 +5,13 @@ import { ToolbarProps } from '../../models/toolbar-props';
 import { TitleRow } from './Rows/TitleRow';
 import styles from './Toolbar.module.scss';
 
-/** Browse section header: title, view/sort controls, search bar, filter row. */
+/** Browse section header: folder heading, search with view/sort/filter controls, applied-topic tags. */
 export const Toolbar: FC<ToolbarProps> = ({
-  query,
-  onQueryChange,
   searchPlaceholder = 'Search models, tools, agents…',
-  styles: browseStyles,
-  filters,
-  onFiltersChange,
-  filterValues,
-  isMyAppsActive,
-  onMyAppsChange,
-  filterFromLabel,
-  filterMyAppsLabel,
-  filterTopicsLabel,
-  gridViewLabel,
-  listViewLabel,
-  viewToggleLabel,
-  sortKey,
-  sortOptions,
-  onSortChange,
-  sortLabel,
   ...innerProps
 }) => {
   const cssVars = {
-    '--cat-browse-settings-dot': browseStyles?.colors?.settingsActiveDot,
+    '--cat-browse-settings-dot': innerProps.styles?.colors?.settingsActiveDot,
   } as CSSProperties;
 
   return (
@@ -41,28 +23,7 @@ export const Toolbar: FC<ToolbarProps> = ({
       )}
       style={cssVars}
     >
-      <TitleRow
-        styles={browseStyles}
-        query={query}
-        onQueryChange={onQueryChange}
-        searchPlaceholder={searchPlaceholder}
-        gridViewLabel={gridViewLabel}
-        listViewLabel={listViewLabel}
-        viewToggleLabel={viewToggleLabel}
-        sortKey={sortKey}
-        sortOptions={sortOptions}
-        onSortChange={onSortChange}
-        sortLabel={sortLabel}
-        filters={filters}
-        onFiltersChange={onFiltersChange}
-        filterValues={filterValues}
-        isMyAppsActive={isMyAppsActive}
-        onMyAppsChange={onMyAppsChange}
-        filterFromLabel={filterFromLabel}
-        filterMyAppsLabel={filterMyAppsLabel}
-        filterTopicsLabel={filterTopicsLabel}
-        {...innerProps}
-      />
+      <TitleRow searchPlaceholder={searchPlaceholder} {...innerProps} />
     </section>
   );
 };

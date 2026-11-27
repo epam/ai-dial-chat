@@ -412,3 +412,49 @@ describe('CatalogPickerModal', () => {
     });
   });
 });
+
+/* Clicks before the Popup's deferred focus move would close the opened dropdown. */
+const waitForDialogFocus = () =>
+  waitFor(() =>
+    expect(screen.getByRole('dialog').matches(':focus')).toBe(true),
+  );
+
+describe('CatalogPickerModal — topics and folders', () => {
+  const items = [
+    { ...makeItem('a', 'Alpha'), topics: ['Business'], isMyApp: true },
+    { ...makeItem('b', 'Beta'), topics: ['Coding'] },
+  ];
+
+  it('applies a topic on toggle and shows its tag below the search', async () => {
+    renderPicker({ items });
+    await waitForDialogFocus();
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Filter by topic' }),
+    );
+    await userEvent.click(
+      await screen.findByRole('menuitemcheckbox', { name: 'Business' }),
+    );
+
+    expect(screen.getByRole('list', { name: 'Rows for ""' }).textContent).toBe(
+      'Alpha',
+    );
+    expect(screen.getByRole('group', { name: 'Applied topics' })).toBeTruthy();
+    expect(screen.queryByRole('menuitemcheckbox', { name: 'My' })).toBeNull();
+  });
+
+  it('narrows to a folder and shows the trail headed by the catalog', async () => {
+    renderPicker({ items });
+    await waitForDialogFocus();
+    await userEvent.click(screen.getByRole('button', { name: 'Folders' }));
+    await userEvent.click(
+      await screen.findByRole('treeitem', { name: 'Personal' }),
+    );
+
+    expect(screen.getByRole('list', { name: 'Rows for ""' }).textContent).toBe(
+      'Alpha',
+    );
+    const trail = screen.getByRole('navigation', { name: 'Folder path' });
+    expect(trail.textContent).toContain('Models catalog');
+    expect(trail.textContent).toContain('Personal');
+  });
+});

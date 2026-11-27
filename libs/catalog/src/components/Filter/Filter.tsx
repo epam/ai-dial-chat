@@ -4,20 +4,21 @@ import {
   SELECT_LIST_MAX_HEIGHT_CLASS_NAME,
 } from '@epam/ai-dial-chat-shared';
 import {
-  Button,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   Dropdown,
   DropdownOverlayRole,
-  GhostButton,
+  ElementSize,
+  GhostIconButton,
+  LinkButton,
   MenuItem,
   MenuItemMark,
-  PrimaryButton,
 } from '@epam/ai-dial-ui-kit';
-import { IconChevronDown, IconFilter } from '@tabler/icons-react';
+import { IconFilter } from '@tabler/icons-react';
 import {
   FC,
   KeyboardEvent,
+  RefObject,
   useCallback,
   useEffect,
   useMemo,
@@ -25,30 +26,15 @@ import {
   useState,
 } from 'react';
 import { ToolbarTypography } from '../../models/toolbar-props';
-import { getFromLabel, toggleTopic } from '../../utils/catalog-filter';
+import { toggleTopic } from '../../utils/catalog-filter';
 import styles from './Filter.module.scss';
 
-/** Props for Filter. */
 /** Color overrides for `Filter`, applied as CSS custom properties. */
 export interface FilterColors {
-  /** Trigger button background. Fallback: `--bg-control-neutral`. */
-  buttonBackground?: string;
-  /** Trigger button border color at rest. Fallback: `--stroke-tertiary`. */
-  buttonBorder?: string;
-  /** Trigger button border color on hover. Fallback: `--stroke-secondary`. */
-  buttonBorderHover?: string;
-  /** Trigger button border color while the dropdown has focus. Fallback: `--stroke-accent-focus`. */
-  buttonBorderFocus?: string;
-  /** Trigger button border color while a filter is applied. Fallback: `--stroke-accent`. */
-  buttonBorderActive?: string;
-  /** Trigger button border color while the dropdown is open. Fallback: `--stroke-accent-alpha`. */
-  buttonBorderOpen?: string;
-  /** Trigger button label color. Fallback: `--text-primary`. */
-  buttonLabel?: string;
   /** Funnel icon color in the trigger button. Fallback: `--text-secondary`. */
   buttonFunnel?: string;
-  /** Chevron icon color in the trigger button. Fallback: `--text-tertiary`. */
-  buttonChevron?: string;
+  /** Dot on the trigger while a topic is applied. Fallback: `--bg-control-accent`. */
+  activeDot?: string;
   /** Dropdown overlay background. Fallback: `--bg-layer-raised`. */
   overlayBackground?: string;
   /** Dropdown overlay border color. Fallback: `--stroke-tertiary`. */
@@ -59,90 +45,55 @@ export interface FilterColors {
   rowLabel?: string;
   /** Section heading ("Topics") text color. Fallback: `--text-tertiary`. */
   sectionLabel?: string;
-  /** Divider line color between filter sections. Fallback: `--stroke-tertiary`. */
-  divider?: string;
-  /** Footer top-border color. Fallback: `--stroke-tertiary`. */
-  footerBorder?: string;
 }
 
+/** Props for Filter. */
 export interface FilterProps {
   /** Set of topic strings currently selected for filtering. Empty = no topic filter. */
   checked: Set<string>;
-  /** Called when the topic selection changes. */
+  /** Called with the new selection on every toggle and on "Clear all". */
   onChange: (checked: Set<string>) => void;
   /** All available topic strings shown as checkboxes. */
   values?: Set<string>;
-  /** Whether the "My Apps" filter checkbox is active. */
-  isMyAppsActive?: boolean;
-  /** Called when the "My Apps" toggle changes. */
-  onMyAppsChange?: (isActive: boolean) => void;
-  /** Label for the "My Apps" checkbox. Default: 'My'. */
-  myAppsLabel?: string;
-  /** Label for the Topics section heading. Default: 'Topics'. */
+  /** Heading of the overlay and its accessible name. Default: 'Topics'. */
   topicsLabel?: string;
-  /** Button label when nothing is filtered. Default: 'From'. */
-  defaultLabel?: string;
-  /** Label for the footer Clear button. Default: 'Clear'. */
-  clearLabel?: string;
-  /** Label for the footer Apply button. Default: 'Apply'. */
-  applyLabel?: string;
-  /** Optional typography overrides for the filter button and section label. */
+  /** Accessible name and tooltip of the icon-only trigger. Default: 'Filter by topic'. */
+  triggerLabel?: string;
+  /** Text of the header button that clears every topic. Default: 'Clear all'. */
+  clearAllLabel?: string;
+  /** Ref to the trigger button, e.g. so applied-topic tags can return focus to it. */
+  triggerRef?: RefObject<HTMLButtonElement | null>;
+  /** Optional typography overrides for the rows and section label. */
   typography?: ToolbarTypography;
   /** Color overrides applied as CSS custom properties. */
   colors?: FilterColors;
 }
 
-const getFilterButtonLabel = (
-  checked: Set<string>,
-  values: Set<string> | undefined,
-  isMyAppsActive: boolean | undefined,
-  myAppsLabel: string,
-  defaultLabel: string,
-): string => {
-  const hasTopics = checked.size > 0;
-  if (isMyAppsActive && hasTopics) return `${myAppsLabel} · ${checked.size}`;
-  if (isMyAppsActive) return myAppsLabel;
-  if (hasTopics) return getFromLabel(checked, values, defaultLabel);
-  return defaultLabel;
-};
-
-/** Source-filter dropdown: checkbox list for topics and My Apps toggle, with buffered Clear/Apply controls. */
+/** Icon-only topic filter whose dropdown applies each toggle immediately. */
 export const Filter: FC<FilterProps> = ({
   checked,
   onChange,
   values,
-  isMyAppsActive,
-  onMyAppsChange,
-  myAppsLabel = 'My',
   topicsLabel = 'Topics',
-  defaultLabel = 'From',
-  clearLabel = 'Clear',
-  applyLabel = 'Apply',
+  triggerLabel = 'Filter by topic',
+  clearAllLabel = 'Clear all',
+  triggerRef: externalTriggerRef,
   typography,
   colors,
 }) => {
-  const isActive = (isMyAppsActive ?? false) || checked.size > 0;
+  const isActive = checked.size > 0;
   const [isOpen, setIsOpen] = useState(false);
 
   /* Applied to the trigger and the overlay separately — the dropdown portals
    * its overlay, so it is not a DOM descendant of the trigger. */
   const cssVars = buildCssVars({
-    '--cat-filter-btn-bg': colors?.buttonBackground,
-    '--cat-filter-btn-border': colors?.buttonBorder,
-    '--cat-filter-btn-border-hover': colors?.buttonBorderHover,
-    '--cat-filter-btn-border-focus': colors?.buttonBorderFocus,
-    '--cat-filter-btn-border-active': colors?.buttonBorderActive,
-    '--cat-filter-btn-border-open': colors?.buttonBorderOpen,
-    '--cat-filter-btn-label': colors?.buttonLabel,
     '--cat-filter-btn-funnel': colors?.buttonFunnel,
-    '--cat-filter-btn-chevron': colors?.buttonChevron,
+    '--cat-filter-active-dot': colors?.activeDot,
     '--cat-filter-overlay-bg': colors?.overlayBackground,
     '--cat-filter-overlay-border': colors?.overlayBorder,
     '--cat-filter-overlay-shadow': colors?.overlayShadow,
     '--cat-filter-row-label': colors?.rowLabel,
     '--cat-filter-section-label': colors?.sectionLabel,
-    '--cat-filter-divider': colors?.divider,
-    '--cat-filter-footer-border': colors?.footerBorder,
   });
 
   const topics = useMemo(
@@ -150,47 +101,24 @@ export const Filter: FC<FilterProps> = ({
     [values],
   );
 
-  const buttonLabel = getFilterButtonLabel(
-    checked,
-    values,
-    isMyAppsActive,
-    myAppsLabel,
-    defaultLabel,
-  );
-
-  // Pending (buffered) state — committed to parent only on Apply.
-  const [pendingChecked, setPendingChecked] = useState<Set<string>>(
-    () => new Set(checked),
-  );
-  const [pendingMyApps, setPendingMyApps] = useState(isMyAppsActive ?? false);
-
-  // Sync pending from applied state each time the dropdown opens.
-  useEffect(() => {
-    if (!isOpen) return;
-    setPendingChecked(new Set(checked));
-    setPendingMyApps(isMyAppsActive ?? false);
-  }, [isOpen, checked, isMyAppsActive]);
-
-  /*
-   * Keyboard navigation — roving tabindex across checkbox rows only.
-   * Footer buttons live outside the roving group (natural tab order).
-   */
-  const totalItems = topics.length + 1;
+  /* Roving tabindex across the topic rows; "Clear all" sits in the header,
+   * outside the roving group, in the natural tab order. */
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const rowRefs = useRef<(HTMLButtonElement | null)[]>([]);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const footerRef = useRef<HTMLDivElement>(null);
+  const internalTriggerRef = useRef<HTMLButtonElement>(null);
+  const triggerRef = externalTriggerRef ?? internalTriggerRef;
 
   const focusRow = useCallback(
     (index: number) => {
-      const clamped = (index + totalItems) % totalItems;
+      if (topics.length === 0) return;
+      const clamped = (index + topics.length) % topics.length;
       setFocusedIndex(clamped);
       rowRefs.current[clamped]?.focus();
     },
-    [totalItems],
+    [topics.length],
   );
 
-  // Focus first row after overlay renders.
+  // Focus the first row after the overlay renders.
   useEffect(() => {
     if (!isOpen) {
       setFocusedIndex(-1);
@@ -200,11 +128,6 @@ export const Filter: FC<FilterProps> = ({
     return () => cancelAnimationFrame(frame);
   }, [isOpen, focusRow]);
 
-  const handleOpenChange = (next: boolean) => {
-    setIsOpen(next);
-    if (!next) triggerRef.current?.focus();
-  };
-
   const handleTriggerKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
     if (e.key === 'ArrowDown' && !isOpen) {
       e.preventDefault();
@@ -212,210 +135,135 @@ export const Filter: FC<FilterProps> = ({
     }
   };
 
-  /*
-   * Arrow keys navigate checkbox rows; the kit Dropdown handles Escape and
-   * focus return. Arrow keys pressed on the footer buttons are ignored so they
-   * don't accidentally move row focus.
-   */
+  // The kit Dropdown owns Escape, outside presses and focus return.
   const handleMenuKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    const isInFooter = footerRef.current?.contains(e.target as Node) ?? false;
-    if (e.key === 'ArrowDown' && !isInFooter) {
+    if (e.key === 'ArrowDown') {
       e.preventDefault();
       focusRow(focusedIndex + 1);
-    } else if (e.key === 'ArrowUp' && !isInFooter) {
+    } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       focusRow(focusedIndex - 1);
     }
   };
 
-  const handleApply = () => {
-    onChange(pendingChecked);
-    onMyAppsChange?.(pendingMyApps);
-    handleOpenChange(false);
-  };
-
-  const handleClear = () => {
-    onChange(new Set());
-    onMyAppsChange?.(false);
-    handleOpenChange(false);
-  };
+  const handleClearAll = () => onChange(new Set());
 
   return (
-    <Dropdown
-      matchReferenceWidth={false}
-      placement="bottom-start"
-      open={isOpen}
-      onOpenChange={handleOpenChange}
-      listClassName="!bg-transparent !shadow-none !p-0"
-      /* A dialog, not a menu: the panel holds the checkbox menu plus the
-         Clear/Apply footer, which are not menu items. The roving handler
-         below owns the arrow keys. */
-      overlayRole={DropdownOverlayRole.Dialog}
-      overlayAriaLabel={defaultLabel}
-      optionArrowNavigation={false}
-      renderOverlay={() => (
-        <div
-          tabIndex={-1}
-          /*
-           * Bound to the kit Dropdown's own live available-height var (set by
-           * floating-ui) so the topics list, not the floating panel, absorbs
-           * any height constraint. Without it both scroll: the panel keeps its
-           * default overflow and the list keeps its full 344px, so a viewport
-           * too short for the two of them plus the header and footer leaves
-           * the user with two scrollbars. The -8px accounts for this overlay's
-           * own p-[6px] plus the panel's border.
-           */
-          style={{
-            ...cssVars,
-            maxHeight: 'calc(var(--fui-available-height, 9999px) - 8px)',
-          }}
-          className={mergeClasses(
-            'flex min-w-[360px] flex-col rounded-xl p-[6px]',
-            styles.overlay,
-          )}
-          onKeyDown={handleMenuKeyDown}
-        >
+    /* The button must be the Dropdown's direct child, which receives the
+       kit's aria-haspopup/aria-controls; the dot sits beside it. */
+    <span className="relative inline-flex shrink-0" style={cssVars}>
+      <Dropdown
+        matchReferenceWidth={false}
+        placement="bottom-end"
+        open={isOpen}
+        onOpenChange={setIsOpen}
+        listClassName="!bg-transparent !shadow-none !p-0"
+        /* A dialog, not a menu: the panel holds a header with "Clear all" plus
+         the checkbox menu. The roving handler below owns the arrow keys. */
+        overlayRole={DropdownOverlayRole.Dialog}
+        overlayAriaLabel={topicsLabel}
+        optionArrowNavigation={false}
+        // The effect below focuses the first row; the kit must not move focus.
+        initialFocus={-1}
+        renderOverlay={() => (
           <div
-            role="menu"
-            aria-label={defaultLabel}
-            className="flex min-h-0 flex-col"
+            tabIndex={-1}
+            /*
+             * Bound to the kit Dropdown's live available-height var so the
+             * topics list, not the floating panel, absorbs a height constraint.
+             * The -8px accounts for this overlay's p-[6px] plus the border.
+             */
+            style={{
+              ...cssVars,
+              maxHeight: 'calc(var(--fui-available-height, 9999px) - 8px)',
+            }}
+            className={mergeClasses(
+              'flex min-w-[360px] flex-col rounded-xl p-[6px]',
+              styles.overlay,
+            )}
           >
-            {/* My Apps row — the kit's own multiselect menu row, so its rest,
-              hover, focus and checked states come from the Menu-item spec. */}
-            <MenuItem
-              role="menuitemcheckbox"
-              aria-checked={pendingMyApps}
-              mark={MenuItemMark.Checkbox}
-              selected={pendingMyApps}
-              label={myAppsLabel}
-              labelClassName={mergeClasses(
-                styles.rowLabel,
-                typography?.filterButtonClassName ?? 'dial-small-semi-text',
+            <div className="flex shrink-0 items-center gap-2 px-[10px] pt-[6px] pb-1">
+              <span
+                className={mergeClasses(
+                  typography?.filterSectionLabelClassName ??
+                    'dial-tiny-lead-semi-text',
+                  styles.sectionLabel,
+                )}
+                aria-hidden
+              >
+                {topicsLabel}
+              </span>
+              <LinkButton
+                label={clearAllLabel}
+                className="ms-auto"
+                disabled={!isActive}
+                onClick={handleClearAll}
+              />
+            </div>
+            {/* The rows are their own scroll box so the header stays put. */}
+            <div
+              role="menu"
+              aria-label={topicsLabel}
+              className={mergeClasses(
+                SELECT_LIST_MAX_HEIGHT_CLASS_NAME,
+                'flex min-h-0 flex-col gap-1 overflow-y-auto',
               )}
-              /* Its height is a `height`, so as a flex child of the panel it
-               would shrink instead of leaving the topics list to scroll. */
-              className="shrink-0"
-              tabIndex={focusedIndex === 0 ? 0 : -1}
-              ref={(el) => {
-                rowRefs.current[0] = el;
-              }}
-              onClick={() => setPendingMyApps(!pendingMyApps)}
-            />
-
-            {topics.length > 0 && (
-              <>
-                <div
-                  role="separator"
-                  className={mergeClasses('my-1 h-px', styles.divider)}
-                  aria-hidden
-                />
-                <div
-                  className={mergeClasses(
-                    'px-[10px] pt-[10px] pb-1',
-                    typography?.filterSectionLabelClassName ??
-                      'dial-tiny-lead-semi-text',
-                    styles.sectionLabel,
-                  )}
-                  aria-hidden
-                >
-                  {topicsLabel}
-                </div>
-                {/* The options are their own scroll box at the design's maximum
-                  list length, so the My Apps row, the section heading and the
-                  Clear/Apply footer stay put as the topics scroll. `min-h-0`
-                  lets it give way when the panel's available height is under
-                  that maximum, keeping it the only thing that scrolls. */}
-                <div
-                  className={mergeClasses(
-                    SELECT_LIST_MAX_HEIGHT_CLASS_NAME,
-                    'flex min-h-0 flex-col gap-1 overflow-y-auto',
-                  )}
-                >
-                  {topics.map((topic, i) => {
-                    const isChecked = pendingChecked.has(topic);
-                    const idx = i + 1;
-                    const toggle = () =>
-                      setPendingChecked(toggleTopic(topic, pendingChecked));
-                    return (
-                      <MenuItem
-                        key={topic}
-                        role="menuitemcheckbox"
-                        aria-checked={isChecked}
-                        mark={MenuItemMark.Checkbox}
-                        selected={isChecked}
-                        label={topic}
-                        labelClassName={styles.rowLabel}
-                        className="shrink-0"
-                        tabIndex={focusedIndex === idx ? 0 : -1}
-                        ref={(el) => {
-                          rowRefs.current[idx] = el;
-                        }}
-                        onClick={toggle}
-                      />
-                    );
-                  })}
-                </div>
-              </>
-            )}
+              onKeyDown={handleMenuKeyDown}
+            >
+              {topics.map((topic, idx) => {
+                const isChecked = checked.has(topic);
+                return (
+                  <MenuItem
+                    key={topic}
+                    role="menuitemcheckbox"
+                    aria-checked={isChecked}
+                    mark={MenuItemMark.Checkbox}
+                    selected={isChecked}
+                    label={topic}
+                    labelClassName={mergeClasses(
+                      styles.rowLabel,
+                      typography?.filterButtonClassName,
+                    )}
+                    className="shrink-0"
+                    tabIndex={focusedIndex === idx ? 0 : -1}
+                    ref={(el) => {
+                      rowRefs.current[idx] = el;
+                    }}
+                    onFocus={() => setFocusedIndex(idx)}
+                    onClick={() => onChange(toggleTopic(topic, checked))}
+                  />
+                );
+              })}
+            </div>
           </div>
-
-          <div
-            className={mergeClasses(
-              'mt-1 flex shrink-0 items-center px-1 py-3',
-              styles.footer,
-            )}
-            ref={footerRef}
-          >
-            <GhostButton label={clearLabel} onClick={handleClear} />
-
-            <PrimaryButton
-              label={applyLabel}
-              className="ms-auto"
-              onClick={handleApply}
+        )}
+      >
+        <GhostIconButton
+          ref={triggerRef}
+          size={ElementSize.Large}
+          aria-label={triggerLabel}
+          tooltipProps={{ tooltip: triggerLabel }}
+          aria-expanded={isOpen}
+          onKeyDown={handleTriggerKeyDown}
+          icon={
+            <IconFilter
+              size={DIAL_ICON_SIZE.LG}
+              stroke={DIAL_KIT_ICON_STROKE}
+              className={styles.filterBtnFunnel}
+              aria-hidden
             />
-          </div>
-        </div>
+          }
+        />
+      </Dropdown>
+      {isActive && (
+        <span
+          className={mergeClasses(
+            'pointer-events-none absolute inset-e-2.5 top-2.5 size-2 rounded-full',
+            styles.activeDot,
+          )}
+          aria-hidden
+        />
       )}
-    >
-      {/* No `variant`: the kit paints no colours of its own, so the
-          `--cat-filter-btn-*` custom properties keep theming the pill. */}
-      <Button
-        ref={triggerRef}
-        aria-expanded={isOpen}
-        onKeyDown={handleTriggerKeyDown}
-        style={cssVars}
-        iconBefore={
-          <IconFilter
-            size={DIAL_ICON_SIZE.SM}
-            stroke={DIAL_KIT_ICON_STROKE}
-            className={mergeClasses('shrink-0', styles.filterBtnFunnel)}
-            aria-hidden
-          />
-        }
-        label={buttonLabel}
-        textClassName={mergeClasses(
-          styles.filterBtnLabel,
-          typography?.filterButtonClassName ?? 'dial-small-semi-text',
-        )}
-        iconAfter={
-          <IconChevronDown
-            size={14}
-            stroke={DIAL_KIT_ICON_STROKE}
-            className={mergeClasses(
-              'shrink-0 transition-transform duration-150',
-              styles.filterBtnChevron,
-              isOpen && 'rotate-180',
-            )}
-            aria-hidden
-          />
-        }
-        className={mergeClasses(
-          'h-12 shrink-0 gap-[7px] rounded-lg! px-[18px] whitespace-nowrap',
-          styles.filterBtn,
-          isActive && styles.filterBtnActive,
-          isOpen && styles.filterBtnOpen,
-        )}
-      />
-    </Dropdown>
+    </span>
   );
 };

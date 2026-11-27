@@ -1,6 +1,7 @@
 import type { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { type FC, type ReactNode, useCallback, useMemo, useState } from 'react';
 import type { CatalogItem } from '../../models/catalog-item';
+import type { CatalogFolderRoot } from '../../types/catalog-folders';
 import type { CatalogLoadStatus } from '../../types/load-status';
 import { CatalogSelectionMode } from '../../types/selection-mode';
 import { applyCatalogSelection } from '../../utils/list-selection';
@@ -55,6 +56,8 @@ export interface AddOnCatalogModalProps {
   onClose: () => void;
   /** Typography class of the heading above the list, forwarded to `CatalogPickerModal`. Defaults to `'dial-body-semi-text'`. */
   headingClassName?: string;
+  /** Folder roots listed by the Folders control, forwarded to `CatalogPickerModal`. Defaults to `DEFAULT_CATALOG_FOLDER_ROOTS`. */
+  folderRoots?: CatalogFolderRoot[];
 }
 
 /** Add-on picker dialog: a catalog checklist that opens on the attached items and commits the checked set on Add. */
@@ -71,6 +74,7 @@ export const AddOnCatalogModal: FC<AddOnCatalogModalProps> = ({
   onConfirm,
   onClose,
   headingClassName,
+  folderRoots,
 }) => {
   const [checkedIds, setCheckedIds] = useState<Set<string>>(
     () => new Set(attachedIds),
@@ -101,6 +105,7 @@ export const AddOnCatalogModal: FC<AddOnCatalogModalProps> = ({
       footerStart={renderFooterStart?.(checkedIds)}
       onConfirm={handleConfirm}
       onClose={onClose}
+      folderRoots={folderRoots}
       headingClassName={headingClassName}
       listProps={{
         ...listProps,

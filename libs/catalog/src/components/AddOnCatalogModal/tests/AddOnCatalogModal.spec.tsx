@@ -1,9 +1,10 @@
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { CatalogItem } from '../../../models/catalog-item';
 import type { ListViewProps } from '../../../models/list-props';
+import { CatalogFolderRootKind } from '../../../types/catalog-folders';
 import { CatalogLoadStatus } from '../../../types/load-status';
 import {
   AddOnCatalogModal,
@@ -147,5 +148,52 @@ describe('AddOnCatalogModal', () => {
       clientHeight.mockRestore();
       vi.unstubAllGlobals();
     }
+  });
+});
+
+/* Clicks before the Popup's deferred focus move would close the opened dropdown. */
+const waitForDialogFocus = () =>
+  waitFor(() =>
+    expect(screen.getByRole('dialog').matches(':focus')).toBe(true),
+  );
+
+describe('AddOnCatalogModal — topics and folders', () => {
+  it('narrows the list as soon as a topic is checked', async () => {
+    renderPicker({
+      items: [
+        { ...makeItem('t1', 'Figma'), topics: ['Design'] },
+        { ...makeItem('t2', 'Jira'), topics: ['Tracking'] },
+      ],
+    });
+    await waitForDialogFocus();
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Filter by topic' }),
+    );
+    await userEvent.click(
+      await screen.findByRole('menuitemcheckbox', { name: 'Design' }),
+    );
+
+    expect(screen.queryByRole('checkbox', { name: 'Select Jira' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Remove Design' })).toBeTruthy();
+  });
+
+  it('forwards folderRoots and narrows to the picked folder', async () => {
+    renderPicker({
+      items: [
+        { ...makeItem('t1', 'Figma'), isMyApp: true },
+        makeItem('t2', 'Jira'),
+      ],
+      folderRoots: [{ kind: CatalogFolderRootKind.Personal, label: 'Mine' }],
+    });
+    await waitForDialogFocus();
+    await userEvent.click(screen.getByRole('button', { name: 'Folders' }));
+    await userEvent.click(
+      await screen.findByRole('treeitem', { name: 'Mine' }),
+    );
+
+    expect(screen.queryByRole('checkbox', { name: 'Select Jira' })).toBeNull();
+    expect(
+      screen.getByRole('navigation', { name: 'Folder path' }).textContent,
+    ).toContain('Toolsets catalog');
   });
 });

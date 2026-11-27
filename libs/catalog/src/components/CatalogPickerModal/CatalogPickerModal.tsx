@@ -1,8 +1,4 @@
-import {
-  buildCssVars,
-  ItemHeader,
-  SortMenuButton,
-} from '@epam/ai-dial-chat-shared';
+import { buildCssVars, SortMenuButton } from '@epam/ai-dial-chat-shared';
 import {
   ButtonAppearance,
   ButtonVariant,
@@ -24,18 +20,31 @@ import {
   useRef,
   useState,
 } from 'react';
+import { DEFAULT_CATALOG_FOLDER_ROOTS } from '../../constants/catalog-folders';
 import { useCatalogScrollToTop } from '../../hooks/useCatalogScrollToTop/useCatalogScrollToTop';
+import type { CatalogFolderLabels } from '../../models/catalog-folders';
 import type { CatalogItem } from '../../models/catalog-item';
 import type { ListViewHandle, ListViewProps } from '../../models/list-props';
+import type {
+  CatalogFolderRoot,
+  CatalogFolderSelection,
+} from '../../types/catalog-folders';
 import { CatalogLoadStatus } from '../../types/load-status';
 import { CatalogSortKey } from '../../types/sort';
 import {
   filterCatalogItemsByQuery,
   getTopicOptions,
 } from '../../utils/catalog-filter';
+import {
+  buildCatalogFolderTree,
+  resolveCatalogFolderLabels,
+} from '../../utils/catalog-folders';
+import { AppliedTopicTags } from '../AppliedTopicTags/AppliedTopicTags';
 import { Filter } from '../Filter/Filter';
+import { FoldersButton } from '../FoldersButton/FoldersButton';
 import { ListView } from '../ListView/ListView';
 import { ScrollToTopButton } from '../ScrollToTopButton/ScrollToTopButton';
+import { CatalogFolderHeader } from '../Toolbar/Rows/CatalogFolderHeader';
 import styles from './CatalogPickerModal.module.scss';
 
 /** User-visible strings of `CatalogPickerModal`; pass translated ones in a localised host. */
@@ -72,16 +81,18 @@ export interface CatalogPickerModalLabels {
   closeDialog?: string;
   /** Accessible name of the search's clear button. Defaults to `'Clear search'`. */
   clearSearch?: string;
-  /** From filter trigger label. Defaults to `'From'`. */
-  from?: string;
-  /** From filter "My" option. Defaults to `'My'`. */
-  my?: string;
-  /** From filter topics heading. Defaults to `'Topics'`. */
+  /** Topic filter heading. Defaults to `'Topics'`. */
   topics?: string;
-  /** From filter Clear button. Defaults to `'Clear'`. */
-  clear?: string;
-  /** From filter Apply button. Defaults to `'Apply'`. */
-  apply?: string;
+  /** Accessible name and tooltip of the icon-only topic filter. Defaults to `'Filter by topic'`. */
+  filter?: string;
+  /** Text of the buttons that clear every topic. Defaults to `'Clear all'`. */
+  clearAll?: string;
+  /** Accessible name of the applied-topic tag group. Defaults to `'Applied topics'`. */
+  appliedTopics?: string;
+  /** Returns the accessible name of a tag's remove button. Defaults to `` (topic) => `Remove ${topic}` ``. */
+  formatRemoveTopic?: (topic: string) => string;
+  /** Text of the folder navigation, merged over `DEFAULT_CATALOG_FOLDER_LABELS`; the trail starts with `catalog`. */
+  folders?: Partial<CatalogFolderLabels>;
   /** Accessible name and tooltip of the default list's "Scroll to top" button. Defaults to `'Scroll to top'`. */
   scrollToTop?: string;
 }
@@ -118,6 +129,8 @@ interface CatalogPickerModalBaseProps {
   colors?: CatalogPickerModalColors;
   /** Typography class of the heading above the list. Defaults to `'dial-body-semi-text'`. */
   headingClassName?: string;
+  /** Folder roots listed by the Folders control, in display order. Defaults to `DEFAULT_CATALOG_FOLDER_ROOTS`. */
+  folderRoots?: CatalogFolderRoot[];
   /** Called when the user confirms. */
   onConfirm: () => void;
   /** Called when the user cancels or closes the dialog. */
@@ -161,7 +174,8 @@ const FULLSCREEN_BELOW_MD = {
 
 /**
  * Shell of a catalog picker dialog (Add toolset, Change model): the header with
- * sort, search and the From filter, and the loading, failure and empty states.
+ * the folder trail, sort, search and the topic filter, and the loading, failure
+ * and empty states.
  * The list is a `ListView` given `listProps`, or the host's own from
  * `renderList`. Mount it only while open, so search, filter and sort start
  * fresh each time it opens.
@@ -176,6 +190,7 @@ export const CatalogPickerModal: FC<CatalogPickerModalProps> = ({
   footerStart,
   colors,
   headingClassName = 'dial-body-semi-text',
+  folderRoots = DEFAULT_CATALOG_FOLDER_ROOTS,
   onConfirm,
   onClose,
   listProps,
@@ -183,7 +198,10 @@ export const CatalogPickerModal: FC<CatalogPickerModalProps> = ({
 }) => {
   const [search, setSearch] = useState('');
   const [topics, setTopics] = useState<Set<string>>(() => new Set());
-  const [isMyOnly, setIsMyOnly] = useState(false);
+  const [folder, setFolder] = useState<CatalogFolderSelection>(() => ({
+    path: [],
+  }));
+  const filterTriggerRef = useRef<HTMLButtonElement>(null);
   const [sortKey, setSortKey] = useState<string>(
     CatalogSortKey.RecentlyUpdated,
   );
@@ -237,10 +255,37 @@ export const CatalogPickerModal: FC<CatalogPickerModalProps> = ({
   const addLabel = labels.add ?? 'Add';
 
   const topicOptions = useMemo(() => getTopicOptions(items), [items]);
+  const folderTree = useMemo(
+    () => buildCatalogFolderTree(items, folderRoots),
+    [items, folderRoots],
+  );
+  const folderLabels = useMemo(
+    () => resolveCatalogFolderLabels(labels.folders),
+    [labels.folders],
+  );
+  const headerLabels = useMemo(
+    () => ({ ...folderLabels, allEntities: labels.catalog }),
+    [folderLabels, labels.catalog],
+  );
+  const headerStyles = useMemo(
+    () => ({
+      typography: {
+        titleClassName: headingClassName,
+        countClassName: 'dial-tiny-text',
+      },
+    }),
+    [headingClassName],
+  );
   const rows = useMemo(
     () =>
-      filterCatalogItemsByQuery(items, { search, topics, isMyOnly, sortKey }),
-    [items, search, topics, isMyOnly, sortKey],
+      filterCatalogItemsByQuery(items, {
+        search,
+        topics,
+        folder,
+        folderRoots,
+        sortKey,
+      }),
+    [items, search, topics, folder, folderRoots, sortKey],
   );
 
   const sortOptions = useMemo(
@@ -336,7 +381,8 @@ export const CatalogPickerModal: FC<CatalogPickerModalProps> = ({
       );
     }
     if (rows.length === 0) {
-      const isFiltered = search.trim() !== '' || topics.size > 0 || isMyOnly;
+      const isFiltered =
+        search.trim() !== '' || topics.size > 0 || folder.root != null;
       return (
         <div className="py-8">
           <NoDataContent
@@ -392,12 +438,20 @@ export const CatalogPickerModal: FC<CatalogPickerModalProps> = ({
       onClose={onClose}
     >
       <div className="flex shrink-0 flex-col gap-3 pb-5">
-        <div className="flex items-center gap-2">
-          <ItemHeader
-            title={labels.catalog}
-            postfix={isReady ? rows.length : undefined}
-            titleClassName={headingClassName}
-            shouldTruncateTitle={false}
+        <div className="flex min-w-0 items-center gap-2">
+          <CatalogFolderHeader
+            tree={folderTree}
+            selection={folder}
+            onChange={setFolder}
+            totalCount={isReady ? rows.length : undefined}
+            labels={headerLabels}
+            styles={headerStyles}
+          />
+          <FoldersButton
+            tree={folderTree}
+            selection={folder}
+            onChange={setFolder}
+            labels={folderLabels}
           />
           <div className="ms-auto shrink-0">
             <SortMenuButton
@@ -414,7 +468,7 @@ export const CatalogPickerModal: FC<CatalogPickerModalProps> = ({
               value={search}
               onChange={handleSearchChange}
               size={ElementSize.Large}
-              // Matches the 48px Filter button, as the catalog's own toolbar does.
+              // Matches the 48px filter button, as the catalog's own toolbar does.
               wrapperClassName="dial-kit-input-large"
               placeholder={searchLabel}
               aria-label={searchLabel}
@@ -426,15 +480,20 @@ export const CatalogPickerModal: FC<CatalogPickerModalProps> = ({
             checked={topics}
             onChange={setTopics}
             values={topicOptions}
-            isMyAppsActive={isMyOnly}
-            onMyAppsChange={setIsMyOnly}
-            defaultLabel={labels.from ?? 'From'}
-            myAppsLabel={labels.my ?? 'My'}
-            topicsLabel={labels.topics ?? 'Topics'}
-            clearLabel={labels.clear ?? 'Clear'}
-            applyLabel={labels.apply ?? 'Apply'}
+            topicsLabel={labels.topics}
+            triggerLabel={labels.filter}
+            clearAllLabel={labels.clearAll}
+            triggerRef={filterTriggerRef}
           />
         </div>
+        <AppliedTopicTags
+          topics={topics}
+          onChange={setTopics}
+          appliedTopicsLabel={labels.appliedTopics}
+          clearAllLabel={labels.clearAll}
+          formatRemoveTopicLabel={labels.formatRemoveTopic}
+          fallbackFocusRef={filterTriggerRef}
+        />
       </div>
       {renderBody()}
     </Popup>

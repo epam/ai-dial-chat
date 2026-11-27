@@ -1,197 +1,166 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { Filter } from '../Filter';
+import { useState } from 'react';
+import { describe, expect, it, vi } from 'vitest';
+import { Filter, FilterProps } from '../Filter';
 
-vi.mock('../Filter.module.scss', () => ({
-  default: {
-    filterBtn: 'filterBtn',
-    filterBtnActive: 'filterBtnActive',
-    overlay: 'overlay',
-    rowLabel: 'rowLabel',
-    divider: 'divider',
-    sectionLabel: 'sectionLabel',
-    topicsList: 'topicsList',
-    footer: 'footer',
-    applyBtn: 'applyBtn',
-    filterBtnFunnel: 'filterBtnFunnel',
-    filterBtnLabel: 'filterBtnLabel',
-    filterBtnChevron: 'filterBtnChevron',
-    filterBtnChevronOpen: 'filterBtnChevronOpen',
-  },
-}));
+const TOPICS = new Set(['Vision', 'Business', 'Coding']);
 
-/* The trigger is the real kit `Button`, so its role, name and ARIA state are what a user gets. */
-vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
-  const { Button } =
-    await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
-  return {
-    Button,
-    DIAL_KIT_ICON_STROKE: 1.5,
-    DIAL_ICON_SIZE: { SM: 16 },
-    MenuItemMark: { None: 'none', Check: 'check', Checkbox: 'checkbox' },
-    DropdownOverlayRole: { Menu: 'menu', Dialog: 'dialog', None: 'none' },
-    /* Mirrors the kit row's contract: the row is the button that carries the
-     role and aria-checked, and the checkbox box is decorative. */
-    MenuItem: ({
-      label,
-      labelClassName,
-      selected,
-      ...rest
-    }: {
-      label?: React.ReactNode;
-      labelClassName?: string;
-      mark?: string;
-      selected?: boolean;
-    } & React.ButtonHTMLAttributes<HTMLButtonElement> & {
-        ref?: React.Ref<HTMLButtonElement>;
-      }) => (
-      <button type="button" {...rest}>
-        <span aria-hidden="true" data-selected={selected} />
-        <span className={labelClassName}>{label}</span>
-      </button>
-    ),
-    Dropdown: ({
-      children,
-      renderOverlay,
-    }: {
-      children: React.ReactNode;
-      renderOverlay?: () => React.ReactNode;
-      matchReferenceWidth?: boolean;
-    }) => (
-      <div>
-        {children}
-        {renderOverlay?.()}
-      </div>
-    ),
-    PrimaryButton: ({
-      label,
-      className,
-      onClick,
-    }: {
-      label: string;
-      className?: string;
-      onClick?: () => void;
-    }) => (
-      <button className={className} onClick={onClick}>
-        {label}
-      </button>
-    ),
-    GhostButton: ({
-      label,
-      className,
-    }: {
-      label: string;
-      className?: string;
-      iconBefore?: React.ReactNode;
-      iconAfter?: React.ReactNode;
-    }) => <button className={className}>{label}</button>,
-  };
-});
+const renderFilter = (props: Partial<FilterProps> = {}) =>
+  render(
+    <div>
+      <button type="button">Outside</button>
+      <Filter
+        checked={new Set()}
+        onChange={vi.fn()}
+        values={TOPICS}
+        {...props}
+      />
+    </div>,
+  );
 
-vi.mock('@tabler/icons-react', () => ({
-  IconChevronDown: () => null,
-  IconFilter: () => null,
-}));
-vi.mock('@epam/ai-dial-chat-shared', () => ({
-  SELECT_LIST_MAX_HEIGHT_CLASS_NAME: 'max-h-[344px]',
-  mergeClasses: (...args: (string | undefined)[]) =>
-    args.filter(Boolean).join(' '),
-  buildCssVars: (vars: Record<string, string | undefined>) =>
-    Object.fromEntries(
-      Object.entries(vars).filter(([, v]) => v !== undefined),
-    ) as React.CSSProperties,
-}));
+/* Holds the selection like a host, so applied toggles render back. */
+const ControlledFilter = ({
+  onChange,
+}: {
+  onChange: (s: Set<string>) => void;
+}) => {
+  const [checked, setChecked] = useState<Set<string>>(new Set());
+  return (
+    <Filter
+      checked={checked}
+      values={TOPICS}
+      onChange={(next) => {
+        setChecked(next);
+        onChange(next);
+      }}
+    />
+  );
+};
 
-const renderFilter = (props?: Partial<React.ComponentProps<typeof Filter>>) =>
-  render(<Filter checked={new Set()} onChange={vi.fn()} {...props} />);
+const openFilter = async () => {
+  await userEvent.click(
+    screen.getByRole('button', { name: 'Filter by topic' }),
+  );
+  return screen.findByRole('dialog', { name: 'Topics' });
+};
 
 describe('Filter', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('renders the My checkbox', () => {
+  it('renders an icon-only trigger named "Filter by topic"', () => {
     renderFilter();
-    expect(screen.getByRole('menuitemcheckbox', { name: 'My' })).toBeTruthy();
+    const trigger = screen.getByRole('button', { name: 'Filter by topic' });
+    expect(trigger.getAttribute('aria-haspopup')).toBe('dialog');
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    expect(trigger.textContent).toBe('');
   });
 
-  it('renders topic checkboxes alphabetically when values are provided', () => {
-    renderFilter({ values: new Set(['Vision', 'Code']) });
-    const checkboxes = screen.getAllByRole('menuitemcheckbox');
-    // index 0: My; 1: Code (alpha first); 2: Vision
-    expect(checkboxes[1].textContent).toContain('Code');
-    expect(checkboxes[2].textContent).toContain('Vision');
+  /* The dot is decorative (aria-hidden), so only its CSS-module class can find it. */
+  it('shows the active dot only while a topic is applied', () => {
+    const { container, rerender } = renderFilter();
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
+    expect(container.querySelector('[class*="activeDot"]')).toBeNull();
+    rerender(
+      <Filter
+        checked={new Set(['Vision'])}
+        onChange={vi.fn()}
+        values={TOPICS}
+      />,
+    );
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
+    expect(container.querySelector('[class*="activeDot"]')).toBeTruthy();
   });
 
-  it('does not render Topics section when values is undefined', () => {
+  it('lists the topics in sorted order and has no "My" row', async () => {
     renderFilter();
-    expect(screen.queryByText('Topics')).toBeNull();
+    await openFilter();
+    const rows = screen.getAllByRole('menuitemcheckbox');
+    expect(rows.map((r) => r.textContent)).toEqual([
+      'Business',
+      'Coding',
+      'Vision',
+    ]);
+    expect(screen.queryByRole('menuitemcheckbox', { name: 'My' })).toBeNull();
   });
 
-  it('calls onChange with topic added when an unchecked topic is clicked', async () => {
+  it('applies a toggle at once and keeps the dropdown open', async () => {
     const onChange = vi.fn();
-    renderFilter({ values: new Set(['Vision']), onChange });
+    render(<ControlledFilter onChange={onChange} />);
+    await openFilter();
     await userEvent.click(
-      screen.getByRole('menuitemcheckbox', { name: 'Vision' }),
+      screen.getByRole('menuitemcheckbox', { name: 'Business' }),
     );
-    await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
-    expect(onChange).toHaveBeenCalledWith(new Set(['Vision']));
+    expect(onChange).toHaveBeenCalledWith(new Set(['Business']));
+    expect(screen.getByRole('dialog', { name: 'Topics' })).toBeTruthy();
+    expect(
+      screen
+        .getByRole('menuitemcheckbox', { name: 'Business' })
+        .getAttribute('aria-checked'),
+    ).toBe('true');
   });
 
-  it('calls onChange with topic removed when a checked topic is clicked', async () => {
+  it('has no Apply or Clear footer buttons', async () => {
+    renderFilter();
+    await openFilter();
+    expect(screen.queryByRole('button', { name: 'Apply' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Clear' })).toBeNull();
+  });
+
+  it('disables "Clear all" while no topic is applied', async () => {
+    renderFilter();
+    await openFilter();
+    expect(
+      (screen.getByRole('button', { name: 'Clear all' }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+  });
+
+  it('clears every topic from the header and stays open', async () => {
     const onChange = vi.fn();
-    renderFilter({
-      values: new Set(['Vision']),
-      checked: new Set(['Vision']),
-      onChange,
-    });
-    await userEvent.click(
-      screen.getByRole('menuitemcheckbox', { name: 'Vision' }),
-    );
-    await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
+    renderFilter({ checked: new Set(['Vision', 'Coding']), onChange });
+    await openFilter();
+    await userEvent.click(screen.getByRole('button', { name: 'Clear all' }));
     expect(onChange).toHaveBeenCalledWith(new Set());
+    expect(screen.getByRole('dialog', { name: 'Topics' })).toBeTruthy();
   });
 
-  it('shows myAppsLabel as button label when only My Apps is active', () => {
-    renderFilter({ isMyAppsActive: true, myAppsLabel: 'My Apps' });
-    expect(screen.getByRole('button', { name: 'My Apps' })).toBeTruthy();
+  it('closes on a press outside without changing the selection', async () => {
+    const onChange = vi.fn();
+    renderFilter({ onChange });
+    await openFilter();
+    await userEvent.click(screen.getByRole('button', { name: 'Outside' }));
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog', { name: 'Topics' })).toBeNull(),
+    );
+    expect(onChange).not.toHaveBeenCalled();
   });
 
-  it('shows topic count label when only topics are active', () => {
-    renderFilter({
-      checked: new Set(['Vision']),
-      values: new Set(['Vision', 'Code', 'Images']),
-      defaultLabel: 'From',
-    });
-    expect(screen.getByRole('button', { name: 'From: 1 of 3' })).toBeTruthy();
-  });
-
-  it('shows combined label when both My Apps and topics are active', () => {
-    renderFilter({
-      isMyAppsActive: true,
-      checked: new Set(['Vision', 'Code']),
-      myAppsLabel: 'My Apps',
-    });
-    expect(screen.getByRole('button', { name: 'My Apps · 2' })).toBeTruthy();
-  });
-
-  it('applies active CSS class to trigger when any filter is on', () => {
-    renderFilter({ isMyAppsActive: true });
-    // Trigger button renders first, ahead of the Clear/Apply footer buttons.
-    const btn = screen.getAllByRole('button')[0];
-    expect(btn.className).toContain('filterBtnActive');
-  });
-
-  it('does not apply active CSS class when no filter is on', () => {
+  it('closes on Escape and returns focus to the trigger', async () => {
     renderFilter();
-    const btn = screen.getAllByRole('button')[0];
-    expect(btn.className).not.toContain('filterBtnActive');
+    await openFilter();
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog', { name: 'Topics' })).toBeNull(),
+    );
+    expect(
+      screen.getByRole('button', { name: 'Filter by topic' }).matches(':focus'),
+    ).toBe(true);
   });
 
-  it('renders the Apply button', () => {
+  it('moves between rows with the arrow keys', async () => {
     renderFilter();
-    expect(screen.getByRole('button', { name: 'Apply' })).toBeTruthy();
+    await openFilter();
+    const rows = screen.getAllByRole('menuitemcheckbox');
+    await waitFor(() => expect(rows[0].matches(':focus')).toBe(true));
+    await userEvent.keyboard('{ArrowDown}');
+    expect(rows[1].matches(':focus')).toBe(true);
+    await userEvent.keyboard('{ArrowUp}{ArrowUp}');
+    expect(rows[2].matches(':focus')).toBe(true);
+  });
+
+  it('opens with ArrowDown on the trigger', async () => {
+    renderFilter();
+    screen.getByRole('button', { name: 'Filter by topic' }).focus();
+    await userEvent.keyboard('{ArrowDown}');
+    expect(await screen.findByRole('dialog', { name: 'Topics' })).toBeTruthy();
   });
 });

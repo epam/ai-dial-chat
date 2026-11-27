@@ -21,6 +21,7 @@ import { CATALOG_CLASS } from '../../../constants/public-class-names';
 import type { CatalogCardRenderProps } from '../../../models/card-props';
 import type { CatalogItem } from '../../../models/catalog-item';
 import type { ToolbarProps } from '../../../models/toolbar-props';
+import { CatalogFolderRootKind } from '../../../types/catalog-folders';
 import { CatalogSortKey } from '../../../types/sort';
 import {
   CredentialStatus,
@@ -30,6 +31,8 @@ import { CatalogViewMode } from '../../../types/view-mode';
 import { getTopicOptions } from '../../../utils/catalog-filter';
 import { buildCatalogTabs } from '../../../utils/catalog-tabs';
 import { Catalog } from '../Catalog';
+
+const PERSONAL_FOLDER = { root: CatalogFolderRootKind.Personal, path: [] };
 
 const listViewScrollToTop = vi.hoisted(() => vi.fn());
 
@@ -129,8 +132,7 @@ vi.mock('../../Toolbar/Toolbar', () => ({
     filters = new Set(),
     onFiltersChange,
     filterValues = new Set(),
-    isMyAppsActive,
-    onMyAppsChange,
+    onFolderSelectionChange,
     onViewModeChange,
     onViewModeIntent,
     sortKey,
@@ -145,8 +147,10 @@ vi.mock('../../Toolbar/Toolbar', () => ({
     filters?: Set<string>;
     onFiltersChange?: (filters: Set<string>) => void;
     filterValues?: Set<string>;
-    isMyAppsActive?: boolean;
-    onMyAppsChange?: (isActive: boolean) => void;
+    onFolderSelectionChange?: (selection: {
+      root?: string;
+      path: string[];
+    }) => void;
     onViewModeChange?: (mode: CatalogViewMode) => void;
     onViewModeIntent?: () => void;
     sortKey?: string;
@@ -178,7 +182,13 @@ vi.mock('../../Toolbar/Toolbar', () => ({
           {value}
         </button>
       ))}
-      <button onClick={() => onMyAppsChange?.(!isMyAppsActive)}>My Apps</button>
+      <button
+        onClick={() =>
+          onFolderSelectionChange?.({ root: 'personal', path: [] })
+        }
+      >
+        Personal folder
+      </button>
       {/* Mirrors TitleRow: the toggle's wrapper reports view-mode intent. */}
       <div
         className="contents"
@@ -628,7 +638,7 @@ describe('Catalog', () => {
     ).toContain('1 items');
   });
 
-  it('applies the My Apps filter to rendered items', async () => {
+  it('narrows the rendered items to the picked folder', async () => {
     render(
       <Catalog
         items={[
@@ -639,7 +649,9 @@ describe('Catalog', () => {
       />,
     );
 
-    await userEvent.click(screen.getByRole('button', { name: 'My Apps' }));
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Personal folder' }),
+    );
 
     expect(
       screen.getByRole('grid', { name: 'catalog grid' }).textContent,
@@ -1182,7 +1194,7 @@ describe('Catalog', () => {
     expect(onFilterTopicsChange).toHaveBeenCalledWith(new Set(['Free']));
   });
 
-  it('uses the controlled isMyAppsActive prop instead of internal state', () => {
+  it('uses the controlled folderSelection prop instead of internal state', () => {
     render(
       <Catalog
         items={[
@@ -1190,7 +1202,7 @@ describe('Catalog', () => {
           makeItem('2', 'Gemini', { isMyApp: false }),
         ]}
         favorites={[]}
-        isMyAppsActive
+        folderSelection={PERSONAL_FOLDER}
       />,
     );
 
@@ -1199,19 +1211,24 @@ describe('Catalog', () => {
     ).toContain('1 items');
   });
 
-  it('calls onMyAppsActiveChange when the My Apps filter is toggled', async () => {
-    const onMyAppsActiveChange = vi.fn();
+  it('calls onFolderSelectionChange when a folder is picked', async () => {
+    const onFolderSelectionChange = vi.fn();
     render(
       <Catalog
         items={[]}
         favorites={[]}
-        onMyAppsActiveChange={onMyAppsActiveChange}
+        onFolderSelectionChange={onFolderSelectionChange}
       />,
     );
 
-    await userEvent.click(screen.getByRole('button', { name: 'My Apps' }));
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Personal folder' }),
+    );
 
-    expect(onMyAppsActiveChange).toHaveBeenCalledWith(true);
+    expect(onFolderSelectionChange).toHaveBeenCalledWith({
+      root: CatalogFolderRootKind.Personal,
+      path: [],
+    });
   });
 
   it('defaults the active tab to the first tab when uncontrolled', () => {
@@ -1642,13 +1659,13 @@ describe('Catalog', () => {
     );
   });
 
-  it('renders the personal empty state with a Create button when My Apps has nothing to show', () => {
+  it('renders the personal empty state with a Create button when the Personal folder has nothing to show', () => {
     const onCreateClick = vi.fn();
     render(
       <Catalog
         items={[makeItem('1', 'Claude', { type: CatalogEntityType.Agent })]}
         favorites={[]}
-        isMyAppsActive
+        folderSelection={PERSONAL_FOLDER}
         hidePageTitle
         onCreateClick={onCreateClick}
         titles={{
@@ -1671,7 +1688,7 @@ describe('Catalog', () => {
       <Catalog
         items={[makeItem('1', 'Claude')]}
         favorites={[]}
-        isMyAppsActive
+        folderSelection={PERSONAL_FOLDER}
         isReadonly
       />,
     );
@@ -1687,7 +1704,7 @@ describe('Catalog', () => {
       <Catalog
         items={[makeItem('1', 'Tools', { type: CatalogEntityType.Toolset })]}
         favorites={[]}
-        isMyAppsActive
+        folderSelection={PERSONAL_FOLDER}
         hidePageTitle
         onCreateClick={onCreateClick}
         createMenuByTab={{
@@ -1719,7 +1736,7 @@ describe('Catalog', () => {
       <Catalog
         items={[makeItem('1', 'Prompt', { type: CatalogEntityType.Prompt })]}
         favorites={[]}
-        isMyAppsActive
+        folderSelection={PERSONAL_FOLDER}
         hidePageTitle
         createOptions={[
           { key: 'prompt', label: 'Prompt', onClick: vi.fn() },
@@ -1748,7 +1765,7 @@ describe('Catalog', () => {
       <Catalog
         items={[makeItem('1', 'Claude', { type: CatalogEntityType.Model })]}
         favorites={[]}
-        isMyAppsActive
+        folderSelection={PERSONAL_FOLDER}
         hidePageTitle
         onCreateClick={vi.fn()}
         createMenuByTab={{
@@ -1764,7 +1781,7 @@ describe('Catalog', () => {
     expect(screen.getAllByRole('button', { name: 'Create' })).toHaveLength(1);
   });
 
-  it('keeps the default empty state when My Apps is off', () => {
+  it('keeps the default empty state outside the Personal folder', () => {
     render(<Catalog items={[]} favorites={[]} />);
 
     expect(screen.queryByText('No personal items yet')).toBeNull();
@@ -1776,7 +1793,7 @@ describe('Catalog', () => {
       <Catalog
         items={[]}
         favorites={[]}
-        isMyAppsActive
+        folderSelection={PERSONAL_FOLDER}
         renderEmptyState={() => <span>Nothing here yet</span>}
       />,
     );
@@ -1843,7 +1860,7 @@ describe('Catalog', () => {
     expect(screen.getByPlaceholderText('search')).toBeTruthy();
   });
 
-  it('passes the internally-managed query, activeTab, topic filters, and My Apps state to renderEmptyState', async () => {
+  it('passes the internally-managed query, activeTab, topic filters, and folder to renderEmptyState', async () => {
     const renderEmptyState = vi.fn(() => <span>Nothing here yet</span>);
     render(
       <Catalog
@@ -1860,19 +1877,21 @@ describe('Catalog', () => {
 
     await userEvent.type(screen.getByPlaceholderText('search'), 'Gemini');
     await userEvent.click(screen.getByRole('button', { name: 'Free' }));
-    await userEvent.click(screen.getByRole('button', { name: 'My Apps' }));
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Personal folder' }),
+    );
 
     await waitFor(() =>
       expect(renderEmptyState).toHaveBeenLastCalledWith({
         query: 'Gemini',
         activeTab: CatalogEntityType.Model,
         hasTopicFilters: true,
-        isMyAppsActive: true,
+        folderSelection: PERSONAL_FOLDER,
       }),
     );
   });
 
-  it('passes the externally-controlled activeTab, filterTopics, and isMyAppsActive to renderEmptyState', () => {
+  it('passes the externally-controlled activeTab, filterTopics, and folderSelection to renderEmptyState', () => {
     const renderEmptyState = vi.fn(() => <span>Nothing here yet</span>);
     render(
       <Catalog
@@ -1883,7 +1902,7 @@ describe('Catalog', () => {
         favorites={[]}
         activeTab={CatalogEntityType.Prompt}
         filterTopics={new Set(['Paid'])}
-        isMyAppsActive
+        folderSelection={PERSONAL_FOLDER}
         renderEmptyState={renderEmptyState}
       />,
     );
@@ -1892,7 +1911,7 @@ describe('Catalog', () => {
       query: '',
       activeTab: CatalogEntityType.Prompt,
       hasTopicFilters: true,
-      isMyAppsActive: true,
+      folderSelection: PERSONAL_FOLDER,
     });
   });
 
@@ -1968,7 +1987,7 @@ describe('Catalog — creation gating', () => {
       <Catalog
         items={[toolset]}
         favorites={[]}
-        isMyAppsActive
+        folderSelection={PERSONAL_FOLDER}
         hideCreateButton
         createOptions={[{ key: 'toolset', label: 'Toolset', onClick: vi.fn() }]}
         createMenuByTab={{
@@ -1988,7 +2007,7 @@ describe('Catalog — creation gating', () => {
       <Catalog
         items={[{ ...toolset, type: CatalogEntityType.Skill }]}
         favorites={[]}
-        isMyAppsActive
+        folderSelection={PERSONAL_FOLDER}
         hidePageTitle
         createOptions={[{ key: 'prompt', label: 'Prompt', onClick: vi.fn() }]}
         createMenuByTab={{
