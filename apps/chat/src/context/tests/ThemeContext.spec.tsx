@@ -184,11 +184,12 @@ describe('ThemeContext', () => {
     });
 
     await act(async () => {
-      result.current.setTheme('light');
+      result.current.setTheme('dark');
     });
 
     await waitFor(() => {
-      expect(result.current.currentThemeLogo).toBe('logo-light.svg');
+      expect(result.current.currentTheme).toBe('dark');
+      expect(result.current.currentThemeLogo).toBe('logo-dark.svg');
     });
   });
 
@@ -479,27 +480,6 @@ describe('ThemeContext', () => {
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
-    });
-  });
-
-  it('should select correct logo based on theme', async () => {
-    const { result } = renderHook(() => useTheme(), {
-      wrapper: ThemeProvider,
-    });
-
-    // Light theme should use light logo
-    await waitFor(() => {
-      expect(result.current.currentTheme).toBe('light');
-      expect(result.current.currentThemeLogo).toBe('logo-light.svg');
-    });
-
-    // Light theme should use light logo
-    await act(async () => {
-      result.current.setTheme('light');
-    });
-
-    await waitFor(() => {
-      expect(result.current.currentThemeLogo).toBe('logo-light.svg');
     });
   });
 

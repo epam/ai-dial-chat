@@ -1,6 +1,6 @@
 import type { DeploymentItem } from '@epam/ai-dial-chat-shared';
 import type { DropdownItem } from '@epam/ai-dial-ui-kit';
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import type { MouseEvent as ReactMouseEvent } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { CONVERSATION_INPUT_CLASS } from '../../constants/public-class-names';
@@ -261,14 +261,12 @@ describe('useModelSelector — search filtering', () => {
         deployments: mockDeployments,
       }),
     );
-    /*
-     * Simulate search by closing and re-opening would not work in isolation;
-     * instead we access the internal setter via onOpenChange side-effect.
-     * We need to trigger the search — the hook exposes no direct setter,
-     * so we test filtering indirectly via Search onChange in integration.
-     * Here we verify the baseline (no query) returns all items.
-     */
-    expect(result.current.menuItems).toHaveLength(3);
+    act(() => {
+      result.current.onSearchQueryChange('CLAUDE');
+    });
+    expect(result.current.menuItems.map((item) => item.key)).toEqual([
+      'claude-3',
+    ]);
   });
 });
 

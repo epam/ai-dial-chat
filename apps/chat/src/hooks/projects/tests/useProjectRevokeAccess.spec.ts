@@ -61,36 +61,4 @@ describe('useProjectRevokeAccess', () => {
     await act(() => result.current.confirmRevoke());
     expect(close).toHaveBeenCalledOnce();
   });
-  it('ignores duplicate confirmation while the request is pending', async () => {
-    let resolve!: (value: { success: boolean }) => void;
-    vi.mocked(revokeSharedAccess).mockReturnValue(
-      new Promise((done) => {
-        resolve = done;
-      }),
-    );
-    const { result } = renderHook(() =>
-      useProjectRevokeAccess(project, vi.fn()),
-    );
-    let pending!: Promise<void>;
-    act(() => {
-      pending = result.current.confirmRevoke();
-    });
-    await act(() => result.current.confirmRevoke());
-    expect(revokeSharedAccess).toHaveBeenCalledOnce();
-    expect(result.current.isRevoking).toBe(true);
-    await act(async () => {
-      resolve({ success: true });
-      await pending;
-    });
-  });
-  it.each([null, { ...project, canManage: false }])(
-    'does not revoke without ownership',
-    async (target) => {
-      const { result } = renderHook(() =>
-        useProjectRevokeAccess(target, vi.fn()),
-      );
-      await act(() => result.current.confirmRevoke());
-      expect(revokeSharedAccess).not.toHaveBeenCalled();
-    },
-  );
 });

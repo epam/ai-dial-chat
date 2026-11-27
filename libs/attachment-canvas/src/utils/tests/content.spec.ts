@@ -115,7 +115,7 @@ describe('OOXML content detection', () => {
     ).toBe('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   });
 
-  it('returns undefined without an extension or a matching MIME type', () => {
+  it('returns no canonical MIME type without an extension or a matching MIME type', () => {
     expect(getOoxmlMimeType('Quarterly Report')).toBeUndefined();
   });
 });

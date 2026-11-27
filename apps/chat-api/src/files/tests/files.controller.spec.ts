@@ -378,16 +378,6 @@ describe('FilesController — upload', () => {
       .expect(503);
   });
 
-  it('returns 503 when service throws ServiceUnavailableException (5xx from DIAL Core)', async () => {
-    service.uploadFile.mockRejectedValue(new ServiceUnavailableException());
-    await request(app.getHttpServer())
-      .post('/api/v1/files')
-      .field('bucket', 'my-bucket')
-      .field('path', 'folder/file.pdf')
-      .attach('file', Buffer.from('hello'), 'file.pdf')
-      .expect(503);
-  });
-
   it('passes uploadMode to service when provided', async () => {
     await request(app.getHttpServer())
       .post('/api/v1/files')

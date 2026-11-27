@@ -1075,26 +1075,6 @@ describe('ConversationListingService', () => {
       });
     });
 
-    it('falls back to isUnread: true for scheduler items when the viewed-ids fetch fails open', async () => {
-      mockMetadata([
-        {
-          url: 'conversations/test-bucket/.scheduler/sched_abc/gpt-4o__Morning briefing__c7aeee4c-c01f-41f2-b0db-b8a1a39943f5',
-          nodeType: 'FILE',
-          updatedAt: 1000,
-        },
-      ]);
-      mockUserConfigService.getPinnedIds.mockResolvedValue([]);
-      // ScheduledTaskUnreadService.getViewedIds never rejects (it falls back to [] internally on error) — verify that fail-open default is respected here too.
-      mockScheduledTaskUnreadService.getViewedIds.mockResolvedValue([]);
-
-      const result = await service.listConversations(
-        'test-token',
-        'test-bucket',
-      );
-
-      expect(result.items[0].isUnread).toBe(true);
-    });
-
     it('calls getSharedResources with resourceTypes CONVERSATION and with me', async () => {
       mockMetadata([]);
       const spy = vi

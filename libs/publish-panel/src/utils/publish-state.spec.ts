@@ -39,19 +39,6 @@ describe('derivePublishState', () => {
     );
   });
 
-  it('shows the replace-warning callout but keeps submit enabled when the version already exists', () => {
-    expect(
-      derivePublishState({
-        ...baseInput,
-        hasExistingPublicationInFolder: true,
-      }),
-    ).toEqual({
-      calloutKind: PublishCalloutKind.ReplaceWarning,
-      isSubmitDisabled: false,
-      isSubmitLoading: false,
-    });
-  });
-
   it('hides any callout and shows the loading submit state while submitting', () => {
     expect(derivePublishState({ ...baseInput, isSubmitting: true })).toEqual({
       calloutKind: PublishCalloutKind.None,

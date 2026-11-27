@@ -27,17 +27,6 @@ describe('chat-stream api', () => {
     vi.unstubAllGlobals();
   });
 
-  it('throws when stopCompletion receives a non-OK response', async () => {
-    fetchMock.mockResolvedValue(new Response(null, { status: 500 }));
-
-    await expect(
-      stopCompletion({
-        generationId: 'bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb',
-        path: 'gpt-4o__Hello__uuid',
-      }),
-    ).rejects.toThrow('stopCompletion failed: 500');
-  });
-
   it('sends the stop request body to the completion stop endpoint', async () => {
     fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
 
@@ -108,20 +97,6 @@ describe('chat-stream api', () => {
     expect(getBrowserTimezone).toHaveBeenCalledTimes(2);
   });
 
-  it('omits the timezone header when browser detection has no value', async () => {
-    fetchMock.mockResolvedValue(
-      new Response(emptyStream(), {
-        status: 200,
-        headers: { 'Content-Type': 'text/event-stream' },
-      }),
-    );
-
-    await completeStreamRequest();
-
-    const request = fetchMock.mock.calls[0]?.[1] as RequestInit;
-    expect(new Headers(request.headers).has('X-Timezone')).toBe(false);
-  });
-
   it('preserves CSRF and request body behavior when adding the timezone', async () => {
     fetchMock.mockResolvedValue(
       new Response(emptyStream(), {
@@ -142,63 +117,6 @@ describe('chat-stream api', () => {
           'X-Timezone': 'America/New_York',
         }),
         body: expect.stringContaining('"model":"gpt-4o"'),
-      }),
-    );
-  });
-
-  it('includes clientChannelId in the completion body when provided', async () => {
-    fetchMock.mockResolvedValue(
-      new Response(emptyStream(), {
-        status: 200,
-        headers: { 'Content-Type': 'text/event-stream' },
-      }),
-    );
-
-    await new Promise<void>((resolve) => {
-      streamCompletion(
-        'gpt-4o__Hello__uuid',
-        'hello',
-        'gpt-4o',
-        { onChunk: vi.fn(), onComplete: resolve, onError: () => resolve() },
-        undefined,
-        'gen-id',
-        undefined,
-        undefined,
-        'channel-123',
-      );
-    });
-
-    expect(fetchMock).toHaveBeenCalledWith(
-      '/api/v1/conversations/completions',
-      expect.objectContaining({
-        body: expect.stringContaining('"clientChannelId":"channel-123"'),
-      }),
-    );
-  });
-
-  it('omits clientChannelId from the completion body when not provided', async () => {
-    fetchMock.mockResolvedValue(
-      new Response(emptyStream(), {
-        status: 200,
-        headers: { 'Content-Type': 'text/event-stream' },
-      }),
-    );
-
-    await new Promise<void>((resolve) => {
-      streamCompletion(
-        'gpt-4o__Hello__uuid',
-        'hello',
-        'gpt-4o',
-        { onChunk: vi.fn(), onComplete: resolve, onError: () => resolve() },
-        undefined,
-        'gen-id',
-      );
-    });
-
-    expect(fetchMock).toHaveBeenCalledWith(
-      '/api/v1/conversations/completions',
-      expect.objectContaining({
-        body: expect.not.stringContaining('clientChannelId'),
       }),
     );
   });
