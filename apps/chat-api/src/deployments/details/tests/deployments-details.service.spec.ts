@@ -1559,6 +1559,9 @@ describe('DeploymentsDetailsService', () => {
         'toolsets/search-tool',
         'token',
       );
+      await vi.waitFor(() =>
+        expect(sdkClient.getToolset).toHaveBeenCalledOnce(),
+      );
 
       /* Logout completes and invalidates the (not-yet-populated) cache entry. */
       await service.invalidateDetailsCache('user1', 'toolsets/search-tool');
@@ -1601,6 +1604,392 @@ describe('DeploymentsDetailsService', () => {
         'deployments:details:user1:toolsets/search-tool',
       );
       expect(cached).toEqual(freshResult);
+    });
+  });
+
+  /*
+   * Timelines T1–T9 are named in
+   * openspec/changes/bound-deployment-details-invalidation-state/design.md.
+   * Upstream calls are deferred so each test controls the settle order.
+   */
+  describe('getDeploymentDetails invalidation races', () => {
+    const USER = 'user1';
+    const DEPLOYMENT = 'gpt-4o';
+    const CACHE_KEY = `deployments:details:${USER}:${DEPLOYMENT}`;
+
+    const deferred = <T>() => {
+      let resolve: (value: T) => void = () => undefined;
+      const promise = new Promise<T>((res) => {
+        resolve = res;
+      });
+      return { promise, resolve };
+    };
+
+    /* Lets every queued microtask and the pending-request registration run. */
+    const flush = () => new Promise<void>((resolve) => setImmediate(resolve));
+
+    const modelWithOwner = (owner: string) =>
+      okResponse({ id: DEPLOYMENT, owner });
+
+    const ownerOf = (details: unknown) =>
+      (details as { modelDetails?: { owner?: string } } | undefined)
+        ?.modelDetails?.owner;
+
+    /* Old upstream call first, then a fresh one — each deferred. */
+    const setupTwoFetches = () => {
+      const ctx = makeService();
+      const oldCall = deferred<unknown>();
+      const freshCall = deferred<unknown>();
+      ctx.sdkClient.getModel
+        .mockReturnValueOnce(oldCall.promise)
+        .mockReturnValueOnce(freshCall.promise);
+      const cached = () => ctx.cacheManager.get(CACHE_KEY);
+      return { ...ctx, oldCall, freshCall, cached };
+    };
+
+    const request = (service: DeploymentsDetailsService) =>
+      service.getDeploymentDetails(USER, DEPLOYMENT, 'token');
+
+    it('caches only the newer result when the invalidated fetch settles first (T1)', async () => {
+      const { service, sdkClient, oldCall, freshCall, cached } =
+        setupTwoFetches();
+
+      const stale = request(service);
+      await flush();
+      await service.invalidateDetailsCache(USER, DEPLOYMENT);
+      const fresh = request(service);
+      await flush();
+      expect(sdkClient.getModel).toHaveBeenCalledTimes(2);
+
+      oldCall.resolve(modelWithOwner('old'));
+      expect(ownerOf(await stale)).toBe('old');
+      expect(await cached()).toBeUndefined();
+
+      freshCall.resolve(modelWithOwner('new'));
+      expect(ownerOf(await fresh)).toBe('new');
+      expect(ownerOf(await cached())).toBe('new');
+    });
+
+    it('keeps the newer result cached when the invalidated fetch settles last', async () => {
+      const { service, oldCall, freshCall, cached } = setupTwoFetches();
+
+      const stale = request(service);
+      await flush();
+      await service.invalidateDetailsCache(USER, DEPLOYMENT);
+      const fresh = request(service);
+      await flush();
+
+      freshCall.resolve(modelWithOwner('new'));
+      expect(ownerOf(await fresh)).toBe('new');
+
+      oldCall.resolve(modelWithOwner('old'));
+      expect(ownerOf(await stale)).toBe('old');
+      expect(ownerOf(await cached())).toBe('new');
+    });
+
+    it('rejects only the invalidated fetch when it fails, and caches the newer result', async () => {
+      const { service, oldCall, freshCall, cached } = setupTwoFetches();
+
+      const stale = request(service);
+      await flush();
+      await service.invalidateDetailsCache(USER, DEPLOYMENT);
+      const fresh = request(service);
+      await flush();
+
+      oldCall.resolve(errResponse(502));
+      await expect(stale).rejects.toThrow(BadGatewayException);
+
+      freshCall.resolve(modelWithOwner('new'));
+      expect(ownerOf(await fresh)).toBe('new');
+      expect(ownerOf(await cached())).toBe('new');
+    });
+
+    it('caches nothing when the newer fetch fails and the invalidated one succeeds', async () => {
+      const { service, oldCall, freshCall, cached } = setupTwoFetches();
+
+      const stale = request(service);
+      await flush();
+      await service.invalidateDetailsCache(USER, DEPLOYMENT);
+      const fresh = request(service);
+      await flush();
+
+      oldCall.resolve(modelWithOwner('old'));
+      expect(ownerOf(await stale)).toBe('old');
+
+      freshCall.resolve(errResponse(502));
+      await expect(fresh).rejects.toThrow(BadGatewayException);
+      expect(await cached()).toBeUndefined();
+    });
+
+    it('caches nothing when the key is invalidated again while both fetches are live (T6)', async () => {
+      const { service, oldCall, freshCall, cached } = setupTwoFetches();
+
+      const stale = request(service);
+      await flush();
+      await service.invalidateDetailsCache(USER, DEPLOYMENT);
+      const fresh = request(service);
+      await flush();
+      await service.invalidateDetailsCache(USER, DEPLOYMENT);
+      await service.invalidateDetailsCache(USER, DEPLOYMENT);
+
+      oldCall.resolve(modelWithOwner('old'));
+      freshCall.resolve(modelWithOwner('new'));
+
+      expect(ownerOf(await stale)).toBe('old');
+      expect(ownerOf(await fresh)).toBe('new');
+      expect(await cached()).toBeUndefined();
+    });
+
+    it('lets a later caller join the newer fetch after the invalidated one settles (T9)', async () => {
+      const { service, sdkClient, oldCall, freshCall } = setupTwoFetches();
+
+      const stale = request(service);
+      await flush();
+      await service.invalidateDetailsCache(USER, DEPLOYMENT);
+      const fresh = request(service);
+      await flush();
+
+      oldCall.resolve(modelWithOwner('old'));
+      await stale;
+
+      const joined = request(service);
+      await flush();
+      expect(sdkClient.getModel).toHaveBeenCalledTimes(2);
+
+      freshCall.resolve(modelWithOwner('new'));
+      expect(await joined).toEqual(await fresh);
+    });
+
+    it('does not cache a fetch that settles while the invalidation is still deleting its entry (T2)', async () => {
+      const { service, cacheManager, oldCall, cached } = setupTwoFetches();
+      const delGate = deferred<void>();
+      const storeDel = cacheManager.del.getMockImplementation();
+      cacheManager.del.mockImplementationOnce((key: string) => {
+        void storeDel?.(key);
+        return delGate.promise;
+      });
+
+      const stale = request(service);
+      await flush();
+      const invalidation = service.invalidateDetailsCache(USER, DEPLOYMENT);
+
+      oldCall.resolve(modelWithOwner('old'));
+      await stale;
+      delGate.resolve();
+      await invalidation;
+
+      expect(await cached()).toBeUndefined();
+    });
+
+    it('starts its own upstream call for a caller that arrives while the invalidation is still deleting (T3)', async () => {
+      const { service, sdkClient, cacheManager, oldCall, freshCall } =
+        setupTwoFetches();
+      const delGate = deferred<void>();
+      const storeDel = cacheManager.del.getMockImplementation();
+      cacheManager.del.mockImplementationOnce((key: string) => {
+        void storeDel?.(key);
+        return delGate.promise;
+      });
+
+      const stale = request(service);
+      await flush();
+      const invalidation = service.invalidateDetailsCache(USER, DEPLOYMENT);
+      const fresh = request(service);
+      await flush();
+
+      try {
+        expect(sdkClient.getModel).toHaveBeenCalledTimes(2);
+      } finally {
+        oldCall.resolve(modelWithOwner('old'));
+        freshCall.resolve(modelWithOwner('new'));
+        delGate.resolve();
+        await Promise.allSettled([stale, fresh, invalidation]);
+      }
+    });
+
+    it('does not leave a fenced result cached when the invalidation overlaps its cache write (T5)', async () => {
+      const { service, cacheManager, oldCall, cached } = setupTwoFetches();
+      const setGate = deferred<void>();
+      const storeSet = cacheManager.set.getMockImplementation();
+      /* The store applies this write only after a later delete — a reordering cache-manager permits. */
+      cacheManager.set.mockImplementationOnce(
+        async (key: string, value: unknown) => {
+          await setGate.promise;
+          await storeSet?.(key, value);
+        },
+      );
+
+      const stale = request(service);
+      await flush();
+      oldCall.resolve(modelWithOwner('old'));
+      await flush();
+      expect(cacheManager.set).toHaveBeenCalledOnce();
+
+      await service.invalidateDetailsCache(USER, DEPLOYMENT);
+      setGate.resolve();
+      await stale;
+
+      expect(await cached()).toBeUndefined();
+    });
+
+    it('treats a request still reading the cache when invalidation runs as post-invalidation (T10)', async () => {
+      const { service, sdkClient, oldCall, cached } = setupTwoFetches();
+
+      /* Not flushed: this request is still awaiting its cache read. */
+      const early = request(service);
+      await service.invalidateDetailsCache(USER, DEPLOYMENT);
+      const late = request(service);
+      await flush();
+
+      /* Its upstream call goes out after the fence, so a later caller may join it. */
+      expect(sdkClient.getModel).toHaveBeenCalledOnce();
+
+      oldCall.resolve(modelWithOwner('after-write'));
+      expect(await late).toEqual(await early);
+      expect(ownerOf(await cached())).toBe('after-write');
+    });
+
+    describe('invalidation state reclamation', () => {
+      /* The pending-request map is the service's only per-key invalidation state. */
+      const pendingCount = (service: DeploymentsDetailsService) =>
+        service['pendingDetailsRequests'].size;
+
+      it('keeps no per-key state after many distinct keys are invalidated while idle', async () => {
+        const { service } = makeService();
+
+        for (let i = 0; i < 1000; i++) {
+          await service.invalidateDetailsCache(`user-${i}`, `deployment-${i}`);
+        }
+
+        /* Any per-key history, under whatever field name, would show up here. */
+        const collections = Object.values(service).filter(
+          (value): value is Map<unknown, unknown> | Set<unknown> =>
+            value instanceof Map || value instanceof Set,
+        );
+        expect(collections.length).toBeGreaterThan(0);
+        expect(collections.every((collection) => collection.size === 0)).toBe(
+          true,
+        );
+      });
+
+      it('keeps no state once a fetch invalidated several times settles', async () => {
+        const { service, oldCall, cached } = setupTwoFetches();
+
+        const stale = request(service);
+        await flush();
+        await service.invalidateDetailsCache(USER, DEPLOYMENT);
+        await service.invalidateDetailsCache(USER, DEPLOYMENT);
+        await service.invalidateDetailsCache(USER, DEPLOYMENT);
+
+        oldCall.resolve(modelWithOwner('old'));
+        await stale;
+
+        expect(pendingCount(service)).toBe(0);
+        expect(await cached()).toBeUndefined();
+      });
+
+      it('releases the key after a fetch resolves', async () => {
+        const { service, oldCall } = setupTwoFetches();
+
+        const pending = request(service);
+        await flush();
+        expect(pendingCount(service)).toBe(1);
+
+        oldCall.resolve(modelWithOwner('old'));
+        await pending;
+
+        expect(pendingCount(service)).toBe(0);
+      });
+
+      it('releases the key after a fetch rejects', async () => {
+        const { service, oldCall, cached } = setupTwoFetches();
+
+        const pending = request(service);
+        await flush();
+        oldCall.resolve(errResponse(502));
+
+        await expect(pending).rejects.toThrow(BadGatewayException);
+        expect(pendingCount(service)).toBe(0);
+        expect(await cached()).toBeUndefined();
+      });
+
+      it('shares one upstream call and one entry among coalesced callers', async () => {
+        const { service, sdkClient, oldCall } = setupTwoFetches();
+
+        const callers = [request(service), request(service), request(service)];
+        await flush();
+        expect(sdkClient.getModel).toHaveBeenCalledOnce();
+        expect(pendingCount(service)).toBe(1);
+
+        oldCall.resolve(modelWithOwner('old'));
+        const results = await Promise.all(callers);
+
+        expect(results.map(ownerOf)).toEqual(['old', 'old', 'old']);
+        expect(pendingCount(service)).toBe(0);
+      });
+
+      it('keeps one entry for a hung fetch until the key is invalidated', async () => {
+        const { service, sdkClient, freshCall } = setupTwoFetches();
+
+        void request(service);
+        await flush();
+        expect(pendingCount(service)).toBe(1);
+
+        await service.invalidateDetailsCache(USER, DEPLOYMENT);
+        expect(pendingCount(service)).toBe(0);
+
+        const next = request(service);
+        await flush();
+        expect(sdkClient.getModel).toHaveBeenCalledTimes(2);
+
+        freshCall.resolve(modelWithOwner('new'));
+        expect(ownerOf(await next)).toBe('new');
+        expect(pendingCount(service)).toBe(0);
+      });
+
+      it('holds no entry for a hung invalidated fetch next to a newer one', async () => {
+        const { service, freshCall, cached } = setupTwoFetches();
+
+        void request(service);
+        await flush();
+        await service.invalidateDetailsCache(USER, DEPLOYMENT);
+        const fresh = request(service);
+        await flush();
+        expect(pendingCount(service)).toBe(1);
+
+        freshCall.resolve(modelWithOwner('new'));
+        await fresh;
+
+        expect(pendingCount(service)).toBe(0);
+        expect(ownerOf(await cached())).toBe('new');
+      });
+
+      it('never shares an entry or a cached value between users of the same deployment', async () => {
+        const { service, sdkClient, cacheManager, oldCall, freshCall } =
+          setupTwoFetches();
+
+        const first = service.getDeploymentDetails('alice', DEPLOYMENT, 'a');
+        const second = service.getDeploymentDetails('bob', DEPLOYMENT, 'b');
+        await flush();
+        expect(sdkClient.getModel).toHaveBeenCalledTimes(2);
+        expect(pendingCount(service)).toBe(2);
+
+        oldCall.resolve(modelWithOwner('alice-view'));
+        freshCall.resolve(modelWithOwner('bob-view'));
+        await Promise.all([first, second]);
+
+        expect(pendingCount(service)).toBe(0);
+        expect(
+          ownerOf(
+            await cacheManager.get(`deployments:details:alice:${DEPLOYMENT}`),
+          ),
+        ).toBe('alice-view');
+        expect(
+          ownerOf(
+            await cacheManager.get(`deployments:details:bob:${DEPLOYMENT}`),
+          ),
+        ).toBe('bob-view');
+      });
     });
   });
 
