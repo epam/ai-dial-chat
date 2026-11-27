@@ -416,7 +416,8 @@ describe('ConversationLifecycleService', () => {
     });
 
     it('decodes the encoded filename so the title is not mangled (no "New20 chat")', async () => {
-      mockGetConversation();
+      // No stored display name, so the title must come from the file name.
+      mockGetConversation({ ...SHARED_CONVERSATION, name: '' });
       const saveSpy = vi
         .spyOn(mockDialClient.client, 'saveConversation')
         .mockResolvedValue({ data: {} } as never);

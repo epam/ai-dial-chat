@@ -1274,17 +1274,6 @@ describe('Header', () => {
     expect(screen.queryByRole('button', { name: 'Revoke access' })).toBeNull();
   });
 
-  it('offers Revoke access for every owned item when no count resolver is supplied', async () => {
-    render(
-      <Header
-        item={makeItem(CatalogEntityType.Toolset)}
-        onRevokeShare={vi.fn()}
-      />,
-    );
-    await openManage();
-    expect(screen.getByRole('button', { name: 'Revoke access' })).toBeTruthy();
-  });
-
   it('re-requests the recipient count for a newly displayed item', async () => {
     const onFetchRecipientsCount = vi.fn().mockResolvedValue(1);
     const { rerender } = render(

@@ -1008,6 +1008,7 @@ describe('ScheduledTaskCreateForm', () => {
         displayName: 'Daily summary',
         modelId: 'gpt-4o',
         prompt: 'Summarize my inbox',
+        description: '',
       },
     });
 

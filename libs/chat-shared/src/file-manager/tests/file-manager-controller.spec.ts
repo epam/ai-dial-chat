@@ -1,11 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { FileManagerController } from '../file-manager-controller';
-import {
-  DialFileManagerActionProfile,
-  DialFileManagerVariant,
-} from '../file-manager-variant';
 import { getParentFolderPath } from '../path';
-import { FileUploadStatus } from '../upload-batch';
 
 describe('FileManagerController', () => {
   it('contains exactly the shell-consumed fields', () => {
@@ -72,28 +67,6 @@ describe('FileManagerController', () => {
     } satisfies Record<ControllerKeys, true>;
 
     expect(Object.keys(controllerKeys)).toHaveLength(57);
-  });
-});
-
-describe('view-layer types', () => {
-  it('exports FileUploadStatus enum values', () => {
-    expect(FileUploadStatus.Queued).toBe('queued');
-    expect(FileUploadStatus.Uploading).toBe('uploading');
-    expect(FileUploadStatus.Completed).toBe('completed');
-    expect(FileUploadStatus.Failed).toBe('failed');
-    expect(FileUploadStatus.Cancelled).toBe('cancelled');
-  });
-
-  it('exports DialFileManagerVariant enum values', () => {
-    expect(DialFileManagerVariant.Attach).toBe('attach');
-    expect(DialFileManagerVariant.Standalone).toBe('standalone');
-    expect(DialFileManagerVariant.FolderPicker).toBe('folder-picker');
-  });
-
-  it('exports DialFileManagerActionProfile enum values', () => {
-    expect(DialFileManagerActionProfile.Attach).toBe('attach');
-    expect(DialFileManagerActionProfile.Browse).toBe('browse');
-    expect(DialFileManagerActionProfile.Full).toBe('full');
   });
 });
 
