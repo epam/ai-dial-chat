@@ -105,6 +105,7 @@ export const Filter: FC<FilterProps> = ({
    * outside the roving group, in the natural tab order. */
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const rowRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const overlayRef = useRef<HTMLDivElement>(null);
   const internalTriggerRef = useRef<HTMLButtonElement>(null);
   const triggerRef = externalTriggerRef ?? internalTriggerRef;
 
@@ -118,15 +119,19 @@ export const Filter: FC<FilterProps> = ({
     [topics.length],
   );
 
-  // Focus the first row after the overlay renders.
+  /* Focus the first row after the overlay renders, or the panel itself when
+   * there are no topics, so focus never stays behind on the trigger. */
   useEffect(() => {
     if (!isOpen) {
       setFocusedIndex(-1);
       return;
     }
-    const frame = requestAnimationFrame(() => focusRow(0));
+    const frame = requestAnimationFrame(() => {
+      if (topics.length === 0) overlayRef.current?.focus();
+      else focusRow(0);
+    });
     return () => cancelAnimationFrame(frame);
-  }, [isOpen, focusRow]);
+  }, [isOpen, focusRow, topics.length]);
 
   const handleTriggerKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
     if (e.key === 'ArrowDown' && !isOpen) {
@@ -167,6 +172,7 @@ export const Filter: FC<FilterProps> = ({
         initialFocus={-1}
         renderOverlay={() => (
           <div
+            ref={overlayRef}
             tabIndex={-1}
             /*
              * Bound to the kit Dropdown's live available-height var so the
@@ -178,7 +184,7 @@ export const Filter: FC<FilterProps> = ({
               maxHeight: 'calc(var(--fui-available-height, 9999px) - 8px)',
             }}
             className={mergeClasses(
-              'flex min-w-[360px] flex-col rounded-xl p-[6px]',
+              'flex min-w-[360px] flex-col rounded-xl p-[6px] outline-hidden',
               styles.overlay,
             )}
           >

@@ -71,6 +71,25 @@ describe('Toolbar — folders', () => {
     ).toBeTruthy();
   });
 
+  it('forwards the Folders control and tree colors from the toolbar styles', async () => {
+    renderToolbar({
+      styles: {
+        foldersButton: { label: '#ff0000' },
+        folderTree: { rowSelectedBackground: '#00ff00' },
+      },
+    });
+
+    const button = screen.getByRole('button', { name: 'Folders' });
+    expect(button.style.getPropertyValue('--cat-folders-btn-label')).toBe(
+      '#ff0000',
+    );
+    await userEvent.click(button);
+    const tree = await screen.findByRole('tree', { name: 'Folders' });
+    expect(
+      tree.style.getPropertyValue('--cat-folder-tree-row-selected-bg'),
+    ).toBe('#00ff00');
+  });
+
   it('shows the breadcrumb trail of a selected folder with the count after it', () => {
     renderToolbar({ folderSelection: DESIGN_ASSETS, totalCount: 24 });
 

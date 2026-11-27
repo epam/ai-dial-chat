@@ -157,6 +157,16 @@ describe('Filter', () => {
     expect(rows[2].matches(':focus')).toBe(true);
   });
 
+  it('moves focus into the panel when there are no topics', async () => {
+    renderFilter({ values: new Set() });
+    const dialog = await openFilter();
+    await waitFor(() =>
+      // The panel inside the dialog is the only focusable element without topics.
+      // eslint-disable-next-line testing-library/no-node-access
+      expect(dialog.contains(document.activeElement)).toBe(true),
+    );
+  });
+
   it('opens with ArrowDown on the trigger', async () => {
     renderFilter();
     screen.getByRole('button', { name: 'Filter by topic' }).focus();

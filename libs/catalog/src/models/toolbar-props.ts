@@ -1,5 +1,7 @@
 import { SelectOption } from '@epam/ai-dial-ui-kit';
 import type { ReactNode, Ref } from 'react';
+import type { FolderTreeColors } from '../components/CatalogFolderTree/CatalogFolderTree';
+import type { FoldersButtonColors } from '../components/FoldersButton/FoldersButton';
 import type { CatalogFolderSelection } from '../types/catalog-folders';
 import { CatalogViewMode } from '../types/view-mode';
 import type { CatalogFolderLabels, CatalogFolderNode } from './catalog-folders';
@@ -24,7 +26,7 @@ export interface ToolbarColors {
   titleText?: string;
   /** Total count text color. Fallback: `--text-secondary`. */
   countText?: string;
-  /** Dot on the mobile browse-settings button while a filter is applied. Fallback: `--bg-control-accent`. */
+  /** Dot on the mobile browse-settings button and the desktop filter button while a topic is applied. Fallback: `--bg-control-accent`. */
   settingsActiveDot?: string;
 }
 
@@ -34,6 +36,10 @@ export interface ToolbarStyles {
   typography?: ToolbarTypography;
   /** Color overrides applied as CSS custom properties. */
   colors?: ToolbarColors;
+  /** Color overrides of the Folders control. */
+  foldersButton?: FoldersButtonColors;
+  /** Color overrides of the folder tree inside the Folders control. */
+  folderTree?: FolderTreeColors;
 }
 
 /** Text of the mobile browse-settings sheet. Every field has an English default in `Toolbar`. */

@@ -40,6 +40,7 @@ export type {
   CatalogItemFolderPath,
 } from '../models/catalog-folders';
 export {
+  ALL_ENTITIES_FOLDER_SELECTION,
   DEFAULT_CATALOG_FOLDER_LABELS,
   DEFAULT_CATALOG_FOLDER_ROOTS,
 } from '../constants/catalog-folders';

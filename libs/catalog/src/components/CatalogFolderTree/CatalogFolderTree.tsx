@@ -243,7 +243,7 @@ export const CatalogFolderTree: FC<CatalogFolderTreeProps> = ({
           aria-selected={isSelected}
           tabIndex={isFocused ? 0 : -1}
           className={mergeClasses(
-            'flex h-10 shrink-0 cursor-pointer items-center gap-1 rounded-lg pe-3 outline-hidden',
+            'flex h-10 shrink-0 cursor-pointer items-center gap-1 rounded-lg pe-3 outline-hidden mobile:h-11',
             styles.row,
             isSelected && styles.selectedRow,
           )}
@@ -251,12 +251,15 @@ export const CatalogFolderTree: FC<CatalogFolderTreeProps> = ({
           onClick={() => onSelect(rowSelection)}
           onFocus={() => setFocusedId(id)}
         >
-          {/* Pointer-only caret: keyboard users expand with the arrow keys. */}
-          {}
+          {/*
+           * Pointer-only caret: keyboard users expand with the arrow keys. On
+           * touch layouts a pseudo-element widens its hit area to 44px, since a
+           * tap on the row itself selects the folder and closes the sheet.
+           */}
           <span
             aria-hidden
             className={mergeClasses(
-              'flex size-6 shrink-0 items-center justify-center',
+              "relative flex size-6 shrink-0 items-center justify-center mobile:before:absolute mobile:before:-inset-2.5 mobile:before:content-['']",
               !hasChildren && 'invisible',
             )}
             onClick={hasChildren ? handleCaretClick : undefined}
@@ -266,7 +269,7 @@ export const CatalogFolderTree: FC<CatalogFolderTreeProps> = ({
               stroke={DIAL_KIT_ICON_STROKE}
               className={mergeClasses(
                 'transition-transform',
-                !isExpanded && '-rotate-90 rtl:scale-x-[-1]',
+                !isExpanded && '-rotate-90 rtl:rotate-90',
               )}
             />
           </span>

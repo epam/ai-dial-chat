@@ -96,7 +96,7 @@ New components:
 
 - `CatalogFolderTree` (`libs/catalog/src/components/CatalogFolderTree/CatalogFolderTree.tsx`) follows the `ContentFileTree` pattern:
   - The root is `role="tree"` with nested `role="group"`. Every row is a `role="treeitem"` with `aria-level`, `aria-expanded` (folders with children only) and `aria-selected`.
-  - The tree has one roving tab stop. Up/Down move between rows, Right expands or enters a folder, Left collapses or moves to the parent, Home/End jump to the ends, and Enter/Space select. A caret button toggles expansion without selecting.
+  - The tree has one roving tab stop. Up/Down move between rows, Right expands or enters a folder, Left collapses or moves to the parent, Home/End jump to the ends, and Enter/Space select. A pointer-only caret toggles expansion without selecting; on touch layouts its hit area is widened to 44px.
   - "All entities" is the first row, at level 1, and the roots sit under it at level 2. This matches the design.
   - When the tree opens, the ancestors of the current selection are expanded and the selected row takes focus.
 - `FoldersButton` (`libs/catalog/src/components/FoldersButton/FoldersButton.tsx`):

@@ -3,7 +3,10 @@
 }
 
 .activeDot {
-  background: var(--cat-filter-active-dot, var(--bg-control-accent, #1d4ed8));
+  background: var(
+    --cat-filter-active-dot,
+    var(--cat-browse-settings-dot, var(--bg-control-accent, #1d4ed8))
+  );
 }
 
 .overlay {

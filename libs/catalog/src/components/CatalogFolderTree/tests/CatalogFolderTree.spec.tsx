@@ -144,4 +144,19 @@ describe('CatalogFolderTree', () => {
     await userEvent.keyboard('{ArrowRight}');
     expect(item('Organization').getAttribute('aria-expanded')).toBe('false');
   });
+
+  it('turns a collapsed caret toward the inline end in both directions and widens its touch target', () => {
+    setupTree();
+    // The caret is aria-hidden, so its classes are reached through the row.
+    // eslint-disable-next-line testing-library/no-node-access
+    const caret = item('Organization').querySelector('[aria-hidden]');
+    // eslint-disable-next-line testing-library/no-node-access
+    const chevron = caret?.querySelector('svg');
+
+    expect(chevron?.getAttribute('class')).toContain('-rotate-90');
+    expect(chevron?.getAttribute('class')).toContain('rtl:rotate-90');
+    expect(chevron?.getAttribute('class')).not.toContain('scale-x');
+    expect(caret?.className).toContain('mobile:before:-inset-2.5');
+    expect(item('Organization').className).toContain('mobile:h-11');
+  });
 });

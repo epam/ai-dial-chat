@@ -56,6 +56,8 @@ export interface AddOnCatalogModalProps {
   onClose: () => void;
   /** Typography class of the heading above the list, forwarded to `CatalogPickerModal`. Defaults to `'dial-body-semi-text'`. */
   headingClassName?: string;
+  /** Typography class of the item count beside the heading, forwarded to `CatalogPickerModal`. Defaults to `'dial-tiny-text'`. */
+  countClassName?: string;
   /** Folder roots listed by the Folders control, forwarded to `CatalogPickerModal`. Defaults to `DEFAULT_CATALOG_FOLDER_ROOTS`. */
   folderRoots?: CatalogFolderRoot[];
 }
@@ -74,6 +76,7 @@ export const AddOnCatalogModal: FC<AddOnCatalogModalProps> = ({
   onConfirm,
   onClose,
   headingClassName,
+  countClassName,
   folderRoots,
 }) => {
   const [checkedIds, setCheckedIds] = useState<Set<string>>(
@@ -107,6 +110,7 @@ export const AddOnCatalogModal: FC<AddOnCatalogModalProps> = ({
       onClose={onClose}
       folderRoots={folderRoots}
       headingClassName={headingClassName}
+      countClassName={countClassName}
       listProps={{
         ...listProps,
         type,

@@ -311,7 +311,8 @@ import {
 
 #### Folders and breadcrumbs
 
-The Browse heading reads `titles.browseTitle` (default `'All entities'`)
+The Browse heading reads `titles.browseTitle` (default `'All entities'`, also
+used when it is an empty string)
 next to the item count, followed by a Folders control. The control lists a
 folder tree: "All entities", then one node per `folderRoots` entry
 (default `DEFAULT_CATALOG_FOLDER_ROOTS`: Personal, Shared with me,
@@ -887,7 +888,8 @@ receives the searched, filtered and sorted items and the search query.
   `footerStart` takes its color from `colors.footerBorder`
   (`CatalogPickerModalColors`), falling back to `--stroke-tertiary`.
 - `headingClassName` sets the type of the heading above the list, defaulting to
-  `'dial-body-semi-text'`.
+  `'dial-body-semi-text'`, and `countClassName` the type of the item count
+  beside it, defaulting to `'dial-tiny-text'`.
 - The topic filter applies on toggle; `labels.topics`, `labels.filter`,
   `labels.clearAll`, `labels.appliedTopics` and `labels.formatRemoveTopic` name
   it and its tags. The folder selection is local, starts at All entities and is
@@ -936,7 +938,7 @@ import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 - `listProps` passes further `ListView` props (`columnVisibility`, `isFavoriteVisible`,
   `credentialsBadgeLoggedOutLabel`, …); the selection props are the picker's own.
 - `labels.selectAll` and `labels.selectRow` default to `'Select all'` and `Select <name>`.
-- `headingClassName` is forwarded to `CatalogPickerModal` (default `'dial-body-semi-text'`).
+- `headingClassName` and `countClassName` are forwarded to `CatalogPickerModal` (defaults `'dial-body-semi-text'` and `'dial-tiny-text'`).
 - The list gets `CatalogPickerModal`'s "Scroll to top" button, named by `labels.scrollToTop`.
 
 ### AddOnListItem

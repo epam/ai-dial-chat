@@ -58,7 +58,7 @@ export interface CatalogTitles {
   createLabel?: string;
   /** Favorites section heading. Default: 'Your Favorites'. */
   favoritesTitle?: string;
-  /** Browse section heading while All entities is selected, and the first breadcrumb segment. Default: 'All entities'. */
+  /** Browse section heading while All entities is selected, and the first breadcrumb segment. An empty string also falls back to the default. Default: 'All entities'. */
   browseTitle?: string;
   /** Search input placeholder. Default: 'Search models, tools, agents…'. */
   searchPlaceholder?: string;

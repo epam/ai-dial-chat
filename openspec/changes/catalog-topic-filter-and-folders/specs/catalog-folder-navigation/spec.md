@@ -147,7 +147,7 @@ The kit draws at least three segments, so a trail of three segments (All entitie
 
 - render a `role="tree"` named by `folderLabels.tree`;
 - make its first `treeitem` "All entities" (`aria-level="1"`), with the roots beneath it at level 2 and each subfolder one level deeper;
-- give a row with children a caret button that toggles `aria-expanded` without selecting. The caret is `IconChevronDown` turned −90° when collapsed, mirrored under RTL with `rtl:scale-x-[-1]` while collapsed;
+- give a row with children a pointer-only caret (keyboard users expand with the arrow keys) that toggles `aria-expanded` without selecting. The caret is `IconChevronDown` turned −90° when collapsed and +90° under RTL (`-rotate-90 rtl:rotate-90`), so it points toward the inline end in both directions. On the `mobile` layout the caret's hit area is at least 44×44px and each row is at least 44px tall;
 - mark the selected row with `aria-selected="true"` and the `rowSelectedBackground` colour;
 - use a single roving tab stop: ArrowDown and ArrowUp move between visible rows, ArrowRight expands a collapsed row or moves to its first child, ArrowLeft collapses an expanded row or moves to its parent, Home and End jump to the first and last row, and Enter and Space select;
 - on mount, expand every ancestor of the current selection and focus the selected row;

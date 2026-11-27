@@ -13,7 +13,10 @@ import {
   useRef,
   useState,
 } from 'react';
-import { DEFAULT_CATALOG_FOLDER_ROOTS } from '../../constants/catalog-folders';
+import {
+  ALL_ENTITIES_FOLDER_SELECTION,
+  DEFAULT_CATALOG_FOLDER_ROOTS,
+} from '../../constants/catalog-folders';
 import { CATALOG_CLASS } from '../../constants/public-class-names';
 import { useCatalogScrollToTop } from '../../hooks/useCatalogScrollToTop/useCatalogScrollToTop';
 import { CatalogItem } from '../../models/catalog-item';
@@ -76,9 +79,6 @@ enum ListMountState {
   Prepared = 'prepared',
   Shown = 'shown',
 }
-
-/* Shared, never mutated. */
-const ALL_ENTITIES: CatalogFolderSelection = { path: [] };
 
 /** Root catalog component: entity browsing with tabs, search, sort, filter, favorites strip, and details panel. */
 export const Catalog: FC<CatalogProps> = ({
@@ -232,7 +232,7 @@ export const Catalog: FC<CatalogProps> = ({
     new Set(),
   );
   const [internalFolderSelection, setInternalFolderSelection] =
-    useState<CatalogFolderSelection>(ALL_ENTITIES);
+    useState<CatalogFolderSelection>(ALL_ENTITIES_FOLDER_SELECTION);
 
   const sortKey = controlledSortKey ?? internalSortKey;
   const filters = controlledFilterTopics ?? internalFilters;
@@ -754,6 +754,7 @@ export const Catalog: FC<CatalogProps> = ({
     onFolderSelectionChange: handleFolderSelectionChange,
     folderLabels: titles?.folders,
     browseSettingsLabels: titles?.browseSettings,
+    styles: catalogStyles?.toolbar,
   };
 
   return (

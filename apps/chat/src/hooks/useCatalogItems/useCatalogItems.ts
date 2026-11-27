@@ -1,4 +1,5 @@
 import {
+  ALL_ENTITIES_FOLDER_SELECTION,
   buildCatalogFolderTree,
   CATALOG_TAB_ORDER,
   type CatalogFolderRoot,
@@ -53,9 +54,6 @@ import {
   mapDeploymentToCatalogItem,
   mapToolsetToCatalogItem,
 } from '../../utils/map-deployment-to-catalog-item';
-
-/* Shared, never mutated. */
-const ALL_ENTITIES: CatalogFolderSelection = { path: [] };
 
 interface UseCatalogItemsParams {
   schemas: ApplicationSchemaSummaryDto[];
@@ -357,7 +355,7 @@ export const useCatalogItems = ({
     const tree = buildCatalogFolderTree(visibleCatalogItems, folderRoots);
     return isFolderSelectionValid(persistedFolderSelection, tree)
       ? persistedFolderSelection
-      : ALL_ENTITIES;
+      : ALL_ENTITIES_FOLDER_SELECTION;
   }, [isLoading, persistedFolderSelection, visibleCatalogItems, folderRoots]);
 
   const availableTabIds = useMemo(

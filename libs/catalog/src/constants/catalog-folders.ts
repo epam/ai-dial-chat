@@ -1,6 +1,7 @@
 import type { CatalogFolderLabels } from '../models/catalog-folders';
 import {
   type CatalogFolderRoot,
+  type CatalogFolderSelection,
   CatalogFolderRootKind,
 } from '../types/catalog-folders';
 
@@ -20,10 +21,10 @@ export const DEFAULT_CATALOG_FOLDER_LABELS: CatalogFolderLabels = {
   showHiddenSegments: 'Show hidden path segments',
 };
 
-/** The All entities selection. Shared, never mutated. */
-export const ALL_ENTITIES_FOLDER_SELECTION = Object.freeze({
-  path: [] as string[],
-});
+/** The All entities selection: no root and an empty path. Shared, so callers never mutate it. */
+export const ALL_ENTITIES_FOLDER_SELECTION: CatalogFolderSelection = {
+  path: [],
+};
 
 /** Number of applied topics from which the tag row shows "Clear all". */
 export const CLEAR_ALL_TAG_THRESHOLD = 3;

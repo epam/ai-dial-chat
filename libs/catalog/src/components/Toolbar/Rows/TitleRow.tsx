@@ -26,11 +26,11 @@ import {
   useRef,
 } from 'react';
 import { DEFAULT_BROWSE_SETTINGS_LABELS } from '../../../constants/browse-settings';
+import { ALL_ENTITIES_FOLDER_SELECTION } from '../../../constants/catalog-folders';
 import {
   BrowseSettingsSheetLabels,
   ToolbarProps,
 } from '../../../models/toolbar-props';
-import type { CatalogFolderSelection } from '../../../types/catalog-folders';
 import { CatalogViewMode } from '../../../types/view-mode';
 import { resolveCatalogFolderLabels } from '../../../utils/catalog-folders';
 import { AppliedTopicTags } from '../../AppliedTopicTags/AppliedTopicTags';
@@ -45,7 +45,6 @@ type TitleRowProps = ToolbarProps;
 
 /* Shared, never mutated: the filter components copy before editing. */
 const EMPTY_FILTERS = new Set<string>();
-const ALL_ENTITIES: CatalogFolderSelection = { path: [] };
 const noop = () => undefined;
 
 /** Browse section header: folder heading and Folders control, then search with view, sort and filter (or the phone settings button), then the applied-topic tags. */
@@ -78,7 +77,7 @@ export const TitleRow: FC<TitleRowProps> = ({
   formatRemoveTopicLabel,
   browseSettingsLabels,
   folderTree,
-  folderSelection = ALL_ENTITIES,
+  folderSelection = ALL_ENTITIES_FOLDER_SELECTION,
   onFolderSelectionChange,
   folderLabels,
 }) => {
@@ -194,6 +193,8 @@ export const TitleRow: FC<TitleRowProps> = ({
             onChange={handleFolderChange}
             labels={resolvedFolderLabels}
             rowClassName={browseStyles?.typography?.folderTreeRowClassName}
+            colors={browseStyles?.foldersButton}
+            treeColors={browseStyles?.folderTree}
           />
         )}
       </div>

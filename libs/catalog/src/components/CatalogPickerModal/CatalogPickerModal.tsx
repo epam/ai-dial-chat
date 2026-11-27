@@ -129,6 +129,8 @@ interface CatalogPickerModalBaseProps {
   colors?: CatalogPickerModalColors;
   /** Typography class of the heading above the list. Defaults to `'dial-body-semi-text'`. */
   headingClassName?: string;
+  /** Typography class of the item count next to the heading. Defaults to `'dial-tiny-text'`. */
+  countClassName?: string;
   /** Folder roots listed by the Folders control, in display order. Defaults to `DEFAULT_CATALOG_FOLDER_ROOTS`. */
   folderRoots?: CatalogFolderRoot[];
   /** Called when the user confirms. */
@@ -190,6 +192,7 @@ export const CatalogPickerModal: FC<CatalogPickerModalProps> = ({
   footerStart,
   colors,
   headingClassName = 'dial-body-semi-text',
+  countClassName = 'dial-tiny-text',
   folderRoots = DEFAULT_CATALOG_FOLDER_ROOTS,
   onConfirm,
   onClose,
@@ -271,10 +274,10 @@ export const CatalogPickerModal: FC<CatalogPickerModalProps> = ({
     () => ({
       typography: {
         titleClassName: headingClassName,
-        countClassName: 'dial-tiny-text',
+        countClassName,
       },
     }),
-    [headingClassName],
+    [headingClassName, countClassName],
   );
   const rows = useMemo(
     () =>
