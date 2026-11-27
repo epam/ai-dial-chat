@@ -1,4 +1,8 @@
 import type { DeploymentItem } from '@epam/ai-dial-chat-shared';
+import {
+  SKELETON_DELAY_MS,
+  SKELETON_MIN_DURATION_MS,
+} from '@epam/ai-dial-ui-kit';
 import { act, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -27,8 +31,10 @@ describe('ModelSelectorBottomSheet — loading', () => {
     vi.useRealTimers();
   });
 
-  /* The sheet's own region comes first in the DOM; the shimmer adds an unused one after it. */
-  const getStatusRegion = () => screen.getAllByRole('status')[0];
+  /* The shimmer adds a status region of its own beside the sheet's, so regions are read by what they announce. */
+  const getStatusRegions = () => screen.getAllByRole('status');
+  const getAnnouncements = () =>
+    getStatusRegions().map((region) => region.textContent);
 
   const loadedSheet = (
     <ModelSelectorBottomSheet
@@ -44,31 +50,36 @@ describe('ModelSelectorBottomSheet — loading', () => {
   it('announces nothing during the show delay and the loading label once the skeleton is drawn', () => {
     vi.useFakeTimers();
     renderSheet({ loadingLabel: 'Loading models' });
-    const status = getStatusRegion();
-    expect(status.textContent).toBe('');
+    const regions = getStatusRegions();
+    expect(getAnnouncements()).not.toContain('Loading models');
 
     act(() => {
-      vi.advanceTimersByTime(400);
+      vi.advanceTimersByTime(SKELETON_DELAY_MS);
     });
 
-    expect(getStatusRegion()).toBe(status);
-    expect(status.textContent).toBe('Loading models');
+    /* The announcing region was mounted before its text arrived. */
+    const announcing = getStatusRegions().find(
+      (region) => region.textContent === 'Loading models',
+    );
+    expect(announcing).toBeTruthy();
+    expect(regions).toContain(announcing);
   });
 
   it('never announces a load that ends within the show delay', () => {
     vi.useFakeTimers();
     const { rerender } = renderSheet({ loadingLabel: 'Loading models' });
-    const status = getStatusRegion();
+    const regions = getStatusRegions();
 
     act(() => {
-      vi.advanceTimersByTime(100);
+      vi.advanceTimersByTime(SKELETON_DELAY_MS / 4);
     });
     rerender(loadedSheet);
     act(() => {
-      vi.advanceTimersByTime(1000);
+      vi.advanceTimersByTime(SKELETON_DELAY_MS + SKELETON_MIN_DURATION_MS);
     });
 
-    expect(getStatusRegion()).toBe(status);
+    const status = screen.getByRole('status');
+    expect(regions).toContain(status);
     expect(status.textContent).toBe('');
     expect(screen.getByText('GPT-4o')).toBeTruthy();
   });
@@ -77,14 +88,14 @@ describe('ModelSelectorBottomSheet — loading', () => {
     vi.useFakeTimers();
     const { rerender } = renderSheet({ loadingLabel: 'Loading models' });
     act(() => {
-      vi.advanceTimersByTime(400);
+      vi.advanceTimersByTime(SKELETON_DELAY_MS);
     });
-    const status = getStatusRegion();
-    expect(status.textContent).toBe('Loading models');
+    const regions = getStatusRegions();
+    expect(getAnnouncements()).toContain('Loading models');
 
     rerender(loadedSheet);
     act(() => {
-      vi.advanceTimersByTime(499);
+      vi.advanceTimersByTime(SKELETON_MIN_DURATION_MS - 1);
     });
 
     expect(screen.queryByText('GPT-4o')).toBeNull();
@@ -93,7 +104,8 @@ describe('ModelSelectorBottomSheet — loading', () => {
       vi.advanceTimersByTime(1);
     });
 
-    expect(getStatusRegion()).toBe(status);
+    const status = screen.getByRole('status');
+    expect(regions).toContain(status);
     expect(status.textContent).toBe('');
     expect(screen.getByText('GPT-4o')).toBeTruthy();
   });

@@ -4,6 +4,7 @@ import {
   type Attachment,
   type UploadedAttachmentResult,
 } from '@epam/ai-dial-chat-shared';
+import { SKELETON_DELAY_MS } from '@epam/ai-dial-ui-kit';
 import {
   act,
   fireEvent,
@@ -531,7 +532,7 @@ describe('Input — model selector', () => {
       expect(screen.queryByText('Loading models…')).toBeNull();
 
       act(() => {
-        vi.advanceTimersByTime(400);
+        vi.advanceTimersByTime(SKELETON_DELAY_MS);
       });
 
       const region = screen

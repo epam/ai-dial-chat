@@ -13,7 +13,13 @@ import {
   Search,
   useSkeletonTiming,
 } from '@epam/ai-dial-ui-kit';
-import { type CSSProperties, type ReactNode, useMemo, useState } from 'react';
+import {
+  type CSSProperties,
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import {
   ModelSelectorSkeletonIcon,
   ModelSelectorSkeletonRows,
@@ -26,6 +32,9 @@ import {
   getDeploymentLabel,
 } from '../utils/deployment';
 import styles from './useModelSelector.module.scss';
+
+/* Length of the kit's content fade-in (`--animate-skeleton-reveal`, 180 ms). */
+const REVEAL_DURATION_MS = 180;
 
 /** Options passed to `useModelSelector`. */
 export interface UseModelSelectorOptions {
@@ -90,6 +99,23 @@ export const useModelSelector = ({
     placeholderClassName,
     contentClassName,
   } = useSkeletonTiming(isLoading);
+
+  /* The kit keeps `contentClassName` set until the next load, but the menu
+     remounts its items on every open and on every search filter, so the 180 ms
+     fade would replay each time. It is dropped once it has played. */
+  const [hasRevealPlayed, setHasRevealPlayed] = useState(false);
+  useEffect(() => {
+    if (!contentClassName) {
+      setHasRevealPlayed(false);
+      return undefined;
+    }
+    const timer = setTimeout(
+      () => setHasRevealPlayed(true),
+      REVEAL_DURATION_MS,
+    );
+    return () => clearTimeout(timer);
+  }, [contentClassName]);
+  const itemRevealClassName = hasRevealPlayed ? '' : contentClassName;
 
   /* Loading, then the skeleton's minimum display time, defers every resolved
      state: an unloaded list is unknown, not unavailable or empty. */
@@ -184,7 +210,7 @@ export const useModelSelector = ({
           isSelected && menuStyles?.selectedItemClassName,
           CONVERSATION_INPUT_CLASS.modelMenuItem,
           isSelected && CONVERSATION_INPUT_CLASS.modelMenuItemSelected,
-          contentClassName,
+          itemRevealClassName,
         ),
         onClick: () => onDeploymentChange?.(item.id),
       };
@@ -193,7 +219,7 @@ export const useModelSelector = ({
     deployments,
     showPlaceholder,
     placeholderClassName,
-    contentClassName,
+    itemRevealClassName,
     searchQuery,
     selectedDeploymentId,
     modelSelectorLabels,

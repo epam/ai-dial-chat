@@ -1,5 +1,9 @@
 import type { DeploymentItem } from '@epam/ai-dial-chat-shared';
-import { DropdownItemType } from '@epam/ai-dial-ui-kit';
+import {
+  DropdownItemType,
+  SKELETON_DELAY_MS,
+  SKELETON_MIN_DURATION_MS,
+} from '@epam/ai-dial-ui-kit';
 import { act, renderHook } from '@testing-library/react';
 import type { MouseEvent as ReactMouseEvent } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -176,13 +180,13 @@ describe('useModelSelector — menuItems', () => {
 
       rerender({ isLoading: false });
       act(() => {
-        vi.advanceTimersByTime(1000);
+        vi.advanceTimersByTime(SKELETON_DELAY_MS + SKELETON_MIN_DURATION_MS);
       });
       expect(result.current.loadingAnnouncement).toBe('');
 
       rerender({ isLoading: true });
       act(() => {
-        vi.advanceTimersByTime(400);
+        vi.advanceTimersByTime(SKELETON_DELAY_MS);
       });
       expect(result.current.loadingAnnouncement).toBe('Loading…');
     });
@@ -191,12 +195,12 @@ describe('useModelSelector — menuItems', () => {
       vi.useFakeTimers();
       const { result, rerender } = renderLoadingHook();
       act(() => {
-        vi.advanceTimersByTime(400);
+        vi.advanceTimersByTime(SKELETON_DELAY_MS);
       });
 
       rerender({ isLoading: false });
       act(() => {
-        vi.advanceTimersByTime(499);
+        vi.advanceTimersByTime(SKELETON_MIN_DURATION_MS - 1);
       });
       expect(result.current.menuItems.map((item) => item.key)).toEqual([
         '__loading',
@@ -208,6 +212,31 @@ describe('useModelSelector — menuItems', () => {
       expect(result.current.menuItems.map((item) => item.key)).toEqual(
         mockDeployments.map((item) => item.id),
       );
+    });
+
+    it('fades the rows in once after the skeleton, not again on later renders', () => {
+      vi.useFakeTimers();
+      const { result, rerender } = renderLoadingHook();
+      act(() => {
+        vi.advanceTimersByTime(SKELETON_DELAY_MS);
+      });
+      rerender({ isLoading: false });
+      act(() => {
+        vi.advanceTimersByTime(SKELETON_MIN_DURATION_MS);
+      });
+      const getRowClassNames = () =>
+        result.current.menuItems.map((item) => item.className ?? '');
+      expect(
+        getRowClassNames().every((c) => /animate-skeleton-reveal/.test(c)),
+      ).toBe(true);
+
+      act(() => {
+        vi.advanceTimersByTime(180);
+      });
+
+      expect(
+        getRowClassNames().some((c) => /animate-skeleton-reveal/.test(c)),
+      ).toBe(false);
     });
   });
 

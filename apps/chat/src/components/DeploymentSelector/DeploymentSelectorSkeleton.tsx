@@ -22,6 +22,12 @@ const ROW_COUNT = 5;
  * its chunk loads. `showPlaceholder` is true from the first render, so the rows
  * hold the popup's height invisibly during the show delay (no 0px popup, no
  * flash on a fast chunk load); the label is announced once they are drawn.
+ *
+ * As a `Suspense` fallback it unmounts the moment the chunk resolves, so the
+ * hook's 500 ms minimum display time cannot apply: a chunk landing just after
+ * the delay shows the rows briefly. That is accepted, because it happens only on
+ * the first open before the chunk is cached, and holding the real content back
+ * to honour the minimum would make the first open slower.
  */
 const DeploymentSelectorSkeleton: FC = () => {
   const { t } = useTranslation();

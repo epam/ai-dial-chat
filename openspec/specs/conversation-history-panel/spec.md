@@ -163,8 +163,14 @@ When `item.iconTooltip` is provided and `item.isIconLoading` is `false` or `unde
 
 #### Scenario: Normal content is shown after loading
 
-- **WHEN** `isLoading` is `false` or omitted
+- **WHEN** `isLoading` is `false` or omitted and no skeleton was drawn
 - **THEN** the panel renders conversations (or empty/no-results state) as normal
+
+#### Scenario: Content waits for a drawn skeleton's minimum display time
+
+- **GIVEN** the skeleton has been drawn because loading outlasted the kit's delay
+- **WHEN** `isLoading` becomes `false` before the skeleton's minimum display time has passed
+- **THEN** the skeleton stays until that time has passed, the list, empty or no-results state then replaces it with the fade-in, and the empty or no-results message is announced only at that point
 
 ---
 

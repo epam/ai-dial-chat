@@ -1,3 +1,4 @@
+import { SKELETON_DELAY_MS } from '@epam/ai-dial-ui-kit';
 import { act, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import DeploymentSelectorSkeleton from '../DeploymentSelectorSkeleton';
@@ -11,10 +12,11 @@ const getBusyRegion = (): Element | null =>
   // eslint-disable-next-line testing-library/no-node-access
   document.querySelector('[aria-busy="true"]');
 
-/* The shimmer keeps its placeholders in one wrapper, ahead of the band; they carry no role or text to count by. */
-const getPlaceholderCount = (): number =>
+/* The kit documents its placeholders as one `aria-hidden` group of the busy region; they carry no role or text to count by, so each row is a child of that group. */
+const getRowCount = (): number =>
   // eslint-disable-next-line testing-library/no-node-access
-  getBusyRegion()?.firstElementChild?.childElementCount ?? 0;
+  getBusyRegion()?.querySelector('[aria-hidden="true"]')?.childElementCount ??
+  0;
 
 describe('DeploymentSelectorSkeleton', () => {
   afterEach(() => {
@@ -25,7 +27,7 @@ describe('DeploymentSelectorSkeleton', () => {
     render(<DeploymentSelectorSkeleton />);
 
     expect(getBusyRegion()).toBeTruthy();
-    expect(getPlaceholderCount()).toBeGreaterThanOrEqual(3);
+    expect(getRowCount()).toBeGreaterThanOrEqual(3);
   });
 
   it('hides the rows and announces nothing during the show delay', () => {
@@ -42,7 +44,7 @@ describe('DeploymentSelectorSkeleton', () => {
     const region = screen.getByRole('status');
 
     act(() => {
-      vi.advanceTimersByTime(400);
+      vi.advanceTimersByTime(SKELETON_DELAY_MS);
     });
 
     expect(getBusyRegion()?.className).not.toMatch(/invisible/);

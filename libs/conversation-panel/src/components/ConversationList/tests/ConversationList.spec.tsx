@@ -20,6 +20,11 @@ const renderedRange = vi.hoisted(() => ({
 /* Records one entry per ConversationRow body render (its title renders once). */
 const rowRenderLog = vi.hoisted((): string[] => []);
 
+/* The kit's own timing constants: the mocked module below carries only what the component renders. */
+const { SKELETON_DELAY_MS, SKELETON_MIN_DURATION_MS } = await vi.importActual<
+  typeof import('@epam/ai-dial-ui-kit')
+>('@epam/ai-dial-ui-kit');
+
 vi.mock('@epam/ai-dial-ui-kit', async () => ({
   /* The real live region: a hand-rolled stub would hide its always-mounted markup. */
   ...(await vi
@@ -813,8 +818,11 @@ describe('ConversationList', () => {
       // eslint-disable-next-line testing-library/no-node-access
       document.querySelector('[aria-busy="true"]');
 
-    /* The list's own region comes first in the DOM; the shimmer adds an unused one after it. */
-    const getStatusRegion = () => screen.getAllByRole('status')[0];
+    /* While loading, the shimmer adds a status region of its own beside the
+       list's, so every region is read; the list's region is the one that stays. */
+    const getStatusRegions = () => screen.getAllByRole('status');
+    const getAnnouncements = () =>
+      getStatusRegions().map((region) => region.textContent);
 
     afterEach(() => {
       vi.useRealTimers();
@@ -829,10 +837,10 @@ describe('ConversationList', () => {
       expect(screen.queryByRole('button', { name: 'First chat' })).toBeNull();
       expect(getBusyRegion()).toBeTruthy();
       act(() => {
-        vi.advanceTimersByTime(400);
+        vi.advanceTimersByTime(SKELETON_DELAY_MS);
       });
 
-      expect(getStatusRegion().textContent).toBe('Loading conversations');
+      expect(getAnnouncements()).toContain('Loading conversations');
       expect(getBusyRegion()).toBeTruthy();
     });
 
@@ -841,18 +849,19 @@ describe('ConversationList', () => {
       const { rerender } = render(
         <ConversationList {...BASE_PROPS} conversations={items} isLoading />,
       );
-      const region = getStatusRegion();
-      expect(region.textContent).toBe('');
+      const regions = getStatusRegions();
+      expect(getAnnouncements()).not.toContain('Loading conversations');
 
       act(() => {
-        vi.advanceTimersByTime(100);
+        vi.advanceTimersByTime(SKELETON_DELAY_MS / 4);
       });
       rerender(<ConversationList {...BASE_PROPS} conversations={items} />);
       act(() => {
-        vi.advanceTimersByTime(1000);
+        vi.advanceTimersByTime(SKELETON_DELAY_MS + SKELETON_MIN_DURATION_MS);
       });
 
-      expect(getStatusRegion()).toBe(region);
+      const region = screen.getByRole('status');
+      expect(regions).toContain(region);
       expect(region.textContent).toBe('');
       expect(getBusyRegion()).toBeNull();
       expect(screen.getByRole('button', { name: 'First chat' })).toBeTruthy();
@@ -864,18 +873,18 @@ describe('ConversationList', () => {
         <ConversationList {...BASE_PROPS} conversations={[]} isLoading />,
       );
       act(() => {
-        vi.advanceTimersByTime(400);
+        vi.advanceTimersByTime(SKELETON_DELAY_MS);
       });
-      const region = getStatusRegion();
-      expect(region.textContent).toBe('Loading conversations');
+      const regions = getStatusRegions();
+      expect(getAnnouncements()).toContain('Loading conversations');
 
       rerender(<ConversationList {...BASE_PROPS} conversations={[]} />);
       act(() => {
-        vi.advanceTimersByTime(499);
+        vi.advanceTimersByTime(SKELETON_MIN_DURATION_MS - 1);
       });
 
       expect(screen.queryByText('No conversations yet')).toBeNull();
-      expect(region.textContent).toBe('Loading conversations');
+      expect(getAnnouncements()).toContain('Loading conversations');
       expect(getBusyRegion()).toBeTruthy();
 
       act(() => {
@@ -885,7 +894,8 @@ describe('ConversationList', () => {
       expect(
         screen.getAllByText('No conversations yet').length,
       ).toBeGreaterThan(0);
-      expect(getStatusRegion()).toBe(region);
+      const region = screen.getByRole('status');
+      expect(regions).toContain(region);
       expect(region.textContent).toBe('No conversations yet');
       expect(getBusyRegion()).toBeNull();
     });
@@ -896,18 +906,20 @@ describe('ConversationList', () => {
         <ConversationList {...BASE_PROPS} conversations={[]} isLoading />,
       );
       act(() => {
-        vi.advanceTimersByTime(400);
+        vi.advanceTimersByTime(SKELETON_DELAY_MS);
       });
       rerender(<ConversationList {...BASE_PROPS} conversations={[]} />);
       act(() => {
-        vi.advanceTimersByTime(500);
+        vi.advanceTimersByTime(SKELETON_MIN_DURATION_MS);
       });
       const emptyMessage = screen.getAllByText('No conversations yet').at(-1);
 
-      /* The wrapper around whichever state replaces the skeleton is the only element that carries the reveal class. */
+      /* The kit's reveal class is the contract; the wrapper's own layout classes are not. */
       // eslint-disable-next-line testing-library/no-node-access
-      const wrapper = emptyMessage?.closest('.h-full');
-      expect(wrapper?.className).toMatch(/animate-skeleton-reveal/);
+      const wrapper = emptyMessage?.closest(
+        '[class*="animate-skeleton-reveal"]',
+      );
+      expect(wrapper).toBeTruthy();
     });
   });
 
