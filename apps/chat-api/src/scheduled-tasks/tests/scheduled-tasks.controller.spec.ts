@@ -267,12 +267,7 @@ describe('ScheduledTasksController (integration)', () => {
         };
         const saved = fromUpstreamSchedule({
           id: mockSchedule.id,
-          ...toUpstreamSchedulePayload(
-            body,
-            'http://core',
-            '2024-10-21',
-            'scheduler',
-          ),
+          ...toUpstreamSchedulePayload(body, '2024-10-21', 'scheduler'),
         });
         service.createScheduledTask.mockResolvedValue(saved);
         service.getScheduledTask.mockResolvedValue(saved);

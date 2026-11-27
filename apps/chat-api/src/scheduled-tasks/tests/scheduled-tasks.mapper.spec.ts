@@ -2,7 +2,6 @@ import { BadRequestException } from '@nestjs/common';
 import { describe, expect, it } from 'vitest';
 import type { CreateScheduledTaskBodyDto } from '../dto/create-scheduled-task.dto';
 import {
-  buildScheduledTaskChatCompletionUrl,
   fromUpstreamRun,
   fromUpstreamSchedule,
   toUpstreamSchedulePayload,
@@ -10,33 +9,12 @@ import {
   type UpstreamScheduleRun,
 } from '../scheduled-tasks.mapper';
 
-const DIAL_CORE_URL = 'http://dial-core';
 /*
  * Matches DialClientService's DIAL_API_VERSION fallback, so this fixture
  * stays representative of what the mapper actually receives in production.
  */
 const DIAL_API_VERSION = '2024-10-21';
 const SCHEDULER_SERVICE_ID = 'my-oauth-service';
-
-describe('buildScheduledTaskChatCompletionUrl', () => {
-  it('appends /openai to a base URL with no trailing slash', () => {
-    expect(buildScheduledTaskChatCompletionUrl('http://core')).toBe(
-      'http://core/openai',
-    );
-  });
-
-  it('strips a trailing slash before appending /openai', () => {
-    expect(buildScheduledTaskChatCompletionUrl('http://core/')).toBe(
-      'http://core/openai',
-    );
-  });
-
-  it('does not double up an already-present /openai suffix path', () => {
-    expect(buildScheduledTaskChatCompletionUrl('http://core/openai')).toBe(
-      'http://core/openai/openai',
-    );
-  });
-});
 
 describe('toUpstreamSchedulePayload', () => {
   it('forwards all unique skills in order and reads the full array', () => {
@@ -52,7 +30,6 @@ describe('toUpstreamSchedulePayload', () => {
           'skills/public/report',
         ],
       },
-      DIAL_CORE_URL,
       DIAL_API_VERSION,
       SCHEDULER_SERVICE_ID,
     );
@@ -81,7 +58,6 @@ describe('toUpstreamSchedulePayload', () => {
         skillUrls: [skillUrls],
         trigger: { date: '2026-12-01T09:00:00Z' },
       },
-      DIAL_CORE_URL,
       DIAL_API_VERSION,
       SCHEDULER_SERVICE_ID,
     );
@@ -102,7 +78,6 @@ describe('toUpstreamSchedulePayload', () => {
     expect(
       toUpstreamSchedulePayload(
         { ...mapped, model: 'model', prompt: '', trigger: mapped.trigger },
-        DIAL_CORE_URL,
         DIAL_API_VERSION,
         SCHEDULER_SERVICE_ID,
       ).properties.payload,
@@ -127,7 +102,6 @@ describe('toUpstreamSchedulePayload', () => {
 
     const upstream = toUpstreamSchedulePayload(
       body,
-      DIAL_CORE_URL,
       DIAL_API_VERSION,
       SCHEDULER_SERVICE_ID,
     );
@@ -139,7 +113,6 @@ describe('toUpstreamSchedulePayload', () => {
       timezone: 'UTC',
       properties: {
         target_type: 'chat_completion',
-        url: 'http://dial-core/openai',
         api_version: DIAL_API_VERSION,
         create_conversation: true,
         extra_headers: {},
@@ -152,6 +125,7 @@ describe('toUpstreamSchedulePayload', () => {
         },
       },
     });
+    expect(upstream.properties).not.toHaveProperty('url');
   });
 
   it('builds the fixed body for a cron trigger', () => {
@@ -164,7 +138,6 @@ describe('toUpstreamSchedulePayload', () => {
 
     const upstream = toUpstreamSchedulePayload(
       body,
-      DIAL_CORE_URL,
       DIAL_API_VERSION,
       SCHEDULER_SERVICE_ID,
     );
@@ -178,6 +151,7 @@ describe('toUpstreamSchedulePayload', () => {
     expect(upstream.properties.retry).toBeNull();
     expect(upstream.properties.timeout).toBeNull();
     expect(upstream.properties).not.toHaveProperty('stream');
+    expect(upstream.properties).not.toHaveProperty('url');
   });
 
   it('rejects a trigger with both date and cron', () => {
@@ -192,12 +166,7 @@ describe('toUpstreamSchedulePayload', () => {
     };
 
     expect(() =>
-      toUpstreamSchedulePayload(
-        body,
-        DIAL_CORE_URL,
-        DIAL_API_VERSION,
-        SCHEDULER_SERVICE_ID,
-      ),
+      toUpstreamSchedulePayload(body, DIAL_API_VERSION, SCHEDULER_SERVICE_ID),
     ).toThrow(BadRequestException);
   });
 
@@ -210,12 +179,7 @@ describe('toUpstreamSchedulePayload', () => {
     };
 
     expect(() =>
-      toUpstreamSchedulePayload(
-        body,
-        DIAL_CORE_URL,
-        DIAL_API_VERSION,
-        SCHEDULER_SERVICE_ID,
-      ),
+      toUpstreamSchedulePayload(body, DIAL_API_VERSION, SCHEDULER_SERVICE_ID),
     ).toThrow(BadRequestException);
   });
 
@@ -230,7 +194,6 @@ describe('toUpstreamSchedulePayload', () => {
 
     const upstream = toUpstreamSchedulePayload(
       body,
-      DIAL_CORE_URL,
       DIAL_API_VERSION,
       SCHEDULER_SERVICE_ID,
     );
@@ -259,7 +222,6 @@ describe('toUpstreamSchedulePayload', () => {
 
     const upstream = toUpstreamSchedulePayload(
       body,
-      DIAL_CORE_URL,
       DIAL_API_VERSION,
       SCHEDULER_SERVICE_ID,
     );
@@ -283,7 +245,6 @@ describe('toUpstreamSchedulePayload', () => {
 
     const upstream = toUpstreamSchedulePayload(
       body,
-      DIAL_CORE_URL,
       DIAL_API_VERSION,
       SCHEDULER_SERVICE_ID,
     );
@@ -310,12 +271,7 @@ describe('toUpstreamSchedulePayload', () => {
     };
 
     expect(() =>
-      toUpstreamSchedulePayload(
-        body,
-        DIAL_CORE_URL,
-        DIAL_API_VERSION,
-        SCHEDULER_SERVICE_ID,
-      ),
+      toUpstreamSchedulePayload(body, DIAL_API_VERSION, SCHEDULER_SERVICE_ID),
     ).toThrow(BadRequestException);
   });
 
@@ -334,12 +290,7 @@ describe('toUpstreamSchedulePayload', () => {
     };
 
     expect(() =>
-      toUpstreamSchedulePayload(
-        body,
-        DIAL_CORE_URL,
-        DIAL_API_VERSION,
-        SCHEDULER_SERVICE_ID,
-      ),
+      toUpstreamSchedulePayload(body, DIAL_API_VERSION, SCHEDULER_SERVICE_ID),
     ).toThrow(BadRequestException);
   });
 
@@ -359,12 +310,7 @@ describe('toUpstreamSchedulePayload', () => {
     };
 
     expect(() =>
-      toUpstreamSchedulePayload(
-        body,
-        DIAL_CORE_URL,
-        DIAL_API_VERSION,
-        SCHEDULER_SERVICE_ID,
-      ),
+      toUpstreamSchedulePayload(body, DIAL_API_VERSION, SCHEDULER_SERVICE_ID),
     ).toThrow(BadRequestException);
   });
 
@@ -378,7 +324,6 @@ describe('toUpstreamSchedulePayload', () => {
 
     const upstream = toUpstreamSchedulePayload(
       body,
-      DIAL_CORE_URL,
       DIAL_API_VERSION,
       SCHEDULER_SERVICE_ID,
     );
@@ -837,12 +782,7 @@ describe('scheduled-task time zone', () => {
   });
 
   const toPayload = (body: CreateScheduledTaskBodyDto) =>
-    toUpstreamSchedulePayload(
-      body,
-      DIAL_CORE_URL,
-      DIAL_API_VERSION,
-      SCHEDULER_SERVICE_ID,
-    );
+    toUpstreamSchedulePayload(body, DIAL_API_VERSION, SCHEDULER_SERVICE_ID);
 
   it('forwards the requested zone and leaves cron fields unshifted', () => {
     const upstream = toPayload(buildBody({ timezone: 'Europe/Berlin' }));
