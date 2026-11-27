@@ -324,7 +324,7 @@ The compiled SnowmanDelivery SHALL stay the default and the fallback. Removing `
 
 #### Scenario: Rolling back batch 1
 - **WHEN** an operator removes `new-year/snowman-delivery` from the allowlist and bumps the revision during playback
-- **THEN** the external scene restores the card and stops, the next gift click can play the compiled SnowmanDelivery, and an external GiftWrapping keeps playing
+- **THEN** the external scene restores the card and stops, the next gift click can play the compiled SnowmanDelivery, and every other external New Year scene still on the allowlist, such as GiftWrapping, Santa, Snow Circus, the bullfinch couriers and the polar bears workshop, stays external
 
 #### Scenario: Older client
 - **WHEN** a client without `interaction-copy-track-v1` receives `new-year-default@1.2.0`
