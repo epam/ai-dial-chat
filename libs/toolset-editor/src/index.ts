@@ -16,6 +16,7 @@ export type {
 } from './models/settings-form-props';
 export type { AuthSectionLabels } from './models/auth-section-props';
 export { ToolsetOAuthLoginStatus } from './models/toolset-oauth-login';
+export { ToolsetPersistReason } from './models/toolset-form';
 export type {
   ToolsetOAuthLoginHandler,
   ToolsetOAuthLoginRequest,

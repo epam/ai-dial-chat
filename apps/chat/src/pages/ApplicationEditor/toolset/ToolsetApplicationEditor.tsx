@@ -33,6 +33,7 @@ import type {
 import {
   getDefaultToolsetForm,
   ToolsetEditor,
+  ToolsetPersistReason,
 } from '@epam/ai-dial-toolset-editor';
 import type { TFunction } from 'i18next';
 import type { FC } from 'react';
@@ -197,6 +198,7 @@ const ToolsetApplicationEditor: FC = () => {
     async (
       form: ToolsetFormData,
       toolsetId: string,
+      reason: ToolsetPersistReason,
     ): Promise<string | null> => {
       if (!toolsetId && creationDecision !== CatalogCreationDecision.Allowed) {
         showErrorNotification({
@@ -208,7 +210,14 @@ const ToolsetApplicationEditor: FC = () => {
         });
         return null;
       }
-      if (!toolsetId || isOwnToolset) {
+      /*
+       * Log In on an existing toolset only needs Core to hold the current
+       * auth settings, so it updates in place: opening the Save panel there
+       * left the OAuth popup blank behind it (Issue #10046).
+       */
+      const isSaveThroughPanel =
+        !toolsetId || (isOwnToolset && reason === ToolsetPersistReason.Save);
+      if (isSaveThroughPanel) {
         const isCreate = !toolsetId;
         const body = formToToolsetBody(
           form,
@@ -243,7 +252,7 @@ const ToolsetApplicationEditor: FC = () => {
           setIsSavePanelOpen(true);
         });
       }
-      /* Only a toolset shared with the user reaches here; it saves in place. */
+      /* A shared toolset, or a Log In draft of an existing one, saves in place. */
       try {
         const body = formToToolsetBody(form, getToolsetRedirectUri(), true);
         const result = await updateToolset(toolsetId, body);

@@ -168,6 +168,7 @@ vi.mock('@epam/ai-dial-toolset-editor', async (importOriginal) => {
     onPersist: (
       form: { name: string },
       toolsetId: string,
+      reason: string,
     ) => Promise<string | null>;
     onPostSaveLogin: (toolsetId: string, auth: unknown) => Promise<void>;
     onSaveSuccess: (form: { name: string }) => void;
@@ -238,11 +239,25 @@ vi.mock('@epam/ai-dial-toolset-editor', async (importOriginal) => {
             const id = await props.onPersist(
               submittedForm(props.initialForm),
               props.toolsetId,
+              actual.ToolsetPersistReason.Save,
             );
             setPersistResult(id ?? 'null');
           }}
         >
           adapter-persist
+        </button>
+        <button
+          type="button"
+          onClick={async () => {
+            const id = await props.onPersist(
+              submittedForm(props.initialForm),
+              props.toolsetId,
+              actual.ToolsetPersistReason.LogIn,
+            );
+            setPersistResult(id ?? 'null');
+          }}
+        >
+          adapter-persist-for-login
         </button>
         <button
           type="button"
@@ -670,6 +685,28 @@ describe('ApplicationEditorPage — toolset', () => {
         screen.getByRole('button', { name: 'adapter-save-success' }),
       );
       expect(mockNotifyOperationSuccess).not.toHaveBeenCalled();
+    });
+
+    it('updates in place without the Save panel when Log In persists a draft', async () => {
+      vi.mocked(toolsetsApi.updateToolset).mockResolvedValue({
+        id: EDIT_TOOLSET_ID,
+      });
+      await openEditor();
+      await user.click(
+        screen.getByRole('button', { name: 'adapter-persist-for-login' }),
+      );
+      expect(
+        await screen.findByText(`persist-result-${EDIT_TOOLSET_ID}`),
+      ).toBeTruthy();
+      expect(toolsetsApi.updateToolset).toHaveBeenCalledWith(
+        EDIT_TOOLSET_ID,
+        expect.objectContaining({ name: 'My toolset' }),
+      );
+      expect(
+        screen.queryByRole('dialog', {
+          name: `Save ${CatalogI18nKeys.CreateToolset}`,
+        }),
+      ).toBeNull();
     });
 
     it('still updates in place a toolset the user does not own', async () => {

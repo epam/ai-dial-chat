@@ -141,7 +141,9 @@ open with the user's input). Save ordering is: `onPersist` →
 and does not navigate. The Log In flow persists unsaved changes first
 (`buildMcpUrl`'s and every subsequent call in that attempt use the id the
 persist resolved) and skips the request entirely when the form is unchanged
-since the last persist.
+since the last persist. The third `onPersist` argument,
+`ToolsetPersistReason`, is `Save` for the primary action and `LogIn` for that
+draft persist.
 
 The optional `onDirtyChange(isDirty)` reports whether the form — Metadata and
 Setup alike — differs from the values it was seeded with or last persisted. It
@@ -215,7 +217,7 @@ panel's "Save as new version". `labels.versionReadOnlyTooltip` replaces the
 field's tooltip, which otherwise keeps `MetadataForm`'s English default.
 `onPersist` may resolve later than the click that started it: a host can open
 its own save step there and resolve with the id it saved, or `null` when the
-user cancels.
+user cancels. Open it only when the reason is `ToolsetPersistReason.Save`.
 
 ```tsx
 <ToolsetEditor
@@ -324,6 +326,19 @@ How the host's OAuth flow settled, returned from `onOAuthLogin`.
 | `PopupBlocked`  | `'popup-blocked'`  | `labels.errorPopupBlocked` notification           |
 | `InvalidConfig` | `'invalid-config'` | `labels.errorOAuthConfigMissing` notification     |
 | `Failed`        | `'failed'`         | `labels.errorLoginFailed` notification            |
+
+### `ToolsetPersistReason`
+
+Passed as the third argument of `onPersist`.
+
+| Member  | Value      | When the editor persists                                    |
+| ------- | ---------- | ----------------------------------------------------------- |
+| `Save`  | `'save'`   | The user pressed Save/Create                                |
+| `LogIn` | `'log-in'` | Log In needs the current settings stored before it proceeds |
+
+A host that opens its own save step from `onPersist` should open it only for
+`Save`: for an existing toolset, persist a `LogIn` draft in place, so the
+login is never blocked behind a save dialog.
 
 The auth enums the form model uses (`ToolsetAuthTypes`, `WithLogin`,
 `ToolsetCredentialsLevel`) are owned by `@epam/ai-dial-chat-hooks` and are

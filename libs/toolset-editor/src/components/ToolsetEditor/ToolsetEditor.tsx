@@ -26,6 +26,7 @@ import type {
   ToolsetFormData,
   ToolsetFormErrors,
 } from '../../models/toolset-form';
+import { ToolsetPersistReason } from '../../models/toolset-form';
 import {
   getToolsetMetadataValidationOptions,
   isToolsetFormValid,
@@ -256,7 +257,11 @@ export const ToolsetEditor: FC<ToolsetEditorProps> = ({
 
     setIsSaving(true);
     try {
-      const id = await onPersist(form, persistedToolsetId);
+      const id = await onPersist(
+        form,
+        persistedToolsetId,
+        ToolsetPersistReason.LogIn,
+      );
       if (!id) return null;
       if (!persistedToolsetId) {
         setDraftToolsetId(id);
@@ -358,7 +363,11 @@ export const ToolsetEditor: FC<ToolsetEditorProps> = ({
     setErrors({});
     setIsSaving(true);
     try {
-      const id = await onPersist(form, persistedToolsetId);
+      const id = await onPersist(
+        form,
+        persistedToolsetId,
+        ToolsetPersistReason.Save,
+      );
       if (!id) return;
       setBaselineForm(form);
       await onToolsetsChanged();

@@ -65,6 +65,17 @@ export interface ToolsetFormData extends DeploymentGeneralFormData {
   auth: ToolsetAuthFormData;
 }
 
+/** Why the editor asks the host to persist the form. */
+export enum ToolsetPersistReason {
+  /** The user pressed the primary Save/Create action. */
+  Save = 'save',
+  /**
+   * Log In needs the backend to hold the current endpoint and auth settings
+   * before it authenticates; the user did not ask to save.
+   */
+  LogIn = 'log-in',
+}
+
 export interface ToolsetFormErrors {
   /** Validation message for the Metadata name field. */
   name?: string;
