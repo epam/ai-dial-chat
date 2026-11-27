@@ -175,13 +175,13 @@ describe('OnboardingHints', () => {
     expect(screen.getByRole('dialog', { name: 'Start a chat' })).toBeTruthy();
   });
 
-  it('marks only the shown hint seen when closed with Escape', async () => {
+  it('marks nothing seen when closed with Escape', async () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     await startTour();
 
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('dialog')).toBeNull();
-    expect(readSeen()).toEqual(['new-chat']);
+    expect(readSeen()).toEqual([]);
   });
 
   it('marks every hint seen when the tour is skipped', async () => {
@@ -280,7 +280,7 @@ describe('OnboardingHints', () => {
     expect(screen.getByRole('dialog', { name: 'Start a chat' })).toBeTruthy();
   });
 
-  it('keeps the step number of a tour reloaded halfway', async () => {
+  it('counts only the hints of the tour on screen after a reload halfway', async () => {
     localStorage.setItem(
       StorageKey.SeenOnboardingHints,
       JSON.stringify(['new-chat']),
@@ -288,7 +288,7 @@ describe('OnboardingHints', () => {
     await startTour();
     expect(
       screen.getByRole('dialog', { name: 'Ask here' }).textContent,
-    ).toContain('onboardingTour.stepCounter:2/2');
+    ).toContain('onboardingTour.stepCounter:1/1');
   });
 
   it('waits for the config to be ready', async () => {
