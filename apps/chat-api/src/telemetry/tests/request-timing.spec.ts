@@ -1,7 +1,12 @@
 import { channel } from 'node:diagnostics_channel';
 import { EventEmitter } from 'node:events';
-import { context, SpanKind, trace } from '@opentelemetry/api';
+import { context, metrics, SpanKind, trace } from '@opentelemetry/api';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
+import {
+  MeterProvider,
+  MetricReader,
+  type MetricData,
+} from '@opentelemetry/sdk-metrics';
 import {
   BasicTracerProvider,
   InMemorySpanExporter,
@@ -18,11 +23,24 @@ import {
   vi,
 } from 'vitest';
 import {
-  stopCoreRequestTiming,
+  stopUpstreamRequestTiming,
+  withAnalyticsRequestTiming,
   withCoreRequestTiming,
-} from '../core-request-timing';
+} from '../upstream-request-timing';
+
+class TestMetricReader extends MetricReader {
+  protected async onForceFlush(): Promise<void> {
+    /* Tests collect in-memory data directly. */
+  }
+
+  protected async onShutdown(): Promise<void> {
+    /* No external resources. */
+  }
+}
 
 const exporter = new InMemorySpanExporter();
+const metricReader = new TestMetricReader();
+let meterProvider: MeterProvider;
 let createRequestTimingMiddleware: (env?: NodeJS.ProcessEnv) => RequestHandler;
 
 const makeRequest = (url = '/api/v1/files/private-file?secret=value') => {
@@ -46,21 +64,50 @@ describe('request timing trace', () => {
         spanProcessors: [new SimpleSpanProcessor(exporter)],
       }),
     );
+    meterProvider = new MeterProvider({ readers: [metricReader] });
+    metrics.setGlobalMeterProvider(meterProvider);
     ({ createRequestTimingMiddleware } = await import('../request-timing'));
   });
 
   afterEach(() => {
     exporter.reset();
-    stopCoreRequestTiming();
+    stopUpstreamRequestTiming();
     vi.restoreAllMocks();
   });
 
-  afterAll(() => {
+  afterAll(async () => {
+    await meterProvider.shutdown();
+    metrics.disable();
     trace.disable();
     context.disable();
   });
 
-  it('ends once with matching total and phase attributes and no raw URL', () => {
+  const collectPhases = async (): Promise<Record<string, number>> => {
+    const { resourceMetrics } = await metricReader.collect();
+    return Object.fromEntries(
+      resourceMetrics.scopeMetrics
+        .flatMap((scope) => scope.metrics)
+        .filter(
+          (metric) =>
+            metric.descriptor.name === 'dial.chat.http.request.phase.duration',
+        )
+        .flatMap<MetricData['dataPoints'][number]>(
+          (metric) => metric.dataPoints,
+        )
+        .map((point) => {
+          const value = point.value;
+          if (typeof value === 'number' || !('sum' in value)) {
+            throw new Error('Expected request phase histogram data');
+          }
+          return [
+            String(point.attributes['dial.chat.http.phase']),
+            value.sum ?? 0,
+          ];
+        }),
+    );
+  };
+
+  it('ends once with matching total and phase attributes and no raw URL', async () => {
     let now = 10;
     vi.spyOn(performance, 'now').mockImplementation(() => now);
     const { req, res } = makeRequest();
@@ -75,8 +122,15 @@ describe('request timing trace', () => {
       withCoreRequestTiming(() =>
         channel('undici:request:create').publish({ request: wireRequest }),
       );
+      const analyticsRequest = {};
+      now = 25;
+      withAnalyticsRequestTiming(() =>
+        channel('undici:request:create').publish({ request: analyticsRequest }),
+      );
       now = 30;
       channel('undici:request:trailers').publish({ request: wireRequest });
+      now = 35;
+      channel('undici:request:trailers').publish({ request: analyticsRequest });
       now = 40;
       res.emit('finish');
       now = 50;
@@ -96,7 +150,15 @@ describe('request timing trace', () => {
       'http.response.status_code': 200,
       'dial.chat.http.duration.total': 0.03,
       'dial.chat.http.duration.core': 0.01,
-      'dial.chat.http.duration.chat': expect.closeTo(0.02),
+      'dial.chat.http.duration.analytics': 0.01,
+      /* Core 20..30 and Analytics 25..35 overlap: the union is 15 ms. */
+      'dial.chat.http.duration.chat': expect.closeTo(0.015),
+    });
+    expect(await collectPhases()).toEqual({
+      total: 0.03,
+      core: 0.01,
+      analytics: 0.01,
+      chat: expect.closeTo(0.015),
     });
     expect(res.listenerCount('finish')).toBe(0);
     expect(req.listenerCount('aborted')).toBe(0);
