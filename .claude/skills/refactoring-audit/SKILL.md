@@ -224,7 +224,7 @@ Signals, from cheapest to most expensive:
    jq -r '.testResults[] | .name as $f | .assertionResults[] | "\(.duration // 0 | floor)ms  \($f)  \(.fullName)"' <abs>/vitest.json | sort -rn | head -15
    ```
 
-   `--skip-nx-cache` is required: a cache hit replays the log and writes no report file. Resolve `<project>` with `nx show projects` (lib projects are named after their package).
+   `--skip-nx-cache` is required: a cache hit replays the log and writes no report file. Resolve `<project>` with `nx show projects`: every project, apps included, is named after its package (`@epam/chat`, `@epam/chat-api`, `@epam/ai-dial-catalog`).
 
 Read every hit you classify; collector output alone is never evidence. Classify as:
 
@@ -239,6 +239,7 @@ Read every hit you classify; collector output alone is never evidence. Classify 
 Rules:
 
 - A **Delete** row needs a covering test that asserts the same behaviour — read in source, not inferred from a matching title or from coverage of the same lines.
+- An exact duplicate whose two titles differ is often a **Fix**, not a Delete: the second title names a scenario — a theme switch, an empty field, a search query, a fallback path — that the copied body never sets up. Check what each title promises before deleting either; fixing the body usually covers a branch nothing else tests.
 - **Same body, different subject or setup** is a Merge candidate, not a Delete one, unless the subjects differ only by a re-export or a thin wrapper — read the app module before calling the app copy redundant, and keep one wiring test when the wrapper injects host values.
 - Never re-merge a family that a previous spec split produced (big concern-split files, the output of a spec-split OpenSpec change); the collector's merge threshold keeps those out, so a family above it is Keep.
 - A unit spec outside `tests/` in `apps/chat-api` follows the NestJS co-location rule in `.claude/rules/nestjs-best-practices.md`; elsewhere it breaks `.claude/rules/spec.md`. Either way, a subject with specs in both places shows up as a spec family — merge those.
@@ -338,10 +339,11 @@ Preconditions:
 - Act only on Step 3e rows classified **Delete** or **Merge** with evidence from this session; run Step 3e for the target project first if needed. Apply **Fix** rows only when the user asks for fixes too.
 - One Nx project per slice. Touch test files only — never product code, the generated client, celebrations or OpenSpec.
 - If `git status` shows uncommitted edits in a target file, stop and report instead of editing. Never commit, push or open a pull request; leave the changes in the working tree for the user.
+- In a git worktree, run Nx with `NX_WORKSPACE_ROOT_PATH` set to the worktree root — a value inherited from another checkout silently runs that checkout's specs — and check that every `testResults[].name` in the JSON report starts with the worktree root.
 
 Per slice:
 
-1. **Baseline.** Run the touched specs plus the specs holding each named covering test, with a JSON report and coverage limited to the subjects:
+1. **Baseline.** On the unmodified files (if edits exist already: `git stash`, measure, `git stash pop`), run the touched specs plus the specs holding each named covering test, with a JSON report and coverage limited to the subjects:
 
    ```bash
    npm exec nx test <project> --skip-nx-cache -- <spec paths relative to the project root> \
@@ -350,7 +352,7 @@ Per slice:
      --coverage.reportsDirectory=<abs>/before-coverage --coverage.include='<subject glob relative to the project root>'
    ```
 
-   Write the expected change of `numTotalTests` down before editing: −1 per deleted test; an `it.each` of N rows counts as N tests, so turning N clones into one table changes nothing.
+   A whole-project `--coverage.include='src/**'` works as well: removing tests can only lower coverage, so equal totals mean no file lost any. Write the expected change of `numTotalTests` down before editing: −1 per deleted test; an `it.each` of N rows counts as N tests, so turning N clones into one table changes nothing.
 
 2. **Edit.** Delete the redundant test; merge a family into the main spec with its setup hoisted once (render helper per `.claude/rules/spec.md`); turn clones into `it.each`/`describe.each` with a readable title template. Keep every distinct case, delete a file only once it is empty, and remove imports, mocks and helpers the edit left unused.
 3. **Compare.** Rerun the command with the spec paths that exist after the edit (a merged family's target file, not the files it absorbed), into `after.json` / `after-coverage`. Every test passes; `numTotalTests` changed by exactly the expected amount; no coverage total (`lines`, `statements`, `functions`, `branches`) in `coverage-summary.json` dropped. A drop means a removed test was not redundant — restore it and reclassify the row.
