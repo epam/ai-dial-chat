@@ -241,7 +241,11 @@ inline picture or UserInfo no longer supplies a usable one, and 502 when the
 lookup fails.
 
 `GET /api/v1/auth/me` returns `pictureUrl`: the `http(s)` claim, or
-`/api/v1/auth/me/picture` for an inline picture, omitted when there is none.
+`/api/v1/auth/me/picture?u=<key>` for an inline picture, omitted when there is
+none. `<key>` is a short SHA-256 of the provider id and subject. The path is
+the same for every user and the image is cached for an hour, so without it a
+second user signing in on the same browser would see the first user's picture.
+The endpoint ignores the query and always serves the session's own picture.
 The SPA renders it in place of the initials badge and falls back to initials
 when it is absent or fails to load.
 Claims are captured at login; transparent token refresh does not reload them.

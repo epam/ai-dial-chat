@@ -999,15 +999,36 @@ describe('AuthController (integration)', () => {
       const { body, sessionCookies } = await loginAndGetProfile();
 
       expect(body['claims']).toEqual({ sub: 'user-1' });
-      expect(body['pictureUrl']).toBe('/api/v1/auth/me/picture');
+      expect(body['pictureUrl']).toMatch(
+        /^\/api\/v1\/auth\/me\/picture\?u=[\w-]{16}$/,
+      );
 
       const picture = await request(app.getHttpServer())
-        .get('/api/v1/auth/me/picture')
+        .get(body['pictureUrl'] as string)
         .set('Cookie', sessionCookies)
         .expect(200);
       expect(picture.headers['content-type']).toBe('image/jpeg');
       expect(picture.headers['cache-control']).toBe('private, max-age=3600');
       expect(Buffer.from(picture.body)).toEqual(INLINE_PICTURE_BYTES);
+    });
+
+    it('advertises a different inline pictureUrl per user so a cached image is not shown to the next user (#9890)', async () => {
+      MOCK_CLIENT.userinfo.mockResolvedValue({
+        sub: 'user-1',
+        picture: INLINE_PICTURE,
+      });
+      const first = await loginAndGetProfile();
+      const firstAgain = await loginAndGetProfile();
+
+      MOCK_CLIENT.userinfo.mockResolvedValue({
+        sub: 'user-2',
+        picture: INLINE_PICTURE,
+      });
+      const second = await loginAndGetProfile({ sub: 'user-2' });
+
+      expect(firstAgain.body['pictureUrl']).toBe(first.body['pictureUrl']);
+      expect(second.body['pictureUrl']).toEqual(expect.any(String));
+      expect(second.body['pictureUrl']).not.toBe(first.body['pictureUrl']);
     });
 
     it.each([

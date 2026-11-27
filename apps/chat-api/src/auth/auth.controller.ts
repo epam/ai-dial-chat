@@ -1,4 +1,4 @@
-import { randomUUID } from 'crypto';
+import { createHash, randomUUID } from 'crypto';
 import {
   BadRequestException,
   BadGatewayException,
@@ -82,6 +82,21 @@ import { resolveClaimPath } from './utils/claims.util';
 
 /** Same-origin URL `GET /auth/me` advertises as `pictureUrl` for an inline picture. */
 const CURRENT_USER_PICTURE_PATH = '/api/v1/auth/me/picture';
+
+/*
+ * The picture path is the same for every user and the response is cached for
+ * an hour, so a second user signing in on the same browser would get the first
+ * user's cached image (#9890). A query keyed to the user gives each one their
+ * own cache entry; the handler ignores it and always serves the session's
+ * picture.
+ */
+const getCurrentUserPictureUrl = (user: SessionUser): string => {
+  const userKey = createHash('sha256')
+    .update(`${user.providerId}:${user.sub}`)
+    .digest('base64url')
+    .slice(0, 16);
+  return `${CURRENT_USER_PICTURE_PATH}?u=${userKey}`;
+};
 
 @ApiTags('auth')
 @Controller({ path: 'auth', version: '1' })
@@ -640,7 +655,7 @@ export class AuthController {
       res.setHeader('X-CSRF-Token', user.csrf);
     }
     const pictureUrl = user.hasInlinePicture
-      ? CURRENT_USER_PICTURE_PATH
+      ? getCurrentUserPictureUrl(user)
       : getPictureClaim(user.claims);
     return {
       sub: user.sub,
