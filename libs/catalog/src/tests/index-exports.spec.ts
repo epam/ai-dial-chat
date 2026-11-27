@@ -54,3 +54,24 @@ describe('@epam/ai-dial-catalog public picker surface', () => {
     );
   });
 });
+
+describe('@epam/ai-dial-catalog public folder surface', () => {
+  it.each([
+    'buildCatalogFolderTree',
+    'filterByFolder',
+    'getCatalogItemFolderPath',
+    'isFolderSelectionValid',
+  ])('exports %s from the headless entry point and the root', (name) => {
+    const fromMapping = (mapping as Record<string, unknown>)[name];
+    expect(typeof fromMapping).toBe('function');
+    expect((catalog as Record<string, unknown>)[name]).toBe(fromMapping);
+  });
+
+  it('exports the folder enum and defaults', () => {
+    expect(catalog.CatalogFolderRootKind.Personal).toBe('personal');
+    expect(catalog.DEFAULT_CATALOG_FOLDER_ROOTS).toHaveLength(3);
+    expect(catalog.DEFAULT_CATALOG_FOLDER_LABELS.allEntities).toBe(
+      'All entities',
+    );
+  });
+});

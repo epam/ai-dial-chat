@@ -29,6 +29,26 @@ export {
   getTopicOptions,
 } from '../utils/catalog-filter';
 export type { CatalogItemsQuery } from '../utils/catalog-filter';
+export { CatalogFolderRootKind } from '../types/catalog-folders';
+export type {
+  CatalogFolderRoot,
+  CatalogFolderSelection,
+} from '../types/catalog-folders';
+export type {
+  CatalogFolderLabels,
+  CatalogFolderNode,
+  CatalogItemFolderPath,
+} from '../models/catalog-folders';
+export {
+  DEFAULT_CATALOG_FOLDER_LABELS,
+  DEFAULT_CATALOG_FOLDER_ROOTS,
+} from '../constants/catalog-folders';
+export {
+  buildCatalogFolderTree,
+  filterByFolder,
+  getCatalogItemFolderPath,
+  isFolderSelectionValid,
+} from '../utils/catalog-folders';
 export { applyCatalogSelection } from '../utils/list-selection';
 export { sortCatalogItems } from '../utils/catalog-sort';
 export {
