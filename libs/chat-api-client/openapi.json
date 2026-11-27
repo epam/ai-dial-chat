@@ -13351,7 +13351,15 @@
           "tools-selector",
           "editor-setup",
           "active-chat",
-          "active-chat-actions"
+          "active-chat-actions",
+          "project-outputs",
+          "project-chat-list",
+          "scheduled-task-details",
+          "scheduled-task-skills",
+          "scheduled-task-instructions",
+          "scheduled-task-refine-instructions",
+          "scheduled-task-timezone",
+          "scheduled-task-start-date"
         ],
         "description": "The UI element the hint points at. A closed list; the client resolves it and skips the hint when that element is not on screen."
       },

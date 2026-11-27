@@ -466,9 +466,13 @@ itself can pass them there.
 #### Mobile browse settings
 
 Below 768px (`useIsPhone` from `@epam/ai-dial-chat-shared`)
-the Browse toolbar drops the view toggle, the sort dropdown and the filter
+the Browse toolbar drops the view toggle, the sort button and the filter
 dropdown. In their place, next to the search field, it shows one settings
 button that opens a bottom sheet with View, Sorting and Filtering pages.
+From 768px the title row holds the title alone, and the search row reads
+search, view toggle, sort button, filter. The sort button is icon-only
+(`SortMenuButton` from `@epam/ai-dial-chat-shared`), named and tooltipped by
+`sortLabel` whichever order is applied; its menu checks the applied order.
 
 - View and sort apply as soon as they are picked.
 - Filters stay buffered until Apply, as on desktop.
@@ -704,8 +708,7 @@ renders the kit's `GridAppearance.Chat`, a borderless 12px card with the MD
 shadow and inset row dividers. Outside multi-select, the selected row keeps its
 regular background and is framed with a 1.5px `--stroke-accent` border, the same
 outline-only look as a selected card. `styles.colors` (`ListViewColors`) covers cell content only:
-`starFilled`, `folderIcon`, `nameText` and `versionText` (`selectedRowCheckIcon`
-is deprecated and has no effect). With no items, the grid
+`starFilled`, `folderIcon`, `nameText` and `versionText`. With no items, the grid
 shows its own empty state from `emptyStateTitle` (default `'No results'`) and
 `emptyStateDescription`. The message is announced only with `isEmptyStateLive`
 (default `false`); `Catalog` sets it when a search or topic filter left the tab

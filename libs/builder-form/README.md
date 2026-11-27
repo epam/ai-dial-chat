@@ -258,7 +258,6 @@ import {
     uploadFilesLabel: 'Upload',
     newFolderLabel: 'New folder',
     downloadLabel: 'Download',
-    downloadingLabel: 'Downloading',
     deleteLabel: 'Delete',
     deletingLabel: 'Deleting',
     deleteConfirmTitleSingle: 'Delete file?',

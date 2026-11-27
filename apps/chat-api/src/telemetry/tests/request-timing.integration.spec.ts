@@ -25,7 +25,12 @@ import type { Response as ExpressResponse } from 'express';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { EnvironmentVariables } from '../../config/environment.config';
+import type { DialAnalyticsClientService } from '../../dial/dial-analytics-client.service';
 import type { DialClientService } from '../../dial/dial-client.service';
+import {
+  type FakeAnalyticsServer,
+  startFakeAnalytics,
+} from '../../dial/tests/fake-analytics.server';
 
 class TestMetricReader extends MetricReader {
   protected async onForceFlush(): Promise<void> {
@@ -42,6 +47,7 @@ const pause = (ms: number) =>
 
 let upstreamUrl: string;
 let dialClient: DialClientService;
+let analyticsClient: DialAnalyticsClientService;
 let backgroundWork: Promise<unknown> | undefined;
 
 const coreText = async (path: string) => {
@@ -87,6 +93,22 @@ class TimingController {
       coreText('/headers'),
       coreText('/headers'),
       coreText('/headers'),
+    ]);
+    await pause(35);
+    return 'ok';
+  }
+
+  @Get('timing/core-and-analytics')
+  async coreAndAnalytics(): Promise<string> {
+    /* Core runs 0..55 ms and ADAS 30..90 ms, so they overlap for ~25 ms. */
+    await Promise.all([
+      coreText('/headers'),
+      pause(30).then(() =>
+        analyticsClient.client.executeQuery({
+          body: { entity: 'dial_usage_log', mode: 'aggregate' },
+          headers: { Authorization: 'Bearer token' },
+        }),
+      ),
     ]);
     await pause(35);
     return 'ok';
@@ -158,6 +180,7 @@ class TimingController {
 describe('request timing — Core wire attribution through the real Nest pipeline', () => {
   let app: INestApplication;
   let upstream: http.Server;
+  let analytics: FakeAnalyticsServer;
   let meterProvider: MeterProvider;
   let appUrl: string;
   const metricReader = new TestMetricReader();
@@ -212,6 +235,20 @@ describe('request timing — Core wire attribution through the real Nest pipelin
     dialClient = new Client(
       new ConfigService<EnvironmentVariables>({ DIAL_CORE_URL: upstreamUrl }),
     );
+    analytics = await startFakeAnalytics(
+      () =>
+        new Promise((resolve) => {
+          setTimeout(() => resolve({ status: 200, body: { rows: [] } }), 60);
+        }),
+    );
+    const { DialAnalyticsClientService: AnalyticsClient } =
+      await import('../../dial/dial-analytics-client.service');
+    analyticsClient = new AnalyticsClient(
+      new ConfigService<EnvironmentVariables>({
+        ANALYTICS_URL: analytics.url,
+        ANALYTICS_TIMEOUT_MS: 5000,
+      }),
+    );
     app = await buildApp();
     await app.listen(0, '127.0.0.1');
     appUrl = `http://127.0.0.1:${(app.getHttpServer().address() as AddressInfo).port}`;
@@ -222,10 +259,12 @@ describe('request timing — Core wire attribution through the real Nest pipelin
     await app?.close();
     upstream?.closeAllConnections();
     await new Promise<void>((resolve) => upstream?.close(() => resolve()));
+    await analytics?.close();
     await meterProvider?.shutdown();
     metrics.disable();
-    const { stopCoreRequestTiming } = await import('../core-request-timing');
-    stopCoreRequestTiming();
+    const { stopUpstreamRequestTiming } =
+      await import('../upstream-request-timing');
+    stopUpstreamRequestTiming();
   });
 
   const getPhases = async (route: string) => {
@@ -257,16 +296,26 @@ describe('request timing — Core wire attribution through the real Nest pipelin
     );
   };
 
-  const expectCompletePhases = async (route: string) => {
+  /* `isOverlapping` routes run Core and Analytics at once, so the sum exceeds total. */
+  const expectCompletePhases = async (route: string, isOverlapping = false) => {
     const phases = await getPhases(route);
-    expect(Object.keys(phases).sort()).toEqual(['chat', 'core', 'total']);
-    expect(phases.total.count).toBe(1);
-    expect(phases.core.count).toBe(1);
-    expect(phases.chat.count).toBe(1);
-    expect(phases.total.sum).toBeGreaterThanOrEqual(0);
-    expect(phases.core.sum).toBeGreaterThanOrEqual(0);
-    expect(phases.chat.sum).toBeGreaterThanOrEqual(0);
-    expect(phases.core.sum + phases.chat.sum).toBeCloseTo(phases.total.sum, 10);
+    expect(Object.keys(phases).sort()).toEqual([
+      'analytics',
+      'chat',
+      'core',
+      'total',
+    ]);
+    for (const name of ['total', 'core', 'analytics', 'chat']) {
+      const phase = phases[name];
+      expect(phase.count).toBe(1);
+      expect(phase.sum).toBeGreaterThanOrEqual(0);
+      expect(phase.sum).toBeLessThanOrEqual(phases.total.sum);
+    }
+    if (!isOverlapping) {
+      expect(
+        phases.core.sum + phases.analytics.sum + phases.chat.sum,
+      ).toBeCloseTo(phases.total.sum, 10);
+    }
     return phases;
   };
 
@@ -276,6 +325,7 @@ describe('request timing — Core wire attribution through the real Nest pipelin
       .expect(200, 'ok');
     const phases = await expectCompletePhases('/api/v1/timing/no-core');
     expect(phases.core.sum).toBe(0);
+    expect(phases.analytics.sum).toBe(0);
     expect(phases.chat.sum).toBe(phases.total.sum);
     expect(phases.total.attributes).toMatchObject({
       'http.request.method': 'GET',
@@ -291,7 +341,29 @@ describe('request timing — Core wire attribution through the real Nest pipelin
       .expect(200, 'ok');
     const phases = await expectCompletePhases('/api/v1/timing/other-upstream');
     expect(phases.core.sum).toBe(0);
+    expect(phases.analytics.sum).toBe(0);
     expect(phases.chat.sum).toBeGreaterThan(0.035);
+  });
+
+  it('subtracts overlapping Core and Analytics time from chat only once', async () => {
+    await request(app.getHttpServer())
+      .get('/api/v1/timing/core-and-analytics')
+      .expect(200, 'ok');
+    const phases = await expectCompletePhases(
+      '/api/v1/timing/core-and-analytics',
+      true,
+    );
+    const union = phases.total.sum - phases.chat.sum;
+    expect(phases.core.sum).toBeGreaterThan(0.045);
+    expect(phases.analytics.sum).toBeGreaterThan(0.05);
+    expect(union).toBeGreaterThanOrEqual(
+      Math.max(phases.core.sum, phases.analytics.sum),
+    );
+    /* The ~25 ms overlap is in both phases but outside chat once. */
+    expect(phases.core.sum + phases.analytics.sum - union).toBeGreaterThan(
+      0.01,
+    );
+    expect(phases.chat.sum).toBeGreaterThan(0.03);
   });
 
   it('includes a Core call from a rejecting guard before controller execution', async () => {

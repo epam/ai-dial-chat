@@ -151,7 +151,7 @@ Example response (with `?limit=20&offset=0&search=daily&sort=firstToRun`):
 - **WHEN** `model` exceeds 1024 characters
 - **THEN** the response is `400 Bad Request` and DIAL Core is never contacted
 
-### Requirement: Create scheduled task with validated chat_completion/dial-oauth body
+### Requirement: Create scheduled task with validated chat_completion body and no upstream url
 
 `POST /api/v1/scheduled-tasks` SHALL accept `CreateScheduledTaskBodyDto`:
 
@@ -170,7 +170,6 @@ or with `"trigger": { "cron": { "fields": { "minute": "0", "hour": "*" } } }` in
 The service SHALL build the upstream body server-side with `service_id` set from `SCHEDULER_SERVICE_ID` (read once at `SchedulerUpstreamClient` construction; see the "SCHEDULER_APP_ID and SCHEDULER_SERVICE_ID environment configuration" requirement) and `properties`:
 
 - `target_type: "chat_completion"`
-- `url`: built by `buildScheduledTaskChatCompletionUrl(DialClientService.baseUrl)` — the base URL (backed by `DIAL_CORE_URL`) with any trailing slash stripped, followed by `/openai` (no double slashes)
 - `api_version`: `DialClientService.dialApiVersion` (the same value `ChatService.sendCompletion` sends as `api-version`, backed by `DIAL_API_VERSION`, defaulting to `2024-10-21`)
 - `create_conversation: true` — required for the Scheduler run to create a conversation under the reserved `.scheduler/{scheduleId}/{runId}/` path
 - `extra_headers: {}` — fixed
@@ -178,7 +177,7 @@ The service SHALL build the upstream body server-side with `service_id` set from
 - `timeout: null` — fixed
 - `payload: { stream: true, messages: [{ role: "user", content: prompt, custom_content?: { skills: [{ url }] } }], model }` (the extension is present only with an effective skill) — `stream` is fixed (not client-controllable) and appears only inside `properties.payload`
 
-and a top-level `description` field (mapped 1:1, never merged into `properties` or `properties.payload`) when provided. On success it SHALL call `POST {DIAL_CORE_URL}/v1/deployments/applications/{SCHEDULER_APP_ID}/route/v1/schedules/`, return **201** with `CreatedScheduledTaskDto` (at least `id`, `displayName`, `trigger`), and invalidate that user's list cache.
+and a top-level `description` field (mapped 1:1, never merged into `properties` or `properties.payload`) when provided. `properties` SHALL NOT contain a `url` field; the BFF does not choose the chat-completion target for DIAL Scheduler. On success it SHALL call `POST {DIAL_CORE_URL}/v1/deployments/applications/{SCHEDULER_APP_ID}/route/v1/schedules/`, return **201** with `CreatedScheduledTaskDto` (at least `id`, `displayName`, `trigger`), and invalidate that user's list cache.
 
 #### Scenario: Valid create request succeeds
 
@@ -190,15 +189,10 @@ and a top-level `description` field (mapped 1:1, never merged into `properties` 
 - **WHEN** a valid create request is submitted
 - **THEN** the upstream request body's `properties` includes `create_conversation: true`, `extra_headers: {}`, `retry: null`, and `timeout: null`, and `properties.payload` contains `stream: true`, `messages`, and `model`; `properties` itself has no `stream` key
 
-#### Scenario: Upstream url is built from the normalized DIAL Core base URL
+#### Scenario: Upstream properties carry no url
 
-- **WHEN** `DialClientService.baseUrl` is `http://dial-core` (no trailing slash)
-- **THEN** the upstream request body's `properties.url` is `http://dial-core/openai`
-
-#### Scenario: Upstream url normalizes a trailing slash on the base URL
-
-- **WHEN** `DialClientService.baseUrl` is `http://dial-core/` (trailing slash)
-- **THEN** the upstream request body's `properties.url` is `http://dial-core/openai`, not `http://dial-core//openai`
+- **WHEN** a valid create request is submitted with either a `date` or a `cron` trigger
+- **THEN** the upstream `POST` request body's `properties` has no `url` key, while `target_type`, `api_version`, `create_conversation`, `extra_headers`, `retry`, `timeout`, and `payload` are still present
 
 #### Scenario: Upstream api_version matches the interactive chat completion API version
 
@@ -251,6 +245,7 @@ Skill-bearing requests SHALL additionally meet the server capability-validation 
 
 - **WHEN** a valid request includes `prompt: ""` and one valid skill reference with an explicitly supporting model/agent
 - **THEN** it succeeds with 201 and persists the message-level skill extension
+
 ### Requirement: Get scheduled task by id
 
 `GET /api/v1/scheduled-tasks/:scheduleId` SHALL validate `scheduleId` against the allowlist `^[A-Za-z0-9_-]{1,128}$` via `@Matches` before use, proxy `GET {DIAL_CORE_URL}/v1/deployments/applications/{SCHEDULER_APP_ID}/route/v1/schedules/{scheduleId}` with the session bearer token, and return `ScheduledTaskDto` (`id`, `displayName`, `trigger`, `description`, and any additional narrowly-typed fields confirmed against a live upstream response). This endpoint is NOT cached.
@@ -422,7 +417,7 @@ Example request: `GET /api/v1/scheduled-tasks/sched_123/runs?limit=20&offset=40`
 
 ### Requirement: Update scheduled task
 
-`PUT /api/v1/scheduled-tasks/:scheduleId` SHALL accept the same `UpdateScheduledTaskBodyDto` shape as create (`displayName`, `trigger`, `model`, `prompt`, optional array `skillUrls?: string[]`, optional `description` (≤500 chars); no client-supplied `service_id` or `stream`), apply the same server-side `service_id` (from `SCHEDULER_SERVICE_ID`)/`target_type`/`url`/`api_version`/`create_conversation`/`extra_headers`/`retry`/`timeout`/`payload` (including `properties.payload.stream: true`)/`description` construction as create, proxy `PUT {DIAL_CORE_URL}/v1/deployments/applications/{SCHEDULER_APP_ID}/route/v1/schedules/{scheduleId}` with the session bearer token, return `200 OK` with the updated `ScheduledTaskDto`, and invalidate that user's list cache on success.
+`PUT /api/v1/scheduled-tasks/:scheduleId` SHALL accept the same `UpdateScheduledTaskBodyDto` shape as create (`displayName`, `trigger`, `model`, `prompt`, optional array `skillUrls?: string[]`, optional `description` (≤500 chars); no client-supplied `service_id` or `stream`), apply the same server-side `service_id` (from `SCHEDULER_SERVICE_ID`)/`target_type`/`api_version`/`create_conversation`/`extra_headers`/`retry`/`timeout`/`payload` (including `properties.payload.stream: true`)/`description` construction as create, proxy `PUT {DIAL_CORE_URL}/v1/deployments/applications/{SCHEDULER_APP_ID}/route/v1/schedules/{scheduleId}` with the session bearer token, return `200 OK` with the updated `ScheduledTaskDto`, and invalidate that user's list cache on success.
 
 #### Scenario: Valid update succeeds and invalidates list cache
 
@@ -433,6 +428,11 @@ Example request: `GET /api/v1/scheduled-tasks/sched_123/runs?limit=20&offset=40`
 
 - **WHEN** an authenticated, feature-enabled user submits a valid update body for an existing `scheduleId`
 - **THEN** the upstream `PUT` request body's `properties` includes `create_conversation: true`, `extra_headers: {}`, `retry: null`, and `timeout: null`, with `stream: true` only inside `properties.payload`, matching the create request shape, and `service_id` equals the configured `SCHEDULER_SERVICE_ID` value
+
+#### Scenario: Update body properties carry no url
+
+- **WHEN** an authenticated, feature-enabled user submits a valid update body for an existing `scheduleId`, including one whose stored upstream schedule still has a `properties.url`
+- **THEN** the upstream `PUT` request body's `properties` has no `url` key
 
 #### Scenario: Update of unknown schedule id returns 404
 
@@ -450,6 +450,7 @@ Before validation the service SHALL resolve the effective skill from authoritati
 
 - **WHEN** PUT removes a saved skill with `skillUrls: []` and leaves prompt empty/whitespace
 - **THEN** the server returns typed 400 for missing instructions-or-skill and does not alter the saved task
+
 ### Requirement: Scheduled task active state field
 
 `ScheduledTaskDto` SHALL include an optional `isActive: boolean` field, computed in `fromUpstreamSchedule` (`apps/chat-api/src/scheduled-tasks/scheduled-tasks.mapper.ts`) as `upstream.next_run_time != null` whenever the upstream response carries a `trigger` or `trigger_type` (i.e., there is a basis to decide); `isActive` SHALL be `undefined` when the upstream response gives no such basis. This derivation is a documented assumption pending confirmation of an authoritative upstream active/paused field (see design.md "Decision 1" and "Open Questions") — it MUST NOT be silently replaced with a different, undocumented heuristic, and mapping MUST NOT throw regardless of which optional upstream fields are present or absent.

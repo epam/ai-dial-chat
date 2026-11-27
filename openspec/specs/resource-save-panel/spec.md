@@ -54,11 +54,12 @@ The panel SHALL be `StandaloneSaveToFolderPanel` from `@epam/ai-dial-publish-pan
 2. a **Save to folder** section showing the committed destination as the kit `FolderName` — the file manager's folder icon, then the root label and folder segments joined with " / " in a secondary text color, truncated with the full path in a tooltip — followed by a small ghost **Change** action;
 3. for versioned resources only (applications, toolsets), a **Version** section rendered as the kit `RadioGroup` with a visible legend:
    - "Keep version {current}", selected by default;
-   - "Save as new version", which reveals a required Version input;
+   - "Save as new version", which reveals a required Version input that starts empty;
 4. for an application, while the committed destination is under the Organization root, a **Dependencies** section (below);
-5. a footer with Cancel and Save.
+5. for versioned resources only, a **Versions history** section (`resource-version-history`), the last section of the body;
+6. a footer with Cancel and Save.
 
-Prompts SHALL render no Version section. The panel SHALL NOT render a Versions history list.
+Prompts and skills SHALL render no Version section and no Versions history section.
 
 The **Dependencies** section is informational and SHALL NOT change `isSubmitDisabled` or any submit behavior. For a schema-form application it lists the private dependencies of the current form values, worded as dependencies that are saved or published together with the application (the `Published` appearance and the `publish.dependenciesPublished*` keys of the application's Publish panel). For an application with an embedded editor (for example a Quick App) it shows one neutral sentence and no list, because the current values exist only inside the editor: `resourceSavePanel.dependenciesEmbeddedNote`, "The prompts, skills, toolsets and applications this application uses will be saved to the folder together with it." For every other resource, and for a Personal destination, it renders nothing.
 
@@ -68,7 +69,7 @@ The initial destination SHALL be the Personal root with the resource's current f
 
 i18n keys:
 
-- `ResourceSavePanelI18nKeys.Title` (with `{type}`), `SaveToFolderHeading`, `ChangeFolder`, `KeepVersion` (with `{version}`), `SaveAsNewVersion`, `NewVersionLabel`, `NewVersionPlaceholder`, `PersonalRoot`;
+- `ResourceSavePanelI18nKeys.Title` (with `{type}`), `SaveToFolderHeading`, `ChangeFolder`, `KeepVersion` (with `{version}`), `SaveAsNewVersion`, `NewVersionLabel`, `NewVersionPlaceholder`, `PersonalRoot`, plus the keys of the Versions history section;
 - `ResourceSavePanelI18nKeys.DependenciesEmbeddedNote` (`resourceSavePanel.dependenciesEmbeddedNote`) and `ResourceSavePanelI18nKeys.IconNotCopiedNotice` (`resourceSavePanel.iconNotCopiedNotice`);
 - `EditorI18nKeys.VersionLabel` for the Version heading;
 - `ButtonsI18nKeys.Save`, `ButtonsI18nKeys.Cancel`.
@@ -78,7 +79,7 @@ RTL: logical properties only. Accessibility: the note and the notice are plain t
 #### Scenario: Default state for a versioned resource
 
 - **WHEN** the panel opens for Quick App `Design Review Agent` at version `1.0.0` in the Personal root
-- **THEN** the summary shows the name with `1.0.0`, Save to folder reads "Personal", and "Keep version 1.0.0" is selected
+- **THEN** the summary shows the name with `1.0.0`, Save to folder reads "Personal", "Keep version 1.0.0" is selected, a Versions history section is the last section of the body, and no Dependencies section is rendered
 
 #### Scenario: Default state for a prompt in a folder
 
@@ -87,8 +88,8 @@ RTL: logical properties only. Accessibility: the note and the notice are plain t
 
 #### Scenario: No history or dependencies
 
-- **WHEN** the panel is open for any resource with a Personal destination
-- **THEN** no Versions history list and no Dependencies section is rendered
+- **WHEN** the panel is open for a prompt or a skill with a Personal destination
+- **THEN** no Versions history section and no Dependencies section is rendered
 
 #### Scenario: Schema-form application to an Organization folder
 
@@ -108,11 +109,19 @@ RTL: logical properties only. Accessibility: the note and the notice are plain t
 
 ### Requirement: New version input validation
 
-When "Save as new version" is selected, Save SHALL stay disabled until the input holds a version that matches `SEMVER_VERSION_PATTERN` (from `@epam/ai-dial-builder-form`) and differs from the current version. The error text SHALL be wired through the kit `Input` `error` prop (`aria-invalid` and `aria-describedby`). It shows after blur or a submit attempt.
+When "Save as new version" is selected, Save SHALL stay disabled until the input holds a version that matches the shared version rule (`resource-version-pattern`) and differs from the current version. The error text SHALL be wired through the kit `Input` `error` prop (`aria-invalid` and `aria-describedby`). It shows after blur or a submit attempt.
 
 When the backend answers 409 (the version already exists in the target folder), the input SHALL show `ResourceSavePanelI18nKeys.VersionExists`, and the panel SHALL stay open with nothing else persisted.
 
 i18n keys: `ResourceSavePanelI18nKeys.VersionInvalid`, `VersionUnchanged`, `VersionExists`.
+
+#### Scenario: Text version passes the format check
+- **WHEN** the user selects "Save as new version" and types `beta-2`
+- **THEN** no format error is shown and Save is enabled
+
+#### Scenario: Invalid version is rejected
+- **WHEN** the user types a version containing a space, ending with a dot, containing `__`, starting with `_`, or longer than 64 characters
+- **THEN** the input shows "VersionInvalid" after blur and Save is disabled
 
 #### Scenario: Unchanged version is rejected
 - **WHEN** the user selects "Save as new version" and types the current version `1.0.0`

@@ -85,12 +85,12 @@ describe('useOnboardingHints', () => {
     expect(result.current.steps.map((step) => step.id)).toEqual(['catalog']);
   });
 
-  it('counts the hints of the page already seen when a tour starts', () => {
-    onScreen = new Set(['catalog-create']);
+  it('starts each page tour with only the hints not seen yet', () => {
+    onScreen = new Set(['new-chat', 'catalog-create']);
     const { result } = renderHints({ seenIds: ['new-chat', 'other-page'] });
     act(() => vi.advanceTimersByTime(ONBOARDING_START_DELAY_MS));
     expect(result.current.steps.map((step) => step.id)).toEqual(['catalog']);
-    expect(result.current.completedStepCount).toBe(1);
+    expect(result.current).not.toHaveProperty('completedStepCount');
   });
 
   it('marks hints of other pages seen too when the tour is skipped', () => {
@@ -135,7 +135,7 @@ describe('useOnboardingHints', () => {
     expect(onSeenIdsChange).toHaveBeenCalledWith(['new-chat', 'catalog']);
   });
 
-  it('marks only the shown hints seen and opens no new tour when closed', () => {
+  it('marks nothing seen and opens no new tour when closed', () => {
     const onSeenIdsChange = vi.fn();
     const { result, rerender } = renderHints({ onSeenIdsChange });
     act(() => vi.advanceTimersByTime(ONBOARDING_START_DELAY_MS));
@@ -143,12 +143,13 @@ describe('useOnboardingHints', () => {
     act(() =>
       result.current.onFinish(['new-chat'], OnboardingTourEndReason.Closed),
     );
-    expect(onSeenIdsChange).toHaveBeenCalledWith(['new-chat']);
+    expect(onSeenIdsChange).not.toHaveBeenCalled();
+    expect(result.current.steps).toEqual([]);
 
     onScreen.add('catalog-create');
     rerender({
       hints: HINTS,
-      seenIds: ['new-chat'],
+      seenIds: [],
       onSeenIdsChange,
       resolveTarget: (target) => (onScreen.has(target) ? element : null),
       isEnabled: true,
@@ -156,6 +157,23 @@ describe('useOnboardingHints', () => {
     });
     act(() => vi.advanceTimersByTime(ONBOARDING_START_DELAY_MS));
     expect(result.current.steps).toEqual([]);
+  });
+
+  it('opens the tour again on the closed hint after a remount', () => {
+    const onSeenIdsChange = vi.fn();
+    const view = renderHints({ onSeenIdsChange });
+    act(() => vi.advanceTimersByTime(ONBOARDING_START_DELAY_MS));
+    act(() =>
+      view.result.current.onFinish(
+        ['new-chat'],
+        OnboardingTourEndReason.Closed,
+      ),
+    );
+    view.unmount();
+
+    const { result } = renderHints({ onSeenIdsChange });
+    act(() => vi.advanceTimersByTime(ONBOARDING_START_DELAY_MS));
+    expect(result.current.steps.map((step) => step.id)).toEqual(['new-chat']);
   });
 
   it('marks each step seen as soon as the user moves past it', () => {

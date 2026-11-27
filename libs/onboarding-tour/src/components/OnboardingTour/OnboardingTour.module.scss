@@ -2,9 +2,12 @@
   background: var(--ot-backdrop, var(--bg-backdrop, #161b2d4d));
 }
 
-/* A huge spread shadow dims everything around the cut-out. */
+/* A huge spread shadow dims everything around the cut-out. On a dark
+ * surface, such as a dark sidebar, the dimming barely changes the colour, so
+ * a ring marks the lit area too. */
 .cutout {
   box-shadow: 0 0 0 9999px var(--ot-backdrop, var(--bg-backdrop, #161b2d4d));
+  outline: 2px solid var(--ot-spotlight-ring, var(--stroke-accent, #1d4ed8));
 }
 
 /* Same fill as the card, so the arrow reads as part of it. */

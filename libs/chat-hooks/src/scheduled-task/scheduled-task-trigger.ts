@@ -226,23 +226,32 @@ const parseCronFields = (
   const extraKeys = [...presentKeys].filter((key) => !CRON_FIELD_KEYS.has(key));
   const hasDayOfWeek = presentKeys.has('day_of_week');
   const hasDayOfMonth = presentKeys.has('day');
+  const hasHour = presentKeys.has('hour');
+  const hasMinute = presentKeys.has('minute');
+
+  /*
+   * Hourly pattern: `minute` only (with `hour` absent or `'*'`), no day fields.
+   * External schedulers (e.g. Claude Desktop) may omit `hour` entirely rather
+   * than setting it to `'*'` — both mean "every hour at minute N".
+   */
+  const isHourlyPattern =
+    hasMinute &&
+    (!hasHour || fields.hour === '*') &&
+    !hasDayOfWeek &&
+    !hasDayOfMonth &&
+    PLAIN_NUMBER_PATTERN.test(String(fields.minute));
+
+  if (isHourlyPattern) {
+    return { ok: true, isHourly: true, minute: String(Number(fields.minute)) };
+  }
 
   if (
     extraKeys.length > 0 ||
     (hasDayOfWeek && hasDayOfMonth) ||
-    !presentKeys.has('hour') ||
-    !presentKeys.has('minute')
+    !hasHour ||
+    !hasMinute
   ) {
     return { ok: false };
-  }
-
-  if (
-    fields.hour === '*' &&
-    PLAIN_NUMBER_PATTERN.test(String(fields.minute)) &&
-    !hasDayOfWeek &&
-    !hasDayOfMonth
-  ) {
-    return { ok: true, isHourly: true, minute: String(Number(fields.minute)) };
   }
 
   if (

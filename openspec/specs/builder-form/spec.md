@@ -4,7 +4,7 @@
 Specifies `libs/builder-form`'s host-agnostic builder/editor form building blocks: the `BuilderFormContainer` page shell, the `EditorLayout`/`EditorSection` two-column editor layout, the `AddAvatar`/`AvatarPickerModal` avatar controls, and the `DeploymentCreationForm`/`DeploymentLocalesField` shared General-step field set with its validation — public package surface, host-isolation boundary (no i18n/routing/API knowledge), responsive layout behaviour, RTL/accessibility support, and the host/library division of responsibility shared by the scheduled-task, prompt, skill, toolset, Quick App, and Custom App editors.
 ## Requirements
 ### Requirement: Public package surface
-`libs/builder-form/src/index.ts` SHALL export `BuilderFormContainer`, `EditorLayout`, `EditorSection`, `AddAvatar`, `AvatarPickerModal`, `DeploymentCreationForm`, `DeploymentLocalesField`, `EntityEditor`, `MetadataForm`, `useMetadataForm`, `MetadataField`, `validateDeploymentCreationFields` with its patterns (`NAME_PATTERN`, `VERSION_PATTERN`, `SEMVER_VERSION_PATTERN`), `DeploymentCreationFieldErrorCode`, the `BUILDER_FORM_CLASS` public class-name map, `DEFAULT_METADATA_FORM_LABELS`, and every TypeScript type reachable through their props: `BuilderFormContainerProps`, `BuilderFormContainerStyles`, `BuilderFormContainerColors`, `BuilderFormActionsLabels`, `BuilderFormHeaderLabels`, `BuilderFormHeaderStyles`, `BuilderFormHeaderColors`, `BuilderFormHeaderTypography`, `EditorLayoutProps`, `EditorLayoutLabels`, `EditorLayoutStyles`, `EditorLayoutColors`, `EditorSectionProps`, `EditorSectionStyles`, `EditorSectionColors`, `AddAvatarProps`, `AddAvatarColors`, `AddAvatarStyles`, `AvatarPickerModalProps`, `AvatarPickerModalLabels`, `AvatarPickerFileManagerModalProps`, `DeploymentCreationFormProps`, `DeploymentCreationFormValues`, `DeploymentCreationFormLabels`, `DeploymentCreationFormFieldLabels`, `DeploymentCreationFormIconLabels`, `DeploymentCreationFormFieldErrors`, `DeploymentCreationFormLocaleEntry`, `DeploymentCreationFormLocaleOption`, `DeploymentCreationFormLocaleLabels`, `DeploymentCreationFormStyles`, `DeploymentCreationFormErrorCodes`, `DeploymentCreationFormValidationOptions`, `DeploymentLocalesFieldProps`, `EntityEditorProps`, `EntityEditorLabels`, `EntityEditorStyles`, `MetadataFormProps`, `MetadataFormLabels`, `MetadataFormAvatarPicker`, `UseMetadataFormOptions`, `UseMetadataFormResult`. Internal-only helpers (the header and body components inside `BuilderFormContainer`) SHALL NOT be exported from the barrel. The package `libs/builder-form/package.json` SHALL declare `name: "@epam/ai-dial-builder-form"` with `description`, `license: "Apache-2.0"`, an `exports` map with `./package.json`, `./styles.css` (`./dist/index.css`), and `.` (source/types/import/default), peer dependencies on `react`, `@epam/ai-dial-ui-kit`, and `@epam/ai-dial-chat-shared`, and `@tabler/icons-react` as a regular dependency.
+`libs/builder-form/src/index.ts` SHALL export `BuilderFormContainer`, `EditorLayout`, `EditorSection`, `AddAvatar`, `AvatarPickerModal`, `DeploymentCreationForm`, `DeploymentLocalesField`, `EntityEditor`, `MetadataForm`, `useMetadataForm`, `MetadataField`, `validateDeploymentCreationFields` with its patterns (`NAME_PATTERN`, `VERSION_PATTERN`, `STORED_VERSION_PATTERN`), `DeploymentCreationFieldErrorCode`, the `BUILDER_FORM_CLASS` public class-name map, `DEFAULT_METADATA_FORM_LABELS`, and every TypeScript type reachable through their props: `BuilderFormContainerProps`, `BuilderFormContainerStyles`, `BuilderFormContainerColors`, `BuilderFormActionsLabels`, `BuilderFormHeaderLabels`, `BuilderFormHeaderStyles`, `BuilderFormHeaderColors`, `BuilderFormHeaderTypography`, `EditorLayoutProps`, `EditorLayoutLabels`, `EditorLayoutStyles`, `EditorLayoutColors`, `EditorSectionProps`, `EditorSectionStyles`, `EditorSectionColors`, `AddAvatarProps`, `AddAvatarColors`, `AddAvatarStyles`, `AvatarPickerModalProps`, `AvatarPickerModalLabels`, `AvatarPickerFileManagerModalProps`, `DeploymentCreationFormProps`, `DeploymentCreationFormValues`, `DeploymentCreationFormLabels`, `DeploymentCreationFormFieldLabels`, `DeploymentCreationFormIconLabels`, `DeploymentCreationFormFieldErrors`, `DeploymentCreationFormLocaleEntry`, `DeploymentCreationFormLocaleOption`, `DeploymentCreationFormLocaleLabels`, `DeploymentCreationFormStyles`, `DeploymentCreationFormErrorCodes`, `DeploymentCreationFormValidationOptions`, `DeploymentLocalesFieldProps`, `EntityEditorProps`, `EntityEditorLabels`, `EntityEditorStyles`, `MetadataFormProps`, `MetadataFormLabels`, `MetadataFormAvatarPicker`, `UseMetadataFormOptions`, `UseMetadataFormResult`. Internal-only helpers (the header and body components inside `BuilderFormContainer`) SHALL NOT be exported from the barrel. The package `libs/builder-form/package.json` SHALL declare `name: "@epam/ai-dial-builder-form"` with `description`, `license: "Apache-2.0"`, an `exports` map with `./package.json`, `./styles.css` (`./dist/index.css`), and `.` (source/types/import/default), peer dependencies on `react`, `@epam/ai-dial-ui-kit`, and `@epam/ai-dial-chat-shared`, and `@tabler/icons-react` as a regular dependency.
 
 #### Scenario: Consumer imports the library's public surface
 - **WHEN** a consumer writes `import { EditorLayout, EditorSection, EditorLayoutProps, EditorLayoutLabels } from '@epam/ai-dial-builder-form'`
@@ -215,11 +215,12 @@ produces a required error. The function SHALL NOT validate an `intro` field. The
 have no side effects and SHALL NOT depend on i18n, routing, or network state.
 
 `validateVersionPattern` SHALL accept either `true` — checking the non-empty version against the
-exported default `VERSION_PATTERN` (letters, digits, dots, underscores, dashes) — or a `RegExp`,
-checked instead of the default. The library SHALL also export `SEMVER_VERSION_PATTERN` (one or
-more dot-separated numeric segments, e.g. `0.0.1`, `2.0`) as a stricter alternative a host can
-pass when it requires a dot-separated numeric version rather than the default permissive
-character-set check.
+exported default `VERSION_PATTERN` — or a `RegExp`, checked instead of the default. `VERSION_PATTERN`
+SHALL be the shared resource version rule (`resource-version-pattern`: one to 64 letters, digits,
+underscores, dots, plus signs and hyphens, not ending with a dot, not containing `__` and not starting with `_`), taken from
+`@epam/ai-dial-chat-shared` (`RESOURCE_VERSION_PATTERN`) and re-exported under this name.
+`STORED_VERSION_PATTERN` SHALL be `STORED_RESOURCE_VERSION_PATTERN` from the same package, re-exported under this name, and hosts pass it as `validateVersionPattern` in edit mode so a version stored under the earlier rules is not rejected. The library
+SHALL NOT export `SEMVER_VERSION_PATTERN`.
 
 #### Scenario: Valid values produce no errors
 - **WHEN** the function is called with a non-empty, correctly formatted name
@@ -244,12 +245,13 @@ character-set check.
 #### Scenario: Default version pattern check
 - **WHEN** the function is called with `validateVersionPattern: true` and a non-empty version
   containing a character outside `VERSION_PATTERN`
-- **THEN** it returns a version-format error; a version made only of letters, digits, dots,
-  underscores, and dashes (e.g. `abc`) produces no error
+- **THEN** it returns a version-format error; a version following the shared rule (e.g. `abc` or
+  `beta-2`) produces no error, and a version ending with a dot, containing `__`, starting with `_` or longer than 64 characters returns a
+  version-format error
 
 #### Scenario: Stricter version pattern override
-- **WHEN** the function is called with `validateVersionPattern: SEMVER_VERSION_PATTERN` and a
-  non-empty version that is not entirely dot-separated numeric segments (e.g. `abc`)
+- **WHEN** the function is called with `validateVersionPattern` set to a `RegExp` that only accepts
+  dot-separated numeric segments and a non-empty version such as `abc`
 - **THEN** it returns a version-format error; a version such as `0.0.1` or `2.0` produces no error
 
 #### Scenario: Empty version is never flagged
@@ -613,15 +615,15 @@ The default Tags placeholder SHALL be `'Add tags, comma separated'`.
 - **THEN** the Name error appears and focus stays in Version
 
 #### Scenario: Validation options are respected
-- **WHEN** the hook is configured with `validateVersionPattern: SEMVER_VERSION_PATTERN` and the version is `1.0-beta`
+- **WHEN** the hook is configured with `validateVersionPattern: true` and the version is `1.0.`
 - **THEN** `errorCodes.version` is the invalid-version code
 
 ### Requirement: Shared default deployment version
-`@epam/ai-dial-builder-form` SHALL export `DEFAULT_DEPLOYMENT_VERSION`, the string `'1.0.0'`, from `libs/builder-form/src/index.ts`, defined next to `SEMVER_VERSION_PATTERN` in `libs/builder-form/src/utils/validate-deployment-creation-fields.ts`. It is the single frontend source for the Version value a deployment create form opens with, and it SHALL satisfy `SEMVER_VERSION_PATTERN`. The library SHALL NOT apply it on its own: `useMetadataForm`, `MetadataForm` and `validateDeploymentCreationFields` keep using the values the host passes, and a host opts in by seeding its create-mode values with the constant.
+`@epam/ai-dial-builder-form` SHALL export `DEFAULT_DEPLOYMENT_VERSION`, the string `'1.0.0'`, from `libs/builder-form/src/index.ts`, defined next to `VERSION_PATTERN` in `libs/builder-form/src/utils/validate-deployment-creation-fields.ts`. It is the single frontend source for the Version value a deployment create form opens with, and it SHALL satisfy `VERSION_PATTERN`. The library SHALL NOT apply it on its own: `useMetadataForm`, `MetadataForm` and `validateDeploymentCreationFields` keep using the values the host passes, and a host opts in by seeding its create-mode values with the constant.
 
 #### Scenario: Constant is exported and SemVer-valid
-- **WHEN** a consumer writes `import { DEFAULT_DEPLOYMENT_VERSION, SEMVER_VERSION_PATTERN } from '@epam/ai-dial-builder-form'`
-- **THEN** `DEFAULT_DEPLOYMENT_VERSION` equals `'1.0.0'` and `validateDeploymentCreationFields` with `validateVersionPattern: SEMVER_VERSION_PATTERN` returns no version error for it
+- **WHEN** a consumer writes `import { DEFAULT_DEPLOYMENT_VERSION, VERSION_PATTERN } from '@epam/ai-dial-builder-form'`
+- **THEN** `DEFAULT_DEPLOYMENT_VERSION` equals `'1.0.0'` and `validateDeploymentCreationFields` with `validateVersionPattern: true` returns no version error for it
 
 #### Scenario: The library does not inject the default
 - **WHEN** `useMetadataForm` is seeded with `version: ''`

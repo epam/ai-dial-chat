@@ -28,6 +28,8 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
   className,
   styles: groupStyles,
   onAttachmentClick,
+  onAttachmentDownload,
+  isAttachmentDownloadable,
   attachmentDisplayResolvers,
   renderCitation,
 }) => {
@@ -43,6 +45,7 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
     failedAriaLabel,
     attemptLabel,
     attachmentClickLabel,
+    attachmentDownloadLabel,
   } = labels ?? {};
 
   const [isOpen, setIsOpen] = useState(isStreaming);
@@ -102,6 +105,7 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
     failedAriaLabel,
     attemptLabel,
     attachmentClickLabel,
+    attachmentDownloadLabel,
   };
 
   if (stages.length === 1) {
@@ -114,6 +118,8 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
         styles={{ colors: panelColors, typography: groupStyles?.typography }}
         labels={panelLabels}
         onAttachmentClick={onAttachmentClick}
+        onAttachmentDownload={onAttachmentDownload}
+        isAttachmentDownloadable={isAttachmentDownloadable}
         attachmentDisplayResolvers={attachmentDisplayResolvers}
         renderCitation={renderCitation}
       />
@@ -233,6 +239,8 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
             labels={panelLabels}
             className="pt-1"
             onAttachmentClick={onAttachmentClick}
+            onAttachmentDownload={onAttachmentDownload}
+            isAttachmentDownloadable={isAttachmentDownloadable}
             attachmentDisplayResolvers={attachmentDisplayResolvers}
             renderCitation={renderCitation}
           />

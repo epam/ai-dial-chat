@@ -2,26 +2,23 @@ import {
   buildCssVars,
   mergeClasses,
   PanelEmptyState,
+  SortMenuButton,
   useIsMobile,
 } from '@epam/ai-dial-chat-shared';
 import {
   Button,
-  ButtonAppearance,
-  ButtonDropdown,
   ButtonVariant,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
-  DropdownItem,
   ElementSize,
   GhostButton,
-  MenuItemMark,
   Search,
   Spinner,
   LiveRegion,
   LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
-import { IconArrowsSort, IconPlus } from '@tabler/icons-react';
-import { FC, useMemo } from 'react';
+import { IconPlus } from '@tabler/icons-react';
+import { FC, useCallback, useMemo } from 'react';
 import type { ProjectsProps } from '../../models/projects-props';
 import type { ProjectsSortKey } from '../../types/projects-sort-key';
 import { filterProjects, sortProjects } from '../../utils/projects';
@@ -61,7 +58,6 @@ export const Projects: FC<ProjectsProps> = ({
   const cssVars = buildCssVars({
     '--pr-bg': colors?.background,
     '--pr-subtitle-text': colors?.subtitleText,
-    '--pr-sort-text': colors?.sortButtonText,
     '--pr-card-bg': colors?.cardBackground,
     '--pr-card-title-text': colors?.cardTitleText,
     '--pr-updated-at-text': colors?.updatedAtText,
@@ -85,22 +81,13 @@ export const Projects: FC<ProjectsProps> = ({
     [projects, searchQuery, sortKey, locale],
   );
 
-  /* Falls back to the control's own name so the trigger never renders without
-   * an accessible name for an unrecognised sortKey. */
-  const activeSortLabel =
-    labels.sortOptions.find((option) => option.value === sortKey)?.label ??
-    labels.sortLabel;
-
-  const sortItems = useMemo<DropdownItem[]>(
-    () =>
-      labels.sortOptions.map((option) => ({
-        key: option.value,
-        label: option.label,
-        mark: MenuItemMark.Check,
-        checked: option.value === sortKey,
-        onClick: () => onSortKeyChange(option.value as ProjectsSortKey),
-      })),
-    [labels.sortOptions, sortKey, onSortKeyChange],
+  const handleSortChange = useCallback(
+    (value: string) => onSortKeyChange(value as ProjectsSortKey),
+    [onSortKeyChange],
+  );
+  const sortColors = useMemo(
+    () => ({ icon: colors?.sortButtonText }),
+    [colors?.sortButtonText],
   );
 
   const handleSearchChange = (value?: string) => {
@@ -240,30 +227,15 @@ export const Projects: FC<ProjectsProps> = ({
               size={isMobile ? ElementSize.Standard : ElementSize.Large}
             />
           </div>
-          {labels.sortOptions.length > 0 && (
-            <div
-              role="group"
-              aria-label={labels.sortLabel}
-              className="shrink-0"
-            >
-              <ButtonDropdown
-                items={sortItems}
-                label={activeSortLabel}
-                variant={ButtonVariant.Primary}
-                appearance={ButtonAppearance.Ghost}
-                size={isMobile ? ElementSize.Small : ElementSize.Standard}
-                iconBefore={
-                  <IconArrowsSort
-                    size={isMobile ? DIAL_ICON_SIZE.SM : DIAL_ICON_SIZE.MD}
-                    aria-hidden
-                    stroke={DIAL_KIT_ICON_STROKE}
-                  />
-                }
-                /* The design's sort control is narrower than a standard button. */
-                className={mergeClasses('desktop:px-3', styles.sortButton)}
-              />
-            </div>
-          )}
+          <SortMenuButton
+            options={labels.sortOptions}
+            value={sortKey}
+            onChange={handleSortChange}
+            label={labels.sortLabel}
+            size={isMobile ? ElementSize.Small : ElementSize.Standard}
+            iconSize={isMobile ? DIAL_ICON_SIZE.SM : DIAL_ICON_SIZE.MD}
+            colors={sortColors}
+          />
         </div>
 
         <LiveRegion visuallyHidden as={LiveRegionElement.Span}>

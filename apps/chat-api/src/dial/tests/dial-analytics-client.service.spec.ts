@@ -15,14 +15,13 @@ import { ConfigService } from '@nestjs/config';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
 import {
-  initializeCoreRequestTiming,
-  stopCoreRequestTiming,
-  withCoreRequestTiming,
-} from '../../telemetry/core-request-timing';
-import {
   RequestTimingState,
   requestTimingStorage,
 } from '../../telemetry/request-timing-state';
+import {
+  initializeUpstreamRequestTiming,
+  stopUpstreamRequestTiming,
+} from '../../telemetry/upstream-request-timing';
 import { DialAnalyticsClientService } from '../dial-analytics-client.service';
 import {
   handleDialAnalyticsFailure,
@@ -34,6 +33,9 @@ import {
 } from './fake-analytics.server';
 
 type StructuredQuery = AnalyticsComponents['schemas']['StructuredQuery'];
+
+const pause = (ms: number) =>
+  new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 const TOKEN = 'secret-session-token';
 const QUERY: StructuredQuery = { entity: 'dial_usage_log', mode: 'aggregate' };
@@ -95,7 +97,7 @@ describe('DialAnalyticsClientService', () => {
   });
 
   afterEach(async () => {
-    stopCoreRequestTiming();
+    stopUpstreamRequestTiming();
     await analytics.close();
     vi.unstubAllEnvs();
     vi.restoreAllMocks();
@@ -357,8 +359,18 @@ describe('DialAnalyticsClientService', () => {
     );
   });
 
-  it('does not count an ADAS call as DIAL Core time', async () => {
-    initializeCoreRequestTiming();
+  /* Runs one call inside a monitored request, then waits before settling. */
+  const timeCall = async (call: () => Promise<unknown>, waitAfterMs = 0) => {
+    initializeUpstreamRequestTiming();
+    const timing = new RequestTimingState();
+    await requestTimingStorage.run(timing, async () => {
+      await call().catch(() => undefined);
+      await pause(waitAfterMs);
+    });
+    return timing.settle();
+  };
+
+  it('counts an ADAS call as Analytics time and not as DIAL Core time', async () => {
     analytics.setHandler(
       () =>
         new Promise((resolve) => {
@@ -366,18 +378,50 @@ describe('DialAnalyticsClientService', () => {
         }),
     );
     const service = buildService(analytics.url);
-    const analyticsTiming = new RequestTimingState();
-    const coreTiming = new RequestTimingState();
 
-    await requestTimingStorage.run(analyticsTiming, () =>
-      executeQuery(service),
-    );
-    /* The same wire call made through the Core marker is counted, so the probe works. */
-    await requestTimingStorage.run(coreTiming, () =>
-      withCoreRequestTiming(() => executeQuery(service).catch(() => undefined)),
-    );
+    const phases = await timeCall(() => executeQuery(service));
 
-    expect(analyticsTiming.settle().core).toBe(0);
-    expect(coreTiming.settle().core).toBeGreaterThan(0);
+    expect(phases.core).toBe(0);
+    expect(phases.analytics).toBeGreaterThanOrEqual(0.04);
+    expect(phases.chat).toBeCloseTo(phases.total - phases.analytics, 10);
+  });
+
+  it('ends the Analytics interval when a failed call cancels its unfinished error body', async () => {
+    spyOnLogs();
+    analytics.setHandler(() => ({ status: 500, stallBody: true }));
+    const service = buildService(analytics.url, 5000);
+
+    const phases = await timeCall(() => executeQuery(service), 150);
+
+    expect(phases.total).toBeGreaterThanOrEqual(0.15);
+    expect(phases.analytics).toBeGreaterThan(0);
+    expect(phases.analytics).toBeLessThan(0.1);
+  });
+
+  it('ends the Analytics interval when ANALYTICS_TIMEOUT_MS aborts the call', async () => {
+    spyOnLogs();
+    analytics.setHandler(() => ({ hang: true }));
+    const service = buildService(analytics.url, 100);
+
+    const phases = await timeCall(() => executeQuery(service), 150);
+
+    expect(phases.analytics).toBeGreaterThanOrEqual(0.09);
+    expect(phases.analytics).toBeLessThan(0.2);
+    expect(phases.total).toBeGreaterThanOrEqual(0.24);
+  });
+
+  it('ends the Analytics interval of an unfollowed redirect', async () => {
+    spyOnLogs();
+    analytics.setHandler(() => ({
+      status: 302,
+      headers: { Location: `${analytics.url}/elsewhere` },
+    }));
+    const service = buildService(analytics.url);
+
+    const phases = await timeCall(() => executeQuery(service), 150);
+
+    expect(analytics.requests).toHaveLength(1);
+    expect(phases.analytics).toBeGreaterThan(0);
+    expect(phases.analytics).toBeLessThan(0.1);
   });
 });

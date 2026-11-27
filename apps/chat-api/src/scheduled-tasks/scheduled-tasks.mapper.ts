@@ -1,6 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
 import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
-import { StringUtils } from '../common/utils/string-utils';
 import type { CreateScheduledTaskBodyDto } from './dto/create-scheduled-task.dto';
 import type {
   ScheduleCronDto,
@@ -42,7 +41,6 @@ interface UpstreamSchedulePayload {
   description?: string;
   properties: {
     target_type: 'chat_completion';
-    url: string;
     api_version: string;
     create_conversation: true;
     extra_headers: Record<string, never>;
@@ -155,17 +153,8 @@ const toUpstreamTrigger = (
   };
 };
 
-/*
- * DIAL Core's base URL may or may not carry a trailing slash depending on
- * how DIAL_CORE_URL is configured — normalize it here so the upstream Scheduler
- * call never ends up with a double slash before /openai.
- */
-export const buildScheduledTaskChatCompletionUrl = (baseUrl: string): string =>
-  `${StringUtils.stripTrailingSlashes(baseUrl)}/openai`;
-
 export const toUpstreamSchedulePayload = (
   body: CreateScheduledTaskBodyDto,
-  dialCoreUrl: string,
   dialApiVersion: string,
   serviceId: string,
 ): UpstreamSchedulePayload => ({
@@ -176,7 +165,6 @@ export const toUpstreamSchedulePayload = (
   ...(body.description ? { description: body.description } : {}),
   properties: {
     target_type: 'chat_completion',
-    url: buildScheduledTaskChatCompletionUrl(dialCoreUrl),
     api_version: dialApiVersion,
     create_conversation: true,
     extra_headers: {},

@@ -3,7 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { buildChatUserAgent } from '../common/utils/user-agent';
 import { EnvironmentVariables } from '../config/environment.config';
-import { withCoreRequestTiming } from '../telemetry/core-request-timing';
+import { withCoreRequestTiming } from '../telemetry/upstream-request-timing';
 import { streamingFetch } from './streaming-fetch';
 
 @Injectable()

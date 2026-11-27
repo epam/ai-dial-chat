@@ -1,6 +1,7 @@
 import {
   isDialFileId,
   isDialFolderId,
+  isDownloadableAttachment,
   parseDialProjectFileId,
   resolveDialFileBucketAndPath,
   type DialProjectFileIdParts,
@@ -89,6 +90,16 @@ export const isAttachmentDownloadable = (
   if (projectFile != null) return toProjectFileRoute(projectFile) != null;
   return !isDialFolderId(url);
 };
+
+/**
+ * Whether a stage attachment tile may offer a download: it must carry its own
+ * content (a DIAL file or inline data) and pass {@link isAttachmentDownloadable}.
+ * A reference-only search result is a link, not a file.
+ */
+export const isStageAttachmentDownloadable = (
+  attachment: DisplayAttachment,
+): boolean =>
+  isDownloadableAttachment(attachment) && isAttachmentDownloadable(attachment);
 
 const PROJECT_CONTEXT_FOLDER = 'context';
 const PROJECT_ARTIFACTS_FOLDER = 'artifacts';

@@ -45,6 +45,13 @@ import { spotlightRadius } from '../../utils/spotlight';
 import { HintCard } from '../HintCard/HintCard';
 import styles from './OnboardingTour.module.scss';
 
+/** The events floating UI and other dismiss logic treat as an outside press; never `click`, which the card's buttons need. */
+const OUTSIDE_PRESS_EVENTS = [
+  'pointerdown',
+  'mousedown',
+  'touchstart',
+] as const;
+
 const defaultStepCounter = (current: number, total: number) =>
   `Step ${current} of ${total}`;
 
@@ -167,6 +174,30 @@ export const OnboardingTour: FC<OnboardingTourProps> = ({
     target?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
   }, [target]);
 
+  /* The card is portaled outside any open drawer or popover, so a press on it
+   * would count as an outside press and close what the hint points at. */
+  useEffect(() => {
+    if (!step) {
+      return undefined;
+    }
+    const stopOutsidePress = (event: Event) => {
+      if (
+        event.target instanceof Node &&
+        cardRef.current?.contains(event.target)
+      ) {
+        event.stopPropagation();
+      }
+    };
+    for (const type of OUTSIDE_PRESS_EVENTS) {
+      window.addEventListener(type, stopOutsidePress, true);
+    }
+    return () => {
+      for (const type of OUTSIDE_PRESS_EVENTS) {
+        window.removeEventListener(type, stopOutsidePress, true);
+      }
+    };
+  }, [step]);
+
   /* Each step moves focus to its card so the new title is announced. */
   useEffect(() => {
     if (step) {
@@ -205,6 +236,7 @@ export const OnboardingTour: FC<OnboardingTourProps> = ({
     ...cardColorVars(colors),
     '--ot-backdrop': colors?.backdrop,
     '--ot-counter-text': colors?.counterText,
+    '--ot-spotlight-ring': colors?.spotlightRing,
   });
 
   return (

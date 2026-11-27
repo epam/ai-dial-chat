@@ -1,12 +1,15 @@
 import { AttachmentContentType } from '@epam/ai-dial-attachment-canvas';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
+  AttachmentType,
   MessageRole,
+  RequestStatus,
   StageStatus,
   type Annotation,
   type AnnotationSelector,
   type ApplicationVisualizer,
   type ApplicationVisualizerRegistry,
+  type DisplayAttachment,
   type Message,
 } from '@epam/ai-dial-chat-shared';
 import {
@@ -16,7 +19,7 @@ import {
 import type { AnnotationGroup } from '@epam/ai-dial-quotations';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { ComponentProps, ReactNode } from 'react';
+import { Fragment, type ComponentProps, type ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   AttachmentsI18nKeys,
@@ -130,6 +133,8 @@ vi.mock('@epam/ai-dial-conversation-stages', () => ({
     stages,
     labels,
     onAttachmentClick,
+    onAttachmentDownload,
+    isAttachmentDownloadable,
     renderCitation,
   }: {
     labels?: Record<string, unknown>;
@@ -143,14 +148,13 @@ vi.mock('@epam/ai-dial-conversation-stages', () => ({
       attachments?: {
         title: string;
         data?: string;
+        url?: string;
         reference_url?: string;
       }[];
     }[];
-    onAttachmentClick?: (attachment: {
-      name: string;
-      data?: string;
-      referenceUrl?: string;
-    }) => void;
+    onAttachmentClick?: (attachment: DisplayAttachment) => void;
+    onAttachmentDownload?: (attachment: DisplayAttachment) => void;
+    isAttachmentDownloadable?: (attachment: DisplayAttachment) => boolean;
   }) => {
     capturedStageGroupProps = { stages, labels };
     return (
@@ -181,21 +185,37 @@ vi.mock('@epam/ai-dial-conversation-stages', () => ({
         )}
         {stages
           .flatMap((stage) => stage.attachments ?? [])
-          .map((attachment) => (
-            <button
-              key={attachment.title}
-              type="button"
-              onClick={() =>
-                onAttachmentClick?.({
-                  name: attachment.title,
-                  data: attachment.data,
-                  referenceUrl: attachment.reference_url,
-                })
-              }
-            >
-              {attachment.title}
-            </button>
-          ))}
+          .map((dto) => {
+            const attachment: DisplayAttachment = {
+              id: dto.title,
+              type: AttachmentType.File,
+              status: RequestStatus.Idle,
+              contentType: '',
+              name: dto.title,
+              data: dto.data,
+              url: dto.url,
+              referenceUrl: dto.reference_url,
+            };
+            return (
+              <Fragment key={dto.title}>
+                <button
+                  type="button"
+                  onClick={() => onAttachmentClick?.(attachment)}
+                >
+                  {dto.title}
+                </button>
+                {onAttachmentDownload &&
+                  isAttachmentDownloadable?.(attachment) !== false && (
+                    <button
+                      type="button"
+                      onClick={() => onAttachmentDownload(attachment)}
+                    >
+                      {`Download ${dto.title}`}
+                    </button>
+                  )}
+              </Fragment>
+            );
+          })}
       </>
     );
   },
@@ -1727,14 +1747,19 @@ describe('ConversationMessageItem', () => {
   });
 
   describe('ConversationMessageItem — stage attachment click handling', () => {
-    const renderWithStageAttachment = (attachment: {
-      title: string;
-      data?: string;
-      reference_url?: string;
-    }) =>
+    const renderWithStageAttachment = (
+      attachment: {
+        title: string;
+        data?: string;
+        url?: string;
+        reference_url?: string;
+      },
+      props?: Partial<ComponentProps<typeof ConversationMessageItem>>,
+    ) =>
       render(
         <ConversationMessageItem
           {...defaultProps}
+          {...props}
           msg={{
             role: MessageRole.Assistant,
             content: 'Here are the results',
@@ -1786,6 +1811,57 @@ describe('ConversationMessageItem', () => {
         'noopener,noreferrer',
       );
       openSpy.mockRestore();
+    });
+
+    it('opens a stage file attachment in the canvas through the host attachment handler instead of a new tab', async () => {
+      const user = userEvent.setup();
+      const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+      const onAttachmentClick = vi.fn();
+      renderWithStageAttachment(
+        { title: 'report.pdf', url: 'files/bucket-1/generated/report.pdf' },
+        { onAttachmentClick },
+      );
+
+      await user.click(screen.getByRole('button', { name: 'report.pdf' }));
+
+      expect(onAttachmentClick).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'report.pdf',
+          url: 'files/bucket-1/generated/report.pdf',
+        }),
+        1,
+      );
+      expect(openSpy).not.toHaveBeenCalled();
+      openSpy.mockRestore();
+    });
+
+    it('offers a download for a stage file attachment', async () => {
+      const user = userEvent.setup();
+      const clickSpy = vi
+        .spyOn(HTMLAnchorElement.prototype, 'click')
+        .mockImplementation(() => undefined);
+      renderWithStageAttachment({
+        title: 'report.pdf',
+        url: 'files/bucket-1/generated/report.pdf',
+      });
+
+      await user.click(
+        screen.getByRole('button', { name: 'Download report.pdf' }),
+      );
+
+      expect(clickSpy).toHaveBeenCalledOnce();
+      clickSpy.mockRestore();
+    });
+
+    it('offers no download for a reference-only stage attachment', () => {
+      renderWithStageAttachment({
+        title: 'Search result',
+        reference_url: 'https://example.com/article',
+      });
+
+      expect(
+        screen.queryByRole('button', { name: 'Download Search result' }),
+      ).toBeNull();
     });
   });
 

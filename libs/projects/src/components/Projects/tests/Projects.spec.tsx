@@ -145,13 +145,13 @@ describe('Projects', () => {
     render(<Harness />);
 
     expect(cardNames()).toEqual(['Handbook', 'Q4 Launch', 'Launch retro']);
-    expect(screen.getByRole('button', { name: 'Newest' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Newest' })).toBeNull();
   });
 
   it('reorders the list when Oldest is chosen from the sort menu', async () => {
     render(<Harness />);
 
-    await userEvent.click(screen.getByRole('button', { name: 'Newest' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Sort' }));
     await userEvent.click(
       screen.getByRole('menuitemradio', { name: 'Oldest' }),
     );
@@ -162,7 +162,7 @@ describe('Projects', () => {
   it('reorders the list when Name A–Z is chosen from the sort menu', async () => {
     render(<Harness />);
 
-    await userEvent.click(screen.getByRole('button', { name: 'Newest' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Sort' }));
     await userEvent.click(
       screen.getByRole('menuitemradio', { name: 'Name A–Z' }),
     );
@@ -170,11 +170,19 @@ describe('Projects', () => {
     expect(cardNames()).toEqual(['Handbook', 'Launch retro', 'Q4 Launch']);
   });
 
-  it('places the sort control in a group named after the sort label', () => {
+  it('renders the sort control as an icon button named after the sort label', async () => {
     render(<Harness />);
 
-    const group = screen.getByRole('group', { name: 'Sort' });
-    expect(within(group).getByRole('button', { name: 'Newest' })).toBeTruthy();
+    const trigger = screen.getByRole('button', { name: 'Sort' });
+    expect(trigger.textContent).toBe('');
+    expect(screen.queryByRole('group', { name: 'Sort' })).toBeNull();
+
+    await userEvent.click(trigger);
+    expect(
+      screen
+        .getByRole('menuitemradio', { name: 'Newest' })
+        .getAttribute('aria-checked'),
+    ).toBe('true');
   });
 
   it('filters by name and highlights the match', async () => {

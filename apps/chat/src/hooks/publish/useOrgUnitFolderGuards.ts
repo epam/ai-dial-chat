@@ -8,7 +8,7 @@ import {
 } from '@epam/ai-dial-chat-hooks';
 import type { OrgUnitNamespace } from '@epam/ai-dial-chat-shared';
 import type { FolderDestination } from '@epam/ai-dial-publish-panel';
-import { useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { OrgUnitAccessI18nKeys } from '../../constants/translation-keys';
 import { useFeatureFlag } from '../../context/AppConfigContext';
@@ -28,9 +28,13 @@ interface Options {
   shouldRefreshOnOpen?: boolean;
 }
 
+/* Organization folders, org units included, are created in DIAL Admin, never from a chat folder tree. */
+const canCreateFolderIn = ({ rootKey }: FolderDestination): boolean =>
+  rootKey === SaveDestinationRoot.Personal;
+
 /** The guards of {@link useOrgUnitFolderGuards}. */
 export interface OrgUnitFolderGuards extends FolderGuards {
-  /** Whether a folder tree may create a new folder inside a destination: inside an org unit for the Organization root (`rootKey` `''` in a publish tree), so the new folder is not hidden by the org-unit visibility rule; always for the Personal root and while the units are not `Ready`. Pass it to the tree as `canCreateFolderIn`. */
+  /** Whether a folder tree may create a new folder inside a destination: only under the Personal root. Organization folders (`rootKey` `''` in a publish tree, `SaveDestinationRoot.Organization` in the Save tree), org units and the folders inside them included, are managed in DIAL Admin, so the tree offers no "Create new folder", "Add child" or "Add sibling" there. Pass it to the tree as `canCreateFolderIn`. */
   canCreateFolderIn: (destination: FolderDestination) => boolean;
 }
 
@@ -68,13 +72,8 @@ export const useOrgUnitFolderGuards = ({
     getReason,
   });
 
-  const { canCreatePublicFolderIn, isPublicFolderVisible, status } = orgUnits;
-  const canCreateFolderIn = useCallback(
-    ({ rootKey, path }: FolderDestination): boolean =>
-      rootKey === SaveDestinationRoot.Personal ||
-      canCreatePublicFolderIn(path.join('/')),
-    [canCreatePublicFolderIn],
-  );
+  const { isPublicFolderVisible, status } = orgUnits;
+  const isOrgUnitsReady = status === OrgUnitsStatus.Ready;
 
   /*
    * A folder picked before the units loaded can be hidden afterwards while it
@@ -82,7 +81,7 @@ export const useOrgUnitFolderGuards = ({
    * usable and carries its own reason, so neither Publish nor Save writes into
    * a folder the user can no longer see.
    */
-  const isHidingActive = isEnabled && status === OrgUnitsStatus.Ready;
+  const isHidingActive = isEnabled && isOrgUnitsReady;
   const hiddenFolderReason = t(OrgUnitAccessI18nKeys.FolderOutsideOrgUnits);
   const visibilityGuards = useMemo((): Pick<
     FolderGuards,
@@ -116,6 +115,6 @@ export const useOrgUnitFolderGuards = ({
 
   return useMemo(
     () => ({ ...guards, ...visibilityGuards, canCreateFolderIn }),
-    [guards, visibilityGuards, canCreateFolderIn],
+    [guards, visibilityGuards],
   );
 };

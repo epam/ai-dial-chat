@@ -309,6 +309,26 @@ describe('scheduled-task-trigger', () => {
       });
     });
 
+    it('reads an hourly task with hour: null (external scheduler pattern)', () => {
+      expect(
+        mapValues(
+          cronDto({
+            hour: null,
+            minute: '5',
+            day: null,
+            week: null,
+            year: null,
+            month: null,
+            second: null,
+            day_of_week: null,
+          }),
+        ),
+      ).toMatchObject({
+        repeat: ScheduledTaskRepeat.Hourly,
+        minute: '5',
+      });
+    });
+
     it('reads a weekly task and keeps its weekday', () => {
       expect(
         mapValues(

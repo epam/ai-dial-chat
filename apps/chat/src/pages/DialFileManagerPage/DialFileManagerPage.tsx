@@ -232,7 +232,6 @@ const DialFileManagerPage: FC = () => {
       uploadArchiveAction: t(DialFileManagerI18nKeys.UploadArchiveAction),
       newFolderLabel: t(DialFileManagerI18nKeys.NewFolder),
       downloadLabel: t(ButtonsI18nKeys.Download),
-      downloadingLabel: t(DialFileManagerI18nKeys.Downloading),
       deleteLabel: t(ButtonsI18nKeys.Delete),
       deletingLabel: t(BasicI18nKeys.DeletingStatus),
       renameLabel: t(ButtonsI18nKeys.Rename),
@@ -292,6 +291,18 @@ const DialFileManagerPage: FC = () => {
       ),
       metadataSizeLabel: t(DialFileManagerI18nKeys.MetadataSizeLabel),
       metadataAuthorLabel: t(DialFileManagerI18nKeys.MetadataAuthorLabel),
+      sort: {
+        label: t(ButtonsI18nKeys.Sort),
+        fieldLabels: {
+          name: t(DialFileManagerI18nKeys.SortName),
+          updatedAt: t(DialFileManagerI18nKeys.SortModifiedDate),
+          size: t(DialFileManagerI18nKeys.SortSize),
+        },
+        directionLabels: {
+          asc: t(DialFileManagerI18nKeys.SortAscending),
+          desc: t(DialFileManagerI18nKeys.SortDescending),
+        },
+      },
     }),
     [
       t,

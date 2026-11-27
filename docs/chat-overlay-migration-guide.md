@@ -146,10 +146,9 @@ completes the new chat's standard login flow instead — externally by default,
 or inside the iframe for a provider mapped to same-window login.
 
 `signInOptions.autoSignIn`, `signInOptions.signInProvider`, and
-`signInOptions.signInInNewWindow` are still accepted as a deprecated shape and
-translated into `auth.autoSignInProvider` plus a `providerUiModes` entry; their
-successor is described in
-[Start login automatically](#start-login-automatically).
+`signInOptions.signInInNewWindow` are no longer accepted either; their
+successor, `auth.autoSignInProvider` plus a `providerUiModes` entry, is
+described in [Start login automatically](#start-login-automatically).
 
 `signInOptions.explicitToken` has no replacement because the new chat
 authenticates through a BFF that keeps the OIDC session in an encrypted
@@ -277,25 +276,25 @@ overlay.destroy();
 
 ### Changes to `ChatOverlayOptions`
 
-| Legacy option              | New option or required action                                                                                              |
-| -------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `domain`                   | Preserved. The library now derives the target origin from this URL.                                                        |
-| `hostDomain`               | Removed. The library automatically sends `window.location.origin`.                                                         |
-| `theme`                    | Preserved.                                                                                                                 |
-| `modelId`                  | Preserved.                                                                                                                 |
-| `overlayConversationId`    | Preserved.                                                                                                                 |
-| `auth.providerUiModes`     | New optional per-provider login mode map; defaults to `External`.                                                          |
-| `requestTimeout`           | Preserved; defaults to `10000` ms.                                                                                         |
-| `loaderStyles`             | Preserved as `Record<string, string>`.                                                                                     |
-| `loaderClass`              | Preserved.                                                                                                                 |
-| `loaderInnerHTML`          | Preserved. Pass trusted HTML only.                                                                                         |
-| `loaderHideEvent`          | Preserved, but now use `OverlayEventType`.                                                                                 |
-| `enabledFeatures`          | Accepts only `OverlayFeature[]`.                                                                                           |
-| `newConversationsFolderId` | Removed because the new chat does not have conversation folders.                                                           |
-| `enabledFeaturesData`      | Not supported.                                                                                                             |
-| `messageButtons`           | Not supported.                                                                                                             |
-| `signInOptions`            | Deprecated but accepted: `autoSignIn`/`signInProvider`/`signInInNewWindow` are translated into `auth`; other keys ignored. |
-| `signInInSameWindow`       | Removed. Map the provider to `OverlayAuthUiMode.SameWindow` in `auth.providerUiModes`.                                     |
+| Legacy option              | New option or required action                                                                            |
+| -------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `domain`                   | Preserved. The library now derives the target origin from this URL.                                      |
+| `hostDomain`               | Removed. The library automatically sends `window.location.origin`.                                       |
+| `theme`                    | Preserved.                                                                                               |
+| `modelId`                  | Preserved.                                                                                               |
+| `overlayConversationId`    | Preserved.                                                                                               |
+| `auth.providerUiModes`     | New optional per-provider login mode map; defaults to `External`.                                        |
+| `requestTimeout`           | Preserved; defaults to `10000` ms.                                                                       |
+| `loaderStyles`             | Preserved as `Record<string, string>`.                                                                   |
+| `loaderClass`              | Preserved.                                                                                               |
+| `loaderInnerHTML`          | Preserved. Pass trusted HTML only.                                                                       |
+| `loaderHideEvent`          | Preserved, but now use `OverlayEventType`.                                                               |
+| `enabledFeatures`          | Accepts only `OverlayFeature[]`.                                                                         |
+| `newConversationsFolderId` | Removed because the new chat does not have conversation folders.                                         |
+| `enabledFeaturesData`      | Not supported.                                                                                           |
+| `messageButtons`           | Not supported.                                                                                           |
+| `signInOptions`            | Removed. Move `autoSignIn`/`signInProvider` to `auth.autoSignInProvider` plus a `providerUiModes` entry. |
+| `signInInSameWindow`       | Removed. Map the provider to `OverlayAuthUiMode.SameWindow` in `auth.providerUiModes`.                   |
 
 `setOverlayOptions()` now accepts only fields that can be changed dynamically:
 `theme`, `modelId`, `overlayConversationId`, `enabledFeatures`, and `auth`. Do
@@ -1027,16 +1026,10 @@ gate — logging one console warning — whenever one does not:
 
 #### Migrating a legacy `signInOptions` block
 
-The legacy block keeps working unchanged: `ChatOverlay` still accepts
-`signInOptions: { autoSignIn: true, signInProvider }` as a deprecated option
-and translates it into `auth.autoSignInProvider` plus a `providerUiModes`
-entry — `SameWindow`, or `External` when `signInInNewWindow: true` is set. A
-mode already present in `auth.providerUiModes` for that provider is kept, and
-an explicit `auth.autoSignInProvider` wins over the legacy pair. The three
-conditions above still apply.
-
-To move off the deprecated shape, a host that passed the provider in from its
-own configuration — the common legacy shape — moves both fields into `auth`:
+`ChatOverlay` no longer accepts `signInOptions`: TypeScript rejects the block,
+and a JavaScript host's block is silently ignored. A host that passed the
+provider in from its own configuration — the common legacy shape — moves both
+fields into `auth`:
 
 ```diff
 - signInOptions: {
@@ -1068,7 +1061,7 @@ Two things to check while migrating:
   whitespace-only id disables the automatic start and leaves the login gate,
   which is how the legacy pair behaved when `signInProvider` was unset.
 
-Like the legacy option, this is worth enabling when the user already holds a
+As with the legacy option, this is worth enabling when the user already holds a
 session with the provider: the value is the silent round-trip through the IdP,
 not rendering a login form inside the frame. It does not make a provider
 frameable — a provider that refuses framing (Azure sends

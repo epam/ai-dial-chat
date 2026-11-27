@@ -56,7 +56,7 @@ Maintain the version-controlled JSON directly.
 | [05 — Auth and sessions](examples/dashboards/05-bff-auth-sessions.json)                   | Login, callback, refresh, authorization, and logout.                                |
 | [06 — Endpoint usage](examples/dashboards/06-bff-endpoint-traffic.json)                   | Calls per method and endpoint over a selected period.                               |
 | [07 — RED overview](examples/dashboards/07-bff-red-overview.json)                         | Completed-response rate, error share, and latency, with route rankings.             |
-| [08 — Request latency](examples/dashboards/08-bff-request-latency.json)                   | Whole-period slow endpoints, Core/outside-Core timing, and individual slow traces.  |
+| [08 — Request latency](examples/dashboards/08-bff-request-latency.json)                   | Whole-period slow endpoints, Core/Analytics/outside timing, and slow traces.        |
 
 Select one workload and ingestion path. The queries expect Prometheus exporter names and
 `otel_scope_name="dial-chat-api"`; adapt selectors if a collector renames them. Kubernetes labels
@@ -111,7 +111,7 @@ unique users or successful feature adoption; a missing series does not prove zer
 
 Open **08 — Request latency**. The default is rolling **last 24 hours**, refreshing every five
 minutes; select an absolute range for a calendar day. The endpoint tables show count, mean,
-p95/p99, Core/outside-Core means, Core share, and counts/shares above duration thresholds.
+p95/p99, Core/Analytics/outside means, Core share, and counts/shares above duration thresholds.
 Rankings by mean duration identify slow endpoints; rankings by accumulated duration identify
 where requests spend the most time overall. Method and route template identify each endpoint.
 All period statistics use the selected interval, including historical ranges.
@@ -125,15 +125,18 @@ histogram estimates and are omitted when they fall beyond the last finite bucket
 means and slow-tail counts still cover those observations.
 
 **Core** is wall time with at least one outgoing Core request active, including connection,
-network, upload and response-body transfer. Parallel calls overlap only once. **Outside Core**
-is the remaining wall time: Chat work, other dependencies such as the identity provider,
-scheduling and delivery waits. It is not CPU time. Work done locally while Core is active is
-part of the Core-active interval; this split does not prove which component caused a delay.
-Requests awaiting another request's coalesced work have no separate Core call for that wait.
-Measuring processing inside Core itself requires Core-side traces.
+network, upload and response-body transfer. Parallel calls overlap only once. **Analytics** is
+the same measure for DIAL Analytics (ADAS) requests, such as the usage history queries. Time
+when Core and Analytics are both active counts in both, so the two plus the outside component
+can exceed the total. **Outside Core and Analytics** is the remaining wall time: Chat work,
+other dependencies such as the identity provider, scheduling and delivery waits. It is not CPU
+time. Work done locally while an upstream is active is part of that upstream's interval; this
+split does not prove which component caused a delay. Requests awaiting another request's
+coalesced work have no separate upstream call for that wait. Measuring processing inside Core
+or ADAS itself requires their own server-side traces.
 
 Expand the optional **individual slow requests** section and select a Tempo source, service and
-minimum duration. Its table shows individual timing spans and their three durations; the span
+minimum duration. Its table shows individual timing spans and their four durations; the span
 link opens the corresponding trace. Trace filters are separate from the Prometheus workload,
 route and outcome filters. Results are sorted by duration **among returned matches**: sampling,
 retention and search limits mean they are not guaranteed to be the globally slowest calls of
@@ -222,23 +225,30 @@ See [transport instruments](../apps/chat-api/src/telemetry/http-lifecycle-metric
 
 ### Request timing attribution
 
-| Prometheus family                                          | Measurement / labels                                                                                                                                                                |
-| ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `dial_chat_http_request_phase_duration_{bucket,sum,count}` | Seconds per terminal request; `dial_chat_http_phase` = `total`, `core`, or `chat`, plus the transport duration's method, route, outcome, transport-kind and optional status labels. |
+| Prometheus family                                          | Measurement / labels                                                                                                                                                                             |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `dial_chat_http_request_phase_duration_{bucket,sum,count}` | Seconds per terminal request; `dial_chat_http_phase` = `total`, `core`, `analytics`, or `chat`, plus the transport duration's method, route, outcome, transport-kind and optional status labels. |
 
 The [timing middleware](../apps/chat-api/src/telemetry/request-timing.ts) starts before cookies,
 body parsing and guards and ends at the first finish, close, abort or error. It excludes the
 same exact probe URLs as other telemetry. It does not include work before that middleware,
-and its population/boundary differs from the raw HTTP listener. All three phases are recorded
-together, including zero Core time for requests without Core calls; `total = core + chat`.
+and its population/boundary differs from the raw HTTP listener. All four phases are recorded
+together, including zero Core and Analytics time for requests without such calls.
+`chat = total − (Core ∪ Analytics)`: time when Core and DIAL Analytics calls overlap counts in
+both `core` and `analytics` but leaves `chat` once, so `core + analytics + chat` equals `total`
+only when they never overlap. Before this phase existed, DIAL Analytics wait time was part of
+`chat`; compare `chat` across that release with care.
 
-The [Core observer](../apps/chat-api/src/telemetry/core-request-timing.ts) tags the shared
+The [upstream observer](../apps/chat-api/src/telemetry/upstream-request-timing.ts) tags the shared
 `DialClientService.fetchCore` transport, including SDK calls and direct Core escape hatches, and
-the `DialClientService.uploadCore` transport used for streamed file uploads.
-Undici request creation starts an interval; body completion or error ends it. This includes
-client queueing/connection establishment and transfer, not just the wait for headers.
-Failures before request creation accrue no Core interval. Other upstream fetches are excluded.
-The request-local union is clipped at the incoming request's terminal event. Background
+the `DialClientService.uploadCore` transport used for streamed file uploads, as Core. It tags the
+`DialAnalyticsClientService` transport, which every DIAL Analytics (ADAS) SDK call uses, as
+Analytics. Undici request creation starts an interval; body completion or error ends it,
+including an ADAS error body that the transport cancels unread. This includes client
+queueing/connection establishment and transfer, not just the wait for headers. Failures before
+request creation accrue no interval. Other native fetches (themes, OIDC/identity provider and
+other dependencies) are not tagged and count as `chat`.
+Each request-local union is clipped at the incoming request's terminal event. Background
 generation/persistence after disconnect cannot extend the closed request's timing.
 
 Finite bucket boundaries in seconds are `0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5,
@@ -247,7 +257,7 @@ Finite bucket boundaries in seconds are `0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0
 a metric label. Metrics-only collection works without trace export.
 
 When traces are exported, an internal `request.timing METHOD route` span carries
-`dial.chat.http.request.timing=true` and `dial.chat.http.duration.total`, `.core`, and `.chat`
+`dial.chat.http.request.timing=true` and `dial.chat.http.duration.total`, `.core`, `.analytics`, and `.chat`
 attributes in seconds, together with the bounded request attributes. It ends at the same
 terminal boundary and parents the handler's downstream spans. Timing collection is inactive
 when telemetry is disabled, or when both metric and trace exporters are disabled.

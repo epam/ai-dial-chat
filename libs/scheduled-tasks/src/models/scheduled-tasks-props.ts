@@ -60,7 +60,7 @@ export interface ScheduledTasksColors {
   background?: string;
   /** Subtitle and status-message (empty/no-results/error) text color. Fallback: `--text-secondary`. */
   subtitleText?: string;
-  /** Sort control label/icon color. Fallback: `--text-accent`. */
+  /** Sort button glyph color. Fallback: `--text-secondary`. */
   sortButtonText?: string;
   /** Background color of the load-more placeholder skeleton bars. Fallback: `--bg-control-disable-primary`. */
   skeletonColor?: string;
@@ -116,6 +116,7 @@ export interface ScheduledTasksProps {
   onCardClick?: (id: string) => void;
   /** Content rendered between the search/sort toolbar and the content region (e.g. a status banner). Renders nothing when omitted. */
   banner?: ReactNode;
+  /** Glyph drawn in the icon-only sort button. `undefined` or `null` draws the default `IconArrowsSort`. */
   sortIcon?: ReactNode | null;
   className?: string;
   gridLayout?: ScheduledTaskCardGridLayout;

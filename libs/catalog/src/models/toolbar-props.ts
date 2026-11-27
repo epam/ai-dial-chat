@@ -20,8 +20,6 @@ export interface ToolbarColors {
   titleText?: string;
   /** Total count text color. Fallback: `--text-secondary`. */
   countText?: string;
-  /** Vertical divider color next to sort dropdown. Fallback: `--stroke-secondary`. */
-  divider?: string;
   /** Dot on the mobile browse-settings button while a filter is applied. Fallback: `--bg-control-accent`. */
   settingsActiveDot?: string;
 }
@@ -127,7 +125,7 @@ export interface ToolbarProps {
   sortOptions?: SelectOption[];
   /** Called with the picked option's `value` when the sort order changes. */
   onSortChange?: (sortKey: string) => void;
-  /** The sort control's own name, prepended to its accessible name. Default: 'Sort'. */
+  /** Accessible name and tooltip of the icon-only sort button. Default: 'Sort'. */
   sortLabel?: string;
   /** Text of the mobile browse-settings button and sheet; `title` also names the button. `myApps`/`topics` fall back to `filterMyAppsLabel`/`filterTopicsLabel`. */
   browseSettingsLabels?: Partial<BrowseSettingsSheetLabels>;
