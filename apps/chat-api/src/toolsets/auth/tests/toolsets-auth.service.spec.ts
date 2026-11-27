@@ -1,5 +1,6 @@
 import { UnauthorizedException } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { DeploymentsDetailsService } from '../../../deployments/details/deployments-details.service';
 import type { DialClientService } from '../../../dial/dial-client.service';
 import { ToolsetCredentialsLevel } from '../../dto/toolset-auth.dto';
 import { ToolsetAuthType } from '../../dto/toolset-body.dto';
@@ -579,5 +580,118 @@ describe('ToolsetsAuthService', () => {
       >;
       expect(sentBody.url).toBe('toolsets/test-bucket/My toolset__0.0.1');
     });
+  });
+});
+
+/*
+ * A real ToolsetsListingService and DeploymentsDetailsService share one
+ * in-memory cache, so a login/logout runs the same invalidation the details
+ * endpoint relies on — mirrors makeIntegrationDeps in applications.service.spec.ts.
+ */
+describe('loginToolset/logoutToolset + GET .../details cache interaction (regression)', () => {
+  const USER = 'user1';
+  const TOOLSET = 'toolsets/test-bucket/search__0.0.1';
+  const DETAILS_KEY = `deployments:details:${USER}:${TOOLSET}`;
+  const authBody = {
+    url: TOOLSET,
+    credentialsLevel: ToolsetCredentialsLevel.User,
+    authenticationType: ToolsetAuthType.ApiKey,
+    apiKey: 'secret',
+  };
+
+  const toolsetWithStatus = (status: string) =>
+    okResponse({
+      id: TOOLSET,
+      auth_settings: { user_level_auth_status: status },
+    });
+
+  const statusOf = (details: {
+    toolsetDetails?: { authSettings?: { userLevelAuthStatus?: string } };
+  }) => details.toolsetDetails?.authSettings?.userLevelAuthStatus;
+
+  const makeIntegrationDeps = () => {
+    const store = new Map<string, unknown>();
+    const cacheManager = {
+      get: vi.fn((key: string) => Promise.resolve(store.get(key))),
+      set: vi.fn((key: string, value: unknown) => {
+        store.set(key, value);
+        return Promise.resolve();
+      }),
+      del: vi.fn((key: string) => {
+        store.delete(key);
+        return Promise.resolve();
+      }),
+    };
+    const sdk = {
+      getToolset: vi.fn(),
+      getToolSetTools: vi.fn().mockResolvedValue(okResponse({ tools: [] })),
+      toolsetSignin: vi.fn().mockResolvedValue(mutationSdkOk),
+      toolSetSignout: vi.fn().mockResolvedValue(mutationSdkOk),
+    };
+    const dialClient = { client: sdk } as unknown as DialClientService;
+    const detailsService = new DeploymentsDetailsService(
+      dialClient,
+      cacheManager as never,
+      { get: vi.fn() } as never,
+    );
+    const listingService = new ToolsetsListingService(
+      dialClient,
+      cacheManager as never,
+      { getInstalledIds: vi.fn() } as never,
+      detailsService,
+    );
+    const authService = new ToolsetsAuthService(dialClient, listingService);
+    const getDetails = () =>
+      detailsService.getDeploymentDetails(USER, TOOLSET, 'token');
+    return { sdk, store, detailsService, authService, getDetails };
+  };
+
+  it('serves the signed-out status right after a logout instead of the cached signed-in one', async () => {
+    const { sdk, store, authService, getDetails } = makeIntegrationDeps();
+    sdk.getToolset
+      .mockResolvedValueOnce(toolsetWithStatus('SIGNED_IN'))
+      .mockResolvedValueOnce(toolsetWithStatus('SIGNED_OUT'));
+
+    expect(statusOf(await getDetails())).toBe('SIGNED_IN');
+    expect(store.has(DETAILS_KEY)).toBe(true);
+
+    await authService.logoutToolset(
+      USER,
+      'token',
+      'test-bucket',
+      TOOLSET,
+      authBody,
+    );
+
+    expect(statusOf(await getDetails())).toBe('SIGNED_OUT');
+    expect(sdk.getToolset).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps a details fetch started before a login out of every later response', async () => {
+    const { sdk, store, detailsService, authService, getDetails } =
+      makeIntegrationDeps();
+    let resolveBeforeLogin: (value: unknown) => void = () => undefined;
+    sdk.getToolset
+      .mockReturnValueOnce(
+        new Promise((resolve) => {
+          resolveBeforeLogin = resolve;
+        }),
+      )
+      .mockResolvedValueOnce(toolsetWithStatus('SIGNED_IN'));
+
+    const beforeLogin = getDetails();
+    await vi.waitFor(() => expect(sdk.getToolset).toHaveBeenCalledOnce());
+
+    await authService.loginToolset(USER, 'token', TOOLSET, authBody);
+    const afterLogin = getDetails();
+
+    resolveBeforeLogin(toolsetWithStatus('SIGNED_OUT'));
+    expect(statusOf(await beforeLogin)).toBe('SIGNED_OUT');
+    expect(statusOf(await afterLogin)).toBe('SIGNED_IN');
+
+    expect(statusOf(store.get(DETAILS_KEY) as never)).toBe('SIGNED_IN');
+    expect(statusOf(await getDetails())).toBe('SIGNED_IN');
+    expect(sdk.getToolset).toHaveBeenCalledTimes(2);
+    expect(detailsService['pendingDetailsRequests'].size).toBe(0);
   });
 });

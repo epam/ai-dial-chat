@@ -1814,7 +1814,7 @@ describe('updateApplication + GET .../details cache interaction (regression)', (
       makeIdentity(deploymentsService),
     );
 
-    return { sdkClient, applicationsService, deploymentsDetailsService };
+    return { sdkClient, applicationsService, deploymentsDetailsService, store };
   }
 
   it("a Quick App's own application_properties.features survives a read → save → read round trip", async () => {
@@ -1941,6 +1941,126 @@ describe('updateApplication + GET .../details cache interaction (regression)', (
     // A cache hit would have returned `cached`'s value without a second
     // getApplication call — this proves the cache was actually invalidated.
     expect(sdkClient.getApplication).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps a details fetch that read DIAL Core before the save out of the cache and of later reads', async () => {
+    const { sdkClient, applicationsService, deploymentsDetailsService, store } =
+      makeIntegrationDeps();
+    const detailsKey = `deployments:details:user1:${id}`;
+    const staleProperties = { tool_sets: ['old-toolset'] };
+    const freshProperties = { tool_sets: ['new-toolset'] };
+
+    /* A tiny DIAL Core: reads snapshot the stored properties when called, a save replaces them. */
+    let stored: Record<string, unknown> = staleProperties;
+    let releaseFirstRead: () => void = () => undefined;
+    sdkClient.getApplication.mockImplementation(() =>
+      Promise.resolve(okResponse({ id, application_properties: stored })),
+    );
+    sdkClient.getCustomApplication.mockImplementation(async () => {
+      const snapshot = okResponse({
+        displayName: 'Quick App',
+        displayVersion: '1.0.0',
+        application_properties: stored,
+      });
+      if (sdkClient.getCustomApplication.mock.calls.length === 1) {
+        await new Promise<void>((resolve) => {
+          releaseFirstRead = resolve;
+        });
+      }
+      return snapshot;
+    });
+    sdkClient.saveCustomApplication.mockImplementation(
+      (_bucket: string, _path: string, { body }: { body: never }) => {
+        stored = (body as { application_properties: Record<string, unknown> })
+          .application_properties;
+        return Promise.resolve(okResponse({}));
+      },
+    );
+
+    /* The Edit form's load has read the pre-save state but not finished yet. */
+    const beforeSave = deploymentsDetailsService.getDeploymentDetails(
+      'user1',
+      id,
+      'token',
+    );
+    await vi.waitFor(() =>
+      expect(sdkClient.getCustomApplication).toHaveBeenCalledOnce(),
+    );
+
+    await applicationsService.updateApplication('user1', 'token', id, {
+      name: 'Quick App',
+      applicationProperties: freshProperties,
+    });
+    const afterSave = await deploymentsDetailsService.getDeploymentDetails(
+      'user1',
+      id,
+      'token',
+    );
+
+    releaseFirstRead();
+    expect(
+      (await beforeSave).applicationDetails?.applicationProperties,
+    ).toEqual(staleProperties);
+    expect(afterSave.applicationDetails?.applicationProperties).toEqual(
+      freshProperties,
+    );
+    expect(
+      (store.get(detailsKey) as typeof afterSave).applicationDetails
+        ?.applicationProperties,
+    ).toEqual(freshProperties);
+
+    const reopened = await deploymentsDetailsService.getDeploymentDetails(
+      'user1',
+      id,
+      'token',
+    );
+    expect(reopened.applicationDetails?.applicationProperties).toEqual(
+      freshProperties,
+    );
+    expect(sdkClient.getApplication).toHaveBeenCalledTimes(2);
+  });
+
+  it('fences every id an application write touched and retains nothing afterwards', async () => {
+    const { sdkClient, applicationsService, deploymentsDetailsService, store } =
+      makeIntegrationDeps();
+    const cachedId = 'applications/bucket/cached-app__1.0.0';
+    const inFlightId = 'applications/bucket/in-flight-app__1.0.0';
+    let releaseInFlight: () => void = () => undefined;
+    sdkClient.getCustomApplication.mockResolvedValue(okResponse({}));
+    sdkClient.getApplication.mockImplementation(async (encodedId: string) => {
+      if (encodedId.includes('in-flight-app')) {
+        await new Promise<void>((resolve) => {
+          releaseInFlight = resolve;
+        });
+      }
+      return okResponse({ id: encodedId, application_properties: {} });
+    });
+
+    await deploymentsDetailsService.getDeploymentDetails(
+      'user1',
+      cachedId,
+      'token',
+    );
+    const inFlight = deploymentsDetailsService.getDeploymentDetails(
+      'user1',
+      inFlightId,
+      'token',
+    );
+    await vi.waitFor(() =>
+      expect(sdkClient.getApplication).toHaveBeenCalledTimes(2),
+    );
+
+    await applicationsService.invalidateAfterWrite(
+      'user1',
+      [cachedId, inFlightId],
+      'test write',
+    );
+    releaseInFlight();
+    await inFlight;
+
+    expect(store.has(`deployments:details:user1:${cachedId}`)).toBe(false);
+    expect(store.has(`deployments:details:user1:${inFlightId}`)).toBe(false);
+    expect(deploymentsDetailsService['pendingDetailsRequests'].size).toBe(0);
   });
 
   describe('personal folders and versions', () => {

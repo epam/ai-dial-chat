@@ -39,6 +39,16 @@ import {
   toAdditionalProperties,
 } from '../utils/deployment-mapper.util';
 
+/**
+ * One in-flight `getDeploymentDetails` fetch. `fence` is a fresh object per
+ * fetch: the fetch may write the cache only while the key's entry in
+ * `pendingDetailsRequests` still carries that same object.
+ */
+interface PendingDetailsRequest {
+  readonly fence: object;
+  readonly promise: Promise<DeploymentDetailsDto>;
+}
+
 /* The first candidate that is a plain object, or undefined. */
 const pickRecord = (
   ...candidates: unknown[]
@@ -54,16 +64,16 @@ const pickString = (...candidates: unknown[]): string | undefined =>
 export class DeploymentsDetailsService {
   private readonly logger = new Logger(DeploymentsDetailsService.name);
   /**
-   * In-flight `getDeploymentDetails` requests keyed by cache key, so
-   * concurrent requests for the same deployment share one upstream call
-   * instead of racing each other before the cache is populated.
+   * The current in-flight `getDeploymentDetails` fetch per cache key, so
+   * concurrent requests for the same deployment share one upstream call. It is
+   * also the only invalidation state: an entry lives until its fetch settles
+   * or the key is invalidated, so idle keys keep nothing — see the
+   * `deployment-details-api` spec.
    */
   private readonly pendingDetailsRequests = new Map<
     string,
-    Promise<DeploymentDetailsDto>
+    PendingDetailsRequest
   >();
-  /** Per-cache-key generation, bumped on invalidation — see `deployment-details-api` spec, "in flight when a logout invalidates its key" scenario. */
-  private readonly cacheGenerations = new Map<string, number>();
 
   constructor(
     private readonly dialClient: DialClientService,
@@ -75,20 +85,17 @@ export class DeploymentsDetailsService {
    * Evicts a user's cached details for one deployment — e.g. right after a
    * toolset login/logout, so the details panel's next `getDeploymentDetails`
    * call re-reads the updated `userLevelAuthStatus` instead of the snapshot
-   * cached before the credentials changed. Also bumps the key's generation
-   * and drops any in-flight request for it (see `deployment-details-api` spec).
+   * cached before the credentials changed. First, before any `await`, drops
+   * the key's in-flight request, which fences it: a later caller cannot join
+   * it and it cannot write its result (see `deployment-details-api` spec).
    */
   async invalidateDetailsCache(
     userSub: string,
     deployment: string,
   ): Promise<void> {
     const cacheKey = `deployments:details:${userSub}:${deployment}`;
-    await this.cacheManager.del(cacheKey);
-    this.cacheGenerations.set(
-      cacheKey,
-      (this.cacheGenerations.get(cacheKey) ?? 0) + 1,
-    );
     this.pendingDetailsRequests.delete(cacheKey);
+    await this.cacheManager.del(cacheKey);
     await this.cacheManager.del(
       `deployments:interfaces:${userSub}:${deployment}`,
     );
@@ -201,22 +208,52 @@ export class DeploymentsDetailsService {
       this.logger.debug(
         `Joining in-flight request for deployment details "${deployment}"`,
       );
-      return pending;
+      return pending.promise;
     }
 
-    const request = this.fetchDeploymentDetails(
+    const fence = {};
+    const promise = this.fetchDeploymentDetails(
       deployment,
       accessToken,
       cacheKey,
+      fence,
     );
-    this.pendingDetailsRequests.set(cacheKey, request);
+    this.pendingDetailsRequests.set(cacheKey, { fence, promise });
     try {
-      return await request;
+      return await promise;
     } finally {
       /* Only clear this request's own slot — see `deployment-details-api` spec. */
-      if (this.pendingDetailsRequests.get(cacheKey) === request) {
+      if (this.isCurrentDetailsRequest(cacheKey, fence)) {
         this.pendingDetailsRequests.delete(cacheKey);
       }
+    }
+  }
+
+  private isCurrentDetailsRequest(cacheKey: string, fence: object): boolean {
+    return this.pendingDetailsRequests.get(cacheKey)?.fence === fence;
+  }
+
+  /**
+   * Caches a fetch's result only while its fence is still current. If an
+   * invalidation lands while the write is in flight, deletes the entry again:
+   * cache-manager does not order a concurrent `set` and `del`, and a delete
+   * costs at most one cache miss.
+   */
+  private async cacheFencedDetails(
+    cacheKey: string,
+    deployment: string,
+    fence: object,
+    data: DeploymentDetailsDto,
+  ): Promise<void> {
+    if (!this.isCurrentDetailsRequest(cacheKey, fence)) return;
+    await this.cacheManager.set(cacheKey, data, 60 * 1000);
+    if (this.isCurrentDetailsRequest(cacheKey, fence)) return;
+    try {
+      await this.cacheManager.del(cacheKey);
+    } catch (err) {
+      this.logger.warn(
+        `Could not drop fenced cached details for "${StringUtils.sanitizeForLog(deployment)}"; a stale entry may remain until its TTL: ${err instanceof Error ? err.name : 'unknown error'}`,
+      );
     }
   }
 
@@ -234,8 +271,8 @@ export class DeploymentsDetailsService {
     deployment: string,
     accessToken: string,
     cacheKey: string,
+    fence: object,
   ): Promise<DeploymentDetailsDto> {
-    const generationAtStart = this.cacheGenerations.get(cacheKey) ?? 0;
     let data: DeploymentDetailsDto;
     try {
       if (deployment.startsWith('toolsets/')) {
@@ -258,9 +295,7 @@ export class DeploymentsDetailsService {
     }
 
     /* Skip a stale write — see `deployment-details-api` spec. */
-    if ((this.cacheGenerations.get(cacheKey) ?? 0) === generationAtStart) {
-      await this.cacheManager.set(cacheKey, data, 60 * 1000);
-    }
+    await this.cacheFencedDetails(cacheKey, deployment, fence, data);
     return data;
   }
 
