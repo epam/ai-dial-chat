@@ -8,6 +8,7 @@ import {
   useNavigate,
 } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ApiRequestError } from '../../server-api/base';
 import {
   reportClientChannel,
   subscribeClientChannel,
@@ -640,6 +641,115 @@ describe('ClientChannelProvider', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  describe('rejected reconnect channel id', () => {
+    const subscribeError = (status: number) =>
+      new ApiRequestError(
+        `subscribeClientChannel failed: ${status}`,
+        new Response(null, { status }),
+      );
+
+    /* Connects as `ch-1`, then drops the stream so the backoff's first reconnect fires. */
+    const connectThenDrop = async () => {
+      const first = makeControllableStream();
+      mockSubscribe.mockResolvedValueOnce({
+        body: first.stream,
+        channelId: 'ch-1',
+      });
+      const { result } = renderHook(() => useClientChannel(), { wrapper });
+      createDemand(result.current);
+      await act(async () => {
+        await Promise.resolve();
+      });
+      expect(result.current.channelId).toBe('ch-1');
+      return { result, drop: first.close };
+    };
+
+    afterEach(() => {
+      vi.useRealTimers();
+      /* `clearAllMocks` keeps queued `*Once` values; drop them so a failure here cannot leak into later tests. */
+      mockSubscribe.mockReset();
+    });
+
+    it('drops the id and subscribes for a fresh channel at once when the reconnect is rejected with 400', async () => {
+      vi.useFakeTimers();
+      mockUseFeatureFlag.mockReturnValue(true);
+      const { result, drop } = await connectThenDrop();
+
+      mockSubscribe.mockRejectedValueOnce(subscribeError(400));
+      mockSubscribe.mockResolvedValueOnce({
+        body: makeControllableStream().stream,
+        channelId: 'ch-2',
+      });
+      await act(async () => {
+        drop();
+        await vi.advanceTimersByTimeAsync(1000);
+      });
+
+      expect(mockSubscribe).toHaveBeenCalledTimes(3);
+      expect(mockSubscribe).toHaveBeenNthCalledWith(
+        2,
+        'ch-1',
+        expect.any(AbortSignal),
+      );
+      expect(mockSubscribe).toHaveBeenNthCalledWith(
+        3,
+        undefined,
+        expect.any(AbortSignal),
+      );
+      expect(result.current.channelId).toBe('ch-2');
+    });
+
+    it('keeps the id and backs off when the reconnect fails with a status that says nothing about the id', async () => {
+      vi.useFakeTimers();
+      mockUseFeatureFlag.mockReturnValue(true);
+      const { drop } = await connectThenDrop();
+
+      mockSubscribe.mockRejectedValueOnce(subscribeError(401));
+      mockSubscribe.mockResolvedValueOnce({
+        body: makeControllableStream().stream,
+        channelId: 'ch-1',
+      });
+      await act(async () => {
+        drop();
+        await vi.advanceTimersByTimeAsync(1000);
+      });
+      expect(mockSubscribe).toHaveBeenCalledTimes(2);
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2000);
+      });
+      expect(mockSubscribe).toHaveBeenCalledTimes(3);
+      expect(mockSubscribe).toHaveBeenNthCalledWith(
+        3,
+        'ch-1',
+        expect.any(AbortSignal),
+      );
+    });
+
+    it('backs off instead of retrying at once when a fresh subscribe is rejected with 400', async () => {
+      vi.useFakeTimers();
+      mockUseFeatureFlag.mockReturnValue(true);
+      mockSubscribe.mockRejectedValueOnce(subscribeError(400));
+      mockSubscribe.mockResolvedValueOnce({
+        body: makeControllableStream().stream,
+        channelId: 'ch-1',
+      });
+
+      const { result } = renderHook(() => useClientChannel(), { wrapper });
+      createDemand(result.current);
+      await act(async () => {
+        await Promise.resolve();
+      });
+      expect(mockSubscribe).toHaveBeenCalledOnce();
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1000);
+      });
+      expect(mockSubscribe).toHaveBeenCalledTimes(2);
+      expect(result.current.channelId).toBe('ch-1');
+    });
   });
 
   describe('idle disconnect', () => {

@@ -254,6 +254,11 @@ The backend SHALL also enforce the flag server-side (defense in depth, so a rest
 - **WHEN** a tab is hidden while a completion holds demand and its stream drops
 - **THEN** the capped-backoff reconnect proceeds while the tab is hidden, because demand — not visibility — is what justifies it
 
+#### Scenario: A reconnect rejected for its channel id subscribes for a fresh channel
+- **WHEN** a reconnect that sends the held channel id is rejected with `400` (Core no longer holds the channel, e.g. its TTL ran out, or the id is malformed)
+- **THEN** `ClientChannelProvider` clears the held channel id and immediately subscribes again without one, instead of retrying the rejected id through the capped backoff
+- **AND** a reconnect that fails with any other status keeps the held id and follows the capped backoff, and a `400` on a subscribe that sent no id follows the capped backoff too, so the fresh attempt cannot loop
+
 ### Requirement: The channel disconnects after a short idle period once nothing is generating
 
 In addition to the route-scoped disconnect lifecycle (disconnect on route-leave, flag-disable, and unmount), `ClientChannelProvider` (`apps/chat/src/context/ClientChannelContext.tsx`) SHALL also disconnect the active client-channel subscription after a short idle grace period once no generation is active anywhere in the app, so an open subscription is not held while a user remains on a streaming-capable route without streaming anything.
