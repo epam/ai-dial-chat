@@ -57,7 +57,8 @@ describe('trace propagation', () => {
     });
 
     const { createRequestTimingMiddleware } = await import('../request-timing');
-    const { withCoreRequestTiming } = await import('../core-request-timing');
+    const { withCoreRequestTiming } =
+      await import('../upstream-request-timing');
 
     upstreamServer = http.createServer((req, res) => {
       receivedUpstreamTraceparent = req.headers.traceparent as
@@ -124,8 +125,9 @@ describe('trace propagation', () => {
     await new Promise<void>((resolve) => {
       upstreamServer.close(() => resolve());
     });
-    const { stopCoreRequestTiming } = await import('../core-request-timing');
-    stopCoreRequestTiming();
+    const { stopUpstreamRequestTiming } =
+      await import('../upstream-request-timing');
+    stopUpstreamRequestTiming();
     unregisterInstrumentations?.();
     await provider?.shutdown();
     /*

@@ -27,7 +27,6 @@ import {
   ATTR_SERVICE_VERSION,
 } from '@opentelemetry/semantic-conventions';
 import packageJson from '../../package.json';
-import { stopCoreRequestTiming } from './core-request-timing';
 import { isExcludedFromTelemetry } from './excluded-paths';
 import {
   MetricsExporter,
@@ -35,6 +34,7 @@ import {
   SingleSignalExporter,
 } from './otel-config';
 import { initializeRuntimeMetrics } from './runtime-metrics';
+import { stopUpstreamRequestTiming } from './upstream-request-timing';
 
 /*
  * `main.ts` imports this module first, before `reflect-metadata`, Nest, Express, or any DIAL
@@ -138,7 +138,7 @@ export const shutdownOpenTelemetry = async (
   timeoutMs = 5000,
   shutdownFn: () => Promise<void> = () => sdk?.shutdown() ?? Promise.resolve(),
 ): Promise<void> => {
-  stopCoreRequestTiming();
+  stopUpstreamRequestTiming();
   stopRuntimeMetrics?.();
   stopRuntimeMetrics = undefined;
   await Promise.race([
