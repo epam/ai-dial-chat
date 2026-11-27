@@ -558,7 +558,8 @@ describe('DialFileManagerShell', () => {
         {
           id: 'reports',
           name: 'reports',
-          path: '/My files/reports',
+          /* Folder paths from the listing end with a slash. */
+          path: '/My files/reports/',
           parentPath: '/My files',
           folderId: 'reports',
           nodeType: DialFileNodeType.FOLDER,
@@ -698,7 +699,7 @@ describe('DialFileManagerShell', () => {
       );
 
       expect(request.confirm).toHaveBeenCalledWith(
-        '/My files/reports',
+        '/My files/reports/',
         root.items[0].items,
       );
       expect(screen.queryByRole('dialog')).toBeNull();

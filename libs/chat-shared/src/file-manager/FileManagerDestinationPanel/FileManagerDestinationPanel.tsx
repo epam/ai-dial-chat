@@ -260,8 +260,10 @@ export const FileManagerDestinationPanel: FC<
     request.cancel();
     onFinish();
   };
+  /* The file manager finds the destination listing by exact path, and folder paths end with a slash, so pass the folder's own path. */
   const handleConfirm = () => {
-    request.confirm(destinationPath, findFolder(root, destinationPath)?.items);
+    const folder = findFolder(root, destinationPath);
+    request.confirm(folder?.path ?? destinationPath, folder?.items);
     onFinish();
   };
 

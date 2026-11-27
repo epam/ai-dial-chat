@@ -97,7 +97,11 @@ const makeNode = (
 });
 
 const file = makeNode('/My files/reports/a.txt', DialFileNodeType.ITEM);
-const reports = makeNode('/My files/reports', DialFileNodeType.FOLDER, [file]);
+/* Folder paths from the listing end with a slash. */
+const reports: DialFile = {
+  ...makeNode('/My files/reports/', DialFileNodeType.FOLDER, [file]),
+  name: 'reports',
+};
 const archive = makeNode('/My files/archive', DialFileNodeType.FOLDER, []);
 const root = makeNode('/My files', DialFileNodeType.FOLDER, [reports, archive]);
 
@@ -270,7 +274,7 @@ describe('FileManagerDestinationPanel', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Copy here' }));
 
-    expect(request.confirm).toHaveBeenCalledWith('/My files/reports', [file]);
+    expect(request.confirm).toHaveBeenCalledWith('/My files/reports/', [file]);
     expect(onFinish).toHaveBeenCalledOnce();
   });
 
