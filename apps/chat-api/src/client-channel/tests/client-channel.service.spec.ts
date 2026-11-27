@@ -1,8 +1,9 @@
 import {
   BadGatewayException,
+  Logger,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DialClientService } from '../../dial/dial-client.service';
 import { ClientChannelService } from '../client-channel.service';
 import {
@@ -38,6 +39,10 @@ describe('ClientChannelService', () => {
     vi.clearAllMocks();
     deps = makeDeps();
     service = new ClientChannelService(deps.dialClient);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   describe('subscribe', () => {
@@ -109,16 +114,110 @@ describe('ClientChannelService', () => {
       ).rejects.toBeInstanceOf(BadGatewayException);
     });
 
-    it('throws when Core omits the channel id header', async () => {
+    it('throws BadGatewayException without inventing an upstream status when Core omits the channel id header', async () => {
+      const warnSpy = vi
+        .spyOn(Logger.prototype, 'warn')
+        .mockImplementation(() => undefined);
+      vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
       vi.mocked(
         deps.dialClient.client.subscribeClientChannel,
       ).mockResolvedValue({
         response: new Response(new ReadableStream(), { status: 200 }),
       } as never);
 
+      const subscription = service.subscribe(
+        'token',
+        undefined,
+        new AbortController().signal,
+      );
+
+      await expect(subscription).rejects.toBeInstanceOf(BadGatewayException);
+      await expect(subscription).rejects.toThrow(
+        'DIAL Core did not return a client channel id',
+      );
+      expect(warnSpy).not.toHaveBeenCalled();
+    });
+
+    it('logs the response shape at debug level when Core omits the channel id header', async () => {
+      const debugSpy = vi
+        .spyOn(Logger.prototype, 'debug')
+        .mockImplementation(() => undefined);
+      vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+      vi.mocked(
+        deps.dialClient.client.subscribeClientChannel,
+      ).mockResolvedValue({
+        response: new Response(new ReadableStream(), {
+          status: 200,
+          headers: { 'Content-Type': 'text/html', Server: 'nginx' },
+        }),
+      } as never);
+
       await expect(
         service.subscribe('token', undefined, new AbortController().signal),
       ).rejects.toBeInstanceOf(BadGatewayException);
+
+      expect(debugSpy).toHaveBeenCalledWith(
+        'Client-channel subscribe response has no X-DIAL-CLIENT-CHANNEL-ID — status: 200, content-type: text/html, redirected: false, response headers: content-type, server',
+      );
+    });
+
+    it('resumes the reconnect channel id when Core does not echo the header', async () => {
+      const cancel = vi.fn();
+      vi.mocked(
+        deps.dialClient.client.subscribeClientChannel,
+      ).mockResolvedValue({
+        response: new Response(new ReadableStream({ cancel }), {
+          status: 200,
+          headers: { 'Content-Type': 'text/event-stream' },
+        }),
+      } as never);
+
+      const result = await service.subscribe(
+        'token',
+        'channel-1',
+        new AbortController().signal,
+      );
+
+      expect(result.channelId).toBe('channel-1');
+      expect(result.stream).toBeInstanceOf(ReadableStream);
+      expect(cancel).not.toHaveBeenCalled();
+    });
+
+    it('prefers the channel id Core returns over the reconnect id', async () => {
+      vi.mocked(
+        deps.dialClient.client.subscribeClientChannel,
+      ).mockResolvedValue({
+        response: new Response(new ReadableStream(), {
+          status: 200,
+          headers: { 'X-DIAL-CLIENT-CHANNEL-ID': 'channel-2' },
+        }),
+      } as never);
+
+      const result = await service.subscribe(
+        'token',
+        'channel-1',
+        new AbortController().signal,
+      );
+
+      expect(result.channelId).toBe('channel-2');
+    });
+
+    it('cancels the upstream stream when Core omits the channel id header', async () => {
+      vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+      const cancel = vi.fn();
+      vi.mocked(
+        deps.dialClient.client.subscribeClientChannel,
+      ).mockResolvedValue({
+        response: new Response(new ReadableStream({ cancel }), {
+          status: 200,
+        }),
+      } as never);
+
+      await expect(
+        service.subscribe('token', undefined, new AbortController().signal),
+      ).rejects.toBeInstanceOf(BadGatewayException);
+
+      expect(cancel).toHaveBeenCalledOnce();
     });
 
     it('throws ServiceUnavailableException when the fetch itself fails', async () => {

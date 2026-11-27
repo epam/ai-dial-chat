@@ -37,6 +37,7 @@ Use these templates when writing/updating local docs. **English only.** Replace 
 | Phase 3.4 server-api adapters              | …                                  |
 | Phase 4 Platform                           | X/4 — status of 4.1, 4.2, 4.3, 4.5 |
 | Dead-code coverage                         | Full / Partial                     |
+| Test-suite health                          | Signals run; N delete/merge/fix    |
 ```
 
 Scorecard rules:
@@ -72,17 +73,18 @@ Required sections:
 3. **Completed** — extractions with evidence (line counts, archive names)
 4. **God modules** — services table (path, lines, Δ vs last audit, priority)
 5. **Test monoliths** — spec files table
-6. **New domains** — domains added since last audit
-7. **Structural smells** — dispatch/registry/else-if/switch/nested ternary
-8. **Convention violations** — AGENTS.md / RTL / lib isolation / imports / logging
-9. **Dead code** — coverage, confirmed findings, unverified candidates
-10. **Issues** — numbered, prioritized
-11. **Plan** — checkbox phases
-12. **Priority matrix** — P0–P3
-13. **PR order**
-14. **Next OpenSpec prompt**
-15. **Risks**
-16. **Summary**
+6. **Test suite** — signals, collector counts, Delete/Merge/Fix rows (see below)
+7. **New domains** — domains added since last audit
+8. **Structural smells** — dispatch/registry/else-if/switch/nested ternary
+9. **Convention violations** — AGENTS.md / RTL / lib isolation / imports / logging
+10. **Dead code** — coverage, confirmed findings, unverified candidates
+11. **Issues** — numbered, prioritized
+12. **Plan** — checkbox phases
+13. **Priority matrix** — P0–P3
+14. **PR order**
+15. **Next OpenSpec prompt**
+16. **Risks**
+17. **Summary**
 
 ### Structural smells table (populate from metrics)
 
@@ -108,6 +110,22 @@ Required sections:
 
 Keep **Confirmed dead** findings separate from **Reachability/config gap**, **Intentional public API**, **False positive/framework-managed**, and **Needs owner confirmation** candidates. Never describe Partial coverage as “no dead code found.”
 
+### Test suite (populate from the test-health collector and Step 3e reads)
+
+| Static collector | Knip comprehensive (test code) | Runtime pass                | Notes                     |
+| ---------------- | ------------------------------ | --------------------------- | ------------------------- |
+| ran / failed     | ran / failed / unavailable     | pass / fail / skipped (why) | {slow tests, flaky, gaps} |
+
+| Category               | Hits | Delete | Merge | Fix | Keep |
+| ---------------------- | ---: | -----: | ----: | --: | ---: |
+| `{collector category}` |  {N} |    {N} |   {N} | {N} |  {N} |
+
+| Test (path:line from run) | Category                | Class  | Evidence                           | Action                     | P   |
+| ------------------------- | ----------------------- | ------ | ---------------------------------- | -------------------------- | --- |
+| `{path}:{line}`           | exact duplicate / clone | Delete | covered by `{path}:{line} {title}` | delete / `it.each` / merge | P2  |
+
+List **Delete** and **Merge** rows first, then **Fix**, then **Keep** (one line each, with the reason) and **Needs owner confirmation**. Drop rows that Test cleanup mode applied.
+
 ### Reference patterns (not file paths)
 
 - Completed splits → matching archived OpenSpec under `openspec/changes/archive/`
@@ -126,17 +144,18 @@ Required sections:
 4. **Lib inventory** — table: lib name, total LOC, largest files, role
 5. **God modules — App** — components, hooks, contexts, utils tables
 6. **Test monoliths**
-7. **Lib isolation** — ✅ good / ⚠️ issues
-8. **Structural smells**
-9. **Convention violations**
-10. **Dead code** — coverage, confirmed findings, unverified candidates
-11. **Remaining duplication**
-12. **Plan**
-13. **Priority matrix**
-14. **PR order**
-15. **Next OpenSpec prompts**
-16. **Risks**
-17. **Summary**
+7. **Test suite** — same tables as the backend document; app specs that repeat a lib spec go here
+8. **Lib isolation** — ✅ good / ⚠️ issues
+9. **Structural smells**
+10. **Convention violations**
+11. **Dead code** — coverage, confirmed findings, unverified candidates
+12. **Remaining duplication**
+13. **Plan**
+14. **Priority matrix**
+15. **PR order**
+16. **Next OpenSpec prompts**
+17. **Risks**
+18. **Summary**
 
 Use the same **Dead-code coverage and findings** tables as the backend document. For publishable libs, verify package `exports` and possible external consumers before marking an unused export or zero-inbound project as confirmed dead.
 

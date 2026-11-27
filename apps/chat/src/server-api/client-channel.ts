@@ -4,7 +4,12 @@ import {
 } from '@epam/ai-dial-chat-api-client';
 import { JSON_HEADERS } from '../constants/http';
 import { clientChannelApi } from './api-client';
-import { ApiEndpoints, getCsrfToken, setCsrfToken } from './base';
+import {
+  ApiEndpoints,
+  ApiRequestError,
+  getCsrfToken,
+  setCsrfToken,
+} from './base';
 
 export { ReportClientChannelDtoResultEnum as ClientChannelReportResult };
 
@@ -45,8 +50,14 @@ export const subscribeClientChannel = async (
   const rotatedCsrf = response.headers.get('x-csrf-token');
   if (rotatedCsrf) setCsrfToken(rotatedCsrf);
 
-  if (!response.ok || !response.body) {
-    throw new Error(`subscribeClientChannel failed: ${response.status}`);
+  if (!response.ok) {
+    throw new ApiRequestError(
+      `subscribeClientChannel failed: ${response.status}`,
+      response,
+    );
+  }
+  if (!response.body) {
+    throw new Error('subscribeClientChannel response has no body');
   }
 
   const channelId = response.headers.get(CHANNEL_ID_HEADER.toLowerCase());

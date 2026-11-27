@@ -25,7 +25,7 @@ The endpoint:
 - SHALL respond 503 when DIAL Core is unreachable or times out.
 - SHALL cache the mapped `DeploymentDetailsDto` under key `deployments:details:<userSub>:<deployment>` for 60 000 ms, so entries and in-flight request deduplication are isolated by authenticated user and deployment.
 - SHALL invalidate the affected `deployments:details:<userSub>:<deployment>` entry after a successful toolset update, delete, login, or logout, and after a successful application update (`ApplicationsService.updateApplication`, using the same `applicationName` string as the cache key), before the next details fetch is treated as fresh.
-- SHALL ensure an in-flight `getDeploymentDetails` fetch that was dispatched before an invalidation for the same key never repopulates the cache with its (pre-invalidation) result, and is never joined by a request made after that invalidation — see the dedicated requirement below.
+- SHALL ensure an in-flight `getDeploymentDetails` fetch that was dispatched before an invalidation for the same key never repopulates the cache with its (pre-invalidation) result, and is never joined by a request made after that invalidation began — see the requirements "Deployment details invalidation fences older fetches before any asynchronous step" and "Deployment details invalidation state is reclaimed once no older fetch can write" below.
 - SHALL set response header `Cache-Control: private, no-store`; client and intermediary caches MUST NOT reuse the response, while the user-scoped BFF cache remains active.
 - SHALL preserve OpenAPI `operationId: getDeploymentDetails`, path parameter `deployment: string`, response `DeploymentDetailsDto`, and normal generated `DeploymentsApi.getDeploymentDetails({ deployment })` usage; no `Raw` generated call is required because frontend callers do not consume the response header.
 - SHOULD log, at debug level, the raw DIAL Core toolset response (redacting `auth_settings.client_secret`/`code_verifier`) and the final mapped `DeploymentDetailsDto` sent to the frontend, to aid diagnosing field-mapping gaps.
@@ -103,7 +103,7 @@ The endpoint:
 - **WHEN** a `getDeploymentDetails` request for a toolset is still awaiting DIAL Core when a login/logout for that same toolset invalidates its cache key, and a second `getDeploymentDetails` request for the same key arrives after that invalidation
 - **THEN** the second request fires its own upstream call rather than joining the first (still-pending) one, and once the first request resolves it does not overwrite the cache with its pre-invalidation result — the cache ends up holding only the second, post-change result
 
-This closes a race observed as an unstable toolset login/logout indicator: a details fetch dispatched right before a logout could otherwise be joined by the post-logout refetch, or could win the cache write after the invalidation had already run, leaving `authSettings.userLevelAuthStatus` stuck on the pre-logout value for up to the 60 s TTL even though `GET /api/v1/toolsets` already reflected the change. The service tracks a per-cache-key generation counter, bumped by every invalidation; `invalidateDetailsCache` also drops any in-flight request from the pending-request map so a later caller cannot join it, and a fetch only writes its result to cache if the key's generation is unchanged since the fetch started.
+This closes a race observed as an unstable toolset login/logout indicator: a details fetch dispatched right before a logout could otherwise be joined by the post-logout refetch, or could win the cache write after the invalidation had already run, leaving `authSettings.userLevelAuthStatus` stuck on the pre-logout value for up to the 60 s TTL even though `GET /api/v1/toolsets` already reflected the change. Each details fetch is fenced by the identity of its own in-flight record in the service's pending-request map (`pendingDetailsRequests`): invalidation removes the key's record, so a later caller cannot join the older fetch, and a fetch writes its result to cache only while its own record is still the key's current one. No per-key counter survives the fetch.
 
 #### Scenario: Client-side caching is disabled
 
@@ -112,7 +112,7 @@ This closes a race observed as an unstable toolset login/logout indicator: a det
 
 #### Scenario: DIAL Core unreachable
 
-- **WHEN** DIAL Core does not respond within the SDK timeout for the detail call
+- **WHEN** the HTTP transport times out the detail call — no explicit SDK deadline is configured; the undici `headersTimeout`/`bodyTimeout` defaults apply
 - **THEN** the endpoint responds 503
 
 #### Scenario: DIAL Core returns error
@@ -306,3 +306,85 @@ Caching is unchanged: the field rides in the existing `deployments:details:<user
 - **WHEN** the user calls `GET /api/v1/deployments/toolsets%2F<bucket>%2Fgithub_valery__1.0.0/details`
 - **THEN** `toolsetDetails.authSettings.clientSecretHint` is `"d4c6"`
 - **AND** `toolsetDetails.authSettings` has no `clientSecret` or `codeVerifier`
+
+### Requirement: Deployment details invalidation fences older fetches before any asynchronous step
+
+Invalidating `deployments:details:<userSub>:<deployment>` SHALL fence every older fetch for that key before its first asynchronous step, then delete the cached details and `deployments:interfaces:<userSub>:<deployment>`. An older fetch SHALL NOT cache its result, and no caller arriving after invalidation began SHALL join it. If an invalidation runs while a fenced fetch's cache write is in flight, the entry SHALL be deleted again.
+
+#### Scenario: An older fetch settles while the invalidation's cache delete is still pending
+
+- **WHEN** a details fetch is awaiting DIAL Core, an invalidation for the same key starts, and the fetch resolves before the invalidation's cache delete has completed
+- **THEN** the fetch returns its result to its own callers but does not write it to `deployments:details:<userSub>:<deployment>`, and the next details request fetches from DIAL Core
+
+#### Scenario: A caller arriving during the invalidation's cache delete does not join the older fetch
+
+- **WHEN** an invalidation has started for a key with a pending fetch and a new details request for the same key arrives before the invalidation's cache delete has completed
+- **THEN** the new request starts its own upstream call and returns its own result
+
+#### Scenario: Invalidation overlaps an older fetch's cache write
+
+- **WHEN** a fetch has passed its fence check and its cache write is still in flight when an invalidation for the same key runs
+- **THEN** after both settle, `deployments:details:<userSub>:<deployment>` does not hold that fetch's result; at worst the next request is a cache miss
+
+#### Scenario: Old and new fetches settle in either order
+
+- **WHEN** an older fetch is invalidated, a newer fetch for the same key starts, and the two resolve in either order
+- **THEN** the cache holds only the newer fetch's result, and each fetch returns its own result to its own callers
+
+#### Scenario: A failed fetch on either side of an invalidation
+
+- **WHEN** the older or the newer fetch rejects (502, 503 or 404 as mapped today)
+- **THEN** the rejecting fetch's callers receive the same error as before this change, nothing is cached for it, and the other fetch is unaffected
+
+#### Scenario: A request still reading the cache when invalidation starts counts as post-invalidation
+
+- **WHEN** a details request has started but is still reading the cache, without having called DIAL Core, when an invalidation for the same key runs
+- **THEN** its upstream call is sent after the fence, so it reads the post-write state; callers arriving after the invalidation may join it, and its result may be cached
+
+#### Scenario: Companion interfaces entry is still invalidated
+
+- **WHEN** `deployments:details:<userSub>:<deployment>` is invalidated
+- **THEN** `deployments:interfaces:<userSub>:<deployment>` is deleted as well, so the next `getDeploymentInterfaces` call re-reads DIAL Core
+
+### Requirement: Deployment details invalidation state is reclaimed once no older fetch can write
+
+`DeploymentsDetailsService` SHALL keep per-key invalidation and coalescing state only in its pending-request map, at most one record per `deployments:details:<userSub>:<deployment>` key with a current fetch. A record SHALL be removed when that fetch settles or the key is invalidated. A key with no current fetch SHALL retain no state, however often it was invalidated. No hard count SHALL evict a current record.
+
+#### Scenario: Many distinct keys invalidated while idle retain nothing
+
+- **WHEN** invalidations run for many distinct user × deployment keys with no details fetch in flight
+- **THEN** the service holds no per-key state for any of them afterwards
+
+#### Scenario: Repeated invalidation during one live request
+
+- **WHEN** the same key is invalidated several times while one older fetch is still awaiting DIAL Core, and that fetch then settles
+- **THEN** the fetch does not cache its result, and once it settles no state remains for the key
+
+#### Scenario: State is reclaimed after success and after rejection
+
+- **WHEN** a current fetch for a key resolves or rejects
+- **THEN** its record is removed from the pending-request map in both cases, and only if it is still the key's current record
+
+#### Scenario: Coalesced callers share one record
+
+- **WHEN** several callers request the same uncached key in the same epoch while its fetch is pending
+- **THEN** they all join one upstream call and one record, and that record is removed once the call settles
+
+#### Scenario: An older fetch's cleanup does not remove a newer record
+
+- **WHEN** an older, invalidated fetch settles after a newer fetch has registered its own record for the same key
+- **THEN** the newer record stays in place, and callers arriving afterwards still join the newer fetch
+
+### Requirement: Retention for details fetches that never settle
+
+A details fetch whose upstream call never settles SHALL keep at most its own record, and only until the key is invalidated. After that it SHALL hold no map entry: only its own promise chain retains it. The service SHALL NOT claim an absolute bound, because detail calls carry no explicit deadline and rely on the HTTP transport's default timeouts.
+
+#### Scenario: A hung current fetch keeps one record until invalidation
+
+- **WHEN** a details fetch's upstream call neither resolves nor rejects
+- **THEN** exactly one record remains for its key, callers in the same epoch join it, and an invalidation of that key removes the record so the next caller starts a new fetch
+
+#### Scenario: A hung invalidated fetch holds no map entry
+
+- **WHEN** a fetch that has already been invalidated never settles
+- **THEN** the pending-request map holds no entry for it, and when it eventually settles the fence rejects its cache write

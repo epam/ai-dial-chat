@@ -6,7 +6,7 @@ How the BFF relays DIAL Core client-channel subscribe/report/unsubscribe operati
 
 ### Requirement: BFF proxies DIAL Core client-channel subscribe as an SSE relay
 
-The backend SHALL expose `POST /api/v1/client-channel/subscribe` (NestJS domain `apps/chat-api/src/client-channel/`, `ClientChannelController`, `@Controller({ path: 'client-channel', version: '1' })`). The endpoint SHALL call `@epam/ai-dial-typescript-sdk`'s `subscribeClientChannel` using the bearer access token from the caller's encrypted BFF session (never a value supplied by the browser), and SHALL relay the upstream `text/event-stream` response body to the browser without buffering it in memory. The response SHALL echo the `X-DIAL-CLIENT-CHANNEL-ID` header returned by Core. If the browser already holds a channel id (reconnect), the frontend SHALL send it as a request header and the backend SHALL forward it to Core unchanged so Core can attempt to resume the same channel. The relayed SSE body MAY carry RPC events of different `method` values (e.g. `toolset/signin`, `external-service/signin`) — the backend SHALL relay every event body-for-body without inspecting or filtering on `method`; method-specific handling is entirely a frontend concern.
+The backend SHALL expose `POST /api/v1/client-channel/subscribe` (NestJS domain `apps/chat-api/src/client-channel/`, `ClientChannelController`, `@Controller({ path: 'client-channel', version: '1' })`). The endpoint SHALL call `@epam/ai-dial-typescript-sdk`'s `subscribeClientChannel` using the bearer access token from the caller's encrypted BFF session (never a value supplied by the browser), and SHALL relay the upstream `text/event-stream` response body to the browser without buffering it in memory. The response SHALL echo the `X-DIAL-CLIENT-CHANNEL-ID` header returned by Core; when Core resumes a reconnected channel without returning that header, the response SHALL echo the forwarded reconnect channel id instead. If the browser already holds a channel id (reconnect), the frontend SHALL send it as a request header and the backend SHALL forward it to Core unchanged so Core can attempt to resume the same channel. The relayed SSE body MAY carry RPC events of different `method` values (e.g. `toolset/signin`, `external-service/signin`) — the backend SHALL relay every event body-for-body without inspecting or filtering on `method`; method-specific handling is entirely a frontend concern.
 
 The handler SHALL register its `res.on('close', ...)` listener, and construct the `AbortController` whose signal is passed to `ClientChannelService.subscribe`, before making that call — i.e. before the first `await` of upstream setup — so a browser disconnect that happens while the upstream subscribe call is still in flight aborts that call immediately instead of being observed only once the call resolves. The `dial_chat_sse_active{kind="client_channel"}` gauge contribution (see `observability-telemetry`) SHALL start before this call and be released exactly once when the handler settles, unchanged by this requirement.
 
@@ -23,6 +23,14 @@ Generated-client impact: the endpoint is documented in Swagger (`operationId: su
 #### Scenario: Reconnect forwards the existing channel id
 - **WHEN** the frontend calls subscribe with an `X-DIAL-CLIENT-CHANNEL-ID` header from a previous session
 - **THEN** the backend forwards that header value to Core's subscribe call unchanged
+
+#### Scenario: Reconnect to a live channel echoes the resumed channel id
+- **WHEN** the frontend reconnects with a channel id Core still holds, and Core resumes that channel with `200 text/event-stream` but without an `X-DIAL-CLIENT-CHANNEL-ID` response header (Core sets the header only when it creates a channel)
+- **THEN** the backend treats the forwarded channel id as the channel id, echoes it in the `X-DIAL-CLIENT-CHANNEL-ID` response header, and relays the stream instead of failing the subscription
+
+#### Scenario: Fresh subscribe without a channel id from Core
+- **WHEN** the frontend subscribes without a channel id and Core answers `200` without an `X-DIAL-CLIENT-CHANNEL-ID` header
+- **THEN** the backend cancels the upstream stream, logs the response status, content type, redirect flag and header names (not header values) at debug level, and returns `502`
 
 #### Scenario: Browser disconnects mid-stream
 - **WHEN** the browser closes the connection to `/api/v1/client-channel/subscribe` while events are streaming
@@ -245,6 +253,11 @@ The backend SHALL also enforce the flag server-side (defense in depth, so a rest
 
 - **WHEN** a tab is hidden while a completion holds demand and its stream drops
 - **THEN** the capped-backoff reconnect proceeds while the tab is hidden, because demand — not visibility — is what justifies it
+
+#### Scenario: A reconnect rejected for its channel id subscribes for a fresh channel
+- **WHEN** a reconnect that sends the held channel id is rejected with `400` (Core no longer holds the channel, e.g. its TTL ran out, or the id is malformed)
+- **THEN** `ClientChannelProvider` clears the held channel id and immediately subscribes again without one, instead of retrying the rejected id through the capped backoff
+- **AND** a reconnect that fails with any other status keeps the held id and follows the capped backoff, and a `400` on a subscribe that sent no id follows the capped backoff too, so the fresh attempt cannot loop
 
 ### Requirement: The channel disconnects after a short idle period once nothing is generating
 

@@ -84,7 +84,6 @@ export const FileManagerDestinationPanel: FC<
 
   const getDisabledReason = useCallback(
     ({ path }: FolderDestination): string | undefined => {
-      if (!isMove) return undefined;
       const destinationPath = toDestinationPath(rootPath, path);
       if (
         movedFolderPaths.some((moved) =>
@@ -101,13 +100,13 @@ export const FileManagerDestinationPanel: FC<
       }
       return undefined;
     },
-    [isMove, rootPath, movedFolderPaths, request.sourceFolder, labels],
+    [rootPath, movedFolderPaths, request.sourceFolder, labels],
   );
 
   const sourcePath = toPathSegments(request.sourceFolder).slice(
     rootSegmentCount,
   );
-  /* Every folder stays selectable; Move on the source folder only keeps its action disabled. */
+  /* Every folder stays selectable; the source folder, and a moved folder's own subtree, only keep the action disabled. */
   const [destination, setDestination] = useState<FolderDestination>({
     rootKey: ROOT_KEY,
     path: sourcePath,
