@@ -186,6 +186,12 @@ export class DeploymentFeaturesDetailsDto {
   responsesApi?: boolean;
 
   @ApiPropertyOptional({
+    description:
+      'Supports Anthropic Messages, derived from DIAL Core declared-interface metadata',
+  })
+  anthropicMessages?: boolean;
+
+  @ApiPropertyOptional({
     description: 'Supports custom skills in chat requests',
   })
   skillsSupported?: boolean;

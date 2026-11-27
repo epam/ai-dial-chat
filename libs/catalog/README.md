@@ -1209,6 +1209,8 @@ The rest of the details view is public for the same hosts:
 - `CredentialsBanner` is the note under the header about which credentials are active. `getCredentialsBannerState` (also on `@epam/ai-dial-catalog/mapping`) returns its `CredentialsBannerState`, or `undefined` when no banner applies.
 - `CredentialsApiKeyOverlay` is the API-key popover on its own (pass `level` from `getDirectCredentialsLevel`), and `CredentialsManagementPanel` the admin view of personal and organization credentials.
 
+`details.api.endpoints` is an arbitrary list of resolved `EndpointOption` values, not a two-API limit. A host can supply Chat Completions, Responses and Anthropic Messages together, or a single Messages endpoint. Multiple entries render a selector; a single entry renders a plain title. Each entry carries its own URL, display label and optional snippets, which remain copy-only and use the existing accessible copy feedback. A nonempty endpoint list keeps Connect visible. The host owns support metadata, endpoint construction and translated option labels; the catalog never infers APIs from a model ID or provider.
+
 `texts.entityTypeLabels` (shared with `DetailsPanel`) sets the visible type in the
 header per entity type, e.g. translated names; a type without an entry keeps the raw
 value (`TOOLSET`, …).

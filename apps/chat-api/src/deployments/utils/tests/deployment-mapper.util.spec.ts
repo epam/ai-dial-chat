@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import type { RawDeploymentDto } from '../../dto/raw-deployment.dto';
 import {
   mapCatalogProperties,
+  mapDeclaredInterfaces,
+  mapDeploymentFeatures,
+  mapSupportedInterfaces,
   mapToDeploymentItem,
   mapToolsetAuthSettings,
   redactApplicationFunctionEnv,
@@ -9,6 +12,143 @@ import {
 
 const raw = (overrides: Partial<RawDeploymentDto>): RawDeploymentDto =>
   ({ id: 'gpt-4o', ...overrides }) as RawDeploymentDto;
+
+describe('declared API interfaces', () => {
+  it('normalizes mixed interfaces in canonical order without their settings', () => {
+    const payload = {
+      interface_configs: {
+        anthropicMessages: { default_headers: { secret: 'not-for-display' } },
+        openaiResponses: { defaults: { temperature: 1 } },
+        openaiChatCompletions: {},
+        openaiEmbeddings: {},
+        futureApi: {},
+      },
+    };
+    expect(mapSupportedInterfaces(payload)).toEqual([
+      'openaiChatCompletions',
+      'openaiEmbeddings',
+      'openaiResponses',
+      'anthropicMessages',
+    ]);
+  });
+
+  it('preserves Messages-only declarations without a legacy features object', () => {
+    expect(
+      mapDeclaredInterfaces({ interface_configs: { anthropicMessages: {} } }),
+    ).toEqual(['anthropicMessages']);
+  });
+
+  it.each([null, false, 'configured', []])(
+    'does not advertise an invalid descriptor %j',
+    (descriptor) => {
+      expect(
+        mapDeclaredInterfaces({
+          interface_configs: { anthropicMessages: descriptor },
+        }),
+      ).toEqual([]);
+    },
+  );
+
+  it.each([{}, { futureApi: {} }])(
+    'keeps an explicit declaration map %j empty instead of restoring legacy APIs',
+    (interface_configs) => {
+      expect(
+        mapSupportedInterfaces({
+          interface_configs,
+          features: { chat_completion: true },
+        }),
+      ).toEqual([]);
+    },
+  );
+
+  it('accepts equivalent API names, deduplicates them and ignores classifications', () => {
+    expect(
+      mapDeclaredInterfaces({
+        interface_configs: null,
+        interfaces: [
+          'mcp',
+          'chat',
+          'anthropicMessages',
+          'openaiResponses',
+          'anthropicMessages',
+          1,
+        ],
+      }),
+    ).toEqual(['openaiResponses', 'anthropicMessages']);
+    expect(mapDeclaredInterfaces({ interfaces: [] })).toEqual([]);
+  });
+
+  it('falls back independently to legacy OpenAI booleans when declarations are unavailable', () => {
+    expect(
+      mapSupportedInterfaces({
+        interface_configs: [],
+        interfaces: ['chat', 'futureApi'],
+        features: { chat_completion: true, responses_api: false },
+      }),
+    ).toEqual(['openaiChatCompletions']);
+    expect(
+      mapSupportedInterfaces({ features: { responses_api: true } }),
+    ).toEqual(['openaiResponses']);
+    expect(
+      mapSupportedInterfaces({ features: { responses_api: false } }),
+    ).toEqual([]);
+  });
+
+  it.each([
+    undefined,
+    null,
+    [],
+    { id: 'anthropic.claude', provider: 'Anthropic' },
+    { features: { chat_completion: 'true' } },
+  ])('does not infer interfaces from unavailable metadata %j', (payload) => {
+    expect(mapSupportedInterfaces(payload)).toBeUndefined();
+  });
+
+  it('builds Messages-only feature capabilities without raw features', () => {
+    expect(
+      mapDeploymentFeatures(undefined, ['anthropicMessages']),
+    ).toMatchObject({
+      chatCompletion: false,
+      responsesApi: false,
+      anthropicMessages: true,
+    });
+  });
+
+  it('uses each own declaration only when its OpenAI flag is unavailable', () => {
+    expect(
+      mapDeploymentFeatures({ chat_completion: false, responses_api: 'true' }, [
+        'openaiChatCompletions',
+        'openaiResponses',
+        'anthropicMessages',
+      ]),
+    ).toMatchObject({
+      chatCompletion: false,
+      responsesApi: true,
+      anthropicMessages: true,
+    });
+    expect(
+      mapDeploymentFeatures(undefined, ['openaiEmbeddings']),
+    ).toMatchObject({
+      chatCompletion: false,
+      responsesApi: false,
+      anthropicMessages: false,
+    });
+  });
+
+  it('preserves legacy feature behavior without accepting a fabricated Messages flag', () => {
+    expect(mapDeploymentFeatures(undefined)).toBeUndefined();
+    const features = mapDeploymentFeatures({
+      chat_completion: true,
+      responses_api: false,
+      anthropic_messages: true,
+    });
+    expect(features).toMatchObject({
+      chatCompletion: true,
+      responsesApi: false,
+    });
+    expect(features).not.toHaveProperty('anthropicMessages');
+  });
+});
 
 describe('mapCatalogProperties', () => {
   it('keeps the four recognized properties and drops provider', () => {

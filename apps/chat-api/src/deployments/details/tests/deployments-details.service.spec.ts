@@ -703,6 +703,133 @@ describe('DeploymentsDetailsService', () => {
   );
 
   describe('getDeploymentDetails', () => {
+    it.each([
+      {
+        name: 'mixed APIs',
+        input: {
+          interface_configs: {
+            openaiChatCompletions: {},
+            openaiResponses: {},
+            anthropicMessages: {},
+          },
+          features: { chat_completion: true, responses_api: true },
+        },
+        expected: {
+          chatCompletion: true,
+          responsesApi: true,
+          anthropicMessages: true,
+        },
+      },
+      {
+        name: 'Messages-only without features',
+        input: {
+          interface_configs: {
+            anthropicMessages: {
+              defaults: { secret: 'private' },
+              default_headers: { secret: 'private' },
+            },
+          },
+        },
+        expected: {
+          chatCompletion: false,
+          responsesApi: false,
+          anthropicMessages: true,
+        },
+      },
+      {
+        name: 'interface-only mixed APIs',
+        input: {
+          interface_configs: {
+            openaiChatCompletions: {},
+            openaiResponses: {},
+            anthropicMessages: {},
+          },
+        },
+        expected: {
+          chatCompletion: true,
+          responsesApi: true,
+          anthropicMessages: true,
+        },
+      },
+      {
+        name: 'legacy flags',
+        input: { features: { chat_completion: true, responses_api: false } },
+        expected: { chatCompletion: true, responsesApi: false },
+      },
+      {
+        name: 'explicit OpenAI false',
+        input: {
+          interface_configs: {
+            openaiChatCompletions: {},
+            anthropicMessages: {},
+          },
+          features: { chat_completion: false },
+        },
+        expected: { chatCompletion: false, anthropicMessages: true },
+      },
+      {
+        name: 'malformed metadata',
+        input: { interface_configs: [], features: { chat_completion: true } },
+        expected: { chatCompletion: true },
+      },
+      {
+        name: 'unknown interfaces',
+        input: {
+          interface_configs: { futureApi: {} },
+          features: { chat_completion: true },
+        },
+        expected: { chatCompletion: true, anthropicMessages: false },
+      },
+    ])(
+      'maps declared detail capabilities for $name',
+      async ({ input, expected }) => {
+        const { service, sdkClient } = makeService();
+        sdkClient.getModel.mockResolvedValue(
+          okResponse({ id: 'custom-model', ...input }),
+        );
+        const result = await service.getDeploymentDetails(
+          'user1',
+          'custom-model',
+          'token',
+        );
+        expect(result.modelDetails?.features).toMatchObject(expected);
+        expect(JSON.stringify(result)).not.toMatch(
+          /interface_configs|default_headers|private/,
+        );
+        expect(sdkClient.getModel).toHaveBeenCalledOnce();
+      },
+    );
+
+    it('does not infer Messages from the model name or provider', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getModel.mockResolvedValue(
+        okResponse({ id: 'anthropic.claude', provider: 'Anthropic' }),
+      );
+      const result = await service.getDeploymentDetails(
+        'user1',
+        'anthropic.claude',
+        'token',
+      );
+      expect(result.modelDetails?.features?.anthropicMessages).toBeUndefined();
+    });
+
+    it('maps an application declaration without inventing a legacy Messages flag', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getApplication.mockResolvedValue(
+        okResponse({ interface_configs: { anthropicMessages: {} } }),
+      );
+      const result = await service.getDeploymentDetails(
+        'user1',
+        'applications/bucket/messages',
+        'token',
+      );
+      expect(result.applicationDetails?.features).toMatchObject({
+        anthropicMessages: true,
+        chatCompletion: false,
+        responsesApi: false,
+      });
+    });
+
     it('encodes each deployment path segment before calling DIAL Core', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.getApplication.mockResolvedValue(

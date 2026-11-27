@@ -1810,6 +1810,27 @@ describe('DetailsPanel', () => {
     expect(screen.getByText('Api')).toBeTruthy();
   });
 
+  it('keeps Connect available when Anthropic Messages is the only model endpoint', async () => {
+    renderPanel({
+      item: makeItem({
+        type: CatalogEntityType.Model,
+        details: {
+          api: {
+            resource: { modelId: 'messages-only' },
+            endpoints: [
+              {
+                label: 'Anthropic Messages',
+                url: 'https://core/anthropic/v1/messages',
+              },
+            ],
+          },
+        },
+      }),
+    });
+    await userEvent.click(screen.getByRole('button', { name: 'Connect' }));
+    expect(screen.getByText('Api')).toBeTruthy();
+  });
+
   it('replaces the details content with the publish panel when Publish is clicked', async () => {
     renderPanel();
     await userEvent.click(screen.getByRole('button', { name: 'Publish' }));

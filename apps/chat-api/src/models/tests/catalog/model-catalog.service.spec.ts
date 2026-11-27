@@ -73,6 +73,133 @@ describe('ModelCatalogService', () => {
   });
 
   describe('listCatalog', () => {
+    it.each([
+      {
+        name: 'mixed APIs',
+        input: {
+          interface_configs: {
+            anthropicMessages: {
+              defaults: { secret: 'private-setting' },
+              default_headers: { secret: 'private-setting' },
+            },
+            openaiResponses: {},
+            openaiChatCompletions: {},
+            unknownApi: {},
+          },
+        },
+        supported: [
+          'openaiChatCompletions',
+          'openaiResponses',
+          'anthropicMessages',
+        ],
+      },
+      {
+        name: 'Messages-only',
+        input: { interface_configs: { anthropicMessages: {} } },
+        supported: ['anthropicMessages'],
+      },
+      {
+        name: 'embeddings-only',
+        input: { interface_configs: { openaiEmbeddings: {} } },
+        supported: ['openaiEmbeddings'],
+      },
+      {
+        name: 'legacy flags',
+        input: { features: { chat_completion: true, responses_api: false } },
+        supported: ['openaiChatCompletions'],
+      },
+      {
+        name: 'explicit empty declarations',
+        input: { interface_configs: {}, features: { chat_completion: true } },
+        supported: [],
+      },
+      {
+        name: 'unknown or invalid descriptors',
+        input: {
+          interface_configs: {
+            futureApi: {},
+            anthropicMessages: null,
+            openaiResponses: [],
+          },
+        },
+        supported: [],
+      },
+      {
+        name: 'equivalent declarations',
+        input: {
+          interfaces: [
+            'anthropicMessages',
+            'chat',
+            'openaiResponses',
+            'anthropicMessages',
+          ],
+        },
+        supported: ['openaiResponses', 'anthropicMessages'],
+      },
+      {
+        name: 'malformed metadata',
+        input: { interface_configs: 'unknown' },
+        supported: undefined,
+      },
+      {
+        name: 'missing metadata on an Anthropic ID',
+        input: { provider: 'Anthropic' },
+        supported: undefined,
+      },
+    ])(
+      'projects $name consistently into list and cached detail',
+      async ({ input, supported }) => {
+        const { service, getModels, getModel } = makeService();
+        getModels.mockResolvedValue(
+          okResponse({
+            data: [
+              {
+                id: 'anthropic.custom',
+                object: 'model',
+                display_name: 'Custom',
+                ...input,
+              },
+            ],
+          }),
+        );
+        const list = await service.listCatalog();
+        const detail = await service.getCatalogEntry('anthropic.custom');
+        expect(detail).toEqual(list.data[0]);
+        expect(detail.supportedInterfaces).toEqual(supported);
+        if (supported == null)
+          expect(detail).not.toHaveProperty('supportedInterfaces');
+        expect(JSON.stringify(list)).not.toMatch(
+          /interface_configs|default_headers|private-setting/,
+        );
+        expect(detail.display_name).toBe('Custom');
+        expect(getModels).toHaveBeenCalledOnce();
+        expect(getModel).not.toHaveBeenCalled();
+      },
+    );
+
+    it('does not disclose supported interfaces for a hidden model', async () => {
+      const { service, getModels, getModel } = makeService(
+        { apiKey: CATALOG_KEY },
+        ['HIDDEN'],
+      );
+      getModels.mockResolvedValue(
+        okResponse({
+          data: [
+            {
+              id: 'hidden',
+              description_keywords: ['HIDDEN'],
+              interface_configs: { anthropicMessages: {} },
+            },
+          ],
+        }),
+      );
+      expect(await service.listCatalog()).toEqual({ data: [] });
+      await expect(service.getCatalogEntry('hidden')).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(getModel).not.toHaveBeenCalled();
+    });
+
     it('returns 404 without calling DIAL Core when the key is unset', async () => {
       const { service, getModels } = makeService({ apiKey: undefined });
 

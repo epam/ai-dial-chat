@@ -93,6 +93,37 @@ describe('ModelCatalogController (integration)', () => {
   });
 
   describe('GET /api/v1/model-catalog', () => {
+    it('returns normalized supported interfaces in list and detail with private cache headers', async () => {
+      const entry = {
+        id: 'messages-only',
+        object: 'model',
+        supportedInterfaces: ['anthropicMessages'],
+      };
+      service.listCatalog.mockResolvedValue({ data: [entry] });
+      service.getCatalogEntry.mockResolvedValue(entry);
+      const list = await request(app.getHttpServer())
+        .get('/api/v1/model-catalog')
+        .expect(200);
+      const detail = await request(app.getHttpServer())
+        .get('/api/v1/model-catalog/messages-only')
+        .expect(200);
+      expect(list.body).toEqual({ data: [entry] });
+      expect(detail.body).toEqual(entry);
+      expect(list.headers['cache-control']).toBe('private, max-age=300');
+      expect(detail.headers['cache-control']).toBe('private, max-age=300');
+    });
+
+    it('keeps supported-interface metadata absent in legacy list and detail payloads', async () => {
+      const list = await request(app.getHttpServer())
+        .get('/api/v1/model-catalog')
+        .expect(200);
+      const detail = await request(app.getHttpServer())
+        .get('/api/v1/model-catalog/gpt-4o')
+        .expect(200);
+      expect(list.body.data[0]).not.toHaveProperty('supportedInterfaces');
+      expect(detail.body).not.toHaveProperty('supportedInterfaces');
+    });
+
     it('returns 200 with the catalog body passed through', async () => {
       const res = await request(app.getHttpServer())
         .get('/api/v1/model-catalog')

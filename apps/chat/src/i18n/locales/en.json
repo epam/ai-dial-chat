@@ -159,6 +159,9 @@
       "skillDownloadError": "Couldn't download this skill. Please try again.",
       "tabLimits": "Limits",
       "api": {
+        "chatCompletions": "Chat Completions",
+        "responses": "Responses",
+        "anthropicMessages": "Anthropic Messages",
         "resourceSection": "Resource",
         "snippetSection": "Code snippet",
         "modelId": "Model ID",

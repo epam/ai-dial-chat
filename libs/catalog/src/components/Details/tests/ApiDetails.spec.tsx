@@ -6,7 +6,7 @@ import {
   type ReactElement,
   type ReactNode,
 } from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CodeLanguage } from '../../../types/code-language';
 import { ApiDetails } from '../ApiDetails';
 
@@ -90,12 +90,117 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
 const LONG_MCP_URL =
   'https://dial.example.com/v1/toolset/toolsets/public/a-very-long-toolset-name-that-would-otherwise-overflow-the-panel/mcp';
 
+const MESSAGES_URL = 'https://dial.example.com/anthropic/v1/messages';
+const MESSAGES_CODE =
+  'curl -X POST ' +
+  MESSAGES_URL +
+  ' -d \'{"model":"selected-model","max_tokens":128,"messages":[{"role":"user","content":"Hello"}]}\'';
+const MESSAGE_ENDPOINT = {
+  label: 'Anthropic Messages',
+  url: MESSAGES_URL,
+  snippets: [{ language: CodeLanguage.Curl, code: MESSAGES_CODE }],
+};
+const MIXED_ENDPOINTS = [
+  {
+    label: 'Chat Completions',
+    url: 'https://dial.example.com/openai/deployments/selected-model/chat/completions',
+    snippets: [{ language: CodeLanguage.Curl, code: 'curl chat-completions' }],
+  },
+  {
+    label: 'Responses',
+    url: 'https://dial.example.com/openai/v1/responses',
+    snippets: [{ language: CodeLanguage.Curl, code: 'curl responses' }],
+  },
+  MESSAGE_ENDPOINT,
+];
+
 describe('ApiDetails', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    document.documentElement.dir = '';
+  });
+
   beforeEach(() => {
     Object.assign(navigator, {
       clipboard: { writeText: vi.fn().mockResolvedValue(undefined) },
     });
   });
+
+  it('renders a Messages-only endpoint with a plain title and copies both values accessibly', async () => {
+    render(
+      <ApiDetails
+        api={{
+          resource: { modelId: 'selected-model' },
+          endpoints: [MESSAGE_ENDPOINT],
+        }}
+        copiedStatusLabel="Copied API"
+      />,
+    );
+    expect(screen.getByText('Anthropic Messages')).toBeTruthy();
+    expect(
+      screen.queryByRole('button', { name: 'Anthropic Messages' }),
+    ).toBeNull();
+    expect(screen.getByText(MESSAGES_URL)).toBeTruthy();
+    expect(screen.getByText(MESSAGES_CODE)).toBeTruthy();
+    expect(
+      screen
+        .getAllByRole('status')
+        .every((status) => status.textContent === ''),
+    ).toBe(true);
+    await userEvent.click(screen.getAllByRole('button', { name: 'Copy' })[0]);
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(MESSAGES_URL);
+    await userEvent.click(screen.getAllByRole('button', { name: 'Copy' })[1]);
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(MESSAGES_CODE);
+    expect(
+      screen
+        .getAllByRole('status')
+        .every((status) => status.textContent === 'Copied API'),
+    ).toBe(true);
+    expect(screen.queryByRole('button', { name: 'Download code' })).toBeNull();
+  });
+
+  it('switches mixed API URL and request example together before copying', async () => {
+    render(<ApiDetails api={{ endpoints: MIXED_ENDPOINTS }} />);
+    expect(screen.getByText('curl chat-completions')).toBeTruthy();
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Chat Completions' }),
+    );
+    await userEvent.click(
+      screen.getByRole('menuitem', { name: 'Anthropic Messages' }),
+    );
+    expect(screen.queryByText('curl chat-completions')).toBeNull();
+    expect(screen.getByText(MESSAGES_URL)).toBeTruthy();
+    expect(screen.getByText(MESSAGES_CODE)).toBeTruthy();
+    await userEvent.click(screen.getAllByRole('button', { name: 'Copy' })[1]);
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(MESSAGES_CODE);
+  });
+
+  /* ApiDetails has no JS width branch and jsdom does no CSS layout, so only the
+   * document direction is varied here; layout parity is a manual check. */
+  it.each(['ltr', 'rtl'])(
+    'keeps Messages selection and copy available in %s',
+    async (direction) => {
+      document.documentElement.dir = direction;
+      const view = render(
+        <ApiDetails api={{ endpoints: [MESSAGE_ENDPOINT] }} />,
+      );
+      expect(screen.getByText(MESSAGES_URL)).toBeTruthy();
+      expect(
+        screen.queryByRole('button', { name: 'Anthropic Messages' }),
+      ).toBeNull();
+      view.rerender(<ApiDetails api={{ endpoints: MIXED_ENDPOINTS }} />);
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Chat Completions' }),
+      );
+      await userEvent.click(
+        screen.getByRole('menuitem', { name: 'Anthropic Messages' }),
+      );
+      expect(screen.getByText(MESSAGES_CODE)).toBeTruthy();
+      await userEvent.click(screen.getAllByRole('button', { name: 'Copy' })[0]);
+      expect(navigator.clipboard.writeText).toHaveBeenCalledWith(MESSAGES_URL);
+      expect(screen.getAllByRole('status')[0].textContent).toBe('Copied!');
+    },
+  );
 
   it('renders the full single-endpoint URL via MarkdownCodeBlock, never truncated', () => {
     render(<ApiDetails api={{ resource: { endpointUrl: LONG_MCP_URL } }} />);

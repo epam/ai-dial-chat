@@ -495,6 +495,46 @@ describe('useCatalogItems', () => {
   });
 
   describe('onFetchDetails', () => {
+    it('supplies translated generation API labels through a stable details callback', async () => {
+      vi.mocked(getDeploymentLimits).mockResolvedValue({});
+      const params = makeParams({
+        deployments: [
+          {
+            id: 'mixed',
+            displayName: 'Mixed',
+            type: 'model',
+          } as DeploymentItemDto,
+        ],
+      });
+      vi.mocked(getDeploymentDetails).mockResolvedValue({
+        id: 'mixed',
+        type: 'model',
+        modelDetails: {
+          features: {
+            chatCompletion: true,
+            responsesApi: true,
+            anthropicMessages: true,
+          },
+        },
+      });
+      const { result, rerender } = renderHook(() => useCatalogItems(params));
+      const callback = result.current.onFetchDetails;
+      rerender();
+      expect(result.current.onFetchDetails).toBe(callback);
+      const details = await callback(
+        requireItem(
+          result.current.catalogItems.find((item) => item.id === 'mixed'),
+        ),
+      );
+      expect(
+        details?.api?.endpoints?.map((endpoint) => endpoint.label),
+      ).toEqual([
+        CatalogI18nKeys.DetailsApiChatCompletions,
+        CatalogI18nKeys.DetailsApiResponses,
+        CatalogI18nKeys.DetailsApiAnthropicMessages,
+      ]);
+    });
+
     describe('prompt fetch wiring', () => {
       it('fetches a personal prompt through getPrompt and never the deployment endpoints', async () => {
         vi.mocked(getPrompt).mockResolvedValue(personalPrompt);

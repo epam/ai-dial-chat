@@ -1264,7 +1264,7 @@
     },
     "/api/v1/deployments/{deployment}/details": {
       "get": {
-        "description": "Fetches the full per-entity payload for a model, application, or toolset by id (dispatching to DIAL Core's getModel/getApplication/getToolset based on the resolved deployment type) and maps it into a frontend-safe DeploymentDetailsDto. Results are cached server-side for 60 seconds per user; the response sets Cache-Control to private, no-store so browsers and intermediaries never reuse a stale copy after the active user or toolset credentials change.",
+        "description": "Fetches the full per-entity payload for a model, application, or toolset by id (dispatching to DIAL Core's getModel/getApplication/getToolset based on the resolved deployment type) and maps it into a frontend-safe DeploymentDetailsDto. Generation API capabilities include declared Anthropic Messages support without exposing interface settings. Results are cached server-side for 60 seconds per user; the response sets Cache-Control to private, no-store so browsers and intermediaries never reuse a stale copy after the active user or toolset credentials change.",
         "operationId": "getDeploymentDetails",
         "parameters": [
           {
@@ -2008,7 +2008,7 @@
     },
     "/api/v1/model-catalog": {
       "get": {
-        "description": "Returns the DIAL Core models visible to the server-side MODEL_CATALOG_API_KEY, including models the caller's own roles cannot access. Display data only: GET /api/v1/models still decides what the user can use, and Core invocation settings (defaults, responses_defaults, max_retry_attempts, tokenizer_model) are omitted. Models whose description_keywords contain a HIDDEN_ENTITY_TAGS tag are omitted, as in the Chat Catalog. One server-side cache entry, shared by all users, is kept for 5 minutes.",
+        "description": "Returns the DIAL Core models visible to the server-side MODEL_CATALOG_API_KEY, including models the caller's own roles cannot access. Display data only: GET /api/v1/models still decides what the user can use, and Core invocation settings (defaults, responses_defaults, max_retry_attempts, tokenizer_model) are omitted. supportedInterfaces contains normalized advertised API names, without interface defaults or headers. Models whose description_keywords contain a HIDDEN_ENTITY_TAGS tag are omitted, as in the Chat Catalog. One server-side cache entry, shared by all users, is kept for 5 minutes.",
         "operationId": "listModelCatalog",
         "parameters": [],
         "responses": {
@@ -2056,7 +2056,7 @@
     },
     "/api/v1/model-catalog/{modelName}": {
       "get": {
-        "description": "Returns one model from the cached model catalog, without a separate DIAL Core call. A model hidden from the catalog key answers 404, never 403, so its existence is not revealed. A model omitted through HIDDEN_ENTITY_TAGS also answers 404.",
+        "description": "Returns one model from the cached model catalog, without a separate DIAL Core call. Includes the same normalized supportedInterfaces metadata as the list entry. A model hidden from the catalog key answers 404, never 403, so its existence is not revealed. A model omitted through HIDDEN_ENTITY_TAGS also answers 404.",
         "operationId": "getModelCatalogEntry",
         "parameters": [
           {
@@ -15088,6 +15088,10 @@
             "type": "boolean",
             "description": "Supports the responses API"
           },
+          "anthropicMessages": {
+            "type": "boolean",
+            "description": "Supports Anthropic Messages, derived from DIAL Core declared-interface metadata"
+          },
           "skillsSupported": {
             "type": "boolean",
             "description": "Supports custom skills in chat requests"
@@ -16417,6 +16421,18 @@
                 "$ref": "#/components/schemas/ModelCatalogPropertiesDto"
               }
             ]
+          },
+          "supportedInterfaces": {
+            "description": "Normalized supported API names from DIAL Core declarations, with legacy OpenAI fallback when metadata is unavailable; no interface defaults or headers",
+            "example": [
+              "openaiChatCompletions",
+              "openaiResponses",
+              "anthropicMessages"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": ["id", "object"]

@@ -12,7 +12,10 @@ import {
 } from '../../common/dial/dial-error.mapper';
 import { getApiKeyAuthHeaders } from '../../common/utils/auth-header';
 import { EnvironmentVariables } from '../../config/environment.config';
-import { mapCatalogProperties } from '../../deployments/utils/deployment-mapper.util';
+import {
+  mapCatalogProperties,
+  mapSupportedInterfaces,
+} from '../../deployments/utils/deployment-mapper.util';
 import {
   hasHiddenEntityTag,
   readHiddenEntityTags,
@@ -41,7 +44,8 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 /* Copies only the display fields, so invocation settings and any field Core
  * adds later never reach users who cannot use the model. `catalog_properties`
  * goes through the same allowlist as `/deployments/details` and is left out
- * when nothing recognised remains. */
+ * when nothing recognised remains. Advertised API names are normalized without
+ * copying their defaults, headers or other interface settings. */
 const toCatalogEntry = (
   model: Record<string, unknown>,
 ): ModelCatalogEntryDto => {
@@ -54,6 +58,10 @@ const toCatalogEntry = (
   const catalogProperties = mapCatalogProperties(model.catalog_properties);
   if (catalogProperties) {
     entry.catalog_properties = catalogProperties;
+  }
+  const supportedInterfaces = mapSupportedInterfaces(model);
+  if (supportedInterfaces != null) {
+    entry.supportedInterfaces = supportedInterfaces;
   }
   return entry as unknown as ModelCatalogEntryDto;
 };

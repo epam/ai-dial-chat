@@ -26,6 +26,8 @@ export interface ModelCapabilities {
   hasResume?: boolean;
   hasChatCompletion?: boolean;
   hasResponsesApi?: boolean;
+  /** Whether the deployment supports Anthropic Messages. */
+  hasAnthropicMessages?: boolean;
   hasSkills?: boolean;
   reasoningEfforts?: string[];
 }
@@ -113,6 +115,8 @@ export interface AgentCapabilities {
   hasConfiguration?: boolean;
   hasChatCompletion?: boolean;
   hasResponsesApi?: boolean;
+  /** Whether the deployment supports Anthropic Messages. */
+  hasAnthropicMessages?: boolean;
   hasSkills?: boolean;
 }
 

@@ -59,6 +59,45 @@ export const getStringArray = (
     : undefined;
 };
 
+enum DeploymentApiInterface {
+  ChatCompletions = 'openaiChatCompletions',
+  Embeddings = 'openaiEmbeddings',
+  Responses = 'openaiResponses',
+  Messages = 'anthropicMessages',
+}
+
+const API_INTERFACES = Object.values(DeploymentApiInterface);
+
+/** Returns canonical declared API names, or undefined when declaration metadata is unavailable. */
+export const mapDeclaredInterfaces = (raw: unknown): string[] | undefined => {
+  if (!isRecord(raw)) return undefined;
+  const configs = raw.interface_configs;
+  if (isRecord(configs)) {
+    return API_INTERFACES.filter(
+      (name) => Object.hasOwn(configs, name) && isRecord(configs[name]),
+    );
+  }
+  const interfaces = raw.interfaces;
+  if (!Array.isArray(interfaces)) return undefined;
+  const declared = API_INTERFACES.filter((name) => interfaces.includes(name));
+  const isRecognizedOrEmpty = declared.length > 0 || interfaces.length === 0;
+  return isRecognizedOrEmpty ? declared : undefined;
+};
+
+/** Returns normalized advertised APIs, with legacy OpenAI fallback when declarations are unavailable. */
+export const mapSupportedInterfaces = (raw: unknown): string[] | undefined => {
+  const declared = mapDeclaredInterfaces(raw);
+  if (declared != null) return declared;
+  if (!isRecord(raw) || !isRecord(raw.features)) return undefined;
+  const hasChatCompletion = getBoolean(raw.features, 'chat_completion');
+  const hasResponsesApi = getBoolean(raw.features, 'responses_api');
+  if (hasChatCompletion == null && hasResponsesApi == null) return undefined;
+  const supported: string[] = [];
+  if (hasChatCompletion) supported.push(DeploymentApiInterface.ChatCompletions);
+  if (hasResponsesApi) supported.push(DeploymentApiInterface.Responses);
+  return supported;
+};
+
 export const mapConversationStarters = (
   raw: unknown,
 ): ConversationStartersDto | undefined => {
@@ -211,46 +250,63 @@ export const mapCatalogProperties = (
 
 export const mapDeploymentFeatures = (
   raw: unknown,
+  declaredInterfaces?: readonly string[],
 ): DeploymentFeaturesDetailsDto | undefined => {
-  if (!isRecord(raw)) return undefined;
+  if (!isRecord(raw) && declaredInterfaces == null) return undefined;
+  const features: Record<string, unknown> = isRecord(raw) ? raw : {};
 
-  const reasoningEfforts = Array.isArray(raw.reasoning_efforts)
-    ? raw.reasoning_efforts.filter(
+  const reasoningEfforts = Array.isArray(features.reasoning_efforts)
+    ? features.reasoning_efforts.filter(
         (effort): effort is string => typeof effort === 'string',
       )
     : undefined;
 
   return {
-    rate: getBoolean(raw, 'rate'),
-    mcp: getBoolean(raw, 'mcp'),
-    tokenize: getBoolean(raw, 'tokenize'),
-    truncatePrompt: getBoolean(raw, 'truncate_prompt'),
-    hasConfigurationSchema: getBoolean(raw, 'configuration'),
-    systemPrompt: getBoolean(raw, 'system_prompt'),
-    tools: getBoolean(raw, 'tools'),
-    seed: getBoolean(raw, 'seed'),
-    urlAttachments: getBoolean(raw, 'url_attachments'),
-    folderAttachments: getBoolean(raw, 'folder_attachments'),
-    allowResume: getBoolean(raw, 'allow_resume'),
-    accessibleByPerRequestKey: getBoolean(raw, 'accessible_by_per_request_key'),
-    contentParts: getBoolean(raw, 'content_parts'),
-    temperature: getBoolean(raw, 'temperature'),
-    cache: getBoolean(raw, 'cache'),
-    autoCaching: getBoolean(raw, 'auto_caching'),
-    parallelToolCalls: getBoolean(raw, 'parallel_tool_calls'),
+    rate: getBoolean(features, 'rate'),
+    mcp: getBoolean(features, 'mcp'),
+    tokenize: getBoolean(features, 'tokenize'),
+    truncatePrompt: getBoolean(features, 'truncate_prompt'),
+    hasConfigurationSchema: getBoolean(features, 'configuration'),
+    systemPrompt: getBoolean(features, 'system_prompt'),
+    tools: getBoolean(features, 'tools'),
+    seed: getBoolean(features, 'seed'),
+    urlAttachments: getBoolean(features, 'url_attachments'),
+    folderAttachments: getBoolean(features, 'folder_attachments'),
+    allowResume: getBoolean(features, 'allow_resume'),
+    accessibleByPerRequestKey: getBoolean(
+      features,
+      'accessible_by_per_request_key',
+    ),
+    contentParts: getBoolean(features, 'content_parts'),
+    temperature: getBoolean(features, 'temperature'),
+    cache: getBoolean(features, 'cache'),
+    autoCaching: getBoolean(features, 'auto_caching'),
+    parallelToolCalls: getBoolean(features, 'parallel_tool_calls'),
     assistantAttachmentsInRequest: getBoolean(
-      raw,
+      features,
       'assistant_attachments_in_request',
     ),
-    chatCompletion: getBoolean(raw, 'chat_completion'),
-    responsesApi: getBoolean(raw, 'responses_api'),
-    skillsSupported: getBoolean(raw, 'skills_supported'),
-    maxTokensSupported: getBoolean(raw, 'max_tokens_supported'),
+    chatCompletion:
+      getBoolean(features, 'chat_completion') ??
+      declaredInterfaces?.includes(DeploymentApiInterface.ChatCompletions),
+    responsesApi:
+      getBoolean(features, 'responses_api') ??
+      declaredInterfaces?.includes(DeploymentApiInterface.Responses),
+    ...(declaredInterfaces != null && {
+      anthropicMessages: declaredInterfaces.includes(
+        DeploymentApiInterface.Messages,
+      ),
+    }),
+    skillsSupported: getBoolean(features, 'skills_supported'),
+    maxTokensSupported: getBoolean(features, 'max_tokens_supported'),
     maxCompletionTokensSupported: getBoolean(
-      raw,
+      features,
       'max_completion_tokens_supported',
     ),
-    customTemperatureSupported: getBoolean(raw, 'custom_temperature_supported'),
+    customTemperatureSupported: getBoolean(
+      features,
+      'custom_temperature_supported',
+    ),
     reasoningEfforts,
   };
 };

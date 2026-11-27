@@ -33,6 +33,24 @@ const { About, Content, Overview, Pricing, Limits, Tools, Api } =
   CatalogDetailsTab;
 
 describe('getCatalogDetailsTabs', () => {
+  it('keeps Connect visible for a Messages-only model without an OpenAI endpoint', () => {
+    const item = makeItem(CatalogEntityType.Model, {
+      api: {
+        resource: { modelId: 'messages-only' },
+        endpoints: [
+          {
+            label: 'Anthropic Messages',
+            url: 'https://core/anthropic/v1/messages',
+          },
+        ],
+      },
+    });
+    expect(getCatalogDetailsTabs(item)).toEqual([About, Api]);
+    expect(getCatalogDetailsTabs(item, { isConnectHidden: true })).toEqual([
+      About,
+    ]);
+  });
+
   it.each<[string, CatalogItem, CatalogDetailsTab[]]>([
     [
       'a model before details resolve',

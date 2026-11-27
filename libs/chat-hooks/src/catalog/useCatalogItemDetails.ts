@@ -13,6 +13,7 @@ import { useCallback } from 'react';
 import { parsePromptResourceUrl } from '../prompt/prompt-resource';
 import type { SkillFileContent } from '../skill/skill-file-preview';
 import { buildDeploymentConnectApi } from './deployment-endpoint-url';
+import type { DeploymentConnectLabels } from './deployment-endpoint-url';
 import type { DeploymentLimitsLabels } from './map-deployment-limits-to-catalog';
 import { mapDeploymentLimitsDtoToCatalogLimits } from './map-deployment-limits-to-catalog';
 import {
@@ -72,6 +73,12 @@ export interface UseCatalogItemDetailsOptions {
    * a new object on every render recreates `onFetchDetails`.
    */
   entityDetailsLabels?: Partial<EntityDetailsLabels>;
+  /**
+   * Generation API option labels, merged over the English `DEFAULT_DEPLOYMENT_CONNECT_LABELS`.
+   * Memoise it like the other label objects: a new object on every render
+   * recreates `onFetchDetails`.
+   */
+  deploymentConnectLabels?: Partial<DeploymentConnectLabels>;
 }
 
 /** Returned callbacks from `useCatalogItemDetails`. All callbacks are stable for stable inputs. */
@@ -124,6 +131,7 @@ export const useCatalogItemDetails = ({
   promptOverviewLabels,
   deploymentLimitsLabels,
   entityDetailsLabels,
+  deploymentConnectLabels,
 }: UseCatalogItemDetailsOptions): UseCatalogItemDetailsResult => {
   /*
    * The skill pipeline (manifest, file listing, in-package file loads) lives
@@ -176,12 +184,19 @@ export const useCatalogItemDetails = ({
 
         const deploymentConnectApi =
           entityDetails.type === 'MODEL' || entityDetails.type === 'AGENT'
-            ? buildDeploymentConnectApi(dialCoreExternalUrl ?? '', item.id, {
-                hasChatCompletion:
-                  entityDetails.data.capabilities?.hasChatCompletion,
-                hasResponsesApi:
-                  entityDetails.data.capabilities?.hasResponsesApi,
-              })
+            ? buildDeploymentConnectApi(
+                dialCoreExternalUrl ?? '',
+                item.id,
+                {
+                  hasChatCompletion:
+                    entityDetails.data.capabilities?.hasChatCompletion,
+                  hasResponsesApi:
+                    entityDetails.data.capabilities?.hasResponsesApi,
+                  hasAnthropicMessages:
+                    entityDetails.data.capabilities?.hasAnthropicMessages,
+                },
+                deploymentConnectLabels,
+              )
             : undefined;
 
         return {
@@ -213,6 +228,7 @@ export const useCatalogItemDetails = ({
       deploymentLimitsLabels,
       dialCoreExternalUrl,
       entityDetailsLabels,
+      deploymentConnectLabels,
       promptOverviewLabels,
       onFetchSkillDetails,
     ],

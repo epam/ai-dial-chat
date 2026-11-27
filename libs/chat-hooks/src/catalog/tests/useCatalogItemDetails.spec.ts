@@ -428,6 +428,69 @@ describe('useCatalogItemDetails', () => {
   /* ── onFetchDetails — Deployment (MODEL) ─────────────────────────────── */
 
   describe('onFetchDetails — Model', () => {
+    it.each([
+      { features: { anthropicMessages: true }, names: ['Anthropic Messages'] },
+      {
+        features: {
+          anthropicMessages: true,
+          chatCompletion: true,
+          responsesApi: true,
+        },
+        names: ['Chat Completions', 'Responses', 'Anthropic Messages'],
+      },
+      { features: { chatCompletion: true }, names: ['Chat Completions'] },
+      { features: undefined, names: [] },
+    ])(
+      'builds only the APIs advertised by detail capabilities %#',
+      async ({ features, names }) => {
+        const dto: DeploymentDetailsDto = {
+          id: 'anthropic.custom',
+          type: 'model',
+          modelDetails: { features },
+        };
+        const api = makeApi({
+          getDeploymentDetails: vi.fn().mockResolvedValue(dto),
+        });
+        const { result } = renderHook(() =>
+          useCatalogItemDetails(makeOptions(api)),
+        );
+        const details = await result.current.onFetchDetails(
+          makeItem(CatalogEntityType.Model, 'anthropic.custom'),
+        );
+        expect(
+          details?.api?.endpoints?.map((endpoint) => endpoint.label) ?? [],
+        ).toEqual(names);
+        if (features?.anthropicMessages)
+          expect(
+            details?.api?.endpoints?.at(-1)?.snippets?.[0]?.code,
+          ).toContain('"model":"anthropic.custom"');
+      },
+    );
+
+    it('forwards translated API labels and keeps its callback stable', async () => {
+      const dto: DeploymentDetailsDto = {
+        id: 'messages',
+        type: 'model',
+        modelDetails: { features: { anthropicMessages: true } },
+      };
+      const api = makeApi({
+        getDeploymentDetails: vi.fn().mockResolvedValue(dto),
+      });
+      const options = makeOptions(api, {
+        deploymentConnectLabels: { anthropicMessages: 'Messages traduits' },
+      });
+      const { result, rerender } = renderHook(() =>
+        useCatalogItemDetails(options),
+      );
+      const callback = result.current.onFetchDetails;
+      rerender();
+      expect(result.current.onFetchDetails).toBe(callback);
+      expect(
+        (await callback(makeItem(CatalogEntityType.Model, 'messages')))?.api
+          ?.endpoints?.[0]?.label,
+      ).toBe('Messages traduits');
+    });
+
     it('calls getDeploymentDetails and getDeploymentLimits', async () => {
       const api = makeApi({
         getDeploymentDetails: vi.fn().mockResolvedValue(MODEL_DTO),

@@ -1,0 +1,78 @@
+Slicing strategy: **vertical implementation slices, followed by a separate verification slice**. Slices 1–3 implement the detail-to-Connect path, model-catalog metadata and regression coverage. Slice 4 updates docs. Slice 5 contains all automated verification, quality review and manual acceptance testing.
+
+Read `apps/chat-api/AGENTS.md` before backend work and `.claude/rules/libs.md` before library work. Preserve extensionless imports and bundler resolution; host config/client/auth/i18n stays outside feature libs. No dependency or module-boundary changes, unrelated relocations or manual generated-client edits.
+
+## 1. Model details to Messages Connect
+
+- [x] 1.1 Add dedicated declared-interface/normalization utility regression cases in `apps/chat-api/src/deployments/utils/tests/deployment-mapper.util.spec.ts`: mixed APIs, Messages-only without features, empty descriptor/map, unknown-only map, null/array/primitive descriptors, equivalent API names, categorical chat/mcp values, independent legacy fallback and no ID/provider inference.
+
+- [x] 1.2 Implement the defensive declared-interface reader and normalized known-interface projection in `apps/chat-api/src/deployments/utils/deployment-mapper.util.ts`. Wire declaration-derived detail capabilities into `apps/chat-api/src/deployments/details/deployments-details.service.ts` and add optional `anthropicMessages` to `apps/chat-api/src/deployments/dto/deployment-details.dto.ts`. Preserve explicit OpenAI booleans; fall back only to each API's own declaration when its flag is absent/non-boolean. Do not drop derived features when `raw.features` is absent, alter toolset semantics, or expose raw interface configuration.
+
+- [x] 1.3 Update deployment-detail Swagger response/property annotations in `apps/chat-api/src/deployments/dto/deployment-details.dto.ts` and `apps/chat-api/src/deployments/deployments.controller.ts` as needed. Add `apps/chat-api/src/openapi/tests/supported-interfaces-response.schema.spec.ts`, following `user-limits-response.schema.spec.ts`, to verify optional boolean capability metadata and unchanged `getDeploymentDetails` operation/path/response type.
+
+- [x] 1.4 Regenerate `libs/chat-api-client/openapi.json` and `libs/chat-api-client/src/generated/**` with `npm run openapi` after the deployment-detail Swagger changes. Do not hand-edit generated files.
+
+- [x] 1.5 Extend `ModelCapabilities`, `AgentCapabilities` and the shared mapper capability shape in `libs/chat-hooks/src/catalog/entity-details.ts` and `libs/chat-hooks/src/catalog/map-entity-details-to-catalog.ts` to carry `hasAnthropicMessages` from the generated detail feature. Add dedicated mapping regressions in `libs/chat-hooks/src/catalog/tests/map-entity-details-to-catalog.spec.ts` without adding unrelated Overview rows.
+
+- [x] 1.6 Extend `libs/chat-hooks/src/catalog/deployment-endpoint-url.ts` with `buildAnthropicMessagesUrl`, optional `hasAnthropicMessages` and exported `DeploymentConnectLabels`/defaults. Append the independently gated Messages entry; JSON-serialize and shell-quote its selected ID/body/URL, include `max_tokens`/messages and DIAL/Anthropic headers, and return undefined only when all support flags are falsy. Preserve existing three-argument calls and public exports through `libs/chat-hooks/src/index.ts`. No host config/auth/client/i18n read is allowed in the helper.
+
+- [x] 1.7 Add dedicated URL/snippet utility tests in `libs/chat-hooks/src/catalog/tests/deployment-endpoint-url.spec.ts`. Cover all support combinations, mixed order, Messages-only, trailing slash/base-relative behavior, required fields/headers, selected deployment identity, label defaults/overrides and adversarial quotes/apostrophes/backslashes/percent-encoded IDs. Validate syntax/round-trip without sending a live request.
+
+- [x] 1.8 Add the three option-label enum members in `apps/chat/src/constants/i18n-keys/catalog.ts` and matching `en.json` values for `catalog.details.api.chatCompletions`, `catalog.details.api.responses` and `catalog.details.api.anthropicMessages`. Retain the re-export in `apps/chat/src/constants/translation-keys.ts` and do not add i18n imports inside libs.
+
+- [x] 1.9 Thread `hasAnthropicMessages` and optional `deploymentConnectLabels` through `libs/chat-hooks/src/catalog/useCatalogItemDetails.ts`. In `apps/chat/src/hooks/useCatalogItems/useCatalogItems.ts` memoize the translated labels and pass the existing host Core base. Keep `apps/chat/src/server-api/deployments.ts` and `apps/chat/src/server-api/api-client.ts` using the configured `deploymentsApi` and normal generated method; no new REST wrapper or unused `ModelsApi` singleton is needed.
+
+- [x] 1.10 Add detail service/controller and hook regressions in `apps/chat-api/src/deployments/details/tests/deployments-details.service.spec.ts`, `apps/chat-api/src/deployments/tests/deployments.controller.integration.spec.ts` and `libs/chat-hooks/src/catalog/tests/useCatalogItemDetails.spec.ts`. Cover mixed APIs, Messages-only, interface-only mixed metadata, missing/malformed metadata, explicit OpenAI false, no provider inference, secret-setting omission, and existing MCP/backend API fallbacks.
+
+## 2. Normalized model-catalog metadata
+
+Depends on slice 1's normalizer and generated-feature contract.
+
+- [x] 2.1 Add dedicated projection regressions in `apps/chat-api/src/models/tests/catalog/model-catalog.service.spec.ts` for mixed APIs, Messages-only without legacy metadata, distinct embeddings, deterministic ordering/deduplication, explicit emptiness, missing/malformed/unknown declarations, legacy OpenAI fallback, secret-setting exclusion and unchanged hidden-model/cache behavior.
+
+- [x] 2.2 Add optional `supportedInterfaces` to `apps/chat-api/src/models/dto/model-catalog-response.dto.ts` as a separately projected string array, and use the shared normalization in `apps/chat-api/src/models/catalog/model-catalog.service.ts`. Update descriptions in `apps/chat-api/src/models/catalog/model-catalog.controller.ts`. Do not add `interface_configs` to `MODEL_CATALOG_ENTRY_FIELDS`, change ordinary models passthrough, or add a Core detail fetch.
+
+- [x] 2.3 Extend `apps/chat-api/src/openapi/tests/supported-interfaces-response.schema.spec.ts` to verify the optional `supportedInterfaces` array on both model-catalog response schemas, the exclusion of raw interface settings, and stable `listModelCatalog`/`getModelCatalogEntry` operation IDs.
+
+- [x] 2.4 Regenerate `libs/chat-api-client` with `npm run openapi` after the model-catalog Swagger changes. Add generated-client consumption regressions in `apps/chat/src/server-api/tests/api-client.spec.ts` using mocked normal `ModelsApi` list/detail and `DeploymentsApi` detail calls: normal methods preserve the wire field `supportedInterfaces`, and new/legacy detail flags survive.
+
+- [x] 2.5 Extend the existing supertest coverage in `apps/chat-api/src/models/tests/catalog/model-catalog.controller.spec.ts` to assert normalized list/detail response bodies, absent-field legacy behavior, private max-age=300 success headers, hidden/missing model 404 and existing validation/session/upstream error behavior.
+
+## 3. Generic Connect regression and parity
+
+No new catalog renderer or layout is expected. Change production catalog code only if a narrowly demonstrated issue prevents an acceptance criterion.
+
+- [x] 3.1 Add Messages-only/mixed endpoint regressions in `libs/catalog/src/components/Details/tests/ApiDetails.spec.tsx`, `libs/catalog/src/components/Details/tests/DetailsPanel.spec.tsx` and `libs/catalog/src/utils/tests/details-tabs.spec.ts`. Prove Messages-only Connect visibility/plain title, mixed selection swapping URL and snippet together, full clipboard values, mounted polite copy feedback, label overrides, no download and legacy resource-only hidden-tab behavior.
+
+- [x] 3.2 Add dedicated automated RTL and responsive interaction cases to the existing DetailsPanel/`ApiDetails` suites. Exercise Messages-only/mixed endpoint actions at representative 360/900/1280/1920 px and scoped 767/768/1024/1279 boundaries where the existing detail surface branches. Preserve logical layout, touch/keyboard reachability, copied protocol text and existing surface decisions; do not introduce width reads or new breakpoint prefixes in production code.
+
+## 4. Documentation
+
+Depends on the implementation slices. Keep companion Models Garden work as a separately linked follow-up; do not create or modify another repository or claim the example model's production support.
+
+- [x] 4.1 Update `apps/chat-api/README.md`, `libs/chat-api-client/README.md`, `libs/chat-hooks/README.md` and `libs/catalog/README.md` with the new wire/generated fields, normalization/legacy behavior, independent API choices, Messages example and public helper/label contracts. Update the existing model-catalog/API summary in `docs/architecture.md` and any existing affected diagram only if its represented relationship changes; no new diagram/architecture/provider is introduced. Keep request-generation routing explicitly outside scope.
+
+## 5. Verification and manual testing
+
+Run this slice after implementation and documentation. These tasks contain the verification commands and manual acceptance checks; implementation tasks above do not have individual verification blocks.
+
+- [x] 5.1 Run the BFF regression suites with `npm run test:file -- apps/chat-api/src/deployments/utils/tests/deployment-mapper.util.spec.ts apps/chat-api/src/deployments/details/tests/deployments-details.service.spec.ts apps/chat-api/src/deployments/tests/deployments.controller.integration.spec.ts apps/chat-api/src/models/tests/catalog/model-catalog.service.spec.ts apps/chat-api/src/models/tests/catalog/model-catalog.controller.spec.ts apps/chat-api/src/models/tests/models.service.spec.ts apps/chat-api/src/openapi/tests/supported-interfaces-response.schema.spec.ts apps/chat-api/src/openapi/tests/openapi.config.spec.ts`. Confirm mixed, Messages-only, legacy, empty/unknown/malformed metadata and hidden-model cases, unchanged cache/auth/errors, and no raw interface settings in responses.
+- [x] 5.2 Run mapping, helper, hook and host/client suites with `npm run test:file -- libs/chat-hooks/src/catalog/tests/map-entity-details-to-catalog.spec.ts libs/chat-hooks/src/catalog/tests/deployment-endpoint-url.spec.ts libs/chat-hooks/src/catalog/tests/mcp-endpoint-url.spec.ts libs/chat-hooks/src/catalog/tests/useCatalogItemDetails.spec.ts apps/chat/src/hooks/useCatalogItems/tests/useCatalogItems.spec.ts apps/chat/src/server-api/tests/api-client.spec.ts`. Confirm independent capabilities, selected deployment identity, safe JSON/shell quoting, label forwarding, callback stability and matching wire/client field names.
+- [x] 5.3 Run generic Connect and parity suites with `npm run test:file -- libs/catalog/src/components/Details/tests/ApiDetails.spec.tsx libs/catalog/src/components/Details/tests/DetailsPanel.spec.tsx libs/catalog/src/utils/tests/details-tabs.spec.ts`. Confirm Messages-only tab visibility/plain title, mixed selection swapping URL and snippet together, full clipboard values, mounted polite copy feedback, no download, legacy hidden-tab behavior and equivalent RTL/mobile/desktop actions.
+- [x] 5.4 Run `npm run openapi:check`, `npm exec -- nx run chat-api-client:build`, `npm exec -- nx run chat-api-client:lint`, `npm run validate:docs`, `npm run validate:specs`, `npm run verify:changed` and `npm run build:quiet`. Inspect the generated diff for optional fields and unchanged operation IDs; confirm there are no manual generated-file edits.
+- [x] 5.5 Run the `code-review-and-quality` five-axis pass, including UI-kit, localization, isolation, documentation accuracy and responsive parity. Use `i18n-strings` for the new labels. Confirm `libs/catalog` has no host API/client/config/auth/provider knowledge and the `chat-hooks` change is limited to the requested existing pure DIAL helper. Resolve in-scope findings and rerun the affected tests; record unrelated findings as follow-ups.
+- [ ] 5.6 Manual testing with the user: use confirmed test metadata or controlled fixtures for mixed-API, Messages-only and legacy models. Open Catalog → model details → Connect; check the independently available choices, single-option title, configured Core URL and copied request for the selected deployment. Confirm an `anthropic.*` ID without advertised Messages gets no Messages option. On an approved test deployment with a test key, exercise the copied Messages example and record Core's result without recording credentials. Do not infer the reported production model's support or change conversation-generation routing.
+- [ ] 5.7 Manual responsive/accessibility testing: exercise Messages-only and mixed Connect content at 360/900/1280/1920 px, and the existing 767/768/1024/1279 surface boundaries where applicable, including an open selector while crossing a boundary. Check keyboard/touch selection and copying, stable accessible copy labels and announced feedback, long URL/snippet overflow, and equivalent RTL actions with unmodified protocol text.
+- [x] 5.8 Run exactly one `npm run verify:full` and `openspec validate catalog-anthropic-messages --strict`. Record automated and manual results, keep incomplete work unchecked, and report any blocker. Do not archive, commit, push or implement the companion Models Garden frontend without a separate request.
+
+## Verification results and resolved naming decision
+
+- BFF, headless hook/helper, host/client and generic Connect/RTL/viewport suites pass, including the convention-aligned `supportedInterfaces` contract and the corrected test mocks.
+- OpenAPI generation/check, generated-client build, documentation validation and spec-reference validation passed; the latter reports existing identifier warnings. Localization, theming and UI-kit scans reported no added-line candidates.
+- The generator uses `withoutRuntimeChecks=true` and normal calls preserve JSON. Following the user's request to continue with project conventions, the new BFF-owned normalized field is `supportedInterfaces` on both the wire and generated DTO. Existing Core-shaped fields and global generator settings remain unchanged.
+- Affected builds, regenerated-client build/lint, OpenAPI/client checks, documentation/spec validation and focused regression suites pass. The initial broad backend run encountered a schema hook timeout, local-dotenv explicit-environment failure and worker startup timeouts; the subsequent isolated full and changed-slice runs pass.
+- The single full verification run and the final changed-slice run pass with `NX_LOAD_DOT_ENV_FILES=false`: typecheck, lint, formatting and all test targets are green. No global test configuration or generator settings were changed.
+- Five-axis self-review found no blocking code issues after the wire-name and test-formatting fixes. Scope, isolation, safe snippet quoting, metadata privacy, bounded normalization, memoized labels and documentation were checked. The existing non-null-assertion warnings are unrelated to this change.
+- Partial frontend verification with the user: `anthropic.claude-opus-4-6-v1` shows the Messages endpoint at `https://core.aks.dev.dial.parts/anthropic/v1/messages`, and the displayed example uses the selected model ID. Remaining selector/copy/model-switch and responsive/RTL checks are pending.
+- Live cURL/request testing is deferred at the user's explicit request; no live Messages request has been made or verified. Tasks 5.6 and 5.7 remain unchecked until their remaining checks are completed.
+- The diagnostic console tables were temporary DevTools queries only. No table/debug code was added to the frontend repository, and no model configuration was changed for those queries.

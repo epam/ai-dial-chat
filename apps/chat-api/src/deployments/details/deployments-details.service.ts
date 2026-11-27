@@ -32,6 +32,7 @@ import {
   getNumber,
   isRecord,
   mapCatalogProperties,
+  mapDeclaredInterfaces,
   mapDeploymentFeatures,
   mapToolsetAuthSettings,
   redactApplicationFunctionEnv,
@@ -348,7 +349,10 @@ export class DeploymentsDetailsService {
             }
           : undefined,
         pricing: raw.pricing,
-        features: mapDeploymentFeatures(raw.features),
+        features: mapDeploymentFeatures(
+          raw.features,
+          mapDeclaredInterfaces(raw),
+        ),
         catalogProperties: mapCatalogProperties(raw.catalog_properties),
         owner: raw.owner,
         inputAttachmentTypes: Array.isArray(raw.input_attachment_types)
@@ -440,7 +444,10 @@ export class DeploymentsDetailsService {
         functionStatus: raw.function?.status,
         routes: raw.routes ? Object.keys(raw.routes) : undefined,
         owner: raw.owner,
-        features: mapDeploymentFeatures(raw.features),
+        features: mapDeploymentFeatures(
+          raw.features,
+          mapDeclaredInterfaces(raw),
+        ),
         inputAttachmentTypes: Array.isArray(raw.input_attachment_types)
           ? raw.input_attachment_types
           : undefined,
