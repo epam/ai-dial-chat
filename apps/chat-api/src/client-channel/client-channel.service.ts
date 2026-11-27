@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadGatewayException, Injectable, Logger } from '@nestjs/common';
 import {
   handleDialFetchError,
   handleDialSdkError,
@@ -42,47 +42,63 @@ export class ClientChannelService {
     );
 
     try {
-      const result = (await this.dialClient.client.subscribeClientChannel({
-        headers: {
-          ...getBearerAuthHeaders(token),
-          Accept: 'text/event-stream',
-          ...(reconnectChannelId
-            ? { [CHANNEL_ID_HEADER]: reconnectChannelId }
-            : {}),
+      const { response } = (await this.dialClient.client.subscribeClientChannel(
+        {
+          headers: {
+            ...getBearerAuthHeaders(token),
+            Accept: 'text/event-stream',
+            ...(reconnectChannelId
+              ? { [CHANNEL_ID_HEADER]: reconnectChannelId }
+              : {}),
+          },
+          parseAs: 'stream',
+          signal,
         },
-        parseAs: 'stream',
-        signal,
-      })) as { response: globalThis.Response; error?: unknown };
+      )) as { response: globalThis.Response; error?: unknown };
 
       const elapsedMs = Date.now() - startedAt;
 
-      if (!result.response.ok || !result.response.body) {
+      if (!response.ok || !response.body) {
         this.logger.warn(
-          `[timing] DIAL Core rejected client-channel subscribe after ${elapsedMs}ms — status: ${result.response.status}`,
+          `[timing] DIAL Core rejected client-channel subscribe after ${elapsedMs}ms — status: ${response.status}`,
         );
         return handleDialSdkError(
-          { status: result.response.status },
+          { status: response.status },
           'client-channel.subscribe',
           this.logger,
         );
       }
 
-      const channelId = result.response.headers.get(CHANNEL_ID_HEADER);
+      /*
+       * Core sets the channel id header only when it creates a channel. On a
+       * reconnect it resumes the channel named in the request and answers
+       * without the header, so the id the browser sent is the channel id.
+       */
+      const channelId =
+        response.headers.get(CHANNEL_ID_HEADER) ?? reconnectChannelId;
       if (!channelId) {
         this.logger.error(
           `[timing] DIAL Core client-channel subscribe response is missing the channel id header after ${elapsedMs}ms`,
         );
-        return handleDialSdkError(
-          { status: 502 },
-          'client-channel.subscribe',
-          this.logger,
+        /*
+         * Header names only — their values may carry cookies — plus the
+         * content type and redirect flag, which tell a proxy or login page
+         * that answered in Core's place from a Core response without the header.
+         */
+        this.logger.debug(
+          `Client-channel subscribe response has no ${CHANNEL_ID_HEADER} — status: ${response.status}, content-type: ${response.headers.get('content-type') ?? 'none'}, redirected: ${response.redirected}, response headers: ${[...response.headers.keys()].join(', ') || 'none'}`,
+        );
+        /* The controller never reads this stream, so release the upstream connection here. */
+        await response.body.cancel().catch(() => undefined);
+        throw new BadGatewayException(
+          'DIAL Core did not return a client channel id',
         );
       }
 
       this.logger.debug(
         `[timing] Subscribed to client channel: ${channelId} — DIAL Core responded after ${elapsedMs}ms`,
       );
-      return { stream: result.response.body, channelId };
+      return { stream: response.body, channelId };
     } catch (err) {
       this.logger.debug(
         `[timing] client-channel subscribe fetch threw after ${Date.now() - startedAt}ms`,
