@@ -46,6 +46,8 @@ export interface OnboardingTourColors extends OnboardingCardColors {
   backdrop?: string;
   /** Step counter text. Defaults to `--text-tertiary`. */
   counterText?: string;
+  /** Ring around the lit cut-out, so it stands out on a dark surface the dimming barely darkens, such as a dark sidebar. Defaults to `--stroke-accent`. */
+  spotlightRing?: string;
 }
 
 /** Props for the `OnboardingTour` component. */
@@ -172,12 +174,10 @@ export interface UseOnboardingHintsOptions {
 export interface UseOnboardingHintsResult {
   /** Steps to pass to `OnboardingTour`; empty while no tour runs. */
   steps: OnboardingTourStep[];
-  /** Pass to `OnboardingTour` as `onFinish`: marks the shown ids seen (every hint's id when skipped) and ends the tour; after a close no tour opens again until the hook remounts. */
+  /** Pass to `OnboardingTour` as `onFinish`: marks the shown ids seen when done (every hint's id when skipped) and ends the tour; a close marks nothing more, and no tour opens again until the hook remounts. */
   onFinish: (shownIds: string[], reason: OnboardingTourEndReason) => void;
   /** Pass to `OnboardingTour` as `onStepComplete`: marks a hint seen as soon as the user moves past it. */
   onStepComplete: (stepId: string) => void;
-  /** Pass to `OnboardingTour` as `completedStepCount`: how many hints of the current page were already seen when the tour started. */
-  completedStepCount: number;
 }
 
 /** User-visible strings of the `OnboardingHints` component. */

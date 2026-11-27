@@ -50,17 +50,19 @@ focus, so it never takes the user's keystrokes; it waits until they leave the
 field. Next marks the hint just passed as seen at once, so a tour left halfway
 — another page, a reload, a closed tab — later resumes from the first hint the
 user has not passed. Done marks the hints that were on screen as seen. Close
-and Escape mark the same hints seen and put the onboarding off until the hook
-remounts (usually the next visit): the hints not reached stay unseen, but no
-card opens again in the meantime. Skip opts out and marks every configured
+and Escape mark nothing beyond the hints already passed with Next and put the
+onboarding off until the hook remounts (usually the next visit): the hint the
+tour was closed on and the ones after it stay unseen, so the next visit opens
+on that hint again, but no card opens again in the meantime. Skip opts out and marks every configured
 hint seen, so no later page opens another tour. A `pageKey` change ends a running tour; the
 hints not passed yet wait for a page that renders them.
 
 `isHintOnPage` limits each page to its own hints: a hint it rejects is
 neither shown nor counted there, even when its element is on screen. Which
-page a hint belongs to is the host's decision. The step counter counts the
-hints of the page already seen before the tour started, so a tour reloaded
-halfway reads "Step 2 of 3", not "Step 1 of 2".
+page a hint belongs to is the host's decision. The step counter counts only
+the steps of the tour on screen: a page that opens 10 new hints reads
+"Step 1 of 10" whatever was seen on earlier pages, and a tour reloaded halfway
+counts the hints still to come.
 
 The host decides what a `target` means: `resolveTarget` turns it into the
 element, and `anchorTargets` lists every target it knows. The lib never looks
@@ -154,7 +156,7 @@ const Tour = () => {
 | `steps`                | `OnboardingTourStep[]`                                              | —                             | Steps in order. An empty list renders nothing; a new list restarts from its first step.                                                                                                 |
 | `onFinish`             | `(shownStepIds: string[], reason: OnboardingTourEndReason) => void` | —                             | Called with the ids of the steps that were on screen, and `Done` (Done, or no remaining step has a target), `Closed` (Close, Escape) or `Skipped` (Skip). The host clears `steps` here. |
 | `onStepComplete`       | `(stepId: string) => void`                                          | —                             | Optional. Called with a step's id when the user moves past it with Next, so the host can keep the progress of a tour left unfinished.                                                   |
-| `completedStepCount`   | `number`                                                            | `0`                           | Steps of this tour passed in an earlier visit; the counter starts after them and counts them in its total. `useOnboardingHints` returns it.                                             |
+| `completedStepCount`   | `number`                                                            | `0`                           | Steps the host counts before this tour; the counter starts after them and counts them in its total. `useOnboardingHints` counts each page's tour from 1, so `OnboardingHints` leaves it at `0`. |
 | `isMobile`             | `boolean`                                                           | `false`                       | Shows the card as a sheet instead of next to the target, docked at the bottom, or at the top when the target is in the lower half of the screen.                                        |
 | `dir`                  | `'ltr' \| 'rtl'`                                                    | inherited                     | Direction of the card; it is start-aligned with its target.                                                                                                                             |
 | `labels`               | `OnboardingTourLabels`                                              | English                       | `stepCounter`, `next`, `back`, `done`, `skip`, `close`.                                                                                                                                 |
@@ -164,7 +166,7 @@ const Tour = () => {
 | `descriptionClassName` | `string`                                                            | `'dial-small-paragraph-text'` | Typography of the card description.                                                                                                                                                     |
 | `className`            | `string`                                                            | —                             | Extra class name(s) on the tour root.                                                                                                                                                   |
 
-`colors` fields and their defaults: `backdrop` (`--bg-backdrop`, the dimming around the cut-out), `counterText` (`--text-tertiary`), and the card fields `cardBackground` (`--bg-layer-raised`), `cardShadow` (`--shadow-lg`), `titleText` (`--text-primary`), `descriptionText` (`--text-secondary`).
+`colors` fields and their defaults: `backdrop` (`--bg-backdrop`, the dimming around the cut-out), `counterText` (`--text-tertiary`), `spotlightRing` (`--stroke-accent`, the ring around the cut-out), and the card fields `cardBackground` (`--bg-layer-raised`), `cardShadow` (`--shadow-lg`), `titleText` (`--text-primary`), `descriptionText` (`--text-secondary`).
 
 ### OnboardingAnchorMap
 
@@ -211,8 +213,10 @@ import { OnboardingAnchorMap } from '@epam/ai-dial-onboarding-tour';
 The hint logic of `OnboardingHints` without its rendering, for a host that
 renders `OnboardingTour` itself. It takes the same `hints`, `seenIds`,
 `onSeenIdsChange`, `resolveTarget`, `isEnabled`, `pageKey` and `isHintOnPage`,
-and returns the `steps`, `onFinish`, `onStepComplete` and `completedStepCount`
-to pass to `OnboardingTour`.
+and returns the `steps`, `onFinish` and `onStepComplete` to pass to
+`OnboardingTour`. Each page's tour counts its own steps from 1. Next and Done
+mark hints seen; Close (the close button, Escape) marks nothing more, so the
+hint it was closed on opens again on the next visit.
 
 ```tsx
 import {
@@ -220,21 +224,19 @@ import {
   useOnboardingHints,
 } from '@epam/ai-dial-onboarding-tour';
 
-const { steps, onFinish, onStepComplete, completedStepCount } =
-  useOnboardingHints({
-    hints,
-    seenIds,
-    onSeenIdsChange: saveSeenIds,
-    resolveTarget,
-    isEnabled: true,
-    pageKey: pathname,
-  });
+const { steps, onFinish, onStepComplete } = useOnboardingHints({
+  hints,
+  seenIds,
+  onSeenIdsChange: saveSeenIds,
+  resolveTarget,
+  isEnabled: true,
+  pageKey: pathname,
+});
 
 <OnboardingTour
   steps={steps}
   onFinish={onFinish}
   onStepComplete={onStepComplete}
-  completedStepCount={completedStepCount}
 />;
 ```
 
