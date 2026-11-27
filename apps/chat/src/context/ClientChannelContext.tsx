@@ -20,6 +20,7 @@ import {
 } from 'react';
 import { useLocation, useMatch } from 'react-router';
 import { isConversationPagePath } from '../constants/routes';
+import { ApiRequestError } from '../server-api/base';
 import {
   ClientChannelReportResult,
   reportClientChannel,
@@ -32,6 +33,14 @@ import { useGeneration } from './GenerationContext';
 
 /** Capped exponential backoff for reconnect attempts (ms). After these are exhausted, the provider waits for `ensureConnected` (e.g. the next completion) or tab visibility to resume. */
 const RECONNECT_DELAYS_MS = [1000, 2000, 4000, 8000, 16000];
+
+/*
+ * Subscribe status that means the reconnect channel id itself was refused:
+ * DIAL Core answers 400 for a channel it no longer holds (its TTL ran out),
+ * and the BFF answers 400 for a malformed id. 401, 403 and 429 say nothing
+ * about the id, so they keep it and fall back to the backoff.
+ */
+const REJECTED_CHANNEL_ID_STATUS = 400;
 
 /** Idle grace period (ms) after a generation settles before disconnecting the channel, if nothing else is generating. Mirrors chat 1.0's `UNSUBSCRIBE_IDLE_DELAY_MS`. */
 const IDLE_DISCONNECT_DELAY_MS = 1000;
@@ -311,9 +320,11 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
       !controller.signal.aborted &&
       myGeneration === connectionGenerationRef.current;
 
+    const reconnectChannelId = channelIdRef.current ?? undefined;
+
     try {
       const { body, channelId: newChannelId } = await subscribeClientChannel(
-        channelIdRef.current ?? undefined,
+        reconnectChannelId,
         controller.signal,
       );
 
@@ -336,10 +347,27 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
         }
         scheduleReconnect();
       }
-    } catch {
+    } catch (error) {
       if (isCurrent()) {
         if (abortControllerRef.current === controller) {
           abortControllerRef.current = null;
+        }
+        if (
+          reconnectChannelId != null &&
+          error instanceof ApiRequestError &&
+          error.response.status === REJECTED_CHANNEL_ID_STATUS
+        ) {
+          /*
+           * Retrying with the same id can only fail again, and while
+           * `channelIdRef` holds it `beginConnectionAttempt` starts nothing.
+           * Drop it and subscribe for a fresh channel at once; waiters keep
+           * waiting for that one. The fresh attempt sends no id, so it cannot
+           * come back here.
+           */
+          channelIdRef.current = null;
+          setChannelId(null);
+          void connectRef.current();
+          return;
         }
         resolveChannelWaiters(null);
         scheduleReconnect();
