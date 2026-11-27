@@ -17,6 +17,13 @@ interface ConversationListSkeletonProps {
   className?: string;
 }
 
+/*
+ * TODO: move the "skeleton circle + text bar" row into @epam/ai-dial-ui-kit as
+ * a reusable component (for example a `SkeletonListItem`). The same pairing is
+ * already duplicated in several places in this project, so each copy has to be
+ * kept in sync by hand.
+ */
+
 /**
  * Placeholder rows (avatar circle plus title bar) for the conversation list
  * while it loads. The list's own always-mounted live region announces the
