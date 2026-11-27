@@ -165,4 +165,49 @@ describe('resolveMcpAppToolResult', () => {
     expect(result).toBeUndefined();
     expect(callTool).not.toHaveBeenCalled();
   });
+
+  it('keeps the seed result and never re-calls a configured (DIAL loop) match', async () => {
+    const callTool = vi.fn();
+
+    const result = await resolveMcpAppToolResult(
+      makeMatch({ discovery: McpAppToolDiscovery.Configured }),
+      seed,
+      callTool,
+    );
+
+    expect(callTool).not.toHaveBeenCalled();
+    expect(result).toBe(seedResult);
+  });
+
+  it('re-calls a direct match with empty input when the seed arguments are display-derived', async () => {
+    const callTool = vi.fn().mockResolvedValue(liveResult);
+
+    const result = await resolveMcpAppToolResult(
+      makeMatch(),
+      { ...seed, isDisplayDerived: true },
+      callTool,
+    );
+
+    expect(callTool).toHaveBeenCalledOnce();
+    expect(callTool).toHaveBeenCalledWith(
+      'toolsets/public/entity-lookup',
+      'show_entity_card',
+      {},
+      McpDeploymentKind.Toolset,
+    );
+    expect(result).toBe(liveResult);
+  });
+
+  it('does not re-call an indirect match whose seed arguments are display-derived', async () => {
+    const callTool = vi.fn();
+
+    const result = await resolveMcpAppToolResult(
+      makeMatch({ discovery: McpAppToolDiscovery.Indirect }),
+      { ...seed, isDisplayDerived: true },
+      callTool,
+    );
+
+    expect(callTool).not.toHaveBeenCalled();
+    expect(result).toBe(seedResult);
+  });
 });

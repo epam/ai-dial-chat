@@ -18,8 +18,13 @@ export enum McpDeploymentKind {
  *   name-prefix *guess*, not a confirmed link the host was told about, so
  *   re-calling it live risks hitting the wrong tool or re-triggering a
  *   non-idempotent side effect.
+ * - `Configured`: a toolset the active application lists in its own
+ *   configuration, matched to a tool call recovered from the message's
+ *   stages by the tool's real (unprefixed) name. Never live-re-called; the
+ *   app is seeded from the stage response.
  */
 export enum McpAppToolDiscovery {
   Direct = 'direct',
   Indirect = 'indirect',
+  Configured = 'configured',
 }

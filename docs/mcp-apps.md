@@ -50,10 +50,11 @@ sequenceDiagram
 
 ### 1. Discovery
 
-The UI resource is a property of the **tool declaration**, not of a stage or tool-call result: DIAL Core returns it from `tools/list` as `_meta.ui.resourceUri`. `useMcpAppTools(client, deployment, messages, toolsets)` collects the tools that declare one, from two sources:
+The UI resource is a property of the **tool declaration**, not of a stage or tool-call result: DIAL Core returns it from `tools/list` as `_meta.ui.resourceUri`. `useMcpAppTools(client, deployment, messages, toolsets, deploymentDetails)` collects the tools that declare one, from three sources. Each source is a separate adapter — see [Temporary adapters](#temporary-adapters):
 
 - **Direct.** The active deployment has `features.mcp === true` and is a toolset or an application. Its own `tools/list` is queried. These refs carry `discovery: 'direct'`.
 - **Indirect.** An application without MCP support may call an MCP-capable toolset internally. Core does not expose that link, so the hook guesses it from tool-call names already seen in the conversation: the orchestrator calls a toolset's tool as ``sanitizeToolName(`${toolsetDisplayName}_${toolName}`)``, so a call named `Entity_MCP_Server_show_entity_card` points at the toolset `Entity MCP Server`. Each matching toolset is queried once per session. These refs carry `discovery: 'indirect'`.
+- **DIAL loop.** A DIAL loop application also has `features.mcp === true`, but its own `tools/list` holds only loop-management tools (`run`, `get_run`, …), never the UI tools of the toolsets it uses. Those toolsets are named in the application's `applicationProperties.toolsets`, so for an application whose `applicationTypeSchemaId` ends in `dial-loop` the hook queries each configured toolset, once a message carries a tool call reported as a stage. These refs carry `discovery: 'configured'` and the tool's real name as `toolName`.
 
 Every ref keeps two names. `toolName` is the name as it appears in the message (prefixed for indirect discovery) and is used for matching. `mcpToolName` is the tool's real name and is what a live re-call sends — the app only recognizes its own name.
 
@@ -73,7 +74,7 @@ Spec: [`mcp-app-trigger`](../openspec/specs/mcp-app-trigger/spec.md).
 2. Otherwise, a `discovery: 'direct'` tool — the deployment _is_ the MCP server and typically never reports tool calls at all.
 3. Otherwise nothing: there is no guess while the message streams. A message shows the app only once its tool call has finished, so the app never mounts on an answer that does not call the tool.
 
-Tool-call data comes from `message.custom_content.state`, which the SSE chunk merge copies verbatim. Two orchestrator shapes are understood: `tool_messages` (LangChain-style) and `tool_execution_history` (OpenAI chat-completion style). `resolveMcpAppToolCallSeed` turns the **last** matching call — a retry beats an earlier failure — into the seed `{ toolInput, toolResult }` the app is mounted with.
+Tool-call data is read by the tool-call adapters. A quick app records it in `message.custom_content.state`, which the SSE chunk merge copies verbatim, in one of two shapes: `tool_messages` (LangChain-style) or `tool_execution_history` (OpenAI chat-completion style). A DIAL loop records it only as a stage named `<tool> (<n>s, Start: <time>)` with Markdown content: a `**Request**` bullet list of arguments, then a `**Response**` code block with the result. `resolveMcpAppToolCallSeed` turns the **last** matching call — a retry beats an earlier failure — into the seed `{ toolInput, toolResult }` the app is mounted with.
 
 ### 3. Rendering: inline preview first, canvas on demand
 
@@ -96,7 +97,9 @@ Specs: [`mcp-app-canvas`](../openspec/specs/mcp-app-canvas/spec.md), [`mcp-app-t
 
 Before mounting, `resolveMcpAppToolResult` decides which tool result the app gets:
 
-- For a `direct` match, or an `indirect` match with a real tool call in `custom_content.state`, it **calls the tool again live** with the seed's arguments (or `{}` for a direct match with no seed) and hands the app the fresh `CallToolResult`. The transcript's text result is often not what the app's UI expects.
+- For a `direct` match, or an `indirect` match with real arguments from a tool call in `custom_content.state`, it **calls the tool again live** with the seed's arguments (or `{}` for a direct match with no seed) and hands the app the fresh `CallToolResult`. The transcript's text result is often not what the app's UI expects.
+- Arguments are replayed only when they are the real ones. A seed marked `isDisplayDerived` — arguments recovered from a DIAL loop stage's display Markdown, which can differ from what the tool received (escaped underscores, decoded `%20`) — never supplies them, whatever the discovery kind: a `direct` match is re-called with `{}`, and an `indirect` match is not re-called. This follows where the data came from, not which adapter found the tool.
+- A `configured` (DIAL loop) match **never re-calls**. The app is seeded from the stage's `**Response**` block instead, passed as both text `content` and, when the text is a JSON object, `structuredContent`.
 - For an indirect match with no seed (matching no longer produces one), it passes the transcript result through unchanged.
 - If the live call throws, it is retried once after a short randomized delay (500–1000 ms), so a transient connection drop — typical when many cards re-mount together after a page reload — does not cost the card its data. If the retry throws too, it falls back to the transcript result.
 
@@ -175,6 +178,20 @@ Spec: [`mcp-app-sandbox-proxy`](../openspec/specs/mcp-app-sandbox-proxy/spec.md)
 
 There is no feature flag. MCP Apps appear whenever a sandbox URL is configured and the active deployment exposes at least one tool with a UI resource. Without `MCP_APP_SANDBOX_URL` nothing renders — not even a placeholder.
 
+## Temporary adapters
+
+DIAL Core does not yet report MCP Apps tool calls or the toolset a call belongs to, so each kind of app needs a small adapter. An adapter has two halves: a **tool-call** half in `libs/mcp-apps/src/adapters/<kind>/` that reads tool calls out of a message, and a **discovery** half in `libs/chat-hooks/src/mcp-apps/adapters/<kind>/` that finds the UI tools. The generic code (`findMcpAppForMessage`, seeding, the live re-call, rendering) knows no heuristic and does not change when an adapter is replaced.
+
+| Adapter                 | Applies to                                                     | Assumption it depends on                                                                                                              | Remove when                                                             |
+| ----------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Direct (discovery only) | A deployment with `features.mcp` that is itself the MCP server | `tools/list` of the deployment lists its UI tools                                                                                     | Not temporary; stays for toolsets and MCP-server apps                   |
+| Quick app               | A quick app that calls toolsets internally                     | Calls are recorded in `state` as `<ToolsetName>_<tool>` (`sanitizeToolName`), and the toolset is the one whose name prefixes the call | Core reports the toolset id on a tool call                              |
+| DIAL loop               | An application whose schema id ends in `dial-loop`             | Tool calls appear as stages with the `**Request**`/`**Response**` Markdown, and the toolsets are in `applicationProperties.toolsets`  | Core or the loop exposes tool calls and the toolsets' UI tools natively |
+
+Adding a kind: write its tool-call extractor, register it in `libs/mcp-apps/src/adapters/tool-calls.ts`, write its discovery function, and call it from `useMcpAppTools`. Removing a kind: delete its two folders and those two call sites. Applicability is decided by discovery: the extractors only read a message's own shape, and a call matters only if discovery produced a tool with that name.
+
+Limits of the DIAL loop adapter: the stage text is display Markdown, not a contract, so the seed's `toolInput` is informational only and never replayed; request values that are not valid JSON stay strings, with Markdown escapes removed; the result is whatever the stage prints, so a tool whose `structuredContent` differs from its printed text is seeded with the printed JSON; and when two configured toolsets expose a tool with the same name, the first one wins.
+
 ## Known limitations
 
 - **Popups are blocked.** Neither iframe's `sandbox` attribute includes `allow-popups`, and `@mcp-ui/client` (7.1.1) hardcodes the outer one. An app's own `window.open` fails; use `ui/open-link` instead. The CSP's `allow-popups` token does not change this.
@@ -182,4 +199,4 @@ There is no feature flag. MCP Apps appear whenever a sandbox URL is configured a
 - **Indirect discovery is a name heuristic** (see [Discovery](#1-discovery)); a toolset whose sanitized display name does not prefix the tool-call name is not found.
 - **A failed indirect discovery is not retried.** The toolset is marked as queried before the request, so after a failure its app stays hidden until the deployment changes or the page reloads. Clearing the mark on failure would re-send the request on every `messages` change (for example while a response streams) for a persistent error. Reviewed together with the name heuristic above.
 - **The `initialize` handshake fallback can re-send a `tools/call`.** When Core answers `400`/`404` the BFF runs the MCP session handshake and sends the call once more. It works around Core not yet supporting MCP sessions for apps natively, and is to be revisited when it does.
-- **Only two orchestrator state shapes** (`tool_messages`, `tool_execution_history`) are understood for seeding. Neither is a DIAL Core or MCP Apps guarantee.
+- **Only two orchestrator state shapes** (`tool_messages`, `tool_execution_history`) and the DIAL loop stage Markdown are understood for seeding. None is a DIAL Core or MCP Apps guarantee.

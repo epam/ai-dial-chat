@@ -1,102 +1,77 @@
 import type {
+  DeploymentDetailsDto,
   DeploymentItemDto,
   DialToolsetDto,
 } from '@epam/ai-dial-chat-api-client';
 import type { Message } from '@epam/ai-dial-chat-shared';
 import {
   collectToolCallNames,
-  sanitizeToolName,
+  hasDialLoopToolCalls,
   type McpAppToolRef,
-  McpAppToolDiscovery,
-  McpDeploymentKind,
 } from '@epam/ai-dial-mcp-apps';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { isPublicToolsetId } from '../../oauth/toolset-id';
+import {
+  discoverDialLoopTools,
+  getDialLoopToolsetIds,
+} from '../adapters/dial-loop/dial-loop-discovery';
+import { discoverDirectTools } from '../adapters/direct/direct-discovery';
+import {
+  discoverQuickAppTools,
+  findQuickAppToolsets,
+} from '../adapters/quick-app/quick-app-discovery';
 import type { McpAppsApiClient } from '../mcp-apps-api-client';
 
 /**
- * Drops a toolset when another toolset with the same display name is public.
- * Temporary heuristic until MCP Apps are fully supported: a private copy of a
- * published toolset (same name, user bucket) cannot have `forward_auth_token`,
- * so a call to it reaches the MCP server without the user's identity. The
- * toolset an application delegates to is the published one.
- * @param toolsets - toolsets whose name prefixes a tool call seen in the conversation
- */
-const preferPublicToolsets = (toolsets: DialToolsetDto[]): DialToolsetDto[] => {
-  const nameOf = (toolset: DialToolsetDto) =>
-    sanitizeToolName(`${toolset.displayName ?? toolset.id}`);
-  const publicNames = new Set(
-    toolsets.filter((toolset) => isPublicToolsetId(toolset.id)).map(nameOf),
-  );
-  return toolsets.filter(
-    (toolset) =>
-      isPublicToolsetId(toolset.id) || !publicNames.has(nameOf(toolset)),
-  );
-};
-
-/**
- * Discovers MCP Apps-capable tools available to the current conversation, merging two
- * sources:
+ * Discovers MCP Apps-capable tools available to the current conversation by
+ * merging three adapters (see `docs/mcp-apps.md`, "Temporary adapters"):
  *
- * 1. **Direct** — the active deployment itself, when it declares `features.mcp` (a
- *    toolset, or an application that is itself an MCP server).
- * 2. **Indirect** — any toolset in `toolsets` whose name prefixes a tool-call name
- *    actually seen in `messages` (e.g. `weather_get_weather` implies the `weather`
- *    toolset). This covers a quick app that has no MCP capability of its own but
- *    internally delegates to an MCP-capable toolset — a link the host does not
- *    otherwise expose. Tool names discovered this way are re-prefixed with the
- *    toolset's name so they match the `{toolset}_{tool}` form seen in real tool
- *    calls, keeping downstream name-matching (`findMcpAppForMessage`) unchanged.
+ * 1. **Direct** — the active deployment itself, when it declares `features.mcp`.
+ * 2. **Quick app** — any toolset whose name prefixes a tool-call name recorded in
+ *    `state`, re-prefixed so the names match the recorded calls.
+ * 3. **DIAL loop** — the toolsets listed in a DIAL loop application's
+ *    configuration, inspected once a message carries a tool call reported as a stage.
  *
- * Empty until loaded, or if neither source yields anything.
+ * Empty until loaded, or if no adapter yields anything.
+ * @param client - MCP Apps API client
+ * @param deployment - the active deployment
+ * @param messages - conversation messages
+ * @param toolsets - every toolset the host knows
+ * @param deploymentDetails - details of the active deployment, used to read a DIAL loop's configured toolsets
  */
 export const useMcpAppTools = (
   client: McpAppsApiClient,
   deployment: DeploymentItemDto | undefined,
   messages: Message[],
   toolsets: DialToolsetDto[],
+  deploymentDetails?: DeploymentDetailsDto | null,
 ): McpAppToolRef[] => {
   const [directTools, setDirectTools] = useState<McpAppToolRef[]>([]);
-  const [indirectTools, setIndirectTools] = useState<McpAppToolRef[]>([]);
+  const [quickAppTools, setQuickAppTools] = useState<McpAppToolRef[]>([]);
+  const [dialLoopTools, setDialLoopTools] = useState<McpAppToolRef[]>([]);
   const fetchedToolsetIdsRef = useRef<Set<string>>(new Set());
+
+  const deploymentId = deployment?.id;
+  const deploymentType = deployment?.type;
+  const hasMcp = deployment?.features?.mcp === true;
 
   useEffect(() => {
     fetchedToolsetIdsRef.current = new Set();
-    setIndirectTools([]);
+    setQuickAppTools([]);
 
-    if (deployment?.features?.mcp !== true) {
-      setDirectTools([]);
-      return;
-    }
-    if (deployment.type !== 'toolset' && deployment.type !== 'application') {
-      setDirectTools([]);
-      return;
-    }
-    const deploymentId = deployment.id;
-    const kind =
-      deployment.type === 'toolset'
-        ? McpDeploymentKind.Toolset
-        : McpDeploymentKind.Application;
-
-    const loadDirectTools = async () => {
-      try {
-        const tools = await client.listAppTools(deploymentId, kind);
-        setDirectTools(
-          tools.map(({ resourceUri, toolName }) => ({
-            toolsetId: deploymentId,
-            resourceUri,
-            toolName,
-            mcpToolName: toolName,
-            kind,
-            discovery: McpAppToolDiscovery.Direct,
-          })),
-        );
-      } catch {
-        setDirectTools([]);
-      }
+    let isCancelled = false;
+    const load = async () => {
+      const tools = await discoverDirectTools(client, {
+        id: deploymentId,
+        type: deploymentType,
+        hasMcp,
+      });
+      if (!isCancelled) setDirectTools(tools);
     };
-    void loadDirectTools();
-  }, [deployment?.id, deployment?.type, deployment?.features?.mcp, client]);
+    void load();
+    return () => {
+      isCancelled = true;
+    };
+  }, [deploymentId, deploymentType, hasMcp, client]);
 
   const toolCallNames = useMemo(
     () => collectToolCallNames(messages),
@@ -106,50 +81,58 @@ export const useMcpAppTools = (
   useEffect(() => {
     if (toolCallNames.size === 0) return;
 
-    const matchingToolsets = toolsets.filter((toolset) => {
-      const prefix = sanitizeToolName(`${toolset.displayName ?? toolset.id}_`);
-      return [...toolCallNames].some((name) => name.startsWith(prefix));
-    });
-    const candidateToolsets = preferPublicToolsets(matchingToolsets).filter(
-      (toolset) => !fetchedToolsetIdsRef.current.has(toolset.id),
-    );
+    const candidateToolsets = findQuickAppToolsets(
+      toolsets,
+      toolCallNames,
+    ).filter((toolset) => !fetchedToolsetIdsRef.current.has(toolset.id));
     if (candidateToolsets.length === 0) return;
 
     for (const toolset of candidateToolsets) {
       fetchedToolsetIdsRef.current.add(toolset.id);
     }
 
-    const loadIndirectTools = async () => {
-      const results = await Promise.all(
-        candidateToolsets.map(async (toolset) => {
-          try {
-            const tools = await client.listAppTools(
-              toolset.id,
-              McpDeploymentKind.Toolset,
-            );
-            return tools.map(({ resourceUri, toolName }) => ({
-              toolsetId: toolset.id,
-              resourceUri,
-              toolName: sanitizeToolName(
-                `${toolset.displayName ?? toolset.id}_${toolName}`,
-              ),
-              mcpToolName: toolName,
-              kind: McpDeploymentKind.Toolset,
-              discovery: McpAppToolDiscovery.Indirect,
-            }));
-          } catch {
-            return [];
-          }
-        }),
-      );
-      setIndirectTools((prev) => [...prev, ...results.flat()]);
+    const load = async () => {
+      const tools = await discoverQuickAppTools(client, candidateToolsets);
+      setQuickAppTools((prev) => [...prev, ...tools]);
     };
-    void loadIndirectTools();
+    void load();
   }, [toolCallNames, toolsets, client]);
+
+  /* The host's details may still describe a previously selected deployment. */
+  const activeDetails =
+    deploymentDetails?.id === deployment?.id ? deploymentDetails : undefined;
+  /* Keyed by value: a new but equal `deploymentDetails` object must not re-run discovery. */
+  const dialLoopToolsetIdsKey = getDialLoopToolsetIds(activeDetails).join('\n');
+  const dialLoopToolsetIds = useMemo(
+    () =>
+      dialLoopToolsetIdsKey === '' ? [] : dialLoopToolsetIdsKey.split('\n'),
+    [dialLoopToolsetIdsKey],
+  );
+  const hasStageToolCalls = useMemo(
+    () => dialLoopToolsetIds.length > 0 && hasDialLoopToolCalls(messages),
+    [dialLoopToolsetIds, messages],
+  );
+
+  useEffect(() => {
+    if (!hasStageToolCalls || dialLoopToolsetIds.length === 0) {
+      setDialLoopTools([]);
+      return;
+    }
+    let isCancelled = false;
+
+    const load = async () => {
+      const tools = await discoverDialLoopTools(client, dialLoopToolsetIds);
+      if (!isCancelled) setDialLoopTools(tools);
+    };
+    void load();
+    return () => {
+      isCancelled = true;
+    };
+  }, [hasStageToolCalls, dialLoopToolsetIds, client]);
 
   /* Stable identity between renders so memoized message rows don't re-render. */
   return useMemo(
-    () => [...directTools, ...indirectTools],
-    [directTools, indirectTools],
+    () => [...directTools, ...quickAppTools, ...dialLoopTools],
+    [directTools, quickAppTools, dialLoopTools],
   );
 };

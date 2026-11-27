@@ -6830,7 +6830,7 @@ export const mcpAppsApiClient = createMcpAppsApiClient(toolsetsApi);
 
 ### useMcpAppTools
 
-Discovers the active conversation's MCP-Apps-capable tools (direct deployment capability, plus indirect discovery through a toolset an application delegates to internally).
+Discovers the active conversation's MCP-Apps-capable tools: the deployment's own capability, the toolset a quick app delegates to (found by tool-call name), and the toolsets configured on a DIAL loop application (read from `deploymentDetails`, queried once a message reports a tool call as a stage). Each source is a temporary adapter; see `docs/mcp-apps.md`, "Temporary adapters".
 
 ```tsx
 import { useMcpAppTools } from '@epam/ai-dial-chat-hooks/mcp-apps';
@@ -6840,6 +6840,7 @@ const mcpAppTools = useMcpAppTools(
   selectedDeployment,
   messages,
   toolsets,
+  selectedDeploymentDetails,
 );
 ```
 

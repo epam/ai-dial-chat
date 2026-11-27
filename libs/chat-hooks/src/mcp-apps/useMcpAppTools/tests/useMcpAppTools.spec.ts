@@ -1,4 +1,5 @@
 import type {
+  DeploymentDetailsDto,
   DeploymentItemDto,
   DialToolsetDto,
 } from '@epam/ai-dial-chat-api-client';
@@ -127,5 +128,124 @@ describe('useMcpAppTools indirect discovery', () => {
     await Promise.resolve();
     expect(client.listAppTools).not.toHaveBeenCalled();
     expect(result.current).toEqual([]);
+  });
+});
+
+describe('useMcpAppTools DIAL loop discovery', () => {
+  const LOOP_ID = 'applications/bucket/loop__1.0.0';
+  const loopApp = {
+    id: LOOP_ID,
+    type: 'application',
+    features: { mcp: false },
+  } as unknown as DeploymentItemDto;
+  const makeDetails = (id: string): DeploymentDetailsDto =>
+    ({
+      id,
+      applicationDetails: {
+        applicationTypeSchemaId:
+          'https://core.example.com/custom_application_schemas/dial-loop',
+        applicationProperties: { toolsets: [TOOLSET_ID] },
+      },
+    }) as unknown as DeploymentDetailsDto;
+  const stageMessages = [
+    {
+      role: 'assistant',
+      content: '',
+      custom_content: {
+        stages: [
+          {
+            index: 0,
+            name: 'show_entity_card (0.04s, Start: 12:45:41)',
+            status: 'completed',
+            content: '**Request**\n\n- `id`: x\n\n**Response**\n\n```\n{}\n```',
+          },
+        ],
+      },
+    },
+  ] as unknown as Message[];
+
+  it('lists the configured toolsets once a message reports a stage tool call', async () => {
+    const client = makeClient();
+    const details = makeDetails(LOOP_ID);
+    const { result } = renderHook(() =>
+      useMcpAppTools(client, loopApp, stageMessages, [], details),
+    );
+
+    await waitFor(() => expect(result.current).toHaveLength(1));
+    expect(client.listAppTools).toHaveBeenCalledWith(TOOLSET_ID, 'toolset');
+    expect(result.current[0]).toMatchObject({
+      toolName: 'show_entity_card',
+      discovery: McpAppToolDiscovery.Configured,
+    });
+  });
+
+  it('queries the configured toolsets once when the details object is recreated on every render', async () => {
+    const client = makeClient();
+    const { result } = renderHook(() =>
+      useMcpAppTools(client, loopApp, stageMessages, [], makeDetails(LOOP_ID)),
+    );
+
+    await waitFor(() => expect(result.current).toHaveLength(1));
+    await Promise.resolve();
+    expect(client.listAppTools).toHaveBeenCalledOnce();
+  });
+
+  it('ignores details that belong to another deployment', async () => {
+    const client = makeClient();
+    renderHook(() =>
+      useMcpAppTools(
+        client,
+        loopApp,
+        stageMessages,
+        [],
+        makeDetails('applications/bucket/other__1.0.0'),
+      ),
+    );
+
+    await Promise.resolve();
+    expect(client.listAppTools).not.toHaveBeenCalled();
+  });
+
+  it('does not query toolsets before any stage tool call exists', async () => {
+    const client = makeClient();
+    renderHook(() =>
+      useMcpAppTools(client, loopApp, [], [], makeDetails(LOOP_ID)),
+    );
+
+    await Promise.resolve();
+    expect(client.listAppTools).not.toHaveBeenCalled();
+  });
+
+  it('combines the listing of the loop itself and the configured listing when the loop declares mcp', async () => {
+    const mcpLoopApp = {
+      ...loopApp,
+      features: { mcp: true },
+    } as unknown as DeploymentItemDto;
+    const client = {
+      listAppTools: vi.fn(async (id: string) =>
+        id === TOOLSET_ID
+          ? [
+              {
+                toolName: 'show_entity_card',
+                resourceUri: 'ui://entity-card/index.html',
+              },
+            ]
+          : [],
+      ),
+    } as unknown as McpAppsApiClient;
+    const details = makeDetails(LOOP_ID);
+
+    const { result } = renderHook(() =>
+      useMcpAppTools(client, mcpLoopApp, stageMessages, [], details),
+    );
+
+    await waitFor(() => expect(result.current).toHaveLength(1));
+    expect(client.listAppTools).toHaveBeenCalledTimes(2);
+    expect(client.listAppTools).toHaveBeenCalledWith(LOOP_ID, 'application');
+    expect(client.listAppTools).toHaveBeenCalledWith(TOOLSET_ID, 'toolset');
+    expect(result.current[0]).toMatchObject({
+      toolsetId: TOOLSET_ID,
+      discovery: McpAppToolDiscovery.Configured,
+    });
   });
 });

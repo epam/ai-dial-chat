@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { sanitizeToolName } from '../mcp-app';
+import { sanitizeToolName } from '../quick-app-tool-calls';
 
 describe('sanitizeToolName', () => {
   it('leaves an already valid name untouched', () => {

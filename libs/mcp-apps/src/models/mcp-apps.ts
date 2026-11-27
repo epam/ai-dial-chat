@@ -25,8 +25,10 @@ export interface McpAppToolRef {
 
 /** Original tool call's arguments/result, seeded into the mounted app so it renders that invocation immediately instead of an empty initial state. */
 export interface McpAppToolCallSeed {
-  /** The tool call's real structured arguments. */
+  /** The tool call's arguments: the real ones, or display-derived ones when `isDisplayDerived` is set. */
   toolInput?: Record<string, unknown>;
+  /** True when `toolInput` was recovered from display text and may differ from what the tool received; it is informational and is never replayed in a live re-call. */
+  isDisplayDerived?: boolean;
   /** The tool call's result, if already known. */
   toolResult?: CallToolResult;
 }
@@ -140,4 +142,18 @@ export interface McpAppInlinePreviewColors {
 export interface McpAppInlinePreviewTypography {
   /** Typography class of the "opened in canvas" and load-error messages. Defaults to `'dial-body-text'`. */
   messageClassName?: string;
+}
+
+/** A tool call recovered from a message by a tool-call adapter, paired with its result text once known. */
+export interface McpAppToolCall {
+  /** The tool name as the producing agent reports it (prefixed or raw, depending on the adapter). */
+  name: string;
+  /** The call's arguments. */
+  args: Record<string, unknown>;
+  /** The call's result as plain text; undefined while the call is running or when it failed. */
+  result?: string;
+  /** True when `args` were recovered from display text (for example a Markdown stage), so they may differ from what the tool received and must never be replayed. */
+  isDisplayDerived?: boolean;
+  /** The result parsed as a JSON object, when the adapter can tell it is the tool's structured result. */
+  structuredResult?: Record<string, unknown>;
 }

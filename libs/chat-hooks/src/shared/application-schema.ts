@@ -26,6 +26,10 @@ export const isQuickAppSchema = (schema?: QuickAppSchemaLike): boolean =>
   (!!schema.id?.endsWith('quickapps2') ||
     schema.displayName === 'Quick app 2.0');
 
+/** True when `schema` is the DIAL loop schema, matched by id suffix like {@link isQuickAppSchema}. */
+export const isDialLoopSchema = (schema?: QuickAppSchemaLike): boolean =>
+  !!schema?.id?.endsWith('dial-loop');
+
 /** An application schema with a resolved id, as returned by {@link getRunnerSchemas}. */
 export type RunnerSchema<T extends QuickAppSchemaLike> = T & { id: string };
 
