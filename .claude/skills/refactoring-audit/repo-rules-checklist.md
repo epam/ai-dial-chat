@@ -113,12 +113,34 @@ Classify as **Confirmed dead**, **Reachability/config gap**, **Intentional publi
 
 ---
 
+## Tests (`.claude/rules/spec.md`)
+
+Signals come from [scripts/collect-test-health.mjs](scripts/collect-test-health.mjs) (AST, static) — section names below are its headings. Classify each read hit as Delete / Merge / Fix / Keep / Needs owner confirmation (SKILL.md Step 3e).
+
+| Rule                                 | Collector section                            | Expected / interpretation                                                    |
+| ------------------------------------ | -------------------------------------------- | ---------------------------------------------------------------------------- |
+| No focused tests                     | Focused tests and suites                     | **0** — P0                                                                   |
+| No silent skips                      | Skipped suites / tests, conditional, todo    | Each has a reason that still applies, or is fixed/deleted                    |
+| Every test asserts                   | Empty tests, tests with no visible assertion | **0**; a hit may assert through an imported helper — read it                 |
+| One test per behaviour               | Duplicate names, exact duplicates            | **0**; delete only with a named covering test                                |
+| One test per subject after a move    | Same body, different subject or setup        | App copies of lib tests are redundant when the app module only wraps the lib |
+| Repeated cases are a table           | Clone groups                                 | `it.each` / `describe.each` when ≥3 cases differ only in literals            |
+| One spec file per small subject      | Spec families for one subject                | Merge below the threshold; concern splits above it are Keep                  |
+| `.spec.*` suffix, `tests/` subfolder | Placement sections                           | **0** `.test.*`; chat-api co-location follows the NestJS rule                |
+| Spec named after its subject         | Specs not named after a source file          | Behaviour/contract specs are fine; no first-party import needs a read        |
+| Spec proportional to subject         | Largest test files                           | Spec ≫ subject → split by behaviour (Test monoliths)                         |
+
+Unused test helpers, fixtures and mocks come from the Knip comprehensive pass (Dead code above).
+
+---
+
 ## Documenting findings
 
-Split into three sections in audit output docs:
+Split into four sections in audit output docs:
 
 1. **Structural smells** — complexity patterns
 2. **Convention violations** — repo rule breaches
 3. **Dead code** — confirmed findings and separately listed unverified candidates
+4. **Test suite** — Delete/Merge/Fix rows with covering-test evidence, then Keep and unverified rows
 
 Each structural/convention row: **path from this run**, rule/pattern, count, fix, priority. Each dead-code row: path/package, kind, signal/mode, classification, evidence, action, priority. Drop rows on the next audit if the finding no longer appears in current evidence.
