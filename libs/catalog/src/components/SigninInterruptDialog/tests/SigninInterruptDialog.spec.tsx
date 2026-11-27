@@ -173,13 +173,24 @@ describe('SigninInterruptDialog', () => {
     expect(screen.getAllByRole('button', { name: 'Decline' })).toHaveLength(1);
   });
 
-  it('renders the footer actions only while more than one row is listed', async () => {
+  it('cancels a single-row dialog from the footer and hides the close icon', async () => {
+    const user = userEvent.setup();
+    renderDialog({ labels: { cancel: 'Abort' } });
+
+    expect(screen.queryByRole('button', { name: /close/i })).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Abort' }));
+
+    expect(onDeclineAll).toHaveBeenCalledOnce();
+  });
+
+  it('renders Decline all and Log in to … only while more than one row is listed', async () => {
     const user = userEvent.setup();
     const { rerender } = renderDialog();
     expect(screen.queryByRole('button', { name: 'Decline all' })).toBeNull();
     expect(
       screen.queryByRole('button', { name: 'Log in to My Toolset' }),
     ).toBeNull();
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeTruthy();
 
     rerender(
       <SigninInterruptDialog

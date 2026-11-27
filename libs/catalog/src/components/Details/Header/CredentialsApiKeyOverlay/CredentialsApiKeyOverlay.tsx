@@ -48,7 +48,7 @@ export interface CredentialsApiKeyOverlayProps {
     item: CatalogItem,
     params: { level: CredentialsLevel },
   ) => Promise<void> | void;
-  /** Called once the login/logout call resolves successfully, so the anchoring dropdown can close. */
+  /** Called on "Cancel" and once the login/logout call resolves successfully, so the anchoring dropdown can close. */
   onClose: () => void;
   /** Text overrides. */
   texts?: ItemDetailsTexts;
@@ -121,6 +121,7 @@ export const CredentialsApiKeyOverlay: FC<CredentialsApiKeyOverlayProps> = ({
   const title = texts?.personalApiKeyPanelTitle ?? 'Personal API key';
   const addLabel = texts?.addApiKeyActionLabel ?? 'Add';
   const deleteLabel = texts?.deleteActionLabel ?? 'Delete';
+  const cancelLabel = texts?.cancelLabel ?? 'Cancel';
   const addingStatusLabel = texts?.addingApiKeyStatusLabel ?? 'Adding';
   const deletingStatusLabel = texts?.deletingStatusLabel ?? 'Deleting';
   const emptyKeyErrorMessage =
@@ -250,6 +251,15 @@ export const CredentialsApiKeyOverlay: FC<CredentialsApiKeyOverlayProps> = ({
           </div>
         )}
       </LiveRegion>
+
+      <div className={mergeClasses('mx-4 h-px', styles.divider)} />
+      <div className="flex justify-end px-4 py-3">
+        <NeutralButton
+          label={cancelLabel}
+          onClick={onClose}
+          disabled={isSaving || isDeleting}
+        />
+      </div>
     </div>
   );
 };

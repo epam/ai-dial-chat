@@ -2164,7 +2164,9 @@ hint below it. A processing row is `aria-busy`, its controls are disabled and
 its login action shows a spinner. While more than one row is listed, the heading
 shows the row count and the footer holds `Decline all` plus `Log in to <name>`,
 which calls `onLogin` with the first row that is idle, needs credentials and can
-submit (omitted when there is none). The offline-use consent checkbox renders
+submit (omitted when there is none). With a single row the footer holds only
+`Cancel`, which calls `onDeclineAll`; the dialog never shows a close icon. The
+offline-use consent checkbox renders
 only when `isOfflineUsageConsentShown` is set, and
 `statusMessage` is announced in a visually hidden polite region. An empty `rows`
 list renders nothing.
@@ -2203,7 +2205,7 @@ import { SigninInterruptDialog } from '@epam/ai-dial-catalog';
 ```
 
 `labels` (`SigninInterruptDialogLabels`) overrides `title`, `description`,
-`declineAll`, `logInTo` (a function of the row name, defaulting to
+`declineAll`, `cancel`, `logInTo` (a function of the row name, defaulting to
 `` (name) => `Log in to ${name}` ``), `decline` (the icon button's accessible
 name), `logIn`, `retry`, `apiKeyLabel`, `apiKeyPlaceholder`, `dialNativeHint`,
 `noCredentialsRequired`, `offlineUsageConsent` and `offlineUsageConsentHint`;

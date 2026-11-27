@@ -93,14 +93,23 @@ vi.mock(
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   Popup: ({
     children,
+    hideClose,
     onClose,
+    mainButtons,
   }: {
     children: React.ReactNode;
+    hideClose?: boolean;
     onClose: () => void;
+    mainButtons?: { label: string; onClick: () => void }[];
   }) => (
     <div role="dialog">
       {children}
-      <button onClick={onClose}>Close credentials</button>
+      {!hideClose && <button onClick={onClose}>Close credentials</button>}
+      {mainButtons?.map((button) => (
+        <button key={button.label} onClick={button.onClick}>
+          {button.label}
+        </button>
+      ))}
     </div>
   ),
   NeutralButton: ({
@@ -1785,7 +1794,8 @@ describe('application credential requests from Quick apps', () => {
         'Credentials for applications/public/agent%20with%20space',
       ),
     ).toBeTruthy();
-    fireEvent.click(screen.getByText('Close credentials'));
+    expect(screen.queryByText('Close credentials')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 });

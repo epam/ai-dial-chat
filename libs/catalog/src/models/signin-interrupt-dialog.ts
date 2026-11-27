@@ -28,8 +28,10 @@ export interface SigninInterruptDialogLabels {
   title?: string;
   /** Text under the heading. Defaults to `'One or more tools or services need you to sign in before the conversation can continue.'`. */
   description?: string;
-  /** Footer action declining every row. Defaults to `'Decline all'`. */
+  /** Footer action declining every row, shown while more than one row is listed. Defaults to `'Decline all'`. */
   declineAll?: string;
+  /** Footer action that declines the only row and closes the dialog, shown while one row is listed. Defaults to `'Cancel'`. */
+  cancel?: string;
   /** Footer action logging in to the next actionable row, given its name. Defaults to `` (name) => `Log in to ${name}` ``. */
   logInTo?: (name: string) => string;
   /** Accessible name of the per-row icon-only decline action. Defaults to `'Decline'`. */
@@ -84,7 +86,7 @@ export interface SigninInterruptDialogProps {
   onLogin: (rowId: string) => void;
   /** Called with a row id on `Decline`. */
   onDecline: (rowId: string) => void;
-  /** Called on `Decline all`; the footer with `Decline all` and `Log in to …` renders only while more than one row is listed. */
+  /** Called on the footer's `Decline all` (more than one row, shown with `Log in to …`) or `Cancel` (one row). */
   onDeclineAll: () => void;
   /** Copy overrides. */
   labels?: SigninInterruptDialogLabels;

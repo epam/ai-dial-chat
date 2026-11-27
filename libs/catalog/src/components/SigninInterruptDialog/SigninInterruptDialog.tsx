@@ -49,7 +49,11 @@ export const SigninInterruptDialog: FC<SigninInterruptDialogProps> = ({
       labels?.noCredentialsRequired ?? 'No credentials required',
   };
 
-  /* With a single row, its own actions already cover it — a footer would only repeat them. */
+  /*
+   * With several rows the footer offers `Decline all` and `Log in to …`. A
+   * single row carries its own Log in, so the footer only offers Cancel,
+   * the explicit way out of the non-dismissible dialog.
+   */
   const hasFooter = rows.length > 1;
   const nextRow = hasFooter
     ? rows.find(
@@ -71,17 +75,15 @@ export const SigninInterruptDialog: FC<SigninInterruptDialogProps> = ({
           {hasFooter && <Badge label={String(rows.length)} />}
         </span>
       }
-      additionalButtonsOnLeft
-      additionalButtons={
-        hasFooter
-          ? [
-              {
-                label: labels?.declineAll ?? 'Decline all',
-                onClick: onDeclineAll,
-              },
-            ]
-          : undefined
-      }
+      additionalButtonsOnLeft={hasFooter}
+      additionalButtons={[
+        {
+          label: hasFooter
+            ? (labels?.declineAll ?? 'Decline all')
+            : (labels?.cancel ?? 'Cancel'),
+          onClick: onDeclineAll,
+        },
+      ]}
       mainButtons={
         nextRow
           ? [
