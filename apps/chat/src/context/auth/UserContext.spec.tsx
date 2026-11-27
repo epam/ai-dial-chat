@@ -35,7 +35,10 @@ describe('UserContext', () => {
 
   const seedCatalogPreferences = () => {
     localStorage.setItem('catalogFilterTopics', '["billing"]');
-    localStorage.setItem('catalogIsMyAppsActive', 'true');
+    localStorage.setItem(
+      'catalogFolderSelection',
+      '{"root":"personal","path":[]}',
+    );
     localStorage.setItem('catalogSortKey', '"recentlyUpdated"');
   };
 
@@ -46,7 +49,9 @@ describe('UserContext', () => {
    */
   const expectCatalogFilterPreferencesUntouched = () => {
     expect(localStorage.getItem('catalogFilterTopics')).toBe('["billing"]');
-    expect(localStorage.getItem('catalogIsMyAppsActive')).toBe('true');
+    expect(localStorage.getItem('catalogFolderSelection')).toBe(
+      '{"root":"personal","path":[]}',
+    );
     expect(localStorage.getItem('catalogSortKey')).toBe('"recentlyUpdated"');
   };
 

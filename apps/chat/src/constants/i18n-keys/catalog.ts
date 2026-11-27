@@ -29,10 +29,19 @@ export enum CatalogI18nKeys {
   BrowseSettingsFiltering = 'catalog.browseSettings.filtering',
   BrowseSettingsCards = 'catalog.browseSettings.cards',
   BrowseSettingsList = 'catalog.browseSettings.list',
-  BrowseSettingsFrom = 'catalog.browseSettings.from',
-  BrowseSettingsMy = 'catalog.browseSettings.my',
   BrowseSettingsTopics = 'catalog.browseSettings.topics',
   BrowseSettingsFilterCount = 'catalog.browseSettings.filterCount',
+  // Topic filter and applied-topic tags
+  FilterLabel = 'catalog.filter.label',
+  FilterClearAll = 'catalog.filter.clearAll',
+  FilterAppliedTags = 'catalog.filter.appliedTags',
+  FilterRemoveTag = 'catalog.filter.removeTag',
+  // Folder navigation
+  AllEntities = 'catalog.allEntities',
+  FoldersButton = 'catalog.folders.button',
+  FoldersTreeLabel = 'catalog.folders.treeLabel',
+  FoldersBreadcrumbLabel = 'catalog.folders.breadcrumbLabel',
+  FoldersShowHiddenSegments = 'catalog.folders.showHiddenSegments',
   // Details panel
   DetailsAriaLabel = 'catalog.details.ariaLabel',
   DetailsTabTools = 'catalog.details.tabTools',

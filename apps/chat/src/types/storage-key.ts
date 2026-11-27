@@ -9,7 +9,7 @@ export enum StorageKey {
   DefaultAgent = 'defaultAgent',
   CatalogSortKey = 'catalogSortKey',
   CatalogFilterTopics = 'catalogFilterTopics',
-  CatalogIsMyAppsActive = 'catalogIsMyAppsActive',
+  CatalogFolderSelection = 'catalogFolderSelection',
   CatalogActiveTab = 'catalogActiveTab',
   TextOfClosedAnnouncement = 'textOfClosedAnnouncement',
   SeenOnboardingHints = 'seenOnboardingHints',

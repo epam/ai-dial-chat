@@ -1,4 +1,11 @@
-import { CATALOG_TAB_ORDER, type CatalogItem } from '@epam/ai-dial-catalog';
+import {
+  buildCatalogFolderTree,
+  CATALOG_TAB_ORDER,
+  type CatalogFolderRoot,
+  type CatalogFolderSelection,
+  type CatalogItem,
+  isFolderSelectionValid,
+} from '@epam/ai-dial-catalog';
 import type {
   ApplicationSchemaSummaryDto,
   DeploymentItemDto,
@@ -47,6 +54,9 @@ import {
   mapToolsetToCatalogItem,
 } from '../../utils/map-deployment-to-catalog-item';
 
+/* Shared, never mutated. */
+const ALL_ENTITIES: CatalogFolderSelection = { path: [] };
+
 interface UseCatalogItemsParams {
   schemas: ApplicationSchemaSummaryDto[];
   deployments: DeploymentItemDto[];
@@ -72,6 +82,12 @@ interface UseCatalogItemsParams {
   visibleTypes: Set<CatalogEntityType>;
   isCatalogHideMyAppsEnabled: boolean;
   persistedFilterTopics: Set<string>;
+  /** Folder selection read from storage; reconciled against the loaded items. */
+  persistedFolderSelection: CatalogFolderSelection;
+  /** Roots the folder tree is built from. */
+  folderRoots: CatalogFolderRoot[];
+  /** Whether the items are still loading; the folder is not reconciled meanwhile. */
+  isLoading: boolean;
 }
 
 interface UseCatalogItemsResult {
@@ -80,6 +96,7 @@ interface UseCatalogItemsResult {
   catalogItems: CatalogItem[];
   visibleCatalogItems: CatalogItem[];
   reconciledFilterTopics: Set<string>;
+  reconciledFolderSelection: CatalogFolderSelection;
   availableTabIds: CatalogEntityType[];
   favorites: CatalogItem[];
   onFetchDetails: ReturnType<typeof useCatalogItemDetails>['onFetchDetails'];
@@ -121,6 +138,9 @@ export const useCatalogItems = ({
   visibleTypes,
   isCatalogHideMyAppsEnabled,
   persistedFilterTopics,
+  persistedFolderSelection,
+  folderRoots,
+  isLoading,
 }: UseCatalogItemsParams): UseCatalogItemsResult => {
   const quickAppSchemaId = useMemo(
     () => schemas.find((s) => isQuickAppSchema(s))?.id,
@@ -330,6 +350,16 @@ export const useCatalogItems = ({
     [visibleCatalogItems, persistedFilterTopics],
   );
 
+  /* A stale stored folder falls back to All entities; while loading the items
+     are incomplete, so the stored folder is kept as it is. */
+  const reconciledFolderSelection = useMemo<CatalogFolderSelection>(() => {
+    if (isLoading) return persistedFolderSelection;
+    const tree = buildCatalogFolderTree(visibleCatalogItems, folderRoots);
+    return isFolderSelectionValid(persistedFolderSelection, tree)
+      ? persistedFolderSelection
+      : ALL_ENTITIES;
+  }, [isLoading, persistedFolderSelection, visibleCatalogItems, folderRoots]);
+
   const availableTabIds = useMemo(
     () => deriveAvailableTabIds(visibleCatalogItems, CATALOG_TAB_ORDER),
     [visibleCatalogItems],
@@ -346,6 +376,7 @@ export const useCatalogItems = ({
     catalogItems,
     visibleCatalogItems,
     reconciledFilterTopics,
+    reconciledFolderSelection,
     availableTabIds,
     favorites,
     onFetchDetails,

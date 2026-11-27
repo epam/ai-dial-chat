@@ -314,8 +314,8 @@ const setupDefaults = () => {
     setSortKey: vi.fn(),
     filterTopics: new Set(),
     setFilterTopics: vi.fn(),
-    isMyAppsActive: false,
-    setIsMyAppsActive: vi.fn(),
+    folderSelection: { path: [] },
+    setFolderSelection: vi.fn(),
   });
   vi.mocked(useAppConfig).mockReturnValue({
     status: UserConfigStatus.Ready,
