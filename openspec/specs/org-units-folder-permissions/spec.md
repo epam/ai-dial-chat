@@ -1,7 +1,7 @@
 # org-units-folder-permissions Specification
 
 ## Purpose
-What every save and publish folder tree allows inside a DIAL Core org unit, decided by the current user's rights there: unusable folders are disabled with a reason, and a user who may write into a unit saves directly, without a request. Plain `public/` outside units is unchanged.
+What every save and publish folder tree allows inside a DIAL Core org unit, decided by the current user's rights there: unusable folders are disabled with a reason, and a user who may write into a unit saves directly, without a request. Plain `public/` folders outside the org-unit tree are hidden (see `org-units-folder-visibility`); the Organization root and ancestor-only folders keep today's flows.
 
 ## Requirements
 
@@ -11,9 +11,10 @@ Every panel that lists public-bucket folders as a destination SHALL decide each 
 For a folder inside a unit, the resource type decides the Core namespace (`applications` for a Quick App and any other application, `toolsets`, `prompts`, `skills`, `projects`, `conversations`), and the owning unit is the nearest unit above the folder (see `org-units-client-state`):
 - a **save** destination is usable when the owner grants `write` on that namespace;
 - a **publish** destination is usable when a publication request can be sent: the owner grants `read` on that namespace.
-A DIAL admin may use every folder. In the Save panel only the Organization root is judged; a Personal folder is never disabled, whatever its name. A folder outside every unit is never disabled by this change: the Organization root and plain `public/` folders keep today's save-then-request and request flows.
 
-The File storage page and file-manager modals are not covered.
+A DIAL admin may use every folder. In the Save panel only the Organization root is judged; a Personal folder is never disabled, whatever its name. A folder outside every unit is never disabled by this rule. With the rule `Ready`, a plain public folder that is neither inside a unit nor an ancestor of one is not listed at all (see `org-units-folder-visibility`). The Organization root and ancestor-only folders stay listed, and keep today's save-then-request and request flows.
+
+The File storage page and file-manager modals are not covered by the disabling rule; they apply only the visibility rule of `org-units-folder-visibility`.
 
 #### Scenario: Save panel disables a unit without write
 - **WHEN** the flag is on, the rights are `Ready`, and the Change folder view of a Quick App save lists the unit `Sales` where the user holds only `read` on `applications`
@@ -23,9 +24,13 @@ The File storage page and file-manager modals are not covered.
 - **WHEN** the user opens the publish panel of a prompt and the unit `Marketing` grants no `read` on `prompts`
 - **THEN** the `Marketing` row is disabled
 
-#### Scenario: Plain public folder stays usable
-- **WHEN** the tree lists `Shared/Reports`, which lies under no unit, and the user is not an admin
-- **THEN** the row is enabled in the save panel and in the publish panel
+#### Scenario: Plain public folder is hidden, not disabled
+- **WHEN** the rights are `Ready`, `Shared/Reports` lies under no unit and is no unit's ancestor, and the user is not an admin
+- **THEN** neither the save panel nor the publish panel lists `Shared` or `Shared/Reports`, and no row is disabled for it
+
+#### Scenario: Ancestor-only folder stays usable
+- **WHEN** the rights are `Ready`, `Acme/Risk/` is a unit and `Acme/` is not
+- **THEN** the `Acme` row is listed and enabled in the save panel and in the publish panel
 
 #### Scenario: Same rule in every panel
 - **WHEN** one user holds `write` on `applications` and `read` on `prompts` in unit `Delivery`
@@ -37,11 +42,11 @@ The File storage page and file-manager modals are not covered.
 
 #### Scenario: Flag off
 - **WHEN** `features.orgUnitsEnabled` is off
-- **THEN** no row in any panel is disabled and no rights request is made
+- **THEN** no row in any panel is disabled or hidden and no rights request is made
 
 #### Scenario: Rights not loaded
 - **WHEN** the rights read failed or is still running
-- **THEN** no row is disabled
+- **THEN** no row is disabled or hidden
 
 ### Requirement: A disabled row explains itself and cannot be chosen
 A row that the rule disables SHALL render disabled (`aria-disabled="true"`), SHALL NOT change the destination on click, Enter or Space, and SHALL stay in the keyboard order so a screen-reader user can reach it and hear the reason. Its reason SHALL be a visible tooltip on hover and focus, and also reach assistive technology through an accessible description (`aria-describedby`) so touch and keyboard users are not left without it. The reason text is typed by the resource: for a save, "You have no access to save your {type} to this folder."; for a publish, "You have no access to publish your {type} to this folder." `{type}` is the resource word ("QuickApp" for a Quick App, "application" for any other application, "toolset", "prompt", "skill", "conversation", "project"), chosen in one place, `getOrgUnitAccessReasonKey` in `apps/chat/src/utils/org-unit-access.ts`. A disabled folder SHALL still expand and collapse, and its child folders are decided by their own owner, so a child the user may use stays selectable. Search keeps showing a matching disabled row. Inline folder creation (the trailing button and the per-row "Add child" / "Add sibling" items) SHALL be offered under a disabled folder only as the folder rule allows, and never creates under a folder the user cannot use. A destination already committed in the save panel that becomes disabled after a rights refresh SHALL be shown as not allowed and SHALL disable the panel's Save until another folder is chosen.
