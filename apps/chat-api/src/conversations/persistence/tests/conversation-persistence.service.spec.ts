@@ -78,112 +78,63 @@ describe('ConversationPersistenceService', () => {
   });
 
   describe('getConversation', () => {
-    it('uses session bucket and encodes reserved URL characters for a flat path', async () => {
+    it.each([
+      [
+        'uses session bucket and encodes reserved URL characters for a flat path',
+        {
+          path: 'statgpt-sample__What datasets are available?__uuid',
+          bucket: 'test-bucket',
+          subPath: 'statgpt-sample__What%20datasets%20are%20available%3F__uuid',
+        },
+      ],
+      [
+        'extracts bucket from the first path segment when a slash is present',
+        {
+          path: 'public/gpt-4o__My chat__uuid',
+          bucket: 'public',
+          subPath: 'gpt-4o__My%20chat__uuid',
+        },
+      ],
+      [
+        'keeps nested application deployment segments in the conversation path',
+        {
+          path: 'test-bucket/applications/catalog/Untitled app 1__0.0.1__hello',
+          bucket: 'test-bucket',
+          subPath: 'applications/catalog/Untitled%20app%201__0.0.1__hello',
+        },
+      ],
+      [
+        'fetches shared conversation from the originating bucket, not the session bucket',
+        {
+          path: 'other-user-bucket/gpt-4o__shared-chat__uuid',
+          bucket: 'other-user-bucket',
+          subPath: 'gpt-4o__shared-chat__uuid',
+        },
+      ],
+      [
+        'uses session bucket for a path with no slash',
+        {
+          path: 'gpt-4o__My chat__uuid',
+          bucket: 'test-bucket',
+          subPath: 'gpt-4o__My%20chat__uuid',
+        },
+      ],
+      [
+        'keeps encoded separators inside a resource path segment',
+        {
+          path: 'test-bucket/applications/catalog/Team%2FApp%20One__0.0.1__hello',
+          bucket: 'test-bucket',
+          subPath: 'applications/catalog/Team%2FApp%20One__0.0.1__hello',
+        },
+      ],
+    ])('%s', async (_name, { path, bucket, subPath }) => {
       const spy = vi
         .spyOn(service['dialClient'].client, 'getConversation')
         .mockResolvedValue({ data: TEST_CONVERSATION } as never);
 
-      await service.getConversation(
-        'statgpt-sample__What datasets are available?__uuid',
-        'test-token',
-        'test-bucket',
-      );
+      await service.getConversation(path, 'test-token', 'test-bucket');
 
-      expect(spy).toHaveBeenCalledWith(
-        'test-bucket',
-        'statgpt-sample__What%20datasets%20are%20available%3F__uuid',
-        expect.any(Object),
-      );
-    });
-
-    it('extracts bucket from the first path segment when a slash is present', async () => {
-      const spy = vi
-        .spyOn(service['dialClient'].client, 'getConversation')
-        .mockResolvedValue({ data: TEST_CONVERSATION } as never);
-
-      await service.getConversation(
-        'public/gpt-4o__My chat__uuid',
-        'test-token',
-        'test-bucket',
-      );
-
-      expect(spy).toHaveBeenCalledWith(
-        'public',
-        'gpt-4o__My%20chat__uuid',
-        expect.any(Object),
-      );
-    });
-
-    it('keeps nested application deployment segments in the conversation path', async () => {
-      const spy = vi
-        .spyOn(service['dialClient'].client, 'getConversation')
-        .mockResolvedValue({ data: TEST_CONVERSATION } as never);
-
-      await service.getConversation(
-        'test-bucket/applications/catalog/Untitled app 1__0.0.1__hello',
-        'test-token',
-        'test-bucket',
-      );
-
-      expect(spy).toHaveBeenCalledWith(
-        'test-bucket',
-        'applications/catalog/Untitled%20app%201__0.0.1__hello',
-        expect.any(Object),
-      );
-    });
-
-    it('fetches shared conversation from the originating bucket, not the session bucket', async () => {
-      const spy = vi
-        .spyOn(service['dialClient'].client, 'getConversation')
-        .mockResolvedValue({ data: TEST_CONVERSATION } as never);
-
-      await service.getConversation(
-        'other-user-bucket/gpt-4o__shared-chat__uuid',
-        'test-token',
-        'test-bucket',
-      );
-
-      expect(spy).toHaveBeenCalledWith(
-        'other-user-bucket',
-        'gpt-4o__shared-chat__uuid',
-        expect.any(Object),
-      );
-    });
-
-    it('uses session bucket for a path with no slash', async () => {
-      const spy = vi
-        .spyOn(service['dialClient'].client, 'getConversation')
-        .mockResolvedValue({ data: TEST_CONVERSATION } as never);
-
-      await service.getConversation(
-        'gpt-4o__My chat__uuid',
-        'test-token',
-        'test-bucket',
-      );
-
-      expect(spy).toHaveBeenCalledWith(
-        'test-bucket',
-        'gpt-4o__My%20chat__uuid',
-        expect.any(Object),
-      );
-    });
-
-    it('keeps encoded separators inside a resource path segment', async () => {
-      const spy = vi
-        .spyOn(service['dialClient'].client, 'getConversation')
-        .mockResolvedValue({ data: TEST_CONVERSATION } as never);
-
-      await service.getConversation(
-        'test-bucket/applications/catalog/Team%2FApp%20One__0.0.1__hello',
-        'test-token',
-        'test-bucket',
-      );
-
-      expect(spy).toHaveBeenCalledWith(
-        'test-bucket',
-        'applications/catalog/Team%2FApp%20One__0.0.1__hello',
-        expect.any(Object),
-      );
+      expect(spy).toHaveBeenCalledWith(bucket, subPath, expect.any(Object));
     });
 
     it('returns the stored LLM title when the path still uses the message-derived name', async () => {

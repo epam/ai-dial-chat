@@ -9,49 +9,67 @@ async function validateDto(plain: Record<string, unknown>) {
 }
 
 describe('UploadFileDto', () => {
-  it('passes for valid bucket and path', async () => {
-    const errors = await validateDto({
-      bucket: 'my-bucket',
-      path: 'folder/file.txt',
-    });
+  it.each([
+    [
+      'passes for valid bucket and path',
+      { bucket: 'my-bucket', path: 'folder/file.txt' },
+    ],
+    [
+      'accepts bucket with dots and hyphens',
+      { bucket: 'my.bucket-01', path: 'file.txt' },
+    ],
+    [
+      'accepts nested path segments',
+      { bucket: 'my-bucket', path: 'a/b/c/file.pdf' },
+    ],
+  ])('%s', async (_name, body) => {
+    const errors = await validateDto(body);
     expect(errors).toHaveLength(0);
   });
 
-  it('rejects empty bucket', async () => {
-    const errors = await validateDto({ bucket: '', path: 'folder/file.txt' });
-    expect(errors.some((e) => e.property === 'bucket')).toBe(true);
-  });
-
-  it('rejects bucket with slash', async () => {
-    const errors = await validateDto({
-      bucket: 'bad/bucket',
-      path: 'folder/file.txt',
-    });
-    expect(errors.some((e) => e.property === 'bucket')).toBe(true);
-  });
-
-  it('rejects bucket with colon', async () => {
-    const errors = await validateDto({
-      bucket: 'bad:bucket',
-      path: 'folder/file.txt',
-    });
-    expect(errors.some((e) => e.property === 'bucket')).toBe(true);
-  });
-
-  it('rejects path with ..', async () => {
-    const errors = await validateDto({
-      bucket: 'my-bucket',
-      path: '../etc/passwd',
-    });
-    expect(errors.some((e) => e.property === 'path')).toBe(true);
-  });
-
-  it('rejects path starting with /', async () => {
-    const errors = await validateDto({
-      bucket: 'my-bucket',
-      path: '/etc/passwd',
-    });
-    expect(errors.some((e) => e.property === 'path')).toBe(true);
+  it.each([
+    [
+      'rejects empty bucket',
+      { body: { bucket: '', path: 'folder/file.txt' }, property: 'bucket' },
+    ],
+    [
+      'rejects bucket with slash',
+      {
+        body: { bucket: 'bad/bucket', path: 'folder/file.txt' },
+        property: 'bucket',
+      },
+    ],
+    [
+      'rejects bucket with colon',
+      {
+        body: { bucket: 'bad:bucket', path: 'folder/file.txt' },
+        property: 'bucket',
+      },
+    ],
+    [
+      'rejects path with ..',
+      {
+        body: { bucket: 'my-bucket', path: '../etc/passwd' },
+        property: 'path',
+      },
+    ],
+    [
+      'rejects path starting with /',
+      { body: { bucket: 'my-bucket', path: '/etc/passwd' }, property: 'path' },
+    ],
+    [
+      'rejects a path containing &',
+      {
+        body: {
+          bucket: 'my-bucket',
+          path: 'Metrology&UnitConversionPresentation(1).pptx',
+        },
+        property: 'path',
+      },
+    ],
+  ])('%s', async (_name, { body, property }) => {
+    const errors = await validateDto(body);
+    expect(errors.some((e) => e.property === property)).toBe(true);
   });
 
   it('rejects undeclared fields (forbidNonWhitelisted)', async () => {
@@ -63,29 +81,5 @@ describe('UploadFileDto', () => {
     expect(errors.map((e) => e.constraints)).toContainEqual({
       whitelistValidation: 'property admin should not exist',
     });
-  });
-
-  it('accepts bucket with dots and hyphens', async () => {
-    const errors = await validateDto({
-      bucket: 'my.bucket-01',
-      path: 'file.txt',
-    });
-    expect(errors).toHaveLength(0);
-  });
-
-  it('accepts nested path segments', async () => {
-    const errors = await validateDto({
-      bucket: 'my-bucket',
-      path: 'a/b/c/file.pdf',
-    });
-    expect(errors).toHaveLength(0);
-  });
-
-  it('rejects a path containing &', async () => {
-    const errors = await validateDto({
-      bucket: 'my-bucket',
-      path: 'Metrology&UnitConversionPresentation(1).pptx',
-    });
-    expect(errors.some((e) => e.property === 'path')).toBe(true);
   });
 });

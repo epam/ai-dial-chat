@@ -43,24 +43,29 @@ describe('getUserDisplayName', () => {
 describe('resolveDisplayAuthor', () => {
   const claims = { name: 'Daniil Pavlov' };
 
-  it('uses the submitted author when one is supplied', () => {
-    expect(resolveDisplayAuthor('DIAL Team', claims)).toBe('DIAL Team');
-  });
-
-  it('trims the submitted author', () => {
-    expect(resolveDisplayAuthor('  DIAL Team  ', claims)).toBe('DIAL Team');
+  it.each([
+    [
+      'uses the submitted author when one is supplied',
+      { author: 'DIAL Team', expected: 'DIAL Team' },
+    ],
+    [
+      'trims the submitted author',
+      { author: '  DIAL Team  ', expected: 'DIAL Team' },
+    ],
+    [
+      'falls back to the session display name when the author is blank',
+      { author: '   ', expected: 'Daniil Pavlov' },
+    ],
+    [
+      'falls back to the session display name when the author is an empty string',
+      { author: '', expected: 'Daniil Pavlov' },
+    ],
+  ])('%s', (_name, { author, expected }) => {
+    expect(resolveDisplayAuthor(author, claims)).toBe(expected);
   });
 
   it('falls back to the session display name when the author is omitted', () => {
     expect(resolveDisplayAuthor(undefined, claims)).toBe('Daniil Pavlov');
-  });
-
-  it('falls back to the session display name when the author is blank', () => {
-    expect(resolveDisplayAuthor('   ', claims)).toBe('Daniil Pavlov');
-  });
-
-  it('falls back to the session display name when the author is an empty string', () => {
-    expect(resolveDisplayAuthor('', claims)).toBe('Daniil Pavlov');
   });
 
   it('never yields an empty display author, even with no usable claims', () => {
@@ -69,41 +74,43 @@ describe('resolveDisplayAuthor', () => {
 });
 
 describe('readPublicationDisplayAuthor', () => {
-  it('prefers the submitted display author over the account Core recorded', () => {
-    expect(
-      readPublicationDisplayAuthor(
-        { author: 'daniil@example.com', displayAuthor: 'DIAL Team' },
-        'fallback',
-      ),
-    ).toBe('DIAL Team');
-  });
-
-  it('falls back to the recorded account when no display author was submitted', () => {
-    expect(
-      readPublicationDisplayAuthor(
-        { author: 'daniil@example.com' },
-        'fallback',
-      ),
-    ).toBe('daniil@example.com');
-  });
-
-  /* Core stores an omitted display author as `''`, not as a missing key. */
-  it('treats an empty display author as unset', () => {
-    expect(
-      readPublicationDisplayAuthor(
-        { author: 'daniil@example.com', displayAuthor: '' },
-        'fallback',
-      ),
-    ).toBe('daniil@example.com');
-  });
-
-  it('treats a whitespace-only display author as unset', () => {
-    expect(
-      readPublicationDisplayAuthor(
-        { author: 'daniil@example.com', displayAuthor: '   ' },
-        'fallback',
-      ),
-    ).toBe('daniil@example.com');
+  it.each([
+    [
+      'prefers the submitted display author over the account Core recorded',
+      {
+        publication: {
+          author: 'daniil@example.com',
+          displayAuthor: 'DIAL Team',
+        },
+        expected: 'DIAL Team',
+      },
+    ],
+    [
+      'falls back to the recorded account when no display author was submitted',
+      {
+        publication: { author: 'daniil@example.com' },
+        expected: 'daniil@example.com',
+      },
+    ],
+    /* Core stores an omitted display author as `''`, not as a missing key. */
+    [
+      'treats an empty display author as unset',
+      {
+        publication: { author: 'daniil@example.com', displayAuthor: '' },
+        expected: 'daniil@example.com',
+      },
+    ],
+    [
+      'treats a whitespace-only display author as unset',
+      {
+        publication: { author: 'daniil@example.com', displayAuthor: '   ' },
+        expected: 'daniil@example.com',
+      },
+    ],
+  ])('%s', (_name, { publication, expected }) => {
+    expect(readPublicationDisplayAuthor(publication, 'fallback')).toBe(
+      expected,
+    );
   });
 
   it('trims the display author it returns', () => {

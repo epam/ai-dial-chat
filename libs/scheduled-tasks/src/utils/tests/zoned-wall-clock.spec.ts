@@ -45,22 +45,33 @@ describe('getZonedNow', () => {
 });
 
 describe('instantToZonedDateTime', () => {
-  it('shows a UTC instant as the zone wall time', () => {
-    expect(
-      instantToZonedDateTime('2026-07-24T07:00:00.000Z', 'Europe/Berlin'),
-    ).toBe('2026-07-24T09:00');
-  });
-
-  it('uses the offset in force on that date', () => {
-    expect(
-      instantToZonedDateTime('2026-01-24T07:00:00.000Z', 'Europe/Berlin'),
-    ).toBe('2026-01-24T08:00');
-  });
-
-  it('accepts an instant that carries its own offset', () => {
-    expect(instantToZonedDateTime('2026-07-24T09:00:00+02:00', 'UTC')).toBe(
-      '2026-07-24T07:00',
-    );
+  it.each([
+    [
+      'shows a UTC instant as the zone wall time',
+      {
+        instant: '2026-07-24T07:00:00.000Z',
+        timezone: 'Europe/Berlin',
+        expected: '2026-07-24T09:00',
+      },
+    ],
+    [
+      'uses the offset in force on that date',
+      {
+        instant: '2026-01-24T07:00:00.000Z',
+        timezone: 'Europe/Berlin',
+        expected: '2026-01-24T08:00',
+      },
+    ],
+    [
+      'accepts an instant that carries its own offset',
+      {
+        instant: '2026-07-24T09:00:00+02:00',
+        timezone: 'UTC',
+        expected: '2026-07-24T07:00',
+      },
+    ],
+  ])('%s', (_title, { instant, timezone, expected }) => {
+    expect(instantToZonedDateTime(instant, timezone)).toBe(expected);
   });
 
   it('returns undefined for a value that is not a date', () => {
@@ -81,33 +92,44 @@ describe('isNonexistentLocalTime', () => {
     );
   });
 
-  it('does not flag a time just outside the gap', () => {
-    expect(isNonexistentLocalTime('2027-03-28T03:00', 'Europe/Berlin')).toBe(
-      false,
-    );
-    expect(isNonexistentLocalTime('2027-03-28T01:59', 'Europe/Berlin')).toBe(
-      false,
-    );
-  });
-
   it('flags the Lord Howe half-hour gap', () => {
     expect(
       isNonexistentLocalTime('2026-10-04T02:15', 'Australia/Lord_Howe'),
     ).toBe(true);
   });
 
-  it('never flags a zone without clock changes', () => {
-    expect(isNonexistentLocalTime('2027-03-28T02:30', 'UTC')).toBe(false);
-    expect(isNonexistentLocalTime('2027-03-28T02:30', 'Asia/Kolkata')).toBe(
-      false,
-    );
-  });
-
-  it('returns false for an unparseable value or unknown zone', () => {
-    expect(isNonexistentLocalTime('nope', 'Europe/Berlin')).toBe(false);
-    expect(isNonexistentLocalTime('2027-03-28T02:30', 'Mars/Olympus')).toBe(
-      false,
-    );
+  it.each<[string, { cases: [value: string, timezone: string][] }]>([
+    [
+      'does not flag a time just outside the gap',
+      {
+        cases: [
+          ['2027-03-28T03:00', 'Europe/Berlin'],
+          ['2027-03-28T01:59', 'Europe/Berlin'],
+        ],
+      },
+    ],
+    [
+      'never flags a zone without clock changes',
+      {
+        cases: [
+          ['2027-03-28T02:30', 'UTC'],
+          ['2027-03-28T02:30', 'Asia/Kolkata'],
+        ],
+      },
+    ],
+    [
+      'returns false for an unparseable value or unknown zone',
+      {
+        cases: [
+          ['nope', 'Europe/Berlin'],
+          ['2027-03-28T02:30', 'Mars/Olympus'],
+        ],
+      },
+    ],
+  ])('%s', (_title, { cases }) => {
+    for (const [value, timezone] of cases) {
+      expect(isNonexistentLocalTime(value, timezone)).toBe(false);
+    }
   });
 });
 

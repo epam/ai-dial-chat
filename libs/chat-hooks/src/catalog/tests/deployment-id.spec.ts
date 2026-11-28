@@ -7,27 +7,35 @@ import {
 } from '../deployment-id';
 
 describe('encodeDeploymentId', () => {
-  it('percent-encodes spaces within a segment', () => {
-    expect(encodeDeploymentId('applications/bucket/My App__1.0')).toBe(
-      'applications/bucket/My%20App__1.0',
-    );
-  });
-
-  it('leaves already-safe segments unchanged', () => {
-    expect(encodeDeploymentId('applications/bucket/my-app__1.0')).toBe(
-      'applications/bucket/my-app__1.0',
-    );
+  it.each([
+    [
+      'percent-encodes spaces within a segment',
+      {
+        id: 'applications/bucket/My App__1.0',
+        expected: 'applications/bucket/My%20App__1.0',
+      },
+    ],
+    [
+      'leaves already-safe segments unchanged',
+      {
+        id: 'applications/bucket/my-app__1.0',
+        expected: 'applications/bucket/my-app__1.0',
+      },
+    ],
+    [
+      'encodes special characters within a segment',
+      {
+        id: 'applications/bucket/Q&A App__1.0',
+        expected: 'applications/bucket/Q%26A%20App__1.0',
+      },
+    ],
+  ])('%s', (_name, { id, expected }) => {
+    expect(encodeDeploymentId(id)).toBe(expected);
   });
 
   it('keeps `/` as a literal path separator', () => {
     const result = encodeDeploymentId('applications/bucket/My App__1.0');
     expect(result.split('/')).toHaveLength(3);
-  });
-
-  it('encodes special characters within a segment', () => {
-    expect(encodeDeploymentId('applications/bucket/Q&A App__1.0')).toBe(
-      'applications/bucket/Q%26A%20App__1.0',
-    );
   });
 });
 

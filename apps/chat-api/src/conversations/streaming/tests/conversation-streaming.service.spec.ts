@@ -645,7 +645,24 @@ describe('ConversationStreamingService', () => {
       });
     });
 
-    it('omits X-JOB-TITLE for Chat Completions when no job title is provided', async () => {
+    it.each([
+      [
+        'omits X-JOB-TITLE for Chat Completions when no job title is provided',
+        { header: 'X-JOB-TITLE' },
+      ],
+      [
+        'omits X-DIAL-CLIENT-CHANNEL-ID when no channel id is provided',
+        { header: 'X-DIAL-CLIENT-CHANNEL-ID' },
+      ],
+      [
+        'omits X-Timezone when no request timezone is provided',
+        { header: 'X-Timezone' },
+      ],
+      [
+        'omits X-Lang when no request language is provided',
+        { header: 'X-Lang' },
+      ],
+    ])('%s', async (_name, { header }) => {
       const conversation = {
         ...baseConversation,
         messages: [
@@ -664,9 +681,7 @@ describe('ConversationStreamingService', () => {
         'gpt-4o',
       );
 
-      expect(sendSpy.mock.calls[0][1].headers).not.toHaveProperty(
-        'X-JOB-TITLE',
-      );
+      expect(sendSpy.mock.calls[0][1].headers).not.toHaveProperty(header);
     });
 
     it('percent-encodes non-Latin-1 characters in X-CONVERSATION-ID so the request reaches DIAL Core', async () => {
@@ -706,30 +721,6 @@ describe('ConversationStreamingService', () => {
       ).not.toThrow();
     });
 
-    it('omits X-DIAL-CLIENT-CHANNEL-ID when no channel id is provided', async () => {
-      const conversation = {
-        ...baseConversation,
-        messages: [
-          {
-            id: 'u1',
-            role: ConversationMessageRole.User,
-            content: 'Hello',
-            timestamp: '2024-01-01T00:00:00.000Z',
-          },
-        ],
-      };
-
-      const { sendSpy } = await callStream(
-        conversation,
-        'Next message',
-        'gpt-4o',
-      );
-
-      expect(sendSpy.mock.calls[0][1].headers).not.toHaveProperty(
-        'X-DIAL-CLIENT-CHANNEL-ID',
-      );
-    });
-
     it('forwards the request timezone as X-Timezone when provided', async () => {
       const conversation = {
         ...baseConversation,
@@ -757,28 +748,6 @@ describe('ConversationStreamingService', () => {
       expect(sendSpy.mock.calls[0][1].headers).toMatchObject({
         'X-Timezone': 'Asia/Tokyo',
       });
-    });
-
-    it('omits X-Timezone when no request timezone is provided', async () => {
-      const conversation = {
-        ...baseConversation,
-        messages: [
-          {
-            id: 'u1',
-            role: ConversationMessageRole.User,
-            content: 'Hello',
-            timestamp: '2024-01-01T00:00:00.000Z',
-          },
-        ],
-      };
-
-      const { sendSpy } = await callStream(
-        conversation,
-        'Next message',
-        'gpt-4o',
-      );
-
-      expect(sendSpy.mock.calls[0][1].headers).not.toHaveProperty('X-Timezone');
     });
 
     it('forwards the request language as X-Lang when provided', async () => {
@@ -809,28 +778,6 @@ describe('ConversationStreamingService', () => {
       expect(sendSpy.mock.calls[0][1].headers).toMatchObject({
         'X-Lang': 'uk',
       });
-    });
-
-    it('omits X-Lang when no request language is provided', async () => {
-      const conversation = {
-        ...baseConversation,
-        messages: [
-          {
-            id: 'u1',
-            role: ConversationMessageRole.User,
-            content: 'Hello',
-            timestamp: '2024-01-01T00:00:00.000Z',
-          },
-        ],
-      };
-
-      const { sendSpy } = await callStream(
-        conversation,
-        'Next message',
-        'gpt-4o',
-      );
-
-      expect(sendSpy.mock.calls[0][1].headers).not.toHaveProperty('X-Lang');
     });
 
     it('keeps timezone values isolated across concurrent completion requests', async () => {

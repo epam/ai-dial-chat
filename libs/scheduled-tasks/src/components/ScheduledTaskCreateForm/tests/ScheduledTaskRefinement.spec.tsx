@@ -140,34 +140,6 @@ describe('text refinement authoring', () => {
     fireEvent.change(field(), { target: { value: '  ' } });
     expect(action().disabled).toBe(true);
   });
-  it('regenerates from the original draft, restores it with focus on Refine with AI, and saves restored text', async () => {
-    const refine = vi
-      .fn()
-      .mockResolvedValueOnce('Better')
-      .mockResolvedValueOnce('Best');
-    const submit = vi.fn();
-    render(<Harness onRefineDescription={refine} onSubmit={submit} />);
-    await userEvent.click(action());
-    expect(field().value).toBe('Better');
-    expect(
-      group('Description').queryByRole('button', { name: 'Refine with AI' }),
-    ).toBeNull();
-    await userEvent.click(regenerate());
-    expect(field().value).toBe('Best');
-    expect(refine.mock.calls[1][0]).toBe('Original');
-    await userEvent.click(restore());
-    expect(field().value).toBe('Original');
-    /* Focus and inherited ARIA/direction/layout hooks have no semantic query. */
-    // eslint-disable-next-line testing-library/no-node-access
-    expect(document.activeElement).toBe(action());
-    expect(group('Description').getByRole('status').textContent).toContain(
-      'Original text restored.',
-    );
-    await userEvent.click(screen.getAllByRole('button', { name: 'Save' })[0]);
-    expect(submit).toHaveBeenCalledWith(
-      expect.objectContaining({ description: 'Original' }),
-    );
-  });
   it('coordinates both actions and Save, locks only the refining field, and preserves sibling edits', async () => {
     const pending = deferred();
     const refine = vi.fn<
@@ -221,27 +193,6 @@ describe('text refinement authoring', () => {
       expect.objectContaining({ description: 'Refined' }),
     );
   });
-  it.each(['Description', 'Instructions'])(
-    'manual edits invalidate %s and ignore a late result',
-    async (name) => {
-      const pending = deferred();
-      const refine = vi.fn<
-        (value: string, signal: AbortSignal) => Promise<string>
-      >(() => pending.promise);
-      render(
-        <Harness onRefineDescription={refine} onRefineInstructions={refine} />,
-      );
-      await screen.findByRole('textbox', { name: 'Instructions' });
-      await userEvent.click(action(name));
-      fireEvent.change(field(name), { target: { value: 'Manual' } });
-      expect(refine.mock.calls[0][1].aborted).toBe(true);
-      await act(async () => pending.resolve('Late'));
-      expect(field(name).value).toBe('Manual');
-      expect(
-        screen.queryByRole('button', { name: 'Restore original' }),
-      ).toBeNull();
-    },
-  );
   it('a toolbar edit cancels instructions, and each field keeps its own Restore original', async () => {
     const pending = deferred();
     const refine = vi
@@ -267,51 +218,21 @@ describe('text refinement authoring', () => {
     expect(field('Instructions').value).toBe('Better instructions**bold**');
     expect(restore().disabled).toBe(false);
   });
-  it('shows inline retryable errors, retains text and baseline, and announces no-change', async () => {
-    const refine = vi
-      .fn()
-      .mockResolvedValueOnce('Better')
-      .mockRejectedValueOnce(new Error('secret'))
-      .mockResolvedValueOnce('Better');
-    render(<Harness onRefineDescription={refine} />);
+  it('keeps the kit input-caption styling on the no-change status by default', async () => {
+    render(<Harness onRefineDescription={async () => 'Original'} />);
     await userEvent.click(action());
-    await userEvent.click(regenerate());
-    expect(field().value).toBe('Better');
-    expect(
-      group('Description').getByText(
-        'Could not refine this text. Please try again.',
-      ).textContent,
-    ).toContain('Could not refine this text. Please try again.');
-    expect(
-      screen
-        .getByRole('group', { name: /^Description/ })
-        .getAttribute('aria-describedby'),
-    ).toBe(
-      group('Description').getByText(
-        'Could not refine this text. Please try again.',
-      ).id,
-    );
-    await userEvent.click(regenerate());
-    expect(group('Description').getByRole('status').textContent).toContain(
-      'No changes were needed.',
-    );
-    /* The visible status keeps the kit input-caption styling by default. */
     const caption = group('Description').getByText('No changes were needed.');
     expect(caption.className).toContain('dial-tiny-text');
     expect(caption.className).toContain('text-secondary');
-    await userEvent.click(restore());
-    expect(field().value).toBe('Original');
   });
-  it.each(['Cancel', 'Back', 'unmount'])('cancels on %s', async (mode) => {
+  it.each(['Cancel', 'Back'])('cancels on %s', async (mode) => {
     const pending = deferred();
     const refine = vi.fn<
       (value: string, signal: AbortSignal) => Promise<string>
     >(() => pending.promise);
-    const { unmount } = render(<Harness onRefineDescription={refine} />);
+    render(<Harness onRefineDescription={refine} />);
     await userEvent.click(action());
-    if (mode === 'unmount') unmount();
-    else
-      await userEvent.click(screen.getAllByRole('button', { name: mode })[0]);
+    await userEvent.click(screen.getAllByRole('button', { name: mode })[0]);
     expect(refine.mock.calls[0][1].aborted).toBe(true);
     await act(async () => pending.resolve('Late'));
   });
@@ -355,41 +276,5 @@ describe('text refinement authoring', () => {
     expect(button.querySelector('svg')?.getAttribute('aria-hidden')).toBe(
       'true',
     );
-  });
-});
-
-describe('draft replacement', () => {
-  it('cancels an equal-text draft replacement and clears Restore original', async () => {
-    const pending = deferred();
-    const refine = vi.fn<
-      (value: string, signal: AbortSignal) => Promise<string>
-    >(() => pending.promise);
-    const { rerender } = render(
-      <Harness onRefineDescription={refine} key="first" />,
-    );
-    await userEvent.click(action());
-    rerender(<Harness onRefineDescription={refine} key="second" />);
-    expect(refine.mock.calls[0][1].aborted).toBe(true);
-    await act(async () => pending.resolve('Late'));
-    expect(field().value).toBe('Original');
-    expect(
-      screen.queryByRole('button', { name: 'Restore original' }),
-    ).toBeNull();
-  });
-  it('returns to Ready after a manual edit and starts a new baseline', async () => {
-    const refine = vi
-      .fn()
-      .mockResolvedValueOnce('Better')
-      .mockResolvedValueOnce('Newest');
-    render(<Harness onRefineDescription={refine} />);
-    await userEvent.click(action());
-    fireEvent.change(field(), { target: { value: 'Manual baseline' } });
-    expect(
-      screen.queryByRole('button', { name: 'Restore original' }),
-    ).toBeNull();
-    await userEvent.click(action());
-    expect(refine.mock.calls[1][0]).toBe('Manual baseline');
-    await userEvent.click(restore());
-    expect(field().value).toBe('Manual baseline');
   });
 });

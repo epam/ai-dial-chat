@@ -192,7 +192,24 @@ describe('ListView', () => {
     expect(screen.getByText('selected')).toBeTruthy();
   });
 
-  it('uses a fixed dense row height — constant across every row regardless of content', () => {
+  it.each([
+    [
+      'uses a fixed dense row height — constant across every row regardless of content',
+      { attribute: 'data-row-height', expected: '60' },
+    ],
+    [
+      'drops the row context-menu wrapper ag-grid puts around every cell',
+      { attribute: 'data-wrap-custom-cell-renderers', expected: 'false' },
+    ],
+    [
+      'removes ag-grid header column dividers (no vertical dividers in this view)',
+      { attribute: 'data-without-header-borders', expected: 'true' },
+    ],
+    [
+      'leaves row colors to the grid theme, with no zebra striping',
+      { attribute: 'data-alternate-odd-row-colors', expected: 'false' },
+    ],
+  ])('%s', (_name, { attribute, expected }) => {
     render(
       <ListView
         type={CatalogEntityType.Model}
@@ -201,9 +218,9 @@ describe('ListView', () => {
         ariaLabel="Catalog"
       />,
     );
-    expect(
-      screen.getByLabelText('Catalog').getAttribute('data-row-height'),
-    ).toBe('60');
+    expect(screen.getByLabelText('Catalog').getAttribute(attribute)).toBe(
+      expected,
+    );
   });
 
   it('hands the grid every item and renders no spacer rows', () => {
@@ -273,54 +290,6 @@ describe('ListView', () => {
 
     rerender(<ListView type={CatalogEntityType.Model} items={items} />);
     expect(screen.getByRole('button', { name: 'star item-1' })).toBeTruthy();
-  });
-
-  it('drops the row context-menu wrapper ag-grid puts around every cell', () => {
-    render(
-      <ListView
-        type={CatalogEntityType.Model}
-        items={[makeItem({ id: 'x', name: 'x' })]}
-        query=""
-        ariaLabel="Catalog"
-      />,
-    );
-    expect(
-      screen
-        .getByLabelText('Catalog')
-        .getAttribute('data-wrap-custom-cell-renderers'),
-    ).toBe('false');
-  });
-
-  it('removes ag-grid header column dividers (no vertical dividers in this view)', () => {
-    render(
-      <ListView
-        type={CatalogEntityType.Model}
-        items={[makeItem({ id: 'x', name: 'x' })]}
-        query=""
-        ariaLabel="Catalog"
-      />,
-    );
-    expect(
-      screen
-        .getByLabelText('Catalog')
-        .getAttribute('data-without-header-borders'),
-    ).toBe('true');
-  });
-
-  it('leaves row colors to the grid theme, with no zebra striping', () => {
-    render(
-      <ListView
-        type={CatalogEntityType.Model}
-        items={[makeItem({ id: 'x', name: 'x' })]}
-        query=""
-        ariaLabel="Catalog"
-      />,
-    );
-    expect(
-      screen
-        .getByLabelText('Catalog')
-        .getAttribute('data-alternate-odd-row-colors'),
-    ).toBe('false');
   });
 
   it('emits only the cell-content color variables, leaving the chrome to the grid theme', () => {

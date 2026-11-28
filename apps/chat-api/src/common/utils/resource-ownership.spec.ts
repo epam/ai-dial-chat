@@ -24,26 +24,36 @@ describe('computeItemOwnershipFlags', () => {
     });
   });
 
-  it('sets isMy=false when bucket does not match the bucket segment of a prefixed id', () => {
-    const result = computeItemOwnershipFlags(
-      'applications/OTHER_BUCKET/their-app',
-      'BUCKET_HASH',
-      emptyUrlSets,
-    );
-
-    expect(result.isMy).toBe(false);
-  });
-
-  it('does not match a bucket that only appears in a later path segment', () => {
+  it.each([
+    [
+      'sets isMy=false when bucket does not match the bucket segment of a prefixed id',
+      { itemId: 'applications/OTHER_BUCKET/their-app', bucket: 'BUCKET_HASH' },
+    ],
     /*
      * Regression: an app whose *name* segment happens to equal another
      * user's bucket hash must not be misclassified as owned by that bucket.
      */
-    const result = computeItemOwnershipFlags(
-      'applications/OTHER_BUCKET/BUCKET_HASH',
-      'BUCKET_HASH',
-      emptyUrlSets,
-    );
+    [
+      'does not match a bucket that only appears in a later path segment',
+      {
+        itemId: 'applications/OTHER_BUCKET/BUCKET_HASH',
+        bucket: 'BUCKET_HASH',
+      },
+    ],
+    [
+      'sets isMy=false for a prefix-less id not owned by the bucket',
+      { itemId: 'OTHER_BUCKET/their-toolset', bucket: 'BUCKET_HASH' },
+    ],
+    [
+      'sets isMy=false for a root-level id with no bucket segment',
+      { itemId: 'gpt-4o', bucket: 'BUCKET_HASH' },
+    ],
+    [
+      'sets isMy=false when bucket is an empty string',
+      { itemId: 'applications//my-app', bucket: '' },
+    ],
+  ])('%s', (_name, { itemId, bucket }) => {
+    const result = computeItemOwnershipFlags(itemId, bucket, emptyUrlSets);
 
     expect(result.isMy).toBe(false);
   });
@@ -62,26 +72,6 @@ describe('computeItemOwnershipFlags', () => {
     );
 
     expect(result.isMy).toBe(true);
-  });
-
-  it('sets isMy=false for a prefix-less id not owned by the bucket', () => {
-    const result = computeItemOwnershipFlags(
-      'OTHER_BUCKET/their-toolset',
-      'BUCKET_HASH',
-      emptyUrlSets,
-    );
-
-    expect(result.isMy).toBe(false);
-  });
-
-  it('sets isMy=false for a root-level id with no bucket segment', () => {
-    const result = computeItemOwnershipFlags(
-      'gpt-4o',
-      'BUCKET_HASH',
-      emptyUrlSets,
-    );
-
-    expect(result.isMy).toBe(false);
   });
 
   it('sets canEdit=true when the item is in the writable set, even when not owned', () => {
@@ -121,16 +111,6 @@ describe('computeItemOwnershipFlags', () => {
 
     expect(result.isMy).toBe(true);
     expect(result.sharedWithMe).toBe(false);
-  });
-
-  it('sets isMy=false when bucket is an empty string', () => {
-    const result = computeItemOwnershipFlags(
-      'applications//my-app',
-      '',
-      emptyUrlSets,
-    );
-
-    expect(result.isMy).toBe(false);
   });
 });
 

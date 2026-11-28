@@ -811,28 +811,31 @@ describe('selectScheduledTaskErrorMessage', () => {
 });
 
 describe('formatScheduledTaskTriggerTime', () => {
-  it('shows a zone-local value as stored', () => {
-    expect(
-      formatScheduledTaskTriggerTime(
-        '2026-08-01T00:00:00.000',
-        'Asia/Tokyo',
-        'en',
-      ),
-    ).toBe('Aug 1, 2026, 12:00 AM');
-  });
-
-  it('shows an absolute instant in the task zone', () => {
-    expect(
-      formatScheduledTaskTriggerTime(
-        '2026-07-31T22:00:00.000Z',
-        'Europe/Berlin',
-        'en',
-      ),
-    ).toBe('Aug 1, 2026, 12:00 AM');
-  });
-
-  it('returns a value that is not a date unchanged', () => {
-    expect(formatScheduledTaskTriggerTime('soon', 'UTC', 'en')).toBe('soon');
+  it.each([
+    [
+      'shows a zone-local value as stored',
+      {
+        value: '2026-08-01T00:00:00.000',
+        timezone: 'Asia/Tokyo',
+        expected: 'Aug 1, 2026, 12:00 AM',
+      },
+    ],
+    [
+      'shows an absolute instant in the task zone',
+      {
+        value: '2026-07-31T22:00:00.000Z',
+        timezone: 'Europe/Berlin',
+        expected: 'Aug 1, 2026, 12:00 AM',
+      },
+    ],
+    [
+      'returns a value that is not a date unchanged',
+      { value: 'soon', timezone: 'UTC', expected: 'soon' },
+    ],
+  ])('%s', (_name, { value, timezone, expected }) => {
+    expect(formatScheduledTaskTriggerTime(value, timezone, 'en')).toBe(
+      expected,
+    );
   });
 });
 

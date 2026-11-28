@@ -7,23 +7,23 @@ import {
 } from '../dial-resource-path.util';
 
 describe('encodeDialFilePath', () => {
-  it('percent-encodes each segment while keeping separators', () => {
-    expect(encodeDialFilePath('New folder/a b.pdf')).toBe(
-      'New%20folder/a%20b.pdf',
-    );
-  });
-
-  it('preserves a trailing slash', () => {
-    expect(encodeDialFilePath('New folder/')).toBe('New%20folder/');
+  it.each([
+    [
+      'percent-encodes each segment while keeping separators',
+      { path: 'New folder/a b.pdf', expected: 'New%20folder/a%20b.pdf' },
+    ],
+    [
+      'preserves a trailing slash',
+      { path: 'New folder/', expected: 'New%20folder/' },
+    ],
+    ['returns an empty string unchanged', { path: '', expected: '' }],
+  ])('%s', (_name, { path, expected }) => {
+    expect(encodeDialFilePath(path)).toBe(expected);
   });
 
   it('does not decode first, so a percent escape in a name survives', () => {
     expect(encodeDialFilePath('a%20b.pdf')).toBe('a%2520b.pdf');
     expect(encodeDialFilePath('a%2Fb.txt')).toBe('a%252Fb.txt');
-  });
-
-  it('returns an empty string unchanged', () => {
-    expect(encodeDialFilePath('')).toBe('');
   });
 });
 

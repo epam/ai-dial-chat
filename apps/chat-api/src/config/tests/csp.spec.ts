@@ -328,12 +328,41 @@ describe('extractOrigin', () => {
 });
 
 describe('isOriginAllowedForIframe', () => {
-  it('matches an exact origin entry', () => {
-    expect(
-      isOriginAllowedForIframe('https://viz.example.com/app', [
-        'https://viz.example.com',
-      ]),
-    ).toBe(true);
+  it.each([
+    [
+      'matches an exact origin entry',
+      {
+        url: 'https://viz.example.com/app',
+        allowlist: ['https://viz.example.com'],
+        expected: true,
+      },
+    ],
+    [
+      'matches a subdomain through a leading-wildcard-label entry',
+      {
+        url: 'https://viz.example.com',
+        allowlist: ['https://*.example.com'],
+        expected: true,
+      },
+    ],
+    [
+      'does not match the apex through a wildcard entry, as CSP does not',
+      {
+        url: 'https://example.com',
+        allowlist: ['https://*.example.com'],
+        expected: false,
+      },
+    ],
+    [
+      'tolerates surrounding whitespace on an allowlist entry',
+      {
+        url: 'https://viz.example.com',
+        allowlist: [' https://viz.example.com '],
+        expected: true,
+      },
+    ],
+  ])('%s', (_name, { url, allowlist, expected }) => {
+    expect(isOriginAllowedForIframe(url, allowlist)).toBe(expected);
   });
 
   it('does not match a different scheme, host, or port', () => {
@@ -346,22 +375,6 @@ describe('isOriginAllowedForIframe', () => {
     );
     expect(
       isOriginAllowedForIframe(url, ['https://viz.example.com:8443']),
-    ).toBe(false);
-  });
-
-  it('matches a subdomain through a leading-wildcard-label entry', () => {
-    expect(
-      isOriginAllowedForIframe('https://viz.example.com', [
-        'https://*.example.com',
-      ]),
-    ).toBe(true);
-  });
-
-  it('does not match the apex through a wildcard entry, as CSP does not', () => {
-    expect(
-      isOriginAllowedForIframe('https://example.com', [
-        'https://*.example.com',
-      ]),
     ).toBe(false);
   });
 
@@ -386,13 +399,5 @@ describe('isOriginAllowedForIframe', () => {
     expect(
       isOriginAllowedForIframe('not-a-url', ['https://viz.example.com']),
     ).toBe(false);
-  });
-
-  it('tolerates surrounding whitespace on an allowlist entry', () => {
-    expect(
-      isOriginAllowedForIframe('https://viz.example.com', [
-        ' https://viz.example.com ',
-      ]),
-    ).toBe(true);
   });
 });

@@ -161,49 +161,51 @@ describe('mapSkillToCatalogItem', () => {
     expect(item.folder).toEqual(['Organization']);
   });
 
-  it('decodes a folder whose parentPath arrived percent-encoded (Issue #8882)', () => {
-    const item = mapPersonal({
-      parentPath: 'test%20folder/',
-      url: 'skills/my-bucket/test%20folder/revenue-skill',
-    });
+  it.each([
+    [
+      'decodes a folder whose parentPath arrived percent-encoded (Issue #8882)',
+      {
+        parentPath: 'test%20folder/',
+        url: 'skills/my-bucket/test%20folder/revenue-skill',
+        expected: ['Personal', 'test folder'],
+      },
+    ],
+    [
+      'preserves a folder literally named with a percent escape (Issue #8974)',
+      {
+        parentPath: 'test%20folder/',
+        url: 'skills/my-bucket/test%2520folder/revenue-skill',
+        expected: ['Personal', 'test%20folder'],
+      },
+    ],
+    [
+      'keeps a literal percent sign in a folder name',
+      {
+        parentPath: '100%/',
+        url: 'skills/my-bucket/100%25/revenue-skill',
+        expected: ['Personal', '100%'],
+      },
+    ],
+    [
+      'keeps a folder name containing a raw space intact',
+      {
+        parentPath: 'my folder/',
+        url: 'skills/my-bucket/my%20folder/revenue-skill',
+        expected: ['Personal', 'my folder'],
+      },
+    ],
+    [
+      'falls back to the verbatim parentPath when the url shape does not match',
+      {
+        parentPath: 'test%20folder/',
+        url: 'skills/my-bucket/revenue-skill',
+        expected: ['Personal', 'test%20folder'],
+      },
+    ],
+  ])('%s', (_name, { parentPath, url, expected }) => {
+    const item = mapPersonal({ parentPath, url });
 
-    expect(item.folder).toEqual(['Personal', 'test folder']);
-  });
-
-  it('preserves a folder literally named with a percent escape (Issue #8974)', () => {
-    const item = mapPersonal({
-      parentPath: 'test%20folder/',
-      url: 'skills/my-bucket/test%2520folder/revenue-skill',
-    });
-
-    expect(item.folder).toEqual(['Personal', 'test%20folder']);
-  });
-
-  it('keeps a literal percent sign in a folder name', () => {
-    const item = mapPersonal({
-      parentPath: '100%/',
-      url: 'skills/my-bucket/100%25/revenue-skill',
-    });
-
-    expect(item.folder).toEqual(['Personal', '100%']);
-  });
-
-  it('keeps a folder name containing a raw space intact', () => {
-    const item = mapPersonal({
-      parentPath: 'my folder/',
-      url: 'skills/my-bucket/my%20folder/revenue-skill',
-    });
-
-    expect(item.folder).toEqual(['Personal', 'my folder']);
-  });
-
-  it('falls back to the verbatim parentPath when the url shape does not match', () => {
-    const item = mapPersonal({
-      parentPath: 'test%20folder/',
-      url: 'skills/my-bucket/revenue-skill',
-    });
-
-    expect(item.folder).toEqual(['Personal', 'test%20folder']);
+    expect(item.folder).toEqual(expected);
   });
 
   it('carries the metadata timestamps through for sorting', () => {
@@ -636,31 +638,26 @@ describe('buildSkillContentTree', () => {
 });
 
 describe('resolveSkillFileDownloadPath', () => {
-  it('keeps a file-relative nested path unchanged', () => {
+  it.each([
+    [
+      'keeps a file-relative nested path unchanged',
+      { fileId: 'scripts/run.py', expected: 'scripts/run.py' },
+    ],
+    [
+      'removes the skill files-root prefix returned by Core',
+      {
+        fileId: 'address-current-branch-review/files/openai.yaml',
+        expected: 'openai.yaml',
+      },
+    ],
+    [
+      'removes a files-root prefix without a skill-path prefix',
+      { fileId: 'files/docs/notes.md', expected: 'docs/notes.md' },
+    ],
+  ])('%s', (_name, { fileId, expected }) => {
     expect(
-      resolveSkillFileDownloadPath(
-        'scripts/run.py',
-        'address-current-branch-review',
-      ),
-    ).toBe('scripts/run.py');
-  });
-
-  it('removes the skill files-root prefix returned by Core', () => {
-    expect(
-      resolveSkillFileDownloadPath(
-        'address-current-branch-review/files/openai.yaml',
-        'address-current-branch-review',
-      ),
-    ).toBe('openai.yaml');
-  });
-
-  it('removes a files-root prefix without a skill-path prefix', () => {
-    expect(
-      resolveSkillFileDownloadPath(
-        'files/docs/notes.md',
-        'address-current-branch-review',
-      ),
-    ).toBe('docs/notes.md');
+      resolveSkillFileDownloadPath(fileId, 'address-current-branch-review'),
+    ).toBe(expected);
   });
 
   it('rejects folder-root ids because they are not downloadable files', () => {

@@ -195,27 +195,30 @@ describe('getDropAfterId', () => {
     clientY,
   });
 
-  it('returns the item id when dropping on the bottom half (insert after)', () => {
+  it.each([
     // rect: top=0, height=40 → midpoint=20; clientY=30 → bottom half
-    const e = makeDragEvent(30, 0, 40);
-    expect(getDropAfterId(e, 'b', rows, FilterTab.MyChats)).toBe('b');
-  });
-
-  it('returns the preceding item id when dropping on the top half (insert before)', () => {
+    [
+      'returns the item id when dropping on the bottom half (insert after)',
+      { clientY: 30, itemId: 'b', expected: 'b' },
+    ],
     // rect: top=0, height=40 → midpoint=20; clientY=10 → top half; preceding 'b' is 'a'
-    const e = makeDragEvent(10, 0, 40);
-    expect(getDropAfterId(e, 'b', rows, FilterTab.MyChats)).toBe('a');
+    [
+      'returns the preceding item id when dropping on the top half (insert before)',
+      { clientY: 10, itemId: 'b', expected: 'a' },
+    ],
+    [
+      'returns the correct preceding item for the last item in a group',
+      { clientY: 10, itemId: 'c', expected: 'b' },
+    ],
+  ])('%s', (_name, { clientY, itemId, expected }) => {
+    const e = makeDragEvent(clientY, 0, 40);
+    expect(getDropAfterId(e, itemId, rows, FilterTab.MyChats)).toBe(expected);
   });
 
   it('returns null when dropping on the top half of the first item in a group', () => {
     // Dropping on top half of 'a' (first in group) → insert before 'a' → afterId = null
     const e = makeDragEvent(10, 0, 40);
     expect(getDropAfterId(e, 'a', rows, FilterTab.MyChats)).toBeNull();
-  });
-
-  it('returns the correct preceding item for the last item in a group', () => {
-    const e = makeDragEvent(10, 0, 40);
-    expect(getDropAfterId(e, 'c', rows, FilterTab.MyChats)).toBe('b');
   });
 });
 

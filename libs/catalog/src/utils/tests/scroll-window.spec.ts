@@ -16,30 +16,25 @@ const withRect = (top: number, bottom: number): HTMLElement => {
 };
 
 describe('scrollChildIntoContainerView', () => {
-  it('scrolls down just enough to reveal a child below the fold', () => {
+  it.each([
+    [
+      'scrolls down just enough to reveal a child below the fold',
+      { scrollTop: 20, childTop: 320, childBottom: 360, expected: 80 },
+    ],
+    [
+      'scrolls up just enough to reveal a child above the fold',
+      { scrollTop: 200, childTop: 60, childBottom: 90, expected: 160 },
+    ],
+    [
+      'leaves a fully visible child where it is',
+      { scrollTop: 50, childTop: 150, childBottom: 200, expected: 50 },
+    ],
+  ])('%s', (_name, { scrollTop, childTop, childBottom, expected }) => {
     const container = withRect(100, 300);
-    container.scrollTop = 20;
+    container.scrollTop = scrollTop;
 
-    scrollChildIntoContainerView(container, withRect(320, 360));
+    scrollChildIntoContainerView(container, withRect(childTop, childBottom));
 
-    expect(container.scrollTop).toBe(80);
-  });
-
-  it('scrolls up just enough to reveal a child above the fold', () => {
-    const container = withRect(100, 300);
-    container.scrollTop = 200;
-
-    scrollChildIntoContainerView(container, withRect(60, 90));
-
-    expect(container.scrollTop).toBe(160);
-  });
-
-  it('leaves a fully visible child where it is', () => {
-    const container = withRect(100, 300);
-    container.scrollTop = 50;
-
-    scrollChildIntoContainerView(container, withRect(150, 200));
-
-    expect(container.scrollTop).toBe(50);
+    expect(container.scrollTop).toBe(expected);
   });
 });

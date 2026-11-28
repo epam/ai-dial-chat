@@ -17,8 +17,15 @@ describe('ListFilesQueryDto', () => {
     expect(errors).toHaveLength(0);
   });
 
-  it('passes with empty path', async () => {
-    const errors = await validateDto({ bucket: 'my-bucket', path: '' });
+  it.each([
+    ['passes with empty path', { path: '' }],
+    ['passes path with spaces and parentheses', { path: 'asdasd (1) (1)/' }],
+    [
+      'passes path with percent-encoded spaces',
+      { path: 'asdasd%20(1)%20(1)/' },
+    ],
+  ])('%s', async (_name, { path }) => {
+    const errors = await validateDto({ bucket: 'my-bucket', path });
     expect(errors).toHaveLength(0);
   });
 
@@ -44,22 +51,6 @@ describe('ListFilesQueryDto', () => {
     const errors = await validateDto({ bucket: 'my:bucket' });
     expect(errors.length).toBeGreaterThan(0);
     expect(errors[0].property).toBe('bucket');
-  });
-
-  it('passes path with spaces and parentheses', async () => {
-    const errors = await validateDto({
-      bucket: 'my-bucket',
-      path: 'asdasd (1) (1)/',
-    });
-    expect(errors).toHaveLength(0);
-  });
-
-  it('passes path with percent-encoded spaces', async () => {
-    const errors = await validateDto({
-      bucket: 'my-bucket',
-      path: 'asdasd%20(1)%20(1)/',
-    });
-    expect(errors).toHaveLength(0);
   });
 
   it('rejects path with ..', async () => {

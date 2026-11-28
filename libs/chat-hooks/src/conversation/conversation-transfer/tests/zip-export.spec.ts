@@ -28,28 +28,26 @@ const readBlobAsBytes = (blob: Blob): Promise<Uint8Array> =>
   });
 
 describe('isValidArchivePath', () => {
-  it('accepts a simple nested path', () => {
-    expect(isValidArchivePath('reports/2026/q1.pdf')).toBe(true);
+  it.each([
+    ['accepts a simple nested path', { path: 'reports/2026/q1.pdf' }],
+    [
+      'accepts a path with spaces, parentheses, and unicode characters',
+      { path: 'reports/q1 (final) — Résumé.pdf' },
+    ],
+    [
+      'accepts a filename with multiple dots',
+      { path: 'reports/report.v2.final.pdf' },
+    ],
+  ])('%s', (_name, { path }) => {
+    expect(isValidArchivePath(path)).toBe(true);
   });
 
-  it('rejects a path traversal attempt', () => {
-    expect(isValidArchivePath('../../etc/passwd')).toBe(false);
-  });
-
-  it('accepts a path with spaces, parentheses, and unicode characters', () => {
-    expect(isValidArchivePath('reports/q1 (final) — Résumé.pdf')).toBe(true);
-  });
-
-  it('rejects an absolute path', () => {
-    expect(isValidArchivePath('/etc/passwd')).toBe(false);
-  });
-
-  it('rejects a path with a double slash', () => {
-    expect(isValidArchivePath('reports//q1.pdf')).toBe(false);
-  });
-
-  it('accepts a filename with multiple dots', () => {
-    expect(isValidArchivePath('reports/report.v2.final.pdf')).toBe(true);
+  it.each([
+    ['rejects a path traversal attempt', { path: '../../etc/passwd' }],
+    ['rejects an absolute path', { path: '/etc/passwd' }],
+    ['rejects a path with a double slash', { path: 'reports//q1.pdf' }],
+  ])('%s', (_name, { path }) => {
+    expect(isValidArchivePath(path)).toBe(false);
   });
 });
 

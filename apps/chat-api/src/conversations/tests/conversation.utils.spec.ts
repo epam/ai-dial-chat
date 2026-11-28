@@ -7,26 +7,29 @@ import {
 const LOCATOR = 'projects/z9y8x7/research/conversations/gpt-4o__Hi__1';
 
 describe('qualifySessionConversationPath', () => {
-  it('prefixes a session-relative path with the session bucket', () => {
-    expect(qualifySessionConversationPath('folder/x', 'a1b2c3')).toBe(
-      'a1b2c3/folder/x',
-    );
-  });
-
-  it('keeps a path that already starts with the session bucket', () => {
-    expect(qualifySessionConversationPath('a1b2c3/x', 'a1b2c3')).toBe(
-      'a1b2c3/x',
-    );
-  });
-
-  it('returns a project conversation locator unchanged', () => {
-    expect(qualifySessionConversationPath(LOCATOR, 'a1b2c3')).toBe(LOCATOR);
-  });
-
-  it('still prefixes a path that only looks like a project folder', () => {
-    expect(
-      qualifySessionConversationPath('projects/a/b/conversations/x/y', 'b1'),
-    ).toBe('b1/projects/a/b/conversations/x/y');
+  it.each([
+    [
+      'prefixes a session-relative path with the session bucket',
+      { path: 'folder/x', bucket: 'a1b2c3', expected: 'a1b2c3/folder/x' },
+    ],
+    [
+      'keeps a path that already starts with the session bucket',
+      { path: 'a1b2c3/x', bucket: 'a1b2c3', expected: 'a1b2c3/x' },
+    ],
+    [
+      'returns a project conversation locator unchanged',
+      { path: LOCATOR, bucket: 'a1b2c3', expected: LOCATOR },
+    ],
+    [
+      'still prefixes a path that only looks like a project folder',
+      {
+        path: 'projects/a/b/conversations/x/y',
+        bucket: 'b1',
+        expected: 'b1/projects/a/b/conversations/x/y',
+      },
+    ],
+  ])('%s', (_name, { path, bucket, expected }) => {
+    expect(qualifySessionConversationPath(path, bucket)).toBe(expected);
   });
 });
 

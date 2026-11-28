@@ -39,103 +39,94 @@ describe('PROHIBITED_CONVERSATION_NAME_CHARS_RE', () => {
 });
 
 describe('sanitizeConversationName', () => {
-  it('removes all prohibited characters from a mixed string', () => {
-    expect(sanitizeConversationName('a"b:c;d/e\\f,g=h{i}j%k&l')).toBe(
-      'abcdefghijkl',
-    );
-  });
-
-  it('removes tab characters', () => {
-    expect(sanitizeConversationName('a\tb')).toBe('ab');
-  });
-
-  it('returns an empty string when input contains only prohibited characters', () => {
-    expect(sanitizeConversationName('":;/\\,={}%&\t')).toBe('');
-  });
-
-  it('leaves allowed characters unchanged', () => {
-    expect(sanitizeConversationName('Hello World')).toBe('Hello World');
+  it.each([
+    [
+      'removes all prohibited characters from a mixed string',
+      { input: 'a"b:c;d/e\\f,g=h{i}j%k&l', expected: 'abcdefghijkl' },
+    ],
+    ['removes tab characters', { input: 'a\tb', expected: 'ab' }],
+    [
+      'returns an empty string when input contains only prohibited characters',
+      { input: '":;/\\,={}%&\t', expected: '' },
+    ],
+    [
+      'leaves allowed characters unchanged',
+      { input: 'Hello World', expected: 'Hello World' },
+    ],
+    [
+      'preserves dots inside the name',
+      { input: 'my.conversation.name', expected: 'my.conversation.name' },
+    ],
+    ['returns an empty string for an empty input', { input: '', expected: '' }],
+    [
+      'removes multiple occurrences of the same prohibited character',
+      { input: 'a::b;;c', expected: 'abc' },
+    ],
+  ])('%s', (_name, { input, expected }) => {
+    expect(sanitizeConversationName(input)).toBe(expected);
   });
 
   it('preserves other special symbols that are not prohibited', () => {
     const allowed = "!@#$^*()-_+[]|~' 123";
     expect(sanitizeConversationName(allowed)).toBe(allowed);
   });
-
-  it('preserves dots inside the name', () => {
-    expect(sanitizeConversationName('my.conversation.name')).toBe(
-      'my.conversation.name',
-    );
-  });
-
-  it('returns an empty string for an empty input', () => {
-    expect(sanitizeConversationName('')).toBe('');
-  });
-
-  it('removes multiple occurrences of the same prohibited character', () => {
-    expect(sanitizeConversationName('a::b;;c')).toBe('abc');
-  });
 });
 
 describe('stripTrailingDots', () => {
-  it('removes a single trailing dot', () => {
-    expect(stripTrailingDots('name.')).toBe('name');
-  });
-
-  it('removes multiple trailing dots', () => {
-    expect(stripTrailingDots('name...')).toBe('name');
+  it.each([
+    ['removes a single trailing dot', { input: 'name.', expected: 'name' }],
+    ['removes multiple trailing dots', { input: 'name...', expected: 'name' }],
+    [
+      'preserves a dot at the start of the name',
+      { input: '.hiddenfile', expected: '.hiddenfile' },
+    ],
+    [
+      'preserves dots inside the name',
+      { input: 'my.conv.name', expected: 'my.conv.name' },
+    ],
+    [
+      'returns an empty string when input is only dots',
+      { input: '...', expected: '' },
+    ],
+    ['returns an empty string for an empty input', { input: '', expected: '' }],
+    [
+      'leaves a name without trailing dots unchanged',
+      { input: 'hello', expected: 'hello' },
+    ],
+  ])('%s', (_name, { input, expected }) => {
+    expect(stripTrailingDots(input)).toBe(expected);
   });
 
   it('removes a long sequence of trailing dots', () => {
     expect(stripTrailingDots(`name${'.'.repeat(100_000)}`)).toBe('name');
   });
-
-  it('preserves a dot at the start of the name', () => {
-    expect(stripTrailingDots('.hiddenfile')).toBe('.hiddenfile');
-  });
-
-  it('preserves dots inside the name', () => {
-    expect(stripTrailingDots('my.conv.name')).toBe('my.conv.name');
-  });
-
-  it('returns an empty string when input is only dots', () => {
-    expect(stripTrailingDots('...')).toBe('');
-  });
-
-  it('returns an empty string for an empty input', () => {
-    expect(stripTrailingDots('')).toBe('');
-  });
-
-  it('leaves a name without trailing dots unchanged', () => {
-    expect(stripTrailingDots('hello')).toBe('hello');
-  });
 });
 
 describe('stripTrailingSlashes', () => {
-  it('removes a single trailing slash', () => {
-    expect(stripTrailingSlashes('/My files/reports/')).toBe(
-      '/My files/reports',
-    );
-  });
-
-  it('removes repeated trailing slashes', () => {
-    expect(stripTrailingSlashes('reports///')).toBe('reports');
-  });
-
-  it('preserves leading slashes', () => {
-    expect(stripTrailingSlashes('//reports')).toBe('//reports');
-  });
-
-  it('returns an empty string when input is only slashes', () => {
-    expect(stripTrailingSlashes('////')).toBe('');
-  });
-
-  it('returns an empty string for an empty input', () => {
-    expect(stripTrailingSlashes('')).toBe('');
-  });
-
-  it('leaves a path without trailing slashes unchanged', () => {
-    expect(stripTrailingSlashes('reports/q1.pdf')).toBe('reports/q1.pdf');
+  it.each([
+    [
+      'removes a single trailing slash',
+      { input: '/My files/reports/', expected: '/My files/reports' },
+    ],
+    [
+      'removes repeated trailing slashes',
+      { input: 'reports///', expected: 'reports' },
+    ],
+    [
+      'preserves leading slashes',
+      { input: '//reports', expected: '//reports' },
+    ],
+    [
+      'returns an empty string when input is only slashes',
+      { input: '////', expected: '' },
+    ],
+    ['returns an empty string for an empty input', { input: '', expected: '' }],
+    [
+      'leaves a path without trailing slashes unchanged',
+      { input: 'reports/q1.pdf', expected: 'reports/q1.pdf' },
+    ],
+  ])('%s', (_name, { input, expected }) => {
+    expect(stripTrailingSlashes(input)).toBe(expected);
   });
 
   it('handles a long sequence of trailing slashes in linear time', () => {
@@ -146,26 +137,26 @@ describe('stripTrailingSlashes', () => {
 });
 
 describe('stripSurroundingSlashes', () => {
-  it('removes leading and trailing slashes', () => {
-    expect(stripSurroundingSlashes('/reports/')).toBe('reports');
-  });
-
-  it('removes repeated slashes on both ends', () => {
-    expect(stripSurroundingSlashes('///reports///')).toBe('reports');
-  });
-
-  it('preserves slashes inside the path', () => {
-    expect(stripSurroundingSlashes('/reports/q1/final.pdf/')).toBe(
-      'reports/q1/final.pdf',
-    );
-  });
-
-  it('returns an empty string when input is only slashes', () => {
-    expect(stripSurroundingSlashes('////')).toBe('');
-  });
-
-  it('returns an empty string for an empty input', () => {
-    expect(stripSurroundingSlashes('')).toBe('');
+  it.each([
+    [
+      'removes leading and trailing slashes',
+      { input: '/reports/', expected: 'reports' },
+    ],
+    [
+      'removes repeated slashes on both ends',
+      { input: '///reports///', expected: 'reports' },
+    ],
+    [
+      'preserves slashes inside the path',
+      { input: '/reports/q1/final.pdf/', expected: 'reports/q1/final.pdf' },
+    ],
+    [
+      'returns an empty string when input is only slashes',
+      { input: '////', expected: '' },
+    ],
+    ['returns an empty string for an empty input', { input: '', expected: '' }],
+  ])('%s', (_name, { input, expected }) => {
+    expect(stripSurroundingSlashes(input)).toBe(expected);
   });
 
   it('handles a long sequence of surrounding slashes in linear time', () => {
@@ -177,21 +168,20 @@ describe('stripSurroundingSlashes', () => {
 });
 
 describe('getUtf8ByteLength', () => {
-  it('returns the byte length of an ASCII string', () => {
-    expect(getUtf8ByteLength('hello')).toBe(5);
-  });
-
-  it('returns 0 for an empty string', () => {
-    expect(getUtf8ByteLength('')).toBe(0);
-  });
-
-  it('counts multi-byte characters correctly', () => {
+  it.each([
+    [
+      'returns the byte length of an ASCII string',
+      { input: 'hello', expected: 5 },
+    ],
+    ['returns 0 for an empty string', { input: '', expected: 0 }],
     // '€' is 3 bytes in UTF-8
-    expect(getUtf8ByteLength('€')).toBe(3);
-  });
-
-  it('counts emoji (4-byte) characters correctly', () => {
+    ['counts multi-byte characters correctly', { input: '€', expected: 3 }],
     // '😀' is 4 bytes in UTF-8
-    expect(getUtf8ByteLength('😀')).toBe(4);
+    [
+      'counts emoji (4-byte) characters correctly',
+      { input: '😀', expected: 4 },
+    ],
+  ])('%s', (_name, { input, expected }) => {
+    expect(getUtf8ByteLength(input)).toBe(expected);
   });
 });

@@ -17,22 +17,29 @@ describe('KNOWN_UI_FEATURES', () => {
     expect(KNOWN_UI_FEATURES.size).toBe(58);
   });
 
-  it('includes representative transferable keys', () => {
-    expect(KNOWN_UI_FEATURES.has('header')).toBe(true);
-    expect(KNOWN_UI_FEATURES.has('likes')).toBe(true);
-    expect(KNOWN_UI_FEATURES.has('voice-input')).toBe(true);
-  });
-
-  it('includes the chat-input keys', () => {
-    expect(KNOWN_UI_FEATURES.has('chat-settings')).toBe(true);
-    expect(KNOWN_UI_FEATURES.has('removable-tools')).toBe(true);
-    expect(KNOWN_UI_FEATURES.has('conversation-drafts')).toBe(true);
-  });
-
-  it('includes the catalog keys under their current names', () => {
-    expect(KNOWN_UI_FEATURES.has('catalog')).toBe(true);
-    expect(KNOWN_UI_FEATURES.has('catalog-hide-my-apps')).toBe(true);
-    expect(KNOWN_UI_FEATURES.has('catalog-table-view')).toBe(true);
+  it.each([
+    [
+      'includes representative transferable keys',
+      { keys: ['header', 'likes', 'voice-input'] },
+    ],
+    [
+      'includes the chat-input keys',
+      { keys: ['chat-settings', 'removable-tools', 'conversation-drafts'] },
+    ],
+    [
+      'includes the catalog keys under their current names',
+      { keys: ['catalog', 'catalog-hide-my-apps', 'catalog-table-view'] },
+    ],
+    [
+      'includes the starter-layout key',
+      {
+        keys: ['show-all-starters', 'starters-below-greeting', 'hide-greeting'],
+      },
+    ],
+  ])('%s', (_name, { keys: [first, second, third] }) => {
+    expect(KNOWN_UI_FEATURES.has(first)).toBe(true);
+    expect(KNOWN_UI_FEATURES.has(second)).toBe(true);
+    expect(KNOWN_UI_FEATURES.has(third)).toBe(true);
   });
 
   it('includes the keys that gate a whole route', () => {
@@ -43,52 +50,31 @@ describe('KNOWN_UI_FEATURES', () => {
     expect(KNOWN_UI_FEATURES.has('schema-apps')).toBe(true);
   });
 
-  it('includes the starter-layout key', () => {
-    expect(KNOWN_UI_FEATURES.has('show-all-starters')).toBe(true);
-    expect(KNOWN_UI_FEATURES.has('starters-below-greeting')).toBe(true);
-    expect(KNOWN_UI_FEATURES.has('hide-greeting')).toBe(true);
-  });
-
-  it('includes the footer-version key', () => {
-    expect(KNOWN_UI_FEATURES.has('hide-footer-version')).toBe(true);
-  });
-
-  it('includes the agent-description key', () => {
-    expect(KNOWN_UI_FEATURES.has('show-agent-description')).toBe(true);
-  });
-
-  it('includes the input-history-navigation key', () => {
-    expect(KNOWN_UI_FEATURES.has('disable-input-history-navigation')).toBe(
-      true,
-    );
-  });
-
-  it('includes the conversation-export key', () => {
-    expect(KNOWN_UI_FEATURES.has('hide-conversation-export')).toBe(true);
-  });
-
-  it('includes the conversation-import key', () => {
-    expect(KNOWN_UI_FEATURES.has('hide-conversation-import')).toBe(true);
-  });
-
-  it('includes the settings-page key', () => {
-    expect(KNOWN_UI_FEATURES.has('hide-settings-page')).toBe(true);
-  });
-
-  it('includes the usage-page key', () => {
-    expect(KNOWN_UI_FEATURES.has('hide-usage-page')).toBe(true);
-  });
-
-  it('includes the header-logo key', () => {
-    expect(KNOWN_UI_FEATURES.has('show-header-logo')).toBe(true);
-  });
-
-  it('includes the starter-icon key', () => {
-    expect(KNOWN_UI_FEATURES.has('hide-starter-icon')).toBe(true);
-  });
-
-  it('includes the mobile-header-full-logo key', () => {
-    expect(KNOWN_UI_FEATURES.has('show-mobile-header-full-logo')).toBe(true);
+  it.each([
+    ['includes the footer-version key', { key: 'hide-footer-version' }],
+    ['includes the agent-description key', { key: 'show-agent-description' }],
+    [
+      'includes the input-history-navigation key',
+      { key: 'disable-input-history-navigation' },
+    ],
+    [
+      'includes the conversation-export key',
+      { key: 'hide-conversation-export' },
+    ],
+    [
+      'includes the conversation-import key',
+      { key: 'hide-conversation-import' },
+    ],
+    ['includes the settings-page key', { key: 'hide-settings-page' }],
+    ['includes the usage-page key', { key: 'hide-usage-page' }],
+    ['includes the header-logo key', { key: 'show-header-logo' }],
+    ['includes the starter-icon key', { key: 'hide-starter-icon' }],
+    [
+      'includes the mobile-header-full-logo key',
+      { key: 'show-mobile-header-full-logo' },
+    ],
+  ])('%s', (_name, { key }) => {
+    expect(KNOWN_UI_FEATURES.has(key)).toBe(true);
   });
 
   it('includes both agent-selector keys', () => {

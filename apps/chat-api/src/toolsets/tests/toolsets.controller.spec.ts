@@ -131,16 +131,25 @@ describe('ToolsetsController (integration)', () => {
       );
     });
 
-    it('returns 400 for a toolset name with invalid characters (semicolon)', async () => {
-      await request(app.getHttpServer())
-        .get('/api/v1/toolsets/bad;toolset')
-        .expect(400);
-    });
-
-    it('returns 400 for a toolset name with a null byte (%00)', async () => {
-      await request(app.getHttpServer())
-        .get('/api/v1/toolsets/bad%00toolset')
-        .expect(400);
+    it.each([
+      [
+        'returns 400 for a toolset name with invalid characters (semicolon)',
+        { url: '/api/v1/toolsets/bad;toolset', status: 400 },
+      ],
+      [
+        'returns 400 for a toolset name with a null byte (%00)',
+        { url: '/api/v1/toolsets/bad%00toolset', status: 400 },
+      ],
+      [
+        'accepts dotted toolset names',
+        { url: '/api/v1/toolsets/folder.toolset-v1', status: 200 },
+      ],
+      [
+        'accepts namespaced toolset names with @ and :',
+        { url: '/api/v1/toolsets/@org%2Ftoolset:tag', status: 200 },
+      ],
+    ])('%s', async (_name, { url, status }) => {
+      await request(app.getHttpServer()).get(url).expect(status);
     });
 
     it('returns 400 for a percent-encoded path-traversal payload, without calling the service', async () => {
@@ -171,18 +180,6 @@ describe('ToolsetsController (integration)', () => {
       await request(app.getHttpServer())
         .get('/api/v1/toolsets/my-toolset')
         .expect(401);
-    });
-
-    it('accepts dotted toolset names', async () => {
-      await request(app.getHttpServer())
-        .get('/api/v1/toolsets/folder.toolset-v1')
-        .expect(200);
-    });
-
-    it('accepts namespaced toolset names with @ and :', async () => {
-      await request(app.getHttpServer())
-        .get('/api/v1/toolsets/@org%2Ftoolset:tag')
-        .expect(200);
     });
 
     it('accepts a percent-encoded custom-toolset path (bucket/path segments)', async () => {

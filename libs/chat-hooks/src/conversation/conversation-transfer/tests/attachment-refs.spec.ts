@@ -44,25 +44,30 @@ const withPool = (
 ): Conversation => ({ ...conversation, customViewState: { annotations } });
 
 describe('splitFileIdAnchor', () => {
-  it('separates a trailing anchor from the file id', () => {
-    expect(splitFileIdAnchor('files/b/doc.pdf#page=3')).toEqual({
-      fileId: 'files/b/doc.pdf',
-      anchor: '#page=3',
-    });
-  });
-
-  it('reports an empty anchor when there is none', () => {
-    expect(splitFileIdAnchor('files/b/doc.pdf')).toEqual({
-      fileId: 'files/b/doc.pdf',
-      anchor: '',
-    });
-  });
-
-  it('drops an anchor carrying characters no reader parses, keeping the file id', () => {
-    expect(splitFileIdAnchor('files/b/doc.pdf#"><script>')).toEqual({
-      fileId: 'files/b/doc.pdf',
-      anchor: '',
-    });
+  it.each([
+    [
+      'separates a trailing anchor from the file id',
+      {
+        id: 'files/b/doc.pdf#page=3',
+        expected: { fileId: 'files/b/doc.pdf', anchor: '#page=3' },
+      },
+    ],
+    [
+      'reports an empty anchor when there is none',
+      {
+        id: 'files/b/doc.pdf',
+        expected: { fileId: 'files/b/doc.pdf', anchor: '' },
+      },
+    ],
+    [
+      'drops an anchor carrying characters no reader parses, keeping the file id',
+      {
+        id: 'files/b/doc.pdf#"><script>',
+        expected: { fileId: 'files/b/doc.pdf', anchor: '' },
+      },
+    ],
+  ])('%s', (_name, { id, expected }) => {
+    expect(splitFileIdAnchor(id)).toEqual(expected);
   });
 });
 

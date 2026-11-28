@@ -383,30 +383,23 @@ describe('request timing — Core wire attribution through the real Nest pipelin
     expect(phases.core.sum).toBeGreaterThan(0.045);
   });
 
-  it('merges parallel Core intervals and preserves the subsequent local wait', async () => {
-    await request(app.getHttpServer())
-      .get('/api/v1/timing/parallel')
-      .expect(200, 'ok');
-    const phases = await expectCompletePhases('/api/v1/timing/parallel');
-    expect(phases.core.sum).toBeGreaterThan(0.035);
-    expect(phases.chat.sum).toBeGreaterThan(0.025);
-  });
-
-  it('stops Core timing when the upstream fails, before local error handling completes', async () => {
-    await request(app.getHttpServer())
-      .get('/api/v1/timing/failure')
-      .expect(200, 'recovered');
-    const phases = await expectCompletePhases('/api/v1/timing/failure');
-    expect(phases.core.sum).toBeGreaterThan(0.025);
-    expect(phases.chat.sum).toBeGreaterThan(0.025);
-  });
-
-  it('stops Core timing when the response body is aborted', async () => {
-    await request(app.getHttpServer())
-      .get('/api/v1/timing/cancel')
-      .expect(200, 'cancelled');
-    const phases = await expectCompletePhases('/api/v1/timing/cancel');
-    expect(phases.core.sum).toBeGreaterThan(0.015);
+  it.each([
+    [
+      'merges parallel Core intervals and preserves the subsequent local wait',
+      { path: '/api/v1/timing/parallel', body: 'ok', minCore: 0.035 },
+    ],
+    [
+      'stops Core timing when the upstream fails, before local error handling completes',
+      { path: '/api/v1/timing/failure', body: 'recovered', minCore: 0.025 },
+    ],
+    [
+      'stops Core timing when the response body is aborted',
+      { path: '/api/v1/timing/cancel', body: 'cancelled', minCore: 0.015 },
+    ],
+  ])('%s', async (_name, { path, body, minCore }) => {
+    await request(app.getHttpServer()).get(path).expect(200, body);
+    const phases = await expectCompletePhases(path);
+    expect(phases.core.sum).toBeGreaterThan(minCore);
     expect(phases.chat.sum).toBeGreaterThan(0.025);
   });
 

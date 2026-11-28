@@ -22,19 +22,28 @@ describe('resolveCandidatePath', () => {
     expect(resolveCandidatePath(buildFile('notes.md'))).toBe('notes.md');
   });
 
-  it('falls back to File.name when webkitRelativePath is empty', () => {
-    expect(resolveCandidatePath(buildFile('notes.md', ''))).toBe('notes.md');
-  });
-
-  it('normalizes backslash separators to forward slashes', () => {
-    expect(
-      resolveCandidatePath(buildFile('analyzer.md', 'agents\\analyzer.md')),
-    ).toBe('agents/analyzer.md');
-  });
-
-  it('leaves an already-forward-slash relative path unchanged', () => {
-    expect(
-      resolveCandidatePath(buildFile('analyzer.md', 'agents/analyzer.md')),
-    ).toBe('agents/analyzer.md');
+  it.each([
+    [
+      'falls back to File.name when webkitRelativePath is empty',
+      { name: 'notes.md', relativePath: '', expected: 'notes.md' },
+    ],
+    [
+      'normalizes backslash separators to forward slashes',
+      {
+        name: 'analyzer.md',
+        relativePath: 'agents\\analyzer.md',
+        expected: 'agents/analyzer.md',
+      },
+    ],
+    [
+      'leaves an already-forward-slash relative path unchanged',
+      {
+        name: 'analyzer.md',
+        relativePath: 'agents/analyzer.md',
+        expected: 'agents/analyzer.md',
+      },
+    ],
+  ])('%s', (_name, { name, relativePath, expected }) => {
+    expect(resolveCandidatePath(buildFile(name, relativePath))).toBe(expected);
   });
 });

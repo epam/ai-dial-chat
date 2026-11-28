@@ -89,21 +89,15 @@ describe('SkillsPackageService', () => {
     ).toThrow(BadRequestException);
   });
 
-  it('rejects a path traversal entry', () => {
+  it.each([
+    ['rejects a path traversal entry', { path: '../a.md' }],
+    ['rejects a reserved marker entry', { path: '.dial-resource' }],
+    ['rejects SKILL.md as a supporting path', { path: 'SKILL.md' }],
+  ])('%s', (_name, { path }) => {
     expect(() =>
-      service.validateAndBuildFormData(manifest, JSON.stringify(['../a.md']), [
+      service.validateAndBuildFormData(manifest, JSON.stringify([path]), [
         makeFile('a'),
       ]),
-    ).toThrow(BadRequestException);
-  });
-
-  it('rejects a reserved marker entry', () => {
-    expect(() =>
-      service.validateAndBuildFormData(
-        manifest,
-        JSON.stringify(['.dial-resource']),
-        [makeFile('a')],
-      ),
     ).toThrow(BadRequestException);
   });
 
@@ -174,14 +168,6 @@ describe('SkillsPackageService', () => {
         JSON.stringify(['a.md', 'a.md']),
         [makeFile('a'), makeFile('a')],
       ),
-    ).toThrow(BadRequestException);
-  });
-
-  it('rejects SKILL.md as a supporting path', () => {
-    expect(() =>
-      service.validateAndBuildFormData(manifest, JSON.stringify(['SKILL.md']), [
-        makeFile('a'),
-      ]),
     ).toThrow(BadRequestException);
   });
 

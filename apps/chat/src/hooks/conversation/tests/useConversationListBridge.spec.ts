@@ -380,11 +380,24 @@ describe('useConversationListBridge', () => {
       expect(response.error).toBeUndefined();
     });
 
-    it('maps a thrown 404 error to NOT_FOUND', async () => {
+    it.each([
+      [
+        'maps a thrown 404 error to NOT_FOUND',
+        { status: 404, message: 'gone', code: 'NOT_FOUND' },
+      ],
+      [
+        'maps a thrown 403 error to FORBIDDEN',
+        { status: 403, message: 'no access', code: 'FORBIDDEN' },
+      ],
+      [
+        'maps a thrown 400 error to INVALID_ARGUMENT',
+        { status: 400, message: 'invalid name', code: 'INVALID_ARGUMENT' },
+      ],
+    ])('%s', async (_name, { status, message, code }) => {
       const overlay = makeOverlay();
       mockUseOptionalOverlay.mockReturnValue(overlay);
       mockRenameConversation.mockRejectedValue({
-        response: { status: 404, json: async () => ({ message: 'gone' }) },
+        response: { status, json: async () => ({ message }) },
       });
 
       renderHook(() => useConversationListBridge());
@@ -392,49 +405,7 @@ describe('useConversationListBridge', () => {
 
       const response = await bridge.renameConversation('conv-1', 'New');
 
-      expect(response.error).toEqual({ code: 'NOT_FOUND', message: 'gone' });
-    });
-
-    it('maps a thrown 403 error to FORBIDDEN', async () => {
-      const overlay = makeOverlay();
-      mockUseOptionalOverlay.mockReturnValue(overlay);
-      mockRenameConversation.mockRejectedValue({
-        response: {
-          status: 403,
-          json: async () => ({ message: 'no access' }),
-        },
-      });
-
-      renderHook(() => useConversationListBridge());
-      const bridge = getRegisteredBridge(overlay);
-
-      const response = await bridge.renameConversation('conv-1', 'New');
-
-      expect(response.error).toEqual({
-        code: 'FORBIDDEN',
-        message: 'no access',
-      });
-    });
-
-    it('maps a thrown 400 error to INVALID_ARGUMENT', async () => {
-      const overlay = makeOverlay();
-      mockUseOptionalOverlay.mockReturnValue(overlay);
-      mockRenameConversation.mockRejectedValue({
-        response: {
-          status: 400,
-          json: async () => ({ message: 'invalid name' }),
-        },
-      });
-
-      renderHook(() => useConversationListBridge());
-      const bridge = getRegisteredBridge(overlay);
-
-      const response = await bridge.renameConversation('conv-1', 'New');
-
-      expect(response.error).toEqual({
-        code: 'INVALID_ARGUMENT',
-        message: 'invalid name',
-      });
+      expect(response.error).toEqual({ code, message });
     });
   });
 });

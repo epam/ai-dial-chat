@@ -232,42 +232,33 @@ describe('FilesController — upload', () => {
     );
   });
 
-  it('returns 400 for invalid bucket (contains slash)', async () => {
+  it.each([
+    [
+      'returns 400 for invalid bucket (contains slash)',
+      { bucket: 'bad/bucket', path: 'folder/file.pdf', fileName: 'file.pdf' },
+    ],
+    [
+      'returns 400 for path traversal (..)',
+      { bucket: 'my-bucket', path: '../etc/passwd', fileName: 'file.pdf' },
+    ],
+    [
+      'returns 400 for URL-encoded path traversal',
+      {
+        bucket: 'my-bucket',
+        path: 'files/my-bucket/uploads/2026-06/%2E%2E%2Fsecret.txt',
+        fileName: 'secret.txt',
+      },
+    ],
+    [
+      'returns 400 for path starting with /',
+      { bucket: 'my-bucket', path: '/etc/passwd', fileName: 'file.pdf' },
+    ],
+  ])('%s', async (_title, { bucket, path, fileName }) => {
     await request(app.getHttpServer())
       .post('/api/v1/files')
-      .field('bucket', 'bad/bucket')
-      .field('path', 'folder/file.pdf')
-      .attach('file', Buffer.from('hello'), 'file.pdf')
-      .expect(400);
-    expect(service.uploadFile).not.toHaveBeenCalled();
-  });
-
-  it('returns 400 for path traversal (..)', async () => {
-    await request(app.getHttpServer())
-      .post('/api/v1/files')
-      .field('bucket', 'my-bucket')
-      .field('path', '../etc/passwd')
-      .attach('file', Buffer.from('hello'), 'file.pdf')
-      .expect(400);
-    expect(service.uploadFile).not.toHaveBeenCalled();
-  });
-
-  it('returns 400 for URL-encoded path traversal', async () => {
-    await request(app.getHttpServer())
-      .post('/api/v1/files')
-      .field('bucket', 'my-bucket')
-      .field('path', 'files/my-bucket/uploads/2026-06/%2E%2E%2Fsecret.txt')
-      .attach('file', Buffer.from('hello'), 'secret.txt')
-      .expect(400);
-    expect(service.uploadFile).not.toHaveBeenCalled();
-  });
-
-  it('returns 400 for path starting with /', async () => {
-    await request(app.getHttpServer())
-      .post('/api/v1/files')
-      .field('bucket', 'my-bucket')
-      .field('path', '/etc/passwd')
-      .attach('file', Buffer.from('hello'), 'file.pdf')
+      .field('bucket', bucket)
+      .field('path', path)
+      .attach('file', Buffer.from('hello'), fileName)
       .expect(400);
     expect(service.uploadFile).not.toHaveBeenCalled();
   });
@@ -1549,18 +1540,24 @@ describe('FilesController — getFileMetadata', () => {
     expect(service.getFileMetadata).not.toHaveBeenCalled();
   });
 
-  it('returns 400 when bucket contains invalid characters', async () => {
+  it.each([
+    [
+      'returns 400 when bucket contains invalid characters',
+      { bucket: 'bad/bucket', path: 'file.pdf' },
+    ],
+    ['returns 400 when path is empty', { bucket: 'my-bucket', path: '' }],
+    [
+      'returns 400 when path ends with /',
+      { bucket: 'my-bucket', path: 'folder/' },
+    ],
+    [
+      'returns 400 when path contains ..',
+      { bucket: 'my-bucket', path: '../../etc/passwd' },
+    ],
+  ])('%s', async (_title, query) => {
     await request(app.getHttpServer())
       .get('/api/v1/files/metadata')
-      .query({ bucket: 'bad/bucket', path: 'file.pdf' })
-      .expect(400);
-    expect(service.getFileMetadata).not.toHaveBeenCalled();
-  });
-
-  it('returns 400 when path is empty', async () => {
-    await request(app.getHttpServer())
-      .get('/api/v1/files/metadata')
-      .query({ bucket: 'my-bucket', path: '' })
+      .query(query)
       .expect(400);
     expect(service.getFileMetadata).not.toHaveBeenCalled();
   });
@@ -1569,22 +1566,6 @@ describe('FilesController — getFileMetadata', () => {
     await request(app.getHttpServer())
       .get('/api/v1/files/metadata')
       .query({ bucket: 'my-bucket' })
-      .expect(400);
-    expect(service.getFileMetadata).not.toHaveBeenCalled();
-  });
-
-  it('returns 400 when path ends with /', async () => {
-    await request(app.getHttpServer())
-      .get('/api/v1/files/metadata')
-      .query({ bucket: 'my-bucket', path: 'folder/' })
-      .expect(400);
-    expect(service.getFileMetadata).not.toHaveBeenCalled();
-  });
-
-  it('returns 400 when path contains ..', async () => {
-    await request(app.getHttpServer())
-      .get('/api/v1/files/metadata')
-      .query({ bucket: 'my-bucket', path: '../../etc/passwd' })
       .expect(400);
     expect(service.getFileMetadata).not.toHaveBeenCalled();
   });

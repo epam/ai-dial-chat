@@ -83,15 +83,32 @@ describe('useCollapsedText', () => {
     expect(screen.getByLabelText('Text collapsed').textContent).toBe('true');
   });
 
-  it('does not mark short text as overflowing', async () => {
-    mockParagraphScrollHeight(24);
+  it.each([
+    [
+      'does not mark short text as overflowing',
+      { text: 'Short text', scrollHeight: 24, isOverflowing: false },
+    ],
+    [
+      'does not mark text as overflowing within the overflow tolerance',
+      { text: 'Text', scrollHeight: 49, isOverflowing: false },
+    ],
+    [
+      'marks text as overflowing when scrollHeight exceeds the overflow tolerance',
+      { text: 'Text', scrollHeight: 50, isOverflowing: true },
+    ],
+  ])('%s', async (_name, { text, scrollHeight, isOverflowing }) => {
+    mockParagraphScrollHeight(scrollHeight);
 
-    render(<TestCollapsedText text="Short text" collapsedLineCount={2} />);
+    render(<TestCollapsedText text={text} collapsedLineCount={2} />);
 
     await waitFor(() => {
-      expect(screen.getByLabelText('Overflowing').textContent).toBe('false');
+      expect(screen.getByLabelText('Overflowing').textContent).toBe(
+        String(isOverflowing),
+      );
     });
-    expect(screen.getByLabelText('Text collapsed').textContent).toBe('false');
+    expect(screen.getByLabelText('Text collapsed').textContent).toBe(
+      String(isOverflowing),
+    );
   });
 
   it('resets to collapsed when the text changes', async () => {
@@ -137,28 +154,6 @@ describe('useCollapsedText', () => {
     await waitFor(() => {
       expect(screen.getByLabelText('Collapsed height').textContent).toBe('72');
     });
-  });
-
-  it('does not mark text as overflowing within the overflow tolerance', async () => {
-    mockParagraphScrollHeight(49);
-
-    render(<TestCollapsedText text="Text" collapsedLineCount={2} />);
-
-    await waitFor(() => {
-      expect(screen.getByLabelText('Overflowing').textContent).toBe('false');
-    });
-    expect(screen.getByLabelText('Text collapsed').textContent).toBe('false');
-  });
-
-  it('marks text as overflowing when scrollHeight exceeds the overflow tolerance', async () => {
-    mockParagraphScrollHeight(50);
-
-    render(<TestCollapsedText text="Text" collapsedLineCount={2} />);
-
-    await waitFor(() => {
-      expect(screen.getByLabelText('Overflowing').textContent).toBe('true');
-    });
-    expect(screen.getByLabelText('Text collapsed').textContent).toBe('true');
   });
 
   it('keeps isOverflowing true but isTextCollapsed false when expanded', async () => {

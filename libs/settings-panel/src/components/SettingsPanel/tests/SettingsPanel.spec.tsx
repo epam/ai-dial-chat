@@ -81,7 +81,35 @@ describe('SettingsPanel', () => {
     ).toBe('-1');
   });
 
-  it('ArrowDown skips a disabled row', async () => {
+  it.each([
+    [
+      'ArrowDown skips a disabled row',
+      {
+        activeId: 'usage',
+        activeLabel: 'Usage',
+        key: '{ArrowDown}',
+        expected: 'other',
+      },
+    ],
+    [
+      'ArrowDown wraps from the last enabled row to the first',
+      {
+        activeId: 'other',
+        activeLabel: 'Other',
+        key: '{ArrowDown}',
+        expected: 'usage',
+      },
+    ],
+    [
+      'ArrowUp skips a disabled row and wraps at the start',
+      {
+        activeId: 'usage',
+        activeLabel: 'Usage',
+        key: '{ArrowUp}',
+        expected: 'other',
+      },
+    ],
+  ])('%s', async (_name, { activeId, activeLabel, key, expected }) => {
     const items2: SettingsPanelItem[] = [
       { id: 'usage', label: 'Usage' },
       { id: 'general', label: 'General', disabled: true },
@@ -89,44 +117,12 @@ describe('SettingsPanel', () => {
     ];
     const onSelect = vi.fn();
     render(
-      <SettingsPanel items={items2} activeId="usage" onSelect={onSelect} />,
+      <SettingsPanel items={items2} activeId={activeId} onSelect={onSelect} />,
     );
 
-    screen.getByRole('tab', { name: 'Usage' }).focus();
-    await userEvent.keyboard('{ArrowDown}');
-    expect(onSelect).toHaveBeenCalledWith('other');
-  });
-
-  it('ArrowDown wraps from the last enabled row to the first', async () => {
-    const items2: SettingsPanelItem[] = [
-      { id: 'usage', label: 'Usage' },
-      { id: 'general', label: 'General', disabled: true },
-      { id: 'other', label: 'Other' },
-    ];
-    const onSelect = vi.fn();
-    render(
-      <SettingsPanel items={items2} activeId="other" onSelect={onSelect} />,
-    );
-
-    screen.getByRole('tab', { name: 'Other' }).focus();
-    await userEvent.keyboard('{ArrowDown}');
-    expect(onSelect).toHaveBeenCalledWith('usage');
-  });
-
-  it('ArrowUp skips a disabled row and wraps at the start', async () => {
-    const items2: SettingsPanelItem[] = [
-      { id: 'usage', label: 'Usage' },
-      { id: 'general', label: 'General', disabled: true },
-      { id: 'other', label: 'Other' },
-    ];
-    const onSelect = vi.fn();
-    render(
-      <SettingsPanel items={items2} activeId="usage" onSelect={onSelect} />,
-    );
-
-    screen.getByRole('tab', { name: 'Usage' }).focus();
-    await userEvent.keyboard('{ArrowUp}');
-    expect(onSelect).toHaveBeenCalledWith('other');
+    screen.getByRole('tab', { name: activeLabel }).focus();
+    await userEvent.keyboard(key);
+    expect(onSelect).toHaveBeenCalledWith(expected);
   });
 
   it('Home jumps to the first enabled row', async () => {

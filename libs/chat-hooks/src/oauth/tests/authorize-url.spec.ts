@@ -106,36 +106,22 @@ describe('buildToolsetAuthorizeUrl', () => {
     ).toBeNull();
   });
 
-  it('returns null for a blank client id or authorization endpoint', () => {
+  it.each([
+    [
+      'returns null for a blank client id or authorization endpoint',
+      { clientId: '   ', authorizationEndpoint: '   ' },
+    ],
+    [
+      'returns null without throwing for an unparseable authorization endpoint',
+      { clientId: 'client', authorizationEndpoint: 'not-a-url' },
+    ],
+    [
+      'returns null for a protocol other than http: or https:',
+      { clientId: 'client', authorizationEndpoint: 'javascript:alert(1)' },
+    ],
+  ])('%s', (_name, authConfig) => {
     expect(
-      buildToolsetAuthorizeUrl(
-        { clientId: '   ', authorizationEndpoint: '   ' },
-        REDIRECT_URI,
-        'state',
-      ),
-    ).toBeNull();
-  });
-
-  it('returns null without throwing for an unparseable authorization endpoint', () => {
-    expect(
-      buildToolsetAuthorizeUrl(
-        { clientId: 'client', authorizationEndpoint: 'not-a-url' },
-        REDIRECT_URI,
-        'state',
-      ),
-    ).toBeNull();
-  });
-
-  it('returns null for a protocol other than http: or https:', () => {
-    expect(
-      buildToolsetAuthorizeUrl(
-        {
-          clientId: 'client',
-          authorizationEndpoint: 'javascript:alert(1)',
-        },
-        REDIRECT_URI,
-        'state',
-      ),
+      buildToolsetAuthorizeUrl(authConfig, REDIRECT_URI, 'state'),
     ).toBeNull();
   });
 

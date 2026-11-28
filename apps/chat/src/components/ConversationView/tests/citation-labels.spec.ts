@@ -50,24 +50,47 @@ describe('buildCitationMarkerLabels', () => {
     t = instance.t;
   });
 
-  it('names the cited page in the label and the accessible name', () => {
+  it.each([
+    [
+      'names the cited page in the label and the accessible name',
+      {
+        source: 'clm.pdf',
+        page: 5,
+        expected: {
+          ariaLabel: 'Citation from clm.pdf, page 5',
+          label: 'clm.pdf, p. 5',
+          labelWithOverflow: 'clm.pdf, p. 5 +0',
+        },
+      },
+    ],
+    [
+      'leaves page 1 out of the label, as a link to the whole document',
+      {
+        source: 'clm.pdf',
+        page: 1,
+        expected: {
+          ariaLabel: 'Citation from clm.pdf',
+          label: 'clm.pdf',
+          labelWithOverflow: 'clm.pdf +0',
+        },
+      },
+    ],
+    [
+      'does not repeat a page the source name already mentions',
+      {
+        source: 'clm.pdf, page 3',
+        page: 3,
+        expected: {
+          ariaLabel: 'Citation from clm.pdf, page 3',
+          label: 'clm.pdf, page 3',
+          labelWithOverflow: 'clm.pdf, page 3 +0',
+        },
+      },
+    ],
+  ])('%s', (_name, { source, page, expected }) => {
     expect(
-      buildCitationMarkerLabels(t, makeGroup('clm.pdf', pageSelector(5))),
-    ).toEqual({
-      ariaLabel: 'Citation from clm.pdf, page 5',
-      label: 'clm.pdf, p. 5',
-      labelWithOverflow: 'clm.pdf, p. 5 +0',
-    });
-  });
-
-  it('leaves page 1 out of the label, as a link to the whole document', () => {
-    expect(
-      buildCitationMarkerLabels(t, makeGroup('clm.pdf', pageSelector(1))),
-    ).toEqual({
-      ariaLabel: 'Citation from clm.pdf',
-      label: 'clm.pdf',
-      labelWithOverflow: 'clm.pdf +0',
-    });
+      buildCitationMarkerLabels(t, makeGroup(source, pageSelector(page))),
+    ).toEqual(expected);
   });
 
   it('keeps the page alongside the overflow count', () => {
@@ -75,19 +98,6 @@ describe('buildCitationMarkerLabels', () => {
       buildCitationMarkerLabels(t, makeGroup('clm.pdf', pageSelector(2), 3))
         .labelWithOverflow,
     ).toBe('clm.pdf, p. 2 +2');
-  });
-
-  it('does not repeat a page the source name already mentions', () => {
-    expect(
-      buildCitationMarkerLabels(
-        t,
-        makeGroup('clm.pdf, page 3', pageSelector(3)),
-      ),
-    ).toEqual({
-      ariaLabel: 'Citation from clm.pdf, page 3',
-      label: 'clm.pdf, page 3',
-      labelWithOverflow: 'clm.pdf, page 3 +0',
-    });
   });
 
   it('shows the source name only when no page is known', () => {

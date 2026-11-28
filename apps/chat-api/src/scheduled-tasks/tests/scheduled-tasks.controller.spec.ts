@@ -188,23 +188,20 @@ describe('ScheduledTasksController (integration)', () => {
       );
     });
 
-    it('returns 400 when model is longer than 1024 characters', async () => {
+    it.each([
+      [
+        'returns 400 when model is longer than 1024 characters',
+        { query: `model=${'a'.repeat(1025)}` },
+      ],
+      ['returns 400 when limit is out of range', { query: 'limit=101' }],
+      ['returns 400 when offset is negative', { query: 'offset=-1' }],
+      [
+        'returns 400 for an invalid sort query parameter',
+        { query: 'sort=oldest' },
+      ],
+    ])('%s', async (_name, { query }) => {
       await request(app.getHttpServer())
-        .get(`/api/v1/scheduled-tasks?model=${'a'.repeat(1025)}`)
-        .expect(400);
-      expect(service.listScheduledTasks).not.toHaveBeenCalled();
-    });
-
-    it('returns 400 when limit is out of range', async () => {
-      await request(app.getHttpServer())
-        .get('/api/v1/scheduled-tasks?limit=101')
-        .expect(400);
-      expect(service.listScheduledTasks).not.toHaveBeenCalled();
-    });
-
-    it('returns 400 when offset is negative', async () => {
-      await request(app.getHttpServer())
-        .get('/api/v1/scheduled-tasks?offset=-1')
+        .get(`/api/v1/scheduled-tasks?${query}`)
         .expect(400);
       expect(service.listScheduledTasks).not.toHaveBeenCalled();
     });
@@ -221,13 +218,6 @@ describe('ScheduledTasksController (integration)', () => {
         TEST_USER.at,
         { sort: 'nameAZ' },
       );
-    });
-
-    it('returns 400 for an invalid sort query parameter', async () => {
-      await request(app.getHttpServer())
-        .get('/api/v1/scheduled-tasks?sort=oldest')
-        .expect(400);
-      expect(service.listScheduledTasks).not.toHaveBeenCalled();
     });
 
     it('returns 401 when the service reports the caller is not authenticated', async () => {
@@ -775,24 +765,21 @@ describe('ScheduledTasksController (integration)', () => {
       );
     });
 
-    it('returns 400 when limit is out of range', async () => {
-      await request(app.getHttpServer())
-        .get('/api/v1/scheduled-tasks/sched_123/runs?limit=101')
-        .expect(400);
-      expect(service.listScheduledTaskRuns).not.toHaveBeenCalled();
-    });
-
-    it('returns 400 when offset is negative', async () => {
-      await request(app.getHttpServer())
-        .get('/api/v1/scheduled-tasks/sched_123/runs?offset=-1')
-        .expect(400);
-      expect(service.listScheduledTaskRuns).not.toHaveBeenCalled();
-    });
-
-    it('returns 400 for a path-traversal-shaped scheduleId without calling the service', async () => {
-      await request(app.getHttpServer())
-        .get('/api/v1/scheduled-tasks/..%2F..%2Fetc%2Fpasswd/runs')
-        .expect(400);
+    it.each([
+      [
+        'returns 400 when limit is out of range',
+        { url: '/api/v1/scheduled-tasks/sched_123/runs?limit=101' },
+      ],
+      [
+        'returns 400 when offset is negative',
+        { url: '/api/v1/scheduled-tasks/sched_123/runs?offset=-1' },
+      ],
+      [
+        'returns 400 for a path-traversal-shaped scheduleId without calling the service',
+        { url: '/api/v1/scheduled-tasks/..%2F..%2Fetc%2Fpasswd/runs' },
+      ],
+    ])('%s', async (_name, { url }) => {
+      await request(app.getHttpServer()).get(url).expect(400);
       expect(service.listScheduledTaskRuns).not.toHaveBeenCalled();
     });
 

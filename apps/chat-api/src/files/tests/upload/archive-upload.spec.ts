@@ -6,22 +6,20 @@ import {
 } from '../../upload/archive-upload';
 
 describe('resolveArchiveEntryPath', () => {
-  it('rejects a parent-directory traversal segment', () => {
-    expect(resolveArchiveEntryPath('../../etc/passwd')).toEqual({
-      isDirectory: false,
-      safeRelativePath: null,
-    });
-  });
-
-  it('rejects an absolute path', () => {
-    expect(resolveArchiveEntryPath('/etc/passwd')).toEqual({
-      isDirectory: false,
-      safeRelativePath: null,
-    });
-  });
-
-  it('rejects a Windows drive-letter absolute path', () => {
-    expect(resolveArchiveEntryPath('C:\\Windows\\System32\\config')).toEqual({
+  it.each([
+    [
+      'rejects a parent-directory traversal segment',
+      { path: '../../etc/passwd' },
+    ],
+    ['rejects an absolute path', { path: '/etc/passwd' }],
+    [
+      'rejects a Windows drive-letter absolute path',
+      { path: 'C:\\Windows\\System32\\config' },
+    ],
+    ['rejects a blank (non-directory) entry name', { path: '' }],
+    ['rejects a bare parent-directory entry name', { path: '..' }],
+  ])('%s', (_name, { path }) => {
+    expect(resolveArchiveEntryPath(path)).toEqual({
       isDirectory: false,
       safeRelativePath: null,
     });
@@ -37,20 +35,6 @@ describe('resolveArchiveEntryPath', () => {
   it('identifies directory entries for silent skipping', () => {
     expect(resolveArchiveEntryPath('reports/')).toEqual({
       isDirectory: true,
-      safeRelativePath: null,
-    });
-  });
-
-  it('rejects a blank (non-directory) entry name', () => {
-    expect(resolveArchiveEntryPath('')).toEqual({
-      isDirectory: false,
-      safeRelativePath: null,
-    });
-  });
-
-  it('rejects a bare parent-directory entry name', () => {
-    expect(resolveArchiveEntryPath('..')).toEqual({
-      isDirectory: false,
       safeRelativePath: null,
     });
   });

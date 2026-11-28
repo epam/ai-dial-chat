@@ -81,71 +81,81 @@ describe('CONFIG_DEFINITIONS', () => {
     });
   });
 
-  it('contains the features.responsesApiEnabled entry with server-only visibility and no role gating', () => {
+  it.each([
+    [
+      'contains the features.responsesApiEnabled entry with server-only visibility and no role gating',
+      {
+        key: 'features.responsesApiEnabled',
+        visibility: 'server',
+        envVar: 'RESPONSES_API_ENABLED',
+      },
+    ],
+    [
+      'contains the features.responsesBackgroundEnabled entry with server-only visibility and no role gating',
+      {
+        key: 'features.responsesBackgroundEnabled',
+        visibility: 'server',
+        envVar: 'RESPONSES_BACKGROUND_ENABLED',
+      },
+    ],
+    [
+      'contains the client-visible features.visualizerSendMessages entry without role gating',
+      {
+        key: 'features.visualizerSendMessages',
+        visibility: 'client',
+        envVar: 'ALLOW_VISUALIZER_SEND_MESSAGES',
+      },
+    ],
+  ])('%s', (_name, { key, visibility, envVar }) => {
     const entry = CONFIG_DEFINITIONS.find(
-      (definition) => definition.key === 'features.responsesApiEnabled',
+      (definition) => definition.key === key,
     );
 
     expect(entry).toMatchObject({
-      key: 'features.responsesApiEnabled',
+      key,
       type: 'feature',
       valueType: 'boolean',
-      visibility: 'server',
+      visibility,
       defaultValue: false,
       critical: false,
-      envVar: 'RESPONSES_API_ENABLED',
+      envVar,
     });
     expect(entry).not.toHaveProperty('allowedRolesEnvVar');
   });
 
-  it('contains the features.responsesBackgroundEnabled entry with server-only visibility and no role gating', () => {
+  it.each([
+    [
+      'contains the client-visible features.defaultDeploymentPinned entry',
+      {
+        key: 'features.defaultDeploymentPinned',
+        envVar: 'DEFAULT_DEPLOYMENT_PINNED',
+      },
+    ],
+    [
+      'contains the client-visible features.orgUnitsEnabled entry, off by default',
+      { key: 'features.orgUnitsEnabled', envVar: 'ORG_UNITS_ENABLED' },
+    ],
+    [
+      'contains the client-visible features.usageLimitsControl entry, off by default',
+      {
+        key: 'features.usageLimitsControl',
+        envVar: 'USAGE_LIMITS_CONTROL_ENABLED',
+      },
+    ],
+  ])('%s', (_name, { key, envVar }) => {
     const entry = CONFIG_DEFINITIONS.find(
-      (definition) => definition.key === 'features.responsesBackgroundEnabled',
+      (definition) => definition.key === key,
     );
 
     expect(entry).toMatchObject({
-      key: 'features.responsesBackgroundEnabled',
-      type: 'feature',
-      valueType: 'boolean',
-      visibility: 'server',
-      defaultValue: false,
-      critical: false,
-      envVar: 'RESPONSES_BACKGROUND_ENABLED',
-    });
-    expect(entry).not.toHaveProperty('allowedRolesEnvVar');
-  });
-
-  it('contains the client-visible features.defaultDeploymentPinned entry', () => {
-    const entry = CONFIG_DEFINITIONS.find(
-      (definition) => definition.key === 'features.defaultDeploymentPinned',
-    );
-
-    expect(entry).toMatchObject({
-      key: 'features.defaultDeploymentPinned',
+      key,
       type: 'feature',
       valueType: 'boolean',
       visibility: 'client',
       defaultValue: false,
       critical: false,
-      envVar: 'DEFAULT_DEPLOYMENT_PINNED',
+      envVar,
     });
-  });
-
-  it('contains the client-visible features.visualizerSendMessages entry without role gating', () => {
-    const entry = CONFIG_DEFINITIONS.find(
-      (definition) => definition.key === 'features.visualizerSendMessages',
-    );
-
-    expect(entry).toMatchObject({
-      key: 'features.visualizerSendMessages',
-      type: 'feature',
-      valueType: 'boolean',
-      visibility: 'client',
-      defaultValue: false,
-      critical: false,
-      envVar: 'ALLOW_VISUALIZER_SEND_MESSAGES',
-    });
-    expect(entry).not.toHaveProperty('allowedRolesEnvVar');
   });
 
   it('contains the client-visible ui.celebrationsEnabledByDefault config entry, on by default', () => {
@@ -163,38 +173,6 @@ describe('CONFIG_DEFINITIONS', () => {
       envVar: 'UI_EVENT_ENABLED_BY_DEFAULT',
     });
     expect(entry).not.toHaveProperty('allowedRolesEnvVar');
-  });
-
-  it('contains the client-visible features.orgUnitsEnabled entry, off by default', () => {
-    const entry = CONFIG_DEFINITIONS.find(
-      (definition) => definition.key === 'features.orgUnitsEnabled',
-    );
-
-    expect(entry).toMatchObject({
-      key: 'features.orgUnitsEnabled',
-      type: 'feature',
-      valueType: 'boolean',
-      visibility: 'client',
-      defaultValue: false,
-      critical: false,
-      envVar: 'ORG_UNITS_ENABLED',
-    });
-  });
-
-  it('contains the client-visible features.usageLimitsControl entry, off by default', () => {
-    const entry = CONFIG_DEFINITIONS.find(
-      (definition) => definition.key === 'features.usageLimitsControl',
-    );
-
-    expect(entry).toMatchObject({
-      key: 'features.usageLimitsControl',
-      type: 'feature',
-      valueType: 'boolean',
-      visibility: 'client',
-      defaultValue: false,
-      critical: false,
-      envVar: 'USAGE_LIMITS_CONTROL_ENABLED',
-    });
   });
 
   it('contains the client-visible, role-gated features.projectsEnabled entry, off by default', () => {

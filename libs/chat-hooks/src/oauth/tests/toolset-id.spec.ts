@@ -7,22 +7,27 @@ import {
 } from '../toolset-id';
 
 describe('encodeToolsetId', () => {
-  it('percent-encodes each segment but keeps / as a literal separator', () => {
-    expect(encodeToolsetId('toolsets/b/My Toolset__1.0.0')).toBe(
-      'toolsets/b/My%20Toolset__1.0.0',
-    );
-  });
-
-  it('double-encodes an already-percent-encoded id (must only ever be called on the raw id)', () => {
-    expect(encodeToolsetId('toolsets/b/My%20Toolset__1.0.0')).toBe(
-      'toolsets/b/My%2520Toolset__1.0.0',
-    );
-  });
-
-  it('is a no-op for an id with no reserved characters', () => {
-    expect(encodeToolsetId('toolsets/b/my__1.0.0')).toBe(
-      'toolsets/b/my__1.0.0',
-    );
+  it.each([
+    [
+      'percent-encodes each segment but keeps / as a literal separator',
+      {
+        id: 'toolsets/b/My Toolset__1.0.0',
+        expected: 'toolsets/b/My%20Toolset__1.0.0',
+      },
+    ],
+    [
+      'double-encodes an already-percent-encoded id (must only ever be called on the raw id)',
+      {
+        id: 'toolsets/b/My%20Toolset__1.0.0',
+        expected: 'toolsets/b/My%2520Toolset__1.0.0',
+      },
+    ],
+    [
+      'is a no-op for an id with no reserved characters',
+      { id: 'toolsets/b/my__1.0.0', expected: 'toolsets/b/my__1.0.0' },
+    ],
+  ])('%s', (_name, { id, expected }) => {
+    expect(encodeToolsetId(id)).toBe(expected);
   });
 });
 
@@ -44,16 +49,21 @@ describe('isPublicToolsetId', () => {
     expect(isPublicToolsetId('toolsets/public/jira__1.0.0')).toBe(true);
   });
 
-  it('treats an id in a user bucket as private', () => {
-    expect(isPublicToolsetId('toolsets/bucket123/jira__1.0.0')).toBe(false);
-  });
-
-  it('returns false for an id that is not a toolset id', () => {
-    expect(isPublicToolsetId('applications/public/app')).toBe(false);
-  });
-
-  it('returns false for a bucket that merely starts with "public"', () => {
-    expect(isPublicToolsetId('toolsets/public-ish/jira')).toBe(false);
+  it.each([
+    [
+      'treats an id in a user bucket as private',
+      { id: 'toolsets/bucket123/jira__1.0.0' },
+    ],
+    [
+      'returns false for an id that is not a toolset id',
+      { id: 'applications/public/app' },
+    ],
+    [
+      'returns false for a bucket that merely starts with "public"',
+      { id: 'toolsets/public-ish/jira' },
+    ],
+  ])('%s', (_name, { id }) => {
+    expect(isPublicToolsetId(id)).toBe(false);
   });
 });
 

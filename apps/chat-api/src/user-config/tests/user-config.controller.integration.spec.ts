@@ -363,37 +363,27 @@ describe('UserConfigController (integration)', () => {
       );
     });
 
-    it('returns 400 for a traversal path', async () => {
+    it.each([
+      [
+        'returns 400 for a traversal path',
+        { id: 'prompts/test-bucket/../secret' },
+      ],
+      [
+        'returns 400 for a traversal segment used as the bucket itself',
+        { id: 'prompts/../secret' },
+      ],
+      [
+        'returns 400 for a bucket-relative prompt path with no prefix',
+        { id: 'summarize' },
+      ],
+      [
+        'returns 400 for a non-prompt resource id',
+        { id: 'skills/test-bucket/summarize' },
+      ],
+    ])('%s', async (_name, { id }) => {
       await request(app.getHttpServer())
         .patch('/user-config/prompts')
-        .send({ id: 'prompts/test-bucket/../secret', isInstalled: true })
-        .expect(400);
-
-      expect(service.updateInstalledPrompt).not.toHaveBeenCalled();
-    });
-
-    it('returns 400 for a traversal segment used as the bucket itself', async () => {
-      await request(app.getHttpServer())
-        .patch('/user-config/prompts')
-        .send({ id: 'prompts/../secret', isInstalled: true })
-        .expect(400);
-
-      expect(service.updateInstalledPrompt).not.toHaveBeenCalled();
-    });
-
-    it('returns 400 for a bucket-relative prompt path with no prefix', async () => {
-      await request(app.getHttpServer())
-        .patch('/user-config/prompts')
-        .send({ id: 'summarize', isInstalled: true })
-        .expect(400);
-
-      expect(service.updateInstalledPrompt).not.toHaveBeenCalled();
-    });
-
-    it('returns 400 for a non-prompt resource id', async () => {
-      await request(app.getHttpServer())
-        .patch('/user-config/prompts')
-        .send({ id: 'skills/test-bucket/summarize', isInstalled: true })
+        .send({ id, isInstalled: true })
         .expect(400);
 
       expect(service.updateInstalledPrompt).not.toHaveBeenCalled();
@@ -449,28 +439,23 @@ describe('UserConfigController (integration)', () => {
       );
     });
 
-    it('returns 400 for a traversal segment', async () => {
+    it.each([
+      [
+        'returns 400 for a traversal segment',
+        { id: 'skills/my-bucket/../secret' },
+      ],
+      [
+        'returns 400 for a non-skill resource URL',
+        { id: 'files/my-bucket/report.pdf' },
+      ],
+      [
+        'returns 400 for a bucket-relative path with no bucket segment',
+        { id: 'skills/my-bucket' },
+      ],
+    ])('%s', async (_name, { id }) => {
       await request(app.getHttpServer())
         .patch('/user-config/skills')
-        .send({ id: 'skills/my-bucket/../secret', isInstalled: true })
-        .expect(400);
-
-      expect(service.updateInstalledSkill).not.toHaveBeenCalled();
-    });
-
-    it('returns 400 for a non-skill resource URL', async () => {
-      await request(app.getHttpServer())
-        .patch('/user-config/skills')
-        .send({ id: 'files/my-bucket/report.pdf', isInstalled: true })
-        .expect(400);
-
-      expect(service.updateInstalledSkill).not.toHaveBeenCalled();
-    });
-
-    it('returns 400 for a bucket-relative path with no bucket segment', async () => {
-      await request(app.getHttpServer())
-        .patch('/user-config/skills')
-        .send({ id: 'skills/my-bucket', isInstalled: true })
+        .send({ id, isInstalled: true })
         .expect(400);
 
       expect(service.updateInstalledSkill).not.toHaveBeenCalled();

@@ -9,74 +9,86 @@ import {
 } from '../file-download';
 
 describe('ensureDownloadFilename', () => {
-  it('returns the name unchanged when it already has an extension', () => {
-    expect(ensureDownloadFilename('report.xlsx', undefined, undefined)).toBe(
-      'report.xlsx',
-    );
-  });
-
-  it('appends the extension extracted from the url path segment', () => {
-    expect(
-      ensureDownloadFilename(
-        'Thermo Fisher Scientific - 10-K Risk Factors',
-        'files/bucket/appdata/ThermoFisher_2024.xlsx',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      ),
-    ).toBe('Thermo Fisher Scientific - 10-K Risk Factors.xlsx');
-  });
-
-  it('falls back to the MIME type extension when the url has no extension', () => {
-    expect(
-      ensureDownloadFilename(
-        'Q3 Financial Summary',
-        'files/bucket/appdata/document',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      ),
-    ).toBe('Q3 Financial Summary.xlsx');
-  });
-
-  it('returns the name unchanged when neither url nor contentType provide an extension', () => {
-    expect(ensureDownloadFilename('unknown file', undefined, undefined)).toBe(
-      'unknown file',
-    );
-  });
-
-  it('strips query string and fragment from the url before extracting the extension', () => {
-    expect(
-      ensureDownloadFilename(
-        'Report',
-        'files/bucket/report.pdf?token=abc#page=2',
-        undefined,
-      ),
-    ).toBe('Report.pdf');
-  });
-
-  it('appends the MIME-type extension when the title contains a dot that is not a real extension', () => {
-    expect(
-      ensureDownloadFilename(
-        'Blackstone vs. KKR Comparative Intelligence Briefing (Word Document)',
-        'files/bucket/appdata/applications/public/demo/demo-agent__1.0.0/Blackstone_KKR_Detailed_Report.docx',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      ),
-    ).toBe(
-      'Blackstone vs. KKR Comparative Intelligence Briefing (Word Document).docx',
-    );
-  });
-
-  it('falls back to the url extension when the title has no real extension and no contentType is given', () => {
-    expect(
-      ensureDownloadFilename(
-        'Report v2. Final (draft)',
-        'files/bucket/report.pdf',
-        undefined,
-      ),
-    ).toBe('Report v2. Final (draft).pdf');
-  });
-
-  it('does not mistake a name ending in "vs." followed by more text for an extension', () => {
-    expect(
-      ensureDownloadFilename('Blackstone vs. KKR Report', undefined, undefined),
-    ).toBe('Blackstone vs. KKR Report');
+  it.each([
+    [
+      'returns the name unchanged when it already has an extension',
+      {
+        title: 'report.xlsx',
+        url: undefined,
+        contentType: undefined,
+        expected: 'report.xlsx',
+      },
+    ],
+    [
+      'appends the extension extracted from the url path segment',
+      {
+        title: 'Thermo Fisher Scientific - 10-K Risk Factors',
+        url: 'files/bucket/appdata/ThermoFisher_2024.xlsx',
+        contentType:
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        expected: 'Thermo Fisher Scientific - 10-K Risk Factors.xlsx',
+      },
+    ],
+    [
+      'falls back to the MIME type extension when the url has no extension',
+      {
+        title: 'Q3 Financial Summary',
+        url: 'files/bucket/appdata/document',
+        contentType:
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        expected: 'Q3 Financial Summary.xlsx',
+      },
+    ],
+    [
+      'returns the name unchanged when neither url nor contentType provide an extension',
+      {
+        title: 'unknown file',
+        url: undefined,
+        contentType: undefined,
+        expected: 'unknown file',
+      },
+    ],
+    [
+      'strips query string and fragment from the url before extracting the extension',
+      {
+        title: 'Report',
+        url: 'files/bucket/report.pdf?token=abc#page=2',
+        contentType: undefined,
+        expected: 'Report.pdf',
+      },
+    ],
+    [
+      'appends the MIME-type extension when the title contains a dot that is not a real extension',
+      {
+        title:
+          'Blackstone vs. KKR Comparative Intelligence Briefing (Word Document)',
+        url: 'files/bucket/appdata/applications/public/demo/demo-agent__1.0.0/Blackstone_KKR_Detailed_Report.docx',
+        contentType:
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        expected:
+          'Blackstone vs. KKR Comparative Intelligence Briefing (Word Document).docx',
+      },
+    ],
+    [
+      'falls back to the url extension when the title has no real extension and no contentType is given',
+      {
+        title: 'Report v2. Final (draft)',
+        url: 'files/bucket/report.pdf',
+        contentType: undefined,
+        expected: 'Report v2. Final (draft).pdf',
+      },
+    ],
+    [
+      'does not mistake a name ending in "vs." followed by more text for an extension',
+      {
+        title: 'Blackstone vs. KKR Report',
+        url: undefined,
+        contentType: undefined,
+        expected: 'Blackstone vs. KKR Report',
+      },
+    ],
+  ])('%s', (_name, { title, url, contentType, expected }) => {
+    expect(ensureDownloadFilename(title, url, contentType)).toBe(expected);
   });
 });
 

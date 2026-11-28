@@ -128,28 +128,21 @@ describe('resolveDialFileBucketAndPath', () => {
 });
 
 describe('resolveRelativeDialFilePath', () => {
-  it('strips the files/{bucket}/ prefix from a DIAL file ID', () => {
-    expect(
-      resolveRelativeDialFilePath(
-        'files/my-bucket/reports/q1.pdf',
-        'my-bucket',
-      ),
-    ).toBe('reports/q1.pdf');
-  });
-
-  it('decodes percent-encoded path segments', () => {
-    expect(
-      resolveRelativeDialFilePath(
-        'files/my-bucket/folder%2Fname.pdf',
-        'my-bucket',
-      ),
-    ).toBe('folder/name.pdf');
-  });
-
-  it('returns relative paths unchanged', () => {
-    expect(resolveRelativeDialFilePath('reports/q1.pdf', 'my-bucket')).toBe(
-      'reports/q1.pdf',
-    );
+  it.each([
+    [
+      'strips the files/{bucket}/ prefix from a DIAL file ID',
+      { id: 'files/my-bucket/reports/q1.pdf', expected: 'reports/q1.pdf' },
+    ],
+    [
+      'decodes percent-encoded path segments',
+      { id: 'files/my-bucket/folder%2Fname.pdf', expected: 'folder/name.pdf' },
+    ],
+    [
+      'returns relative paths unchanged',
+      { id: 'reports/q1.pdf', expected: 'reports/q1.pdf' },
+    ],
+  ])('%s', (_name, { id, expected }) => {
+    expect(resolveRelativeDialFilePath(id, 'my-bucket')).toBe(expected);
   });
 });
 

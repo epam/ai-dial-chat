@@ -223,36 +223,35 @@ describe('project context file URLs', () => {
     );
   });
 
-  it('resolves an output locator to the BFF artifact endpoint', () => {
-    expect(
-      resolveProjectFileDownloadUrl(
-        'projects/bucket-1/support/files/artifacts/Q4 deck.pptx',
-      ),
-    ).toBe(
-      '/api/v1/projects/projects%2Fbucket-1%2Fsupport/artifacts/Q4%20deck.pptx',
-    );
-  });
-
-  /* `files` is a name DIAL Core reserves, so no project path holds a `files`
-   * segment and the first one always ends the project id. */
-  it('ends the project id at the first files segment', () => {
-    expect(
-      resolveProjectFileDownloadUrl(
-        'projects/b/p/files/artifacts/files/artifacts/x.csv',
-      ),
-    ).toBe(
-      '/api/v1/projects/projects%2Fb%2Fp/artifacts/files%2Fartifacts%2Fx.csv',
-    );
-  });
-
-  it('maps a nested output to the artifact route with its whole relative path', () => {
-    expect(
-      resolveProjectFileDownloadUrl(
-        'projects/bucket-1/support/files/artifacts/run-1/data.csv',
-      ),
-    ).toBe(
-      '/api/v1/projects/projects%2Fbucket-1%2Fsupport/artifacts/run-1%2Fdata.csv',
-    );
+  it.each([
+    [
+      'resolves an output locator to the BFF artifact endpoint',
+      {
+        locator: 'projects/bucket-1/support/files/artifacts/Q4 deck.pptx',
+        expected:
+          '/api/v1/projects/projects%2Fbucket-1%2Fsupport/artifacts/Q4%20deck.pptx',
+      },
+    ],
+    /* `files` is a name DIAL Core reserves, so no project path holds a `files`
+     * segment and the first one always ends the project id. */
+    [
+      'ends the project id at the first files segment',
+      {
+        locator: 'projects/b/p/files/artifacts/files/artifacts/x.csv',
+        expected:
+          '/api/v1/projects/projects%2Fb%2Fp/artifacts/files%2Fartifacts%2Fx.csv',
+      },
+    ],
+    [
+      'maps a nested output to the artifact route with its whole relative path',
+      {
+        locator: 'projects/bucket-1/support/files/artifacts/run-1/data.csv',
+        expected:
+          '/api/v1/projects/projects%2Fbucket-1%2Fsupport/artifacts/run-1%2Fdata.csv',
+      },
+    ],
+  ])('%s', (_name, { locator, expected }) => {
+    expect(resolveProjectFileDownloadUrl(locator)).toBe(expected);
   });
 
   it.each([

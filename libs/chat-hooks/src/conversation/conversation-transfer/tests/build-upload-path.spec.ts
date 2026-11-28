@@ -23,29 +23,35 @@ describe('buildUploadPath', () => {
     );
   });
 
-  it('does not include the user bucket in the path', () => {
-    const path = buildUploadPath('IMG_4740 2.jpg');
-    expect(path).toMatch(/^uploads\/\d{4}-\d{2}\/IMG_4740%202\.jpg$/);
-  });
-
-  it('URL-encodes unsafe filename characters', () => {
-    const path = buildUploadPath('my report (1).pdf');
-    expect(path).toMatch(/my%20report%20\(1\)\.pdf$/);
-  });
-
-  it('path-traversal slashes are removed before encoding', () => {
-    const path = buildUploadPath('../../etc/passwd');
-    expect(path).toMatch(/^uploads\/\d{4}-\d{2}\/passwd$/);
-  });
-
-  it('leading dots are stripped from the encoded file name', () => {
-    const path = buildUploadPath('.hidden-file');
-    expect(path).toMatch(/hidden-file$/);
-  });
-
-  it('name with no extension is preserved', () => {
-    const path = buildUploadPath('README');
-    expect(path).toMatch(/README$/);
+  it.each([
+    [
+      'does not include the user bucket in the path',
+      {
+        fileName: 'IMG_4740 2.jpg',
+        expected: /^uploads\/\d{4}-\d{2}\/IMG_4740%202\.jpg$/,
+      },
+    ],
+    [
+      'URL-encodes unsafe filename characters',
+      { fileName: 'my report (1).pdf', expected: /my%20report%20\(1\)\.pdf$/ },
+    ],
+    [
+      'path-traversal slashes are removed before encoding',
+      {
+        fileName: '../../etc/passwd',
+        expected: /^uploads\/\d{4}-\d{2}\/passwd$/,
+      },
+    ],
+    [
+      'leading dots are stripped from the encoded file name',
+      { fileName: '.hidden-file', expected: /hidden-file$/ },
+    ],
+    [
+      'name with no extension is preserved',
+      { fileName: 'README', expected: /README$/ },
+    ],
+  ])('%s', (_name, { fileName, expected }) => {
+    expect(buildUploadPath(fileName)).toMatch(expected);
   });
 
   it('builds the same path for two same-named files on the same date when no allocator is involved', () => {
@@ -81,46 +87,50 @@ describe('createUploadPathAllocator', () => {
     expect(allocator.allocate('report.pdf').isRenamed).toBe(true);
   });
 
-  it('inserts the suffix before the extension', () => {
-    const allocator = createUploadPathAllocator({
-      date,
-      existingNames: ['report.pdf'],
-    });
-    expect(allocator.allocate('report.pdf').fileName).toBe('report (1).pdf');
-  });
-
-  it('appends the suffix at the end of an extensionless name', () => {
-    const allocator = createUploadPathAllocator({
-      date,
-      existingNames: ['README'],
-    });
-    expect(allocator.allocate('README').fileName).toBe('README (1)');
-  });
-
-  it('treats only the last dot as the extension separator', () => {
-    const allocator = createUploadPathAllocator({
-      date,
-      existingNames: ['archive.tar.gz'],
-    });
-    expect(allocator.allocate('archive.tar.gz').fileName).toBe(
-      'archive.tar (1).gz',
-    );
-  });
-
-  it('sanitizes a leading-dot name before treating it as extensionless', () => {
-    const allocator = createUploadPathAllocator({
-      date,
-      existingNames: ['env'],
-    });
-    expect(allocator.allocate('.env').fileName).toBe('env (1)');
-  });
-
-  it('skips names already present in the destination folder', () => {
-    const allocator = createUploadPathAllocator({
-      date,
-      existingNames: ['report.pdf', 'report (1).pdf'],
-    });
-    expect(allocator.allocate('report.pdf').fileName).toBe('report (2).pdf');
+  it.each([
+    [
+      'inserts the suffix before the extension',
+      {
+        existingNames: ['report.pdf'],
+        name: 'report.pdf',
+        expected: 'report (1).pdf',
+      },
+    ],
+    [
+      'appends the suffix at the end of an extensionless name',
+      { existingNames: ['README'], name: 'README', expected: 'README (1)' },
+    ],
+    [
+      'treats only the last dot as the extension separator',
+      {
+        existingNames: ['archive.tar.gz'],
+        name: 'archive.tar.gz',
+        expected: 'archive.tar (1).gz',
+      },
+    ],
+    [
+      'sanitizes a leading-dot name before treating it as extensionless',
+      { existingNames: ['env'], name: '.env', expected: 'env (1)' },
+    ],
+    [
+      'skips names already present in the destination folder',
+      {
+        existingNames: ['report.pdf', 'report (1).pdf'],
+        name: 'report.pdf',
+        expected: 'report (2).pdf',
+      },
+    ],
+    [
+      'treats names differing only in case as distinct',
+      {
+        existingNames: ['Photo.png'],
+        name: 'photo.png',
+        expected: 'photo.png',
+      },
+    ],
+  ])('%s', (_name, { existingNames, name, expected }) => {
+    const allocator = createUploadPathAllocator({ date, existingNames });
+    expect(allocator.allocate(name).fileName).toBe(expected);
   });
 
   it('percent-encodes the suffixed name in the returned path', () => {
@@ -131,14 +141,6 @@ describe('createUploadPathAllocator', () => {
     expect(allocator.allocate('report.pdf').path).toBe(
       'uploads/2026-08/report%20(1).pdf',
     );
-  });
-
-  it('treats names differing only in case as distinct', () => {
-    const allocator = createUploadPathAllocator({
-      date,
-      existingNames: ['Photo.png'],
-    });
-    expect(allocator.allocate('photo.png').fileName).toBe('photo.png');
   });
 
   it('skips a name recorded through markTaken', () => {

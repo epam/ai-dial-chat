@@ -140,24 +140,18 @@ describe('ThemeController (integration)', () => {
       expect(response.headers['content-security-policy']).toBeUndefined();
     });
 
-    it('should return 400 for path traversal attempt', async () => {
-      await request(app.getHttpServer())
-        .get('/themes/icon?iconName=../etc/passwd')
-        .expect(400);
-
-      expect(themeService.getThemeIcon).not.toHaveBeenCalled();
-    });
-
-    it('should return 400 for invalid icon name with special characters', async () => {
-      await request(app.getHttpServer())
-        .get('/themes/icon?iconName=icon<script>.svg')
-        .expect(400);
-
-      expect(themeService.getThemeIcon).not.toHaveBeenCalled();
-    });
-
-    it('should return 400 when iconName is missing', async () => {
-      await request(app.getHttpServer()).get('/themes/icon').expect(400);
+    it.each([
+      [
+        'should return 400 for path traversal attempt',
+        { url: '/themes/icon?iconName=../etc/passwd' },
+      ],
+      [
+        'should return 400 for invalid icon name with special characters',
+        { url: '/themes/icon?iconName=icon<script>.svg' },
+      ],
+      ['should return 400 when iconName is missing', { url: '/themes/icon' }],
+    ])('%s', async (_name, { url }) => {
+      await request(app.getHttpServer()).get(url).expect(400);
 
       expect(themeService.getThemeIcon).not.toHaveBeenCalled();
     });

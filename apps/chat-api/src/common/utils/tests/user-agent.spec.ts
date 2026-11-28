@@ -3,10 +3,27 @@ import { PACKAGE_VERSION } from '../app-version';
 import { buildChatUserAgent } from '../user-agent';
 
 describe('buildChatUserAgent', () => {
-  it('uses the configured version', () => {
-    expect(buildChatUserAgent('2026.08.25-a1b2c3d')).toBe(
-      'ai-dial-chat/2026.08.25-a1b2c3d',
-    );
+  it.each([
+    [
+      'uses the configured version',
+      {
+        version: '2026.08.25-a1b2c3d',
+        expected: 'ai-dial-chat/2026.08.25-a1b2c3d',
+      },
+    ],
+    [
+      'replaces unsupported characters and trims surrounding hyphens',
+      {
+        version: ' release 2026/08 ',
+        expected: 'ai-dial-chat/release-2026-08',
+      },
+    ],
+    [
+      'answers unknown when no supported character remains',
+      { version: '/// ***', expected: 'ai-dial-chat/unknown' },
+    ],
+  ])('%s', (_name, { version, expected }) => {
+    expect(buildChatUserAgent(version)).toBe(expected);
   });
 
   it.each([undefined, null, '', '   '])(
@@ -17,14 +34,4 @@ describe('buildChatUserAgent', () => {
       );
     },
   );
-
-  it('replaces unsupported characters and trims surrounding hyphens', () => {
-    expect(buildChatUserAgent(' release 2026/08 ')).toBe(
-      'ai-dial-chat/release-2026-08',
-    );
-  });
-
-  it('answers unknown when no supported character remains', () => {
-    expect(buildChatUserAgent('/// ***')).toBe('ai-dial-chat/unknown');
-  });
 });

@@ -224,11 +224,46 @@ describe('SkillsArchiveExtractionService', () => {
     ).rejects.toBeInstanceOf(UnprocessableEntityException);
   });
 
-  it('rejects an archive with no SKILL.md', async () => {
+  it.each([
+    [
+      'rejects an archive with no SKILL.md',
+      { entry: { name: 'README.md', content: 'not a manifest' } },
+    ],
+    [
+      'rejects a manifest with missing frontmatter',
+      { entry: { name: 'SKILL.md', content: 'no frontmatter here' } },
+    ],
+    [
+      'rejects a manifest with an empty name',
+      {
+        entry: {
+          name: 'SKILL.md',
+          content: '---\nname: ""\ndescription: Explains docs\n---\n\nBody',
+        },
+      },
+    ],
+    [
+      'rejects a manifest with an empty description',
+      {
+        entry: {
+          name: 'SKILL.md',
+          content: '---\nname: docs-helper\ndescription: ""\n---\n\nBody',
+        },
+      },
+    ],
+    [
+      'rejects a manifest name that is not a safe single path segment',
+      {
+        entry: {
+          name: 'SKILL.md',
+          content:
+            '---\nname: "team/docs-helper"\ndescription: Explains docs\n---\n\nBody',
+        },
+      },
+    ],
+  ])('%s', async (_name, { entry }) => {
     const service = makeService();
-    const buffer = await buildZipBuffer([
-      { name: 'README.md', content: 'not a manifest' },
-    ]);
+    const buffer = await buildZipBuffer([entry]);
 
     await expect(
       withArchiveFile(buffer, (path) => service.extract(path)),
@@ -271,37 +306,25 @@ describe('SkillsArchiveExtractionService', () => {
     ).rejects.toBeInstanceOf(UnprocessableEntityException);
   });
 
-  it('rejects a path-traversal entry', async () => {
-    const service = makeService();
-    // archiver strips a *leading* `../` when writing an entry name, so the
-    // traversal segment is placed after a safe first segment instead.
-    const buffer = await buildZipBuffer([
-      { name: 'SKILL.md', content: VALID_MANIFEST },
+  it.each([
+    /*
+     * archiver strips a *leading* `../` when writing an entry name, so the
+     * traversal segment is placed after a safe first segment instead.
+     */
+    [
+      'rejects a path-traversal entry',
       { name: 'a/../../etc/passwd', content: 'evil' },
-    ]);
-
-    await expect(
-      withArchiveFile(buffer, (path) => service.extract(path)),
-    ).rejects.toBeInstanceOf(BadRequestException);
-  });
-
-  it('rejects a reserved-segment path', async () => {
-    const service = makeService();
-    const buffer = await buildZipBuffer([
-      { name: 'SKILL.md', content: VALID_MANIFEST },
-      { name: 'files/x.txt', content: 'x' },
-    ]);
-
-    await expect(
-      withArchiveFile(buffer, (path) => service.extract(path)),
-    ).rejects.toBeInstanceOf(BadRequestException);
-  });
-
-  it('rejects a .dial-resource segment', async () => {
-    const service = makeService();
-    const buffer = await buildZipBuffer([
-      { name: 'SKILL.md', content: VALID_MANIFEST },
+    ],
+    ['rejects a reserved-segment path', { name: 'files/x.txt', content: 'x' }],
+    [
+      'rejects a .dial-resource segment',
       { name: '.dial-resource', content: 'x' },
+    ],
+  ])('%s', async (_name, entry) => {
+    const service = makeService();
+    const buffer = await buildZipBuffer([
+      { name: 'SKILL.md', content: VALID_MANIFEST },
+      entry,
     ]);
 
     await expect(
@@ -472,60 +495,6 @@ describe('SkillsArchiveExtractionService', () => {
 
     await expect(
       withArchiveFile(invalidBuffer, (path) => service.extract(path)),
-    ).rejects.toBeInstanceOf(BadRequestException);
-  });
-
-  it('rejects a manifest with missing frontmatter', async () => {
-    const service = makeService();
-    const buffer = await buildZipBuffer([
-      { name: 'SKILL.md', content: 'no frontmatter here' },
-    ]);
-
-    await expect(
-      withArchiveFile(buffer, (path) => service.extract(path)),
-    ).rejects.toBeInstanceOf(BadRequestException);
-  });
-
-  it('rejects a manifest with an empty name', async () => {
-    const service = makeService();
-    const buffer = await buildZipBuffer([
-      {
-        name: 'SKILL.md',
-        content: '---\nname: ""\ndescription: Explains docs\n---\n\nBody',
-      },
-    ]);
-
-    await expect(
-      withArchiveFile(buffer, (path) => service.extract(path)),
-    ).rejects.toBeInstanceOf(BadRequestException);
-  });
-
-  it('rejects a manifest with an empty description', async () => {
-    const service = makeService();
-    const buffer = await buildZipBuffer([
-      {
-        name: 'SKILL.md',
-        content: '---\nname: docs-helper\ndescription: ""\n---\n\nBody',
-      },
-    ]);
-
-    await expect(
-      withArchiveFile(buffer, (path) => service.extract(path)),
-    ).rejects.toBeInstanceOf(BadRequestException);
-  });
-
-  it('rejects a manifest name that is not a safe single path segment', async () => {
-    const service = makeService();
-    const buffer = await buildZipBuffer([
-      {
-        name: 'SKILL.md',
-        content:
-          '---\nname: "team/docs-helper"\ndescription: Explains docs\n---\n\nBody',
-      },
-    ]);
-
-    await expect(
-      withArchiveFile(buffer, (path) => service.extract(path)),
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 });

@@ -221,21 +221,19 @@ describe('DeploymentsController (integration)', () => {
       );
     });
 
-    it('returns 400 for invalid refresh value', async () => {
+    it.each([
+      ['returns 400 for invalid refresh value', { query: 'refresh=maybe' }],
+      [
+        'returns 400 with invalid interface_type',
+        { query: 'interface_type=unknown' },
+      ],
+      [
+        'returns 400 for old embeddings value',
+        { query: 'interface_type=embeddings' },
+      ],
+    ])('%s', async (_name, { query }) => {
       await request(app.getHttpServer())
-        .get('/api/v1/deployments?refresh=maybe')
-        .expect(400);
-    });
-
-    it('returns 400 with invalid interface_type', async () => {
-      await request(app.getHttpServer())
-        .get('/api/v1/deployments?interface_type=unknown')
-        .expect(400);
-    });
-
-    it('returns 400 for old embeddings value', async () => {
-      await request(app.getHttpServer())
-        .get('/api/v1/deployments?interface_type=embeddings')
+        .get(`/api/v1/deployments?${query}`)
         .expect(400);
     });
 

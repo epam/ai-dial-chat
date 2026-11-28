@@ -9,20 +9,25 @@ import {
 import { ResourceDependencyType } from '../../dto/resource-dependency.dto';
 
 describe('toResourceDependency', () => {
-  it('returns nothing for a resource in the public bucket', () => {
-    expect(toResourceDependency('prompts/public/Org/Shared')).toBeUndefined();
-  });
-
-  it('returns nothing for an id without a bucket, such as a built-in model', () => {
-    expect(toResourceDependency('gpt-4o')).toBeUndefined();
-  });
-
-  it('returns nothing for a resource kind that is not listed', () => {
-    expect(toResourceDependency('conversations/b/chat')).toBeUndefined();
-  });
-
-  it('returns nothing for a url with no path after the bucket', () => {
-    expect(toResourceDependency('prompts/b/')).toBeUndefined();
+  it.each([
+    [
+      'returns nothing for a resource in the public bucket',
+      { id: 'prompts/public/Org/Shared' },
+    ],
+    [
+      'returns nothing for an id without a bucket, such as a built-in model',
+      { id: 'gpt-4o' },
+    ],
+    [
+      'returns nothing for a resource kind that is not listed',
+      { id: 'conversations/b/chat' },
+    ],
+    [
+      'returns nothing for a url with no path after the bucket',
+      { id: 'prompts/b/' },
+    ],
+  ])('%s', (_name, { id }) => {
+    expect(toResourceDependency(id)).toBeUndefined();
   });
 
   it('maps a prompt in a nested folder, decoding name and location', () => {

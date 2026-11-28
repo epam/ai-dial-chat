@@ -903,19 +903,13 @@ describe('FilesListingService', () => {
   });
 
   describe('buildArchivePath', () => {
-    it('returns null for paths containing ..', () => {
+    it.each([
+      ['returns null for paths containing ..', { path: '../etc/passwd' }],
+      ['returns null for paths starting with /', { path: '/etc/passwd' }],
+      ['returns null for paths containing backslash', { path: 'a\\b' }],
+    ])('%s', (_name, { path }) => {
       const { service } = makeService();
-      expect(service.buildArchivePath('root', '../etc/passwd')).toBeNull();
-    });
-
-    it('returns null for paths starting with /', () => {
-      const { service } = makeService();
-      expect(service.buildArchivePath('root', '/etc/passwd')).toBeNull();
-    });
-
-    it('returns null for paths containing backslash', () => {
-      const { service } = makeService();
-      expect(service.buildArchivePath('root', 'a\\b')).toBeNull();
+      expect(service.buildArchivePath('root', path)).toBeNull();
     });
 
     it('returns joined path for valid relative path', () => {
