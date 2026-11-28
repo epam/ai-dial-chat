@@ -109,22 +109,23 @@ describe('isPublicCatalogEntityId', () => {
     expect(isPublicCatalogEntityId(id)).toBe(true);
   });
 
-  it('treats an id in the caller’s own bucket as not public', () => {
-    expect(isPublicCatalogEntityId('applications/my-bucket/Revenue bot')).toBe(
-      false,
-    );
-  });
-
-  /* The bucket is the second segment, so a personal folder named `public`
-   * must not read as the shared public area. */
-  it('does not match a personal folder that happens to be named public', () => {
-    expect(
-      isPublicCatalogEntityId('applications/my-bucket/public/Revenue bot'),
-    ).toBe(false);
-  });
-
-  it('treats a bare deployment id with no bucket as not public', () => {
-    expect(isPublicCatalogEntityId('gpt-4')).toBe(false);
+  it.each([
+    [
+      'treats an id in the caller’s own bucket as not public',
+      { id: 'applications/my-bucket/Revenue bot' },
+    ],
+    /* The bucket is the second segment, so a personal folder named `public`
+     * must not read as the shared public area. */
+    [
+      'does not match a personal folder that happens to be named public',
+      { id: 'applications/my-bucket/public/Revenue bot' },
+    ],
+    [
+      'treats a bare deployment id with no bucket as not public',
+      { id: 'gpt-4' },
+    ],
+  ])('%s', (_name, { id }) => {
+    expect(isPublicCatalogEntityId(id)).toBe(false);
   });
 });
 

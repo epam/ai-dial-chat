@@ -80,12 +80,34 @@ describe('serializeMarkdownTableRows — formula cells', () => {
     ).toBe('| Bound |\n| :-- |\n| $$-\\tfrac12$$ |');
   });
 
-  it('leaves a formula\u2019s backslashes single, so the LaTeX is not doubled', () => {
-    const rows = [createMathRow('\\alpha \\wedge \\beta')];
-
+  it.each([
+    [
+      'leaves a formula\u2019s backslashes single, so the LaTeX is not doubled',
+      {
+        source: '\\alpha \\wedge \\beta',
+        expected: '| $$\\alpha \\wedge \\beta$$ |\n| :-- |',
+      },
+    ],
+    /* An escaped pipe is not an option inside `$$…$$`: GFM leaves the backslash
+       in place there, so `\|` would reach KaTeX as the norm delimiter ‖. */
+    [
+      'rewrites a pipe in the source to the LaTeX that renders it',
+      {
+        source: '\\left|x\\right|',
+        expected: '| $$\\left\\vert x\\right\\vert$$ |\n| :-- |',
+      },
+    ],
+    [
+      'rewrites an escaped pipe to the norm delimiter it stands for',
+      { source: 'a\\|b', expected: '| $$a\\Vert b$$ |\n| :-- |' },
+    ],
+  ])('%s', (_name, { source, expected }) => {
     expect(
-      serializeMarkdownTableRows(rows, MarkdownTableCopyFormat.Markdown),
-    ).toBe('| $$\\alpha \\wedge \\beta$$ |\n| :-- |');
+      serializeMarkdownTableRows(
+        [createMathRow(source)],
+        MarkdownTableCopyFormat.Markdown,
+      ),
+    ).toBe(expected);
   });
 
   it('writes the bare source into a CSV column, without math delimiters', () => {
@@ -96,24 +118,6 @@ describe('serializeMarkdownTableRows — formula cells', () => {
     );
   });
 
-  /* An escaped pipe is not an option inside `$$…$$`: GFM leaves the backslash
-     in place there, so `\|` would reach KaTeX as the norm delimiter ‖. */
-  it('rewrites a pipe in the source to the LaTeX that renders it', () => {
-    const rows = [createMathRow('\\left|x\\right|')];
-
-    expect(
-      serializeMarkdownTableRows(rows, MarkdownTableCopyFormat.Markdown),
-    ).toBe('| $$\\left\\vert x\\right\\vert$$ |\n| :-- |');
-  });
-
-  it('rewrites an escaped pipe to the norm delimiter it stands for', () => {
-    const rows = [createMathRow('a\\|b')];
-
-    expect(
-      serializeMarkdownTableRows(rows, MarkdownTableCopyFormat.Markdown),
-    ).toBe('| $$a\\Vert b$$ |\n| :-- |');
-  });
-
   it('keeps the pipe itself in a CSV column, which has no row to split', () => {
     const rows = [createMathRow('\\left|x\\right|')];
 
@@ -122,30 +126,28 @@ describe('serializeMarkdownTableRows — formula cells', () => {
     );
   });
 
-  it('escapes a pipe in ordinary cell text as well', () => {
-    const rows = [createRow('a | b')];
-
+  it.each([
+    [
+      'escapes a pipe in ordinary cell text as well',
+      { text: 'a | b', expected: '| a \\| b |\n| :-- |' },
+    ],
+    /* Escaping the pipe alone would serialize this as `a \\| b`, where GFM reads
+       `\\` as one backslash and then splits the row on the bare pipe. */
+    [
+      'escapes a backslash in cell text before the pipe it precedes',
+      { text: 'a \\| b', expected: '| a \\\\\\| b |\n| :-- |' },
+    ],
+    [
+      'escapes a backslash in cell text that no pipe follows',
+      { text: 'C:\\path', expected: '| C:\\\\path |\n| :-- |' },
+    ],
+  ])('%s', (_name, { text, expected }) => {
     expect(
-      serializeMarkdownTableRows(rows, MarkdownTableCopyFormat.Markdown),
-    ).toBe('| a \\| b |\n| :-- |');
-  });
-
-  /* Escaping the pipe alone would serialize this as `a \\| b`, where GFM reads
-     `\\` as one backslash and then splits the row on the bare pipe. */
-  it('escapes a backslash in cell text before the pipe it precedes', () => {
-    const rows = [createRow('a \\| b')];
-
-    expect(
-      serializeMarkdownTableRows(rows, MarkdownTableCopyFormat.Markdown),
-    ).toBe('| a \\\\\\| b |\n| :-- |');
-  });
-
-  it('escapes a backslash in cell text that no pipe follows', () => {
-    const rows = [createRow('C:\\path')];
-
-    expect(
-      serializeMarkdownTableRows(rows, MarkdownTableCopyFormat.Markdown),
-    ).toBe('| C:\\\\path |\n| :-- |');
+      serializeMarkdownTableRows(
+        [createRow(text)],
+        MarkdownTableCopyFormat.Markdown,
+      ),
+    ).toBe(expected);
   });
 
   it('keeps a formula inline with the prose around it', () => {

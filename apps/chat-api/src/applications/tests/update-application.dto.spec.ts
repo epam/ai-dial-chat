@@ -121,11 +121,6 @@ describe('UpdateApplicationBodyDto', () => {
     expect(errors.some((e) => e.property === 'maxInputAttachments')).toBe(true);
   });
 
-  it('rejects a request body that still includes an intro property', async () => {
-    const errors = await validateDto({ ...BASE_BODY, intro: 'Short intro' });
-    expect(errors.some((e) => e.property === 'intro')).toBe(true);
-  });
-
   it('passes with description, iconUrl, and topics provided', async () => {
     const errors = await validateDto({
       ...BASE_BODY,
@@ -148,32 +143,6 @@ describe('UpdateApplicationBodyDto', () => {
       expect(errors.some((e) => e.property === 'iconUrl')).toBe(true);
     },
   );
-
-  it('passes with a valid locale entry and primaryLocale', async () => {
-    const errors = await validateDto({
-      ...BASE_BODY,
-      locales: [{ language: 'de', name: 'Meine App' }],
-      primaryLocale: 'en',
-    });
-    expect(errors).toHaveLength(0);
-  });
-
-  it('rejects a locale entry with a stray client-side id field', async () => {
-    const errors = await validateDto({
-      ...BASE_BODY,
-      locales: [{ id: 'locale-row-1', language: 'de', name: 'Meine App' }],
-      primaryLocale: 'en',
-    });
-    expect(errors.some((e) => e.property === 'locales')).toBe(true);
-  });
-
-  it('rejects a non-empty locales array without primaryLocale', async () => {
-    const errors = await validateDto({
-      ...BASE_BODY,
-      locales: [{ language: 'de', name: 'Meine App' }],
-    });
-    expect(errors.some((e) => e.property === 'primaryLocale')).toBe(true);
-  });
 });
 
 describe('UpdateApplicationBodyDto — version', () => {

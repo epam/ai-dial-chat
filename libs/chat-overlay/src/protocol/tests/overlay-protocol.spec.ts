@@ -171,104 +171,32 @@ describe('OverlayFeature', () => {
     expect(new Set(values).size).toBe(58);
   });
 
-  it('includes the hide-user-menu-identity feature key', () => {
-    expect(Object.values(OverlayFeature)).toContain('hide-user-menu-identity');
-  });
-
-  it('includes the hide-keyboard-shortcuts feature key', () => {
-    expect(Object.values(OverlayFeature)).toContain('hide-keyboard-shortcuts');
-  });
-
-  it('includes the hide-conversations-filter feature key', () => {
-    expect(Object.values(OverlayFeature)).toContain(
-      'hide-conversations-filter',
-    );
-  });
-
-  it('includes the hide-change-agent feature key', () => {
-    expect(Object.values(OverlayFeature)).toContain('hide-change-agent');
-  });
-
-  it('includes the prompts feature key', () => {
-    expect(Object.values(OverlayFeature)).toContain('prompts');
-  });
-
-  it('includes the skills feature key', () => {
-    expect(Object.values(OverlayFeature)).toContain('skills');
-  });
-
-  it('includes the file-manager feature key', () => {
-    expect(Object.values(OverlayFeature)).toContain('file-manager');
-  });
-
-  it('includes the show-all-starters feature key', () => {
-    expect(Object.values(OverlayFeature)).toContain('show-all-starters');
-  });
-
-  it('includes the starters-below-greeting feature key', () => {
-    expect(Object.values(OverlayFeature)).toContain('starters-below-greeting');
-  });
-
-  it('includes the hide-greeting feature key', () => {
-    expect(Object.values(OverlayFeature)).toContain('hide-greeting');
-  });
-
-  it('includes the hide-footer-version feature key', () => {
-    expect(Object.values(OverlayFeature)).toContain('hide-footer-version');
-  });
-
-  it('includes the show-agent-description feature key', () => {
-    expect(Object.values(OverlayFeature)).toContain('show-agent-description');
-  });
-
-  it('includes the disable-input-history-navigation feature key', () => {
-    expect(Object.values(OverlayFeature)).toContain(
-      'disable-input-history-navigation',
-    );
-  });
-
-  it('includes the hide-conversation-export feature key', () => {
-    expect(Object.values(OverlayFeature)).toContain('hide-conversation-export');
-  });
-
-  it('includes the hide-conversation-import feature key', () => {
-    expect(Object.values(OverlayFeature)).toContain('hide-conversation-import');
-  });
-
-  it('includes the hide-settings-page feature key', () => {
-    expect(Object.values(OverlayFeature)).toContain('hide-settings-page');
-  });
-
-  it('includes the hide-usage-page feature key', () => {
-    expect(Object.values(OverlayFeature)).toContain('hide-usage-page');
-  });
-
-  it('includes the show-header-logo feature key', () => {
-    expect(Object.values(OverlayFeature)).toContain('show-header-logo');
-  });
-
-  it('includes the conversation-drafts feature key', () => {
-    expect(Object.values(OverlayFeature)).toContain('conversation-drafts');
-  });
-
-  it('includes the hide-starter-icon feature key', () => {
-    expect(Object.values(OverlayFeature)).toContain('hide-starter-icon');
-  });
-
-  it('includes the show-mobile-header-full-logo feature key', () => {
-    expect(Object.values(OverlayFeature)).toContain(
-      'show-mobile-header-full-logo',
-    );
-  });
-
-  it('includes the always-show-citation-card feature key', () => {
-    expect(Object.values(OverlayFeature)).toContain(
-      'always-show-citation-card',
-    );
-  });
-
-  it('includes the removable-tools feature key', () => {
-    expect(Object.values(OverlayFeature)).toContain('removable-tools');
+  it.each([
+    'hide-user-menu-identity',
+    'hide-keyboard-shortcuts',
+    'hide-conversations-filter',
+    'hide-change-agent',
+    'prompts',
+    'skills',
+    'file-manager',
+    'show-all-starters',
+    'starters-below-greeting',
+    'hide-greeting',
+    'hide-footer-version',
+    'show-agent-description',
+    'disable-input-history-navigation',
+    'hide-conversation-export',
+    'hide-conversation-import',
+    'hide-settings-page',
+    'hide-usage-page',
+    'show-header-logo',
+    'conversation-drafts',
+    'hide-starter-icon',
+    'show-mobile-header-full-logo',
+    'always-show-citation-card',
+    'removable-tools',
+  ])('includes the %s feature key', (key) => {
+    expect(Object.values(OverlayFeature)).toContain(key);
   });
 
   it('includes the schema-apps feature key, not its renamed predecessor', () => {

@@ -233,20 +233,21 @@ describe('dialCorePathToRelative', () => {
 });
 
 describe('getVirtualPathName', () => {
-  it('returns the last segment of a virtual path', () => {
-    expect(getVirtualPathName('/My files/reports/q1.pdf', 'fallback')).toBe(
-      'q1.pdf',
-    );
-  });
-
-  it('keeps a percent escape that is part of the name', () => {
-    expect(getVirtualPathName('/My files/reports/a%20b.pdf', 'fallback')).toBe(
-      'a%20b.pdf',
-    );
-  });
-
-  it('falls back when the path has no segments', () => {
-    expect(getVirtualPathName('', 'fallback')).toBe('fallback');
+  it.each([
+    [
+      'returns the last segment of a virtual path',
+      { path: '/My files/reports/q1.pdf', expected: 'q1.pdf' },
+    ],
+    [
+      'keeps a percent escape that is part of the name',
+      { path: '/My files/reports/a%20b.pdf', expected: 'a%20b.pdf' },
+    ],
+    [
+      'falls back when the path has no segments',
+      { path: '', expected: 'fallback' },
+    ],
+  ])('%s', (_name, { path, expected }) => {
+    expect(getVirtualPathName(path, 'fallback')).toBe(expected);
   });
 });
 
@@ -276,23 +277,29 @@ describe('resolveOwnerCoords', () => {
     ],
   ]);
 
-  it('returns the fallback bucket for an empty path', () => {
-    expect(resolveOwnerCoords('', sharedRootMeta, 'my-bucket')).toEqual({
-      bucket: 'my-bucket',
-      path: '',
-    });
-  });
-
-  it('returns the fallback bucket when no shared root matches', () => {
-    expect(
-      resolveOwnerCoords('unknown/sub', sharedRootMeta, 'my-bucket'),
-    ).toEqual({ bucket: 'my-bucket', path: 'unknown/sub' });
-  });
-
-  it('resolves the owner bucket and path for a matching shared root', () => {
-    expect(
-      resolveOwnerCoords('sharedFolder/sub', sharedRootMeta, 'my-bucket'),
-    ).toEqual({ bucket: 'owner-bucket', path: 'reports/sub' });
+  it.each([
+    [
+      'returns the fallback bucket for an empty path',
+      { path: '', expected: { bucket: 'my-bucket', path: '' } },
+    ],
+    [
+      'returns the fallback bucket when no shared root matches',
+      {
+        path: 'unknown/sub',
+        expected: { bucket: 'my-bucket', path: 'unknown/sub' },
+      },
+    ],
+    [
+      'resolves the owner bucket and path for a matching shared root',
+      {
+        path: 'sharedFolder/sub',
+        expected: { bucket: 'owner-bucket', path: 'reports/sub' },
+      },
+    ],
+  ])('%s', (_name, { path, expected }) => {
+    expect(resolveOwnerCoords(path, sharedRootMeta, 'my-bucket')).toEqual(
+      expected,
+    );
   });
 });
 

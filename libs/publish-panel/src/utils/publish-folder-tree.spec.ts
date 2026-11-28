@@ -297,20 +297,21 @@ describe('validateFolderName', () => {
 });
 
 describe('getUniqueFolderName', () => {
-  it('returns the base name unchanged when no sibling has it', () => {
-    expect(getUniqueFolderName('New folder', ['Shared'])).toBe('New folder');
-  });
-
-  it('appends " 2" when a sibling already has the base name', () => {
-    expect(getUniqueFolderName('New folder', ['New folder'])).toBe(
-      'New folder 2',
-    );
-  });
-
-  it('matches case-insensitively when checking for a taken name', () => {
-    expect(getUniqueFolderName('New folder', ['new folder'])).toBe(
-      'New folder 2',
-    );
+  it.each([
+    [
+      'returns the base name unchanged when no sibling has it',
+      { siblings: ['Shared'], expected: 'New folder' },
+    ],
+    [
+      'appends " 2" when a sibling already has the base name',
+      { siblings: ['New folder'], expected: 'New folder 2' },
+    ],
+    [
+      'matches case-insensitively when checking for a taken name',
+      { siblings: ['new folder'], expected: 'New folder 2' },
+    ],
+  ])('%s', (_name, { siblings, expected }) => {
+    expect(getUniqueFolderName('New folder', siblings)).toBe(expected);
   });
 
   it('skips every already-taken suffix to find the first free one', () => {

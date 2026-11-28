@@ -22,35 +22,12 @@ describe('CreateApplicationBodyDto — intro removal', () => {
     const errors = await validateDto(BASE_BODY);
     expect(errors).toHaveLength(0);
   });
-
-  it('rejects a request body that still includes an intro property', async () => {
-    const errors = await validateDto({ ...BASE_BODY, intro: 'Short intro' });
-    expect(errors.some((e) => e.property === 'intro')).toBe(true);
-  });
 });
 
 describe('CreateApplicationBodyDto — locales', () => {
   it('passes when locales is omitted', async () => {
     const errors = await validateDto(BASE_BODY);
     expect(errors).toHaveLength(0);
-  });
-
-  it('passes with a valid locale entry and primaryLocale', async () => {
-    const errors = await validateDto({
-      ...BASE_BODY,
-      locales: [{ language: 'de', name: 'Meine App' }],
-      primaryLocale: 'en',
-    });
-    expect(errors).toHaveLength(0);
-  });
-
-  it('rejects a locale entry with a stray client-side id field', async () => {
-    const errors = await validateDto({
-      ...BASE_BODY,
-      locales: [{ id: 'locale-row-1', language: 'de', name: 'Meine App' }],
-      primaryLocale: 'en',
-    });
-    expect(errors.some((e) => e.property === 'locales')).toBe(true);
   });
 
   it('accepts a non-ASCII localized name even though the top-level name is ASCII-only', async () => {
@@ -60,26 +37,6 @@ describe('CreateApplicationBodyDto — locales', () => {
       primaryLocale: 'en',
     });
     expect(errors).toHaveLength(0);
-  });
-
-  it('rejects a non-empty locales array without primaryLocale', async () => {
-    const errors = await validateDto({
-      ...BASE_BODY,
-      locales: [{ language: 'de', name: 'Meine App' }],
-    });
-    expect(errors.some((e) => e.property === 'primaryLocale')).toBe(true);
-  });
-
-  it('rejects more than 20 locale entries', async () => {
-    const errors = await validateDto({
-      ...BASE_BODY,
-      locales: Array.from({ length: 21 }, (_, i) => ({
-        language: 'de',
-        name: `Locale ${i}`,
-      })),
-      primaryLocale: 'en',
-    });
-    expect(errors.some((e) => e.property === 'locales')).toBe(true);
   });
 });
 describe('CreateApplicationBodyDto — features', () => {

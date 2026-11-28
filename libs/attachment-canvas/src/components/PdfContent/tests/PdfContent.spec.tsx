@@ -455,37 +455,26 @@ describe('PdfContent', () => {
       expect(panel.scrollTop).toBe(1978);
     });
 
-    it('resets to the current page when the committed value is out of range', () => {
+    it.each([
+      [
+        'resets to the current page when the committed value is out of range',
+        { value: '999' },
+      ],
+      [
+        'resets to the current page when the committed value is empty',
+        { value: '' },
+      ],
+      [
+        'resets to the current page when the committed value is not an integer',
+        { value: '3.5' },
+      ],
+    ])('%s', (_name, { value }) => {
       render(<PdfContent url="doc.pdf" highlights={[]} />);
       setTotalPages(50);
       openThumbnailsPanel();
 
       const input = screen.getByLabelText('Page number') as HTMLInputElement;
-      fireEvent.change(input, { target: { value: '999' } });
-      fireEvent.blur(input);
-
-      expect(input.value).toBe('1');
-    });
-
-    it('resets to the current page when the committed value is empty', () => {
-      render(<PdfContent url="doc.pdf" highlights={[]} />);
-      setTotalPages(50);
-      openThumbnailsPanel();
-
-      const input = screen.getByLabelText('Page number') as HTMLInputElement;
-      fireEvent.change(input, { target: { value: '' } });
-      fireEvent.blur(input);
-
-      expect(input.value).toBe('1');
-    });
-
-    it('resets to the current page when the committed value is not an integer', () => {
-      render(<PdfContent url="doc.pdf" highlights={[]} />);
-      setTotalPages(50);
-      openThumbnailsPanel();
-
-      const input = screen.getByLabelText('Page number') as HTMLInputElement;
-      fireEvent.change(input, { target: { value: '3.5' } });
+      fireEvent.change(input, { target: { value } });
       fireEvent.blur(input);
 
       expect(input.value).toBe('1');

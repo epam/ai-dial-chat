@@ -851,57 +851,61 @@ describe('MarkdownRenderer', () => {
       ).toBe('files/bucket/chart.png');
     });
 
-    it('rewrites markdown image src through urlTransform', () => {
-      render(
-        <MarkdownRenderer
-          content="![chart](files/bucket/chart.png)"
-          urlTransform={rewriteFilesUrl}
-        />,
-      );
+    it.each([
+      [
+        'rewrites markdown image src through urlTransform',
+        {
+          content: '![chart](files/bucket/chart.png)',
+          role: 'img',
+          accessibleName: 'chart',
+          attribute: 'src',
+          expected: '/dl/bucket/chart.png',
+        },
+      ],
+      [
+        'rewrites markdown link href through urlTransform',
+        {
+          content: '[report](files/bucket/report.pdf)',
+          role: 'link',
+          accessibleName: 'report',
+          attribute: 'href',
+          expected: '/dl/bucket/report.pdf',
+        },
+      ],
+      [
+        'rewrites raw HTML img src through urlTransform',
+        {
+          content: '<img src="files/bucket/chart.png" alt="chart">',
+          role: 'img',
+          accessibleName: 'chart',
+          attribute: 'src',
+          expected: '/dl/bucket/chart.png',
+        },
+      ],
+      [
+        'leaves non-file URLs unchanged',
+        {
+          content: '![logo](https://example.com/logo.png)',
+          role: 'img',
+          accessibleName: 'logo',
+          attribute: 'src',
+          expected: 'https://example.com/logo.png',
+        },
+      ],
+    ])(
+      '%s',
+      (_name, { content, role, accessibleName, attribute, expected }) => {
+        render(
+          <MarkdownRenderer content={content} urlTransform={rewriteFilesUrl} />,
+        );
 
-      expect(
-        screen.getByRole('img', { name: 'chart' }).getAttribute('src'),
-      ).toBe('/dl/bucket/chart.png');
-    });
-
-    it('rewrites markdown link href through urlTransform', () => {
-      render(
-        <MarkdownRenderer
-          content="[report](files/bucket/report.pdf)"
-          urlTransform={rewriteFilesUrl}
-        />,
-      );
-
-      expect(
-        screen.getByRole('link', { name: 'report' }).getAttribute('href'),
-      ).toBe('/dl/bucket/report.pdf');
-    });
-
-    it('rewrites raw HTML img src through urlTransform', () => {
-      render(
-        <MarkdownRenderer
-          content='<img src="files/bucket/chart.png" alt="chart">'
-          urlTransform={rewriteFilesUrl}
-        />,
-      );
-
-      expect(
-        screen.getByRole('img', { name: 'chart' }).getAttribute('src'),
-      ).toBe('/dl/bucket/chart.png');
-    });
-
-    it('leaves non-file URLs unchanged', () => {
-      render(
-        <MarkdownRenderer
-          content="![logo](https://example.com/logo.png)"
-          urlTransform={rewriteFilesUrl}
-        />,
-      );
-
-      expect(
-        screen.getByRole('img', { name: 'logo' }).getAttribute('src'),
-      ).toBe('https://example.com/logo.png');
-    });
+        expect(
+          screen
+            .getByRole(role, { name: accessibleName })
+            .getAttribute(attribute),
+        ).toBe(expected);
+      },
+    );
 
     it('still strips javascript: URLs after the host rewrite', () => {
       render(

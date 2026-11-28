@@ -19,36 +19,41 @@ const anchor = (
 });
 
 describe('diffTextChange', () => {
-  it('detects a pure insert', () => {
-    expect(diffTextChange('hello world', 'hello there world')).toEqual({
-      start: 6,
-      deletedLength: 0,
-      insertedLength: 6,
-    });
-  });
-
-  it('detects a pure delete', () => {
-    expect(diffTextChange('hello there world', 'hello world')).toEqual({
-      start: 6,
-      deletedLength: 6,
-      insertedLength: 0,
-    });
-  });
-
-  it('detects a replace in the middle', () => {
-    expect(diffTextChange('hello world', 'hello there')).toEqual({
-      start: 6,
-      deletedLength: 5,
-      insertedLength: 5,
-    });
-  });
-
-  it('reports no-op for identical strings', () => {
-    expect(diffTextChange('same', 'same')).toEqual({
-      start: 4,
-      deletedLength: 0,
-      insertedLength: 0,
-    });
+  it.each([
+    [
+      'detects a pure insert',
+      {
+        before: 'hello world',
+        after: 'hello there world',
+        expected: { start: 6, deletedLength: 0, insertedLength: 6 },
+      },
+    ],
+    [
+      'detects a pure delete',
+      {
+        before: 'hello there world',
+        after: 'hello world',
+        expected: { start: 6, deletedLength: 6, insertedLength: 0 },
+      },
+    ],
+    [
+      'detects a replace in the middle',
+      {
+        before: 'hello world',
+        after: 'hello there',
+        expected: { start: 6, deletedLength: 5, insertedLength: 5 },
+      },
+    ],
+    [
+      'reports no-op for identical strings',
+      {
+        before: 'same',
+        after: 'same',
+        expected: { start: 4, deletedLength: 0, insertedLength: 0 },
+      },
+    ],
+  ])('%s', (_name, { before, after, expected }) => {
+    expect(diffTextChange(before, after)).toEqual(expected);
   });
 });
 

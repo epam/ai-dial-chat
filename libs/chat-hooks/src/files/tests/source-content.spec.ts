@@ -6,18 +6,28 @@ import {
 } from '../source-content';
 
 describe('getUrlFileName', () => {
-  it('returns the last path segment of an absolute url', () => {
-    expect(getUrlFileName('https://example.com/files/report.pdf')).toBe(
-      'report.pdf',
-    );
-  });
-
-  it('returns the file name of a relative DIAL resource path', () => {
-    expect(
-      getUrlFileName(
-        'files/4FD1MyzohvVCq3YG9kDnt7Yk38cZfot7myHgGbBMKBpsSERRfFUHAh6ZsqCfieQsGy/qa-routed-source.html',
-      ),
-    ).toBe('qa-routed-source.html');
+  it.each([
+    [
+      'returns the last path segment of an absolute url',
+      { url: 'https://example.com/files/report.pdf', expected: 'report.pdf' },
+    ],
+    [
+      'returns the file name of a relative DIAL resource path',
+      {
+        url: 'files/4FD1MyzohvVCq3YG9kDnt7Yk38cZfot7myHgGbBMKBpsSERRfFUHAh6ZsqCfieQsGy/qa-routed-source.html',
+        expected: 'qa-routed-source.html',
+      },
+    ],
+    [
+      'decodes percent escapes in the file name',
+      { url: 'files/bucket/my%20report.pdf', expected: 'my report.pdf' },
+    ],
+    [
+      'ignores a trailing slash',
+      { url: 'files/bucket/nested/', expected: 'nested' },
+    ],
+  ])('%s', (_name, { url, expected }) => {
+    expect(getUrlFileName(url)).toBe(expected);
   });
 
   it('drops the query string and hash', () => {
@@ -27,16 +37,6 @@ describe('getUrlFileName', () => {
     );
   });
 
-  it('decodes percent escapes in the file name', () => {
-    expect(getUrlFileName('files/bucket/my%20report.pdf')).toBe(
-      'my report.pdf',
-    );
-  });
-
-  it('ignores a trailing slash', () => {
-    expect(getUrlFileName('files/bucket/nested/')).toBe('nested');
-  });
-
   it('returns an empty string when there is no path segment', () => {
     expect(getUrlFileName('')).toBe('');
     expect(getUrlFileName('https://example.com/')).toBe('');
@@ -44,40 +44,41 @@ describe('getUrlFileName', () => {
 });
 
 describe('resolveExternalSourceContentType', () => {
-  it('returns an image/* content type unchanged regardless of url', () => {
-    expect(
-      resolveExternalSourceContentType(
-        'image/jpeg',
-        'https://example.com/citation/doc-id-123',
-      ),
-    ).toBe('image/jpeg');
-  });
-
-  it('returns application/pdf unchanged when already reported', () => {
-    expect(
-      resolveExternalSourceContentType(
-        'application/pdf',
-        'https://example.com/citation/doc-id-123',
-      ),
-    ).toBe('application/pdf');
-  });
-
-  it('overrides a mislabeled content type when the url ends with .pdf', () => {
-    expect(
-      resolveExternalSourceContentType(
-        'text/markdown',
-        'https://example.com/files/report.pdf',
-      ),
-    ).toBe('application/pdf');
-  });
-
-  it('returns the original content type when the url has no .pdf extension', () => {
-    expect(
-      resolveExternalSourceContentType(
-        'text/markdown',
-        'https://example.com/page/about',
-      ),
-    ).toBe('text/markdown');
+  it.each([
+    [
+      'returns an image/* content type unchanged regardless of url',
+      {
+        contentType: 'image/jpeg',
+        url: 'https://example.com/citation/doc-id-123',
+        expected: 'image/jpeg',
+      },
+    ],
+    [
+      'returns application/pdf unchanged when already reported',
+      {
+        contentType: 'application/pdf',
+        url: 'https://example.com/citation/doc-id-123',
+        expected: 'application/pdf',
+      },
+    ],
+    [
+      'overrides a mislabeled content type when the url ends with .pdf',
+      {
+        contentType: 'text/markdown',
+        url: 'https://example.com/files/report.pdf',
+        expected: 'application/pdf',
+      },
+    ],
+    [
+      'returns the original content type when the url has no .pdf extension',
+      {
+        contentType: 'text/markdown',
+        url: 'https://example.com/page/about',
+        expected: 'text/markdown',
+      },
+    ],
+  ])('%s', (_name, { contentType, url, expected }) => {
+    expect(resolveExternalSourceContentType(contentType, url)).toBe(expected);
   });
 
   it.each([
@@ -119,46 +120,85 @@ describe('resolveExternalSourceContentType', () => {
 });
 
 describe('isExternalSourcePreviewable', () => {
-  it('returns true for an image/* content type regardless of url', () => {
-    expect(
-      isExternalSourcePreviewable('image/jpeg', 'https://example.com/photo'),
-    ).toBe(true);
-  });
-
-  it('returns true for an audio/* content type regardless of url', () => {
-    expect(
-      isExternalSourcePreviewable(
-        'audio/mpeg',
-        'https://example.com/track.mp3',
-      ),
-    ).toBe(true);
-  });
-
-  it('returns true for a PDF content type even when the url has no .pdf extension', () => {
-    expect(
-      isExternalSourcePreviewable(
-        'application/pdf',
-        'https://example.com/citation/doc-id-123',
-      ),
-    ).toBe(true);
-  });
-
-  it('returns true for a url whose path ends with .pdf', () => {
-    expect(
-      isExternalSourcePreviewable(
-        'application/octet-stream',
-        'https://example.com/files/report.pdf',
-      ),
-    ).toBe(true);
-  });
-
-  it('returns true for a url whose path ends with .pptx even with a mislabeled content type', () => {
-    expect(
-      isExternalSourcePreviewable(
-        'text/markdown',
-        'https://example.com/citation/slides.pptx',
-      ),
-    ).toBe(true);
+  it.each([
+    [
+      'returns true for an image/* content type regardless of url',
+      {
+        contentType: 'image/jpeg',
+        url: 'https://example.com/photo',
+        expected: true,
+      },
+    ],
+    [
+      'returns true for an audio/* content type regardless of url',
+      {
+        contentType: 'audio/mpeg',
+        url: 'https://example.com/track.mp3',
+        expected: true,
+      },
+    ],
+    [
+      'returns true for a PDF content type even when the url has no .pdf extension',
+      {
+        contentType: 'application/pdf',
+        url: 'https://example.com/citation/doc-id-123',
+        expected: true,
+      },
+    ],
+    [
+      'returns true for a url whose path ends with .pdf',
+      {
+        contentType: 'application/octet-stream',
+        url: 'https://example.com/files/report.pdf',
+        expected: true,
+      },
+    ],
+    [
+      'returns true for a url whose path ends with .pptx even with a mislabeled content type',
+      {
+        contentType: 'text/markdown',
+        url: 'https://example.com/citation/slides.pptx',
+        expected: true,
+      },
+    ],
+    [
+      'returns true when the url extension is a known previewable text format',
+      {
+        contentType: 'text/markdown',
+        url: 'https://example.com/files/readme.md',
+        expected: true,
+      },
+    ],
+    [
+      'returns true when the url extension is html',
+      {
+        contentType: 'text/html',
+        url: 'https://example.com/files/page.html',
+        expected: true,
+      },
+    ],
+    [
+      'returns false when the url path has no file extension',
+      {
+        contentType: 'text/html',
+        url: 'https://example.com/page/about',
+        expected: false,
+      },
+    ],
+    [
+      'returns false for a url that cannot be parsed',
+      { contentType: 'text/html', url: 'not a valid url', expected: false },
+    ],
+    [
+      'returns false when the extension is not previewable and content type is not image or audio',
+      {
+        contentType: 'application/zip',
+        url: 'https://example.com/archive.zip',
+        expected: false,
+      },
+    ],
+  ])('%s', (_name, { contentType, url, expected }) => {
+    expect(isExternalSourcePreviewable(contentType, url)).toBe(expected);
   });
 
   it('returns true for a canonical pptx content type even when the url has no matching extension', () => {
@@ -170,48 +210,6 @@ describe('isExternalSourcePreviewable', () => {
         'https://example.com/citation/doc-id-123',
       ),
     ).toBe(true);
-  });
-
-  it('returns true when the url extension is a known previewable text format', () => {
-    expect(
-      isExternalSourcePreviewable(
-        'text/markdown',
-        'https://example.com/files/readme.md',
-      ),
-    ).toBe(true);
-  });
-
-  it('returns true when the url extension is html', () => {
-    expect(
-      isExternalSourcePreviewable(
-        'text/html',
-        'https://example.com/files/page.html',
-      ),
-    ).toBe(true);
-  });
-
-  it('returns false when the url path has no file extension', () => {
-    expect(
-      isExternalSourcePreviewable(
-        'text/html',
-        'https://example.com/page/about',
-      ),
-    ).toBe(false);
-  });
-
-  it('returns false for a url that cannot be parsed', () => {
-    expect(isExternalSourcePreviewable('text/html', 'not a valid url')).toBe(
-      false,
-    );
-  });
-
-  it('returns false when the extension is not previewable and content type is not image or audio', () => {
-    expect(
-      isExternalSourcePreviewable(
-        'application/zip',
-        'https://example.com/archive.zip',
-      ),
-    ).toBe(false);
   });
 });
 

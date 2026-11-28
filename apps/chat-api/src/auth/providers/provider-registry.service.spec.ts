@@ -373,40 +373,32 @@ describe('ProviderRegistryService', () => {
       );
     });
 
-    it('preserves an explicit https:// URL instead of prefixing it again', async () => {
+    it.each([
+      [
+        'preserves an explicit https:// URL instead of prefixing it again',
+        {
+          host: 'https://keycloak.example.com/realms/test',
+          expected: 'https://keycloak.example.com/realms/test',
+        },
+      ],
+      [
+        'preserves an explicit http:// URL for a provider without TLS',
+        {
+          host: 'http://keycloak.internal:8080/realms/test',
+          expected: 'http://keycloak.internal:8080/realms/test',
+        },
+      ],
+      [
+        'strips a trailing slash from the configured URL',
+        {
+          host: 'https://keycloak.example.com/realms/test/',
+          expected: 'https://keycloak.example.com/realms/test',
+        },
+      ],
+    ])('%s', async (_name, { host, expected }) => {
       await expect(
-        issuerOf(
-          {
-            ...KEYCLOAK_ENV,
-            AUTH_KEYCLOAK_HOST: 'https://keycloak.example.com/realms/test',
-          },
-          'keycloak',
-        ),
-      ).resolves.toBe('https://keycloak.example.com/realms/test');
-    });
-
-    it('preserves an explicit http:// URL for a provider without TLS', async () => {
-      await expect(
-        issuerOf(
-          {
-            ...KEYCLOAK_ENV,
-            AUTH_KEYCLOAK_HOST: 'http://keycloak.internal:8080/realms/test',
-          },
-          'keycloak',
-        ),
-      ).resolves.toBe('http://keycloak.internal:8080/realms/test');
-    });
-
-    it('strips a trailing slash from the configured URL', async () => {
-      await expect(
-        issuerOf(
-          {
-            ...KEYCLOAK_ENV,
-            AUTH_KEYCLOAK_HOST: 'https://keycloak.example.com/realms/test/',
-          },
-          'keycloak',
-        ),
-      ).resolves.toBe('https://keycloak.example.com/realms/test');
+        issuerOf({ ...KEYCLOAK_ENV, AUTH_KEYCLOAK_HOST: host }, 'keycloak'),
+      ).resolves.toBe(expected);
     });
 
     it('keeps exactly one trailing slash on the Auth0 issuer given a full URL', async () => {

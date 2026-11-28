@@ -737,9 +737,22 @@ describe('FilesBatchOperationsService', () => {
       expect(sdkClient.getFileMetadata).not.toHaveBeenCalled();
     });
 
-    it('still maps a 409 to "Conflict" should DIAL Core ever send one', async () => {
+    it.each([
+      [
+        'still maps a 409 to "Conflict" should DIAL Core ever send one',
+        { status: 409, error: 'Conflict' },
+      ],
+      [
+        'returns success=false with "Forbidden" for DIAL Core 403',
+        { status: 403, error: 'Forbidden' },
+      ],
+      [
+        'returns success=false with "Not found" for DIAL Core 404',
+        { status: 404, error: 'Not found' },
+      ],
+    ])('%s', async (_name, { status, error }) => {
       const { service, sdkClient } = makeService();
-      sdkClient.copyResource.mockResolvedValue(errCopy(409));
+      sdkClient.copyResource.mockResolvedValue(errCopy(status));
 
       const result = await service.copyFiles([singleFileItem()], 'token');
 
@@ -747,35 +760,7 @@ describe('FilesBatchOperationsService', () => {
         sourcePath: 'reports/q1.pdf',
         destinationPath: 'archive/q1.pdf',
         success: false,
-        error: 'Conflict',
-      });
-    });
-
-    it('returns success=false with "Forbidden" for DIAL Core 403', async () => {
-      const { service, sdkClient } = makeService();
-      sdkClient.copyResource.mockResolvedValue(errCopy(403));
-
-      const result = await service.copyFiles([singleFileItem()], 'token');
-
-      expect(result.results[0]).toEqual({
-        sourcePath: 'reports/q1.pdf',
-        destinationPath: 'archive/q1.pdf',
-        success: false,
-        error: 'Forbidden',
-      });
-    });
-
-    it('returns success=false with "Not found" for DIAL Core 404', async () => {
-      const { service, sdkClient } = makeService();
-      sdkClient.copyResource.mockResolvedValue(errCopy(404));
-
-      const result = await service.copyFiles([singleFileItem()], 'token');
-
-      expect(result.results[0]).toEqual({
-        sourcePath: 'reports/q1.pdf',
-        destinationPath: 'archive/q1.pdf',
-        success: false,
-        error: 'Not found',
+        error,
       });
     });
 
@@ -1111,9 +1096,22 @@ describe('FilesBatchOperationsService', () => {
       expect(sdkClient.getFileMetadata).not.toHaveBeenCalled();
     });
 
-    it('still maps a 409 to "Conflict" should DIAL Core ever send one', async () => {
+    it.each([
+      [
+        'still maps a 409 to "Conflict" should DIAL Core ever send one',
+        { status: 409, error: 'Conflict' },
+      ],
+      [
+        'returns success=false with "Forbidden" for DIAL Core 403',
+        { status: 403, error: 'Forbidden' },
+      ],
+      [
+        'returns success=false with "Not found" for DIAL Core 404',
+        { status: 404, error: 'Not found' },
+      ],
+    ])('%s', async (_name, { status, error }) => {
       const { service, sdkClient } = makeService();
-      sdkClient.moveResource.mockResolvedValue(errMove(409));
+      sdkClient.moveResource.mockResolvedValue(errMove(status));
 
       const result = await service.moveFiles([singleFileItem()], 'token');
 
@@ -1121,35 +1119,7 @@ describe('FilesBatchOperationsService', () => {
         sourcePath: 'inbox/draft.pdf',
         destinationPath: 'reports/draft.pdf',
         success: false,
-        error: 'Conflict',
-      });
-    });
-
-    it('returns success=false with "Forbidden" for DIAL Core 403', async () => {
-      const { service, sdkClient } = makeService();
-      sdkClient.moveResource.mockResolvedValue(errMove(403));
-
-      const result = await service.moveFiles([singleFileItem()], 'token');
-
-      expect(result.results[0]).toEqual({
-        sourcePath: 'inbox/draft.pdf',
-        destinationPath: 'reports/draft.pdf',
-        success: false,
-        error: 'Forbidden',
-      });
-    });
-
-    it('returns success=false with "Not found" for DIAL Core 404', async () => {
-      const { service, sdkClient } = makeService();
-      sdkClient.moveResource.mockResolvedValue(errMove(404));
-
-      const result = await service.moveFiles([singleFileItem()], 'token');
-
-      expect(result.results[0]).toEqual({
-        sourcePath: 'inbox/draft.pdf',
-        destinationPath: 'reports/draft.pdf',
-        success: false,
-        error: 'Not found',
+        error,
       });
     });
 

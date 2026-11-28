@@ -69,58 +69,31 @@ describe('SkillsManifestImportService', () => {
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 
-  it('rejects a manifest with missing frontmatter', async () => {
+  it.each([
+    [
+      'rejects a manifest with missing frontmatter',
+      { content: 'no frontmatter here' },
+    ],
+    [
+      'rejects a manifest with malformed YAML frontmatter',
+      { content: '---\nname: [unterminated\n---\nbody' },
+    ],
+    [
+      'rejects a blank name',
+      { content: '---\nname: "  "\ndescription: y\n---\n\nbody' },
+    ],
+    [
+      'rejects a blank description',
+      { content: '---\nname: docs-helper\ndescription: "  "\n---\n\nbody' },
+    ],
+    [
+      'rejects an unsafe derived name',
+      { content: '---\nname: "../escape"\ndescription: y\n---\n\nbody' },
+    ],
+    ['rejects an empty file', { content: '' }],
+  ])('%s', async (_name, { content }) => {
     const service = makeService();
-    const buffer = Buffer.from('no frontmatter here');
-
-    await expect(
-      withManifestFile(buffer, (path) => service.extract(path)),
-    ).rejects.toBeInstanceOf(BadRequestException);
-  });
-
-  it('rejects a manifest with malformed YAML frontmatter', async () => {
-    const service = makeService();
-    const buffer = Buffer.from('---\nname: [unterminated\n---\nbody');
-
-    await expect(
-      withManifestFile(buffer, (path) => service.extract(path)),
-    ).rejects.toBeInstanceOf(BadRequestException);
-  });
-
-  it('rejects a blank name', async () => {
-    const service = makeService();
-    const buffer = Buffer.from('---\nname: "  "\ndescription: y\n---\n\nbody');
-
-    await expect(
-      withManifestFile(buffer, (path) => service.extract(path)),
-    ).rejects.toBeInstanceOf(BadRequestException);
-  });
-
-  it('rejects a blank description', async () => {
-    const service = makeService();
-    const buffer = Buffer.from(
-      '---\nname: docs-helper\ndescription: "  "\n---\n\nbody',
-    );
-
-    await expect(
-      withManifestFile(buffer, (path) => service.extract(path)),
-    ).rejects.toBeInstanceOf(BadRequestException);
-  });
-
-  it('rejects an unsafe derived name', async () => {
-    const service = makeService();
-    const buffer = Buffer.from(
-      '---\nname: "../escape"\ndescription: y\n---\n\nbody',
-    );
-
-    await expect(
-      withManifestFile(buffer, (path) => service.extract(path)),
-    ).rejects.toBeInstanceOf(BadRequestException);
-  });
-
-  it('rejects an empty file', async () => {
-    const service = makeService();
-    const buffer = Buffer.from('');
+    const buffer = Buffer.from(content);
 
     await expect(
       withManifestFile(buffer, (path) => service.extract(path)),

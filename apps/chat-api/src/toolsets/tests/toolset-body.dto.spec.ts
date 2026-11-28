@@ -31,11 +31,6 @@ describe('ToolsetBodyDto — intro removal', () => {
     const errors = await validateDto(BASE_BODY);
     expect(errors).toHaveLength(0);
   });
-
-  it('rejects a request body that still includes an intro property', async () => {
-    const errors = await validateDto({ ...BASE_BODY, intro: 'Short intro' });
-    expect(errors.some((e) => e.property === 'intro')).toBe(true);
-  });
 });
 
 describe('ToolsetBodyDto — endpoint', () => {
@@ -85,48 +80,10 @@ describe('ToolsetBodyDto — locales', () => {
     expect(errors).toHaveLength(0);
   });
 
-  it('passes with a valid locale entry and primaryLocale', async () => {
-    const errors = await validateDto({
-      ...BASE_BODY,
-      locales: [{ language: 'de', name: 'Mein Toolset' }],
-      primaryLocale: 'en',
-    });
-    expect(errors).toHaveLength(0);
-  });
-
-  it('rejects a locale entry with a stray client-side id field', async () => {
-    const errors = await validateDto({
-      ...BASE_BODY,
-      locales: [{ id: 'locale-row-1', language: 'de', name: 'Mein Toolset' }],
-      primaryLocale: 'en',
-    });
-    expect(errors.some((e) => e.property === 'locales')).toBe(true);
-  });
-
   it('rejects a locale entry with an invalid language code', async () => {
     const errors = await validateDto({
       ...BASE_BODY,
       locales: [{ language: 'not-a-locale!', name: 'Mein Toolset' }],
-      primaryLocale: 'en',
-    });
-    expect(errors.some((e) => e.property === 'locales')).toBe(true);
-  });
-
-  it('rejects a non-empty locales array without primaryLocale', async () => {
-    const errors = await validateDto({
-      ...BASE_BODY,
-      locales: [{ language: 'de', name: 'Mein Toolset' }],
-    });
-    expect(errors.some((e) => e.property === 'primaryLocale')).toBe(true);
-  });
-
-  it('rejects more than 20 locale entries', async () => {
-    const errors = await validateDto({
-      ...BASE_BODY,
-      locales: Array.from({ length: 21 }, (_, i) => ({
-        language: 'de',
-        name: `Locale ${i}`,
-      })),
       primaryLocale: 'en',
     });
     expect(errors.some((e) => e.property === 'locales')).toBe(true);

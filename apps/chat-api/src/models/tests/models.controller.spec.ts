@@ -118,16 +118,21 @@ describe('ModelsController (integration)', () => {
       );
     });
 
-    it('returns 400 for a model name with invalid characters (semicolon)', async () => {
-      await request(app.getHttpServer())
-        .get('/api/v1/models/bad;model')
-        .expect(400);
-    });
-
-    it('returns 400 for a model name with a null byte (%00)', async () => {
-      await request(app.getHttpServer())
-        .get('/api/v1/models/bad%00model')
-        .expect(400);
+    it.each([
+      [
+        'returns 400 for a model name with invalid characters (semicolon)',
+        { url: '/api/v1/models/bad;model', status: 400 },
+      ],
+      [
+        'returns 400 for a model name with a null byte (%00)',
+        { url: '/api/v1/models/bad%00model', status: 400 },
+      ],
+      [
+        'accepts dotted model names like anthropic.claude-3-5',
+        { url: '/api/v1/models/anthropic.claude-3-5', status: 200 },
+      ],
+    ])('%s', async (_name, { url, status }) => {
+      await request(app.getHttpServer()).get(url).expect(status);
     });
 
     it('returns 404 when service throws NotFoundException', async () => {
@@ -144,12 +149,6 @@ describe('ModelsController (integration)', () => {
       await request(app.getHttpServer())
         .get('/api/v1/models/gpt-4o')
         .expect(401);
-    });
-
-    it('accepts dotted model names like anthropic.claude-3-5', async () => {
-      await request(app.getHttpServer())
-        .get('/api/v1/models/anthropic.claude-3-5')
-        .expect(200);
     });
   });
 });

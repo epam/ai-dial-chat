@@ -241,52 +241,45 @@ describe('ConversationController (integration)', () => {
       );
     });
 
-    it('returns 400 when firstMessage is empty and no attachment is provided', async () => {
+    it.each([
+      [
+        'returns 400 when firstMessage is empty and no attachment is provided',
+        { body: { firstMessage: '', deploymentId: 'gpt-4o' } },
+      ],
+      ['returns 400 when body is empty', { body: {} }],
+      [
+        'returns 400 when firstMessage exceeds 50000 characters',
+        { body: { firstMessage: 'a'.repeat(50001), deploymentId: 'gpt-4o' } },
+      ],
+      [
+        'returns 400 when deploymentId is missing',
+        { body: { firstMessage: 'Hello' } },
+      ],
+      [
+        'returns 400 when deploymentId is an empty string',
+        { body: { firstMessage: 'Hello', deploymentId: '' } },
+      ],
+      [
+        'returns 400 when deploymentId exceeds 256 characters',
+        { body: { firstMessage: 'Hello', deploymentId: 'a'.repeat(257) } },
+      ],
+      [
+        'returns 400 when deploymentId contains disallowed characters',
+        { body: { firstMessage: 'Hello', deploymentId: 'bad id!' } },
+      ],
+      [
+        'returns 400 when deploymentId contains malformed percent-encoding',
+        {
+          body: {
+            firstMessage: 'Hello',
+            deploymentId: 'applications/bad%2-id',
+          },
+        },
+      ],
+    ])('%s', async (_name, { body }) => {
       await request(app.getHttpServer())
         .post('/conversations')
-        .send({ firstMessage: '', deploymentId: 'gpt-4o' })
-        .expect(400);
-    });
-
-    it('returns 400 when body is empty', async () => {
-      await request(app.getHttpServer())
-        .post('/conversations')
-        .send({})
-        .expect(400);
-    });
-
-    it('returns 400 when firstMessage exceeds 50000 characters', async () => {
-      await request(app.getHttpServer())
-        .post('/conversations')
-        .send({ firstMessage: 'a'.repeat(50001), deploymentId: 'gpt-4o' })
-        .expect(400);
-    });
-
-    it('returns 400 when deploymentId is missing', async () => {
-      await request(app.getHttpServer())
-        .post('/conversations')
-        .send({ firstMessage: 'Hello' })
-        .expect(400);
-    });
-
-    it('returns 400 when deploymentId is an empty string', async () => {
-      await request(app.getHttpServer())
-        .post('/conversations')
-        .send({ firstMessage: 'Hello', deploymentId: '' })
-        .expect(400);
-    });
-
-    it('returns 400 when deploymentId exceeds 256 characters', async () => {
-      await request(app.getHttpServer())
-        .post('/conversations')
-        .send({ firstMessage: 'Hello', deploymentId: 'a'.repeat(257) })
-        .expect(400);
-    });
-
-    it('returns 400 when deploymentId contains disallowed characters', async () => {
-      await request(app.getHttpServer())
-        .post('/conversations')
-        .send({ firstMessage: 'Hello', deploymentId: 'bad id!' })
+        .send(body)
         .expect(400);
     });
 
@@ -331,13 +324,6 @@ describe('ConversationController (integration)', () => {
         deploymentId,
         undefined,
       );
-    });
-
-    it('returns 400 when deploymentId contains malformed percent-encoding', async () => {
-      await request(app.getHttpServer())
-        .post('/conversations')
-        .send({ firstMessage: 'Hello', deploymentId: 'applications/bad%2-id' })
-        .expect(400);
     });
 
     it('returns 201 with a valid conversation shape from the real service', async () => {

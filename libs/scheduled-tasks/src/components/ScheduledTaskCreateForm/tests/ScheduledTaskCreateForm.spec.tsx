@@ -952,10 +952,21 @@ describe('ScheduledTaskCreateForm', () => {
     expect(getSaveButtons().every((button) => !button.disabled)).toBe(true);
   });
 
-  it('wraps modelSelector with the required Model or Agent label', async () => {
+  it.each([
+    [
+      'wraps modelSelector with the required Model or Agent label',
+      { text: 'Model or Agent *' },
+    ],
+    ['renders display name field with label', { text: 'Name' }],
+    ['renders an optional description field', { text: 'Description' }],
+    [
+      'marks Instructions as required while no skill is selected',
+      { text: 'Instructions *' },
+    ],
+  ])('%s', async (_title, { text }) => {
     await renderForm();
 
-    expect(screen.getByText('Model or Agent *')).toBeTruthy();
+    expect(screen.getByText(text)).toBeTruthy();
   });
 
   it('links the time picker to errors.time through ariaDescribedBy', async () => {
@@ -987,18 +998,6 @@ describe('ScheduledTaskCreateForm', () => {
     await renderForm({ errors: { modelId: 'Model is required' } });
 
     expect(screen.getByText('Model is required')).toBeTruthy();
-  });
-
-  it('renders display name field with label', async () => {
-    await renderForm();
-
-    expect(screen.getByText('Name')).toBeTruthy();
-  });
-
-  it('renders an optional description field', async () => {
-    await renderForm();
-
-    expect(screen.getByText('Description')).toBeTruthy();
   });
 
   it('does not block Save when description is empty', async () => {
@@ -1035,13 +1034,26 @@ describe('ScheduledTaskCreateForm', () => {
     expect(screen.getByText('3/500')).toBeTruthy();
   });
 
-  it('calls onFieldChange when the description changes', async () => {
+  it.each([
+    [
+      'calls onFieldChange when the description changes',
+      { label: 'Description', field: 'description', value: 'x' },
+    ],
+    [
+      'calls onFieldChange via calendarValueToDateValue when the start-date calendar changes',
+      { label: 'Start date', field: 'startDate', value: '' },
+    ],
+    [
+      'calls onFieldChange via calendarValueToDateValue when the end-date calendar changes',
+      { label: 'End date', field: 'endDate', value: '' },
+    ],
+  ])('%s', async (_title, { label, field, value }) => {
     const onFieldChange = vi.fn();
     await renderForm({ onFieldChange });
 
-    await userEvent.type(screen.getByLabelText('Description'), 'x');
+    await userEvent.type(screen.getByLabelText(label), 'x');
 
-    expect(onFieldChange).toHaveBeenCalledWith('description', 'x');
+    expect(onFieldChange).toHaveBeenCalledWith(field, value);
   });
 
   it('disables Save when displayName is empty', async () => {
@@ -1124,12 +1136,6 @@ describe('ScheduledTaskCreateForm', () => {
     await renderForm();
 
     expect(screen.getByRole('textbox', { name: /^Instructions/ })).toBeTruthy();
-  });
-
-  it('marks Instructions as required while no skill is selected', async () => {
-    await renderForm();
-
-    expect(screen.getByText('Instructions *')).toBeTruthy();
   });
 
   it('drops the required marker once a skill is selected', async () => {
@@ -1473,24 +1479,6 @@ describe('ScheduledTaskCreateForm', () => {
     /* Only the start/end date pickers forward a minDate in a recurring form
        (the time and day-of-week calendars do not), so exactly two markers. */
     expect(screen.getAllByText('hasMinDate').length).toBe(2);
-  });
-
-  it('calls onFieldChange via calendarValueToDateValue when the start-date calendar changes', async () => {
-    const onFieldChange = vi.fn();
-    await renderForm({ onFieldChange });
-
-    await userEvent.type(screen.getByLabelText('Start date'), 'x');
-
-    expect(onFieldChange).toHaveBeenCalledWith('startDate', '');
-  });
-
-  it('calls onFieldChange via calendarValueToDateValue when the end-date calendar changes', async () => {
-    const onFieldChange = vi.fn();
-    await renderForm({ onFieldChange });
-
-    await userEvent.type(screen.getByLabelText('End date'), 'x');
-
-    expect(onFieldChange).toHaveBeenCalledWith('endDate', '');
   });
 
   it('renders errors.startDate and errors.endDate inline', async () => {

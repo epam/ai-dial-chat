@@ -29,26 +29,29 @@ const unit = (
 });
 
 describe('normalizeOrgUnitFolder', () => {
-  it('decodes segments, strips the public root and keeps one trailing slash', () => {
-    expect(normalizeOrgUnitFolder('public/Acme/US%20Risk/')).toBe(
-      'Acme/US Risk/',
-    );
-  });
-
-  it('keeps a malformed escape as written', () => {
-    expect(normalizeOrgUnitFolder('public/100%/')).toBe('100%/');
-  });
-
-  it('returns an empty string for the public root', () => {
-    expect(normalizeOrgUnitFolder('public/')).toBe('');
-  });
-
-  it('returns an empty string for a folder outside the public root', () => {
-    expect(normalizeOrgUnitFolder('Acme/Risk/')).toBe('');
-  });
-
-  it('strips only the leading public root, not a unit named public', () => {
-    expect(normalizeOrgUnitFolder('public/public/')).toBe('public/');
+  it.each([
+    [
+      'decodes segments, strips the public root and keeps one trailing slash',
+      { folder: 'public/Acme/US%20Risk/', expected: 'Acme/US Risk/' },
+    ],
+    [
+      'keeps a malformed escape as written',
+      { folder: 'public/100%/', expected: '100%/' },
+    ],
+    [
+      'returns an empty string for the public root',
+      { folder: 'public/', expected: '' },
+    ],
+    [
+      'returns an empty string for a folder outside the public root',
+      { folder: 'Acme/Risk/', expected: '' },
+    ],
+    [
+      'strips only the leading public root, not a unit named public',
+      { folder: 'public/public/', expected: 'public/' },
+    ],
+  ])('%s', (_name, { folder, expected }) => {
+    expect(normalizeOrgUnitFolder(folder)).toBe(expected);
   });
 });
 
@@ -310,30 +313,26 @@ describe('canApprovePublicationsAt', () => {
     expect(canApprovePublicationsAt(data, 'Acme/Teams')).toBe(true);
   });
 
-  it('refuses read only', () => {
-    expect(canApprovePublicationsAt(data, 'RO/Teams')).toBe(false);
-  });
-
-  it('refuses write only', () => {
-    expect(canApprovePublicationsAt(data, 'WO/Teams')).toBe(false);
-  });
-
-  it('refuses a path under no unit', () => {
-    expect(canApprovePublicationsAt(data, 'Plain/Folder')).toBe(false);
-  });
-
   it('allows a DIAL admin anywhere', () => {
     expect(canApprovePublicationsAt(access([], true), 'Plain/Folder')).toBe(
       true,
     );
   });
 
-  it('does not match a sibling folder sharing leading characters', () => {
-    expect(canApprovePublicationsAt(data, 'Acme2/Teams')).toBe(false);
-  });
-
-  it('lets the child unit decide, not its parent', () => {
-    expect(canApprovePublicationsAt(data, 'Acme/Child/Teams')).toBe(false);
+  it.each([
+    ['refuses read only', { folder: 'RO/Teams' }],
+    ['refuses write only', { folder: 'WO/Teams' }],
+    ['refuses a path under no unit', { folder: 'Plain/Folder' }],
+    [
+      'does not match a sibling folder sharing leading characters',
+      { folder: 'Acme2/Teams' },
+    ],
+    [
+      'lets the child unit decide, not its parent',
+      { folder: 'Acme/Child/Teams' },
+    ],
+  ])('%s', (_name, { folder }) => {
+    expect(canApprovePublicationsAt(data, folder)).toBe(false);
   });
 });
 

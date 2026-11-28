@@ -53,39 +53,35 @@ describe('useIsVerticallyClamped', () => {
     vi.restoreAllMocks();
   });
 
-  it('reports a clamp on the element itself', () => {
+  it.each([
+    [
+      'reports a clamp on the element itself',
+      {
+        wrapper: { scroll: 72, client: 48 },
+        child: { scroll: 72, client: 72 },
+        expected: 'clamped',
+      },
+    ],
+    [
+      'reports a clamp that lands on a direct child',
+      {
+        wrapper: { scroll: 48, client: 48 },
+        child: { scroll: 72, client: 48 },
+        expected: 'clamped',
+      },
+    ],
+    [
+      'reports no clamp when nothing is cut off',
+      {
+        wrapper: { scroll: 48, client: 48 },
+        child: { scroll: 48, client: 48 },
+        expected: 'fits',
+      },
+    ],
+  ])('%s', (_name, { wrapper, child, expected }) => {
     stubHeights();
-    render(
-      <Probe
-        wrapper={{ scroll: 72, client: 48 }}
-        child={{ scroll: 72, client: 72 }}
-      />,
-    );
+    render(<Probe wrapper={wrapper} child={child} />);
 
-    expect(screen.getByRole('status').textContent).toBe('clamped');
-  });
-
-  it('reports a clamp that lands on a direct child', () => {
-    stubHeights();
-    render(
-      <Probe
-        wrapper={{ scroll: 48, client: 48 }}
-        child={{ scroll: 72, client: 48 }}
-      />,
-    );
-
-    expect(screen.getByRole('status').textContent).toBe('clamped');
-  });
-
-  it('reports no clamp when nothing is cut off', () => {
-    stubHeights();
-    render(
-      <Probe
-        wrapper={{ scroll: 48, client: 48 }}
-        child={{ scroll: 48, client: 48 }}
-      />,
-    );
-
-    expect(screen.getByRole('status').textContent).toBe('fits');
+    expect(screen.getByRole('status').textContent).toBe(expected);
   });
 });

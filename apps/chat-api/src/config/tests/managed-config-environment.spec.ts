@@ -89,11 +89,27 @@ describe('managed configuration environment', () => {
     );
   });
 
-  it('requires a mapping outside off mode', () => {
-    expectFailure(
-      { ...MANAGED, MANAGED_CONFIG_INSTANCES: '' },
-      'MANAGED_CONFIG_INSTANCES is required',
-    );
+  it.each([
+    [
+      'requires a mapping outside off mode',
+      { instances: '', message: 'MANAGED_CONFIG_INSTANCES is required' },
+    ],
+    [
+      'rejects mapping both the legacy and the current identifier',
+      {
+        instances: 'chat-ui=chat-dev,ai-dial-chat=chat-prod',
+        message: 'maps an application identifier twice',
+      },
+    ],
+    [
+      'rejects a malformed pair',
+      {
+        instances: 'Chat_UI=chat-dev',
+        message: 'Each MANAGED_CONFIG_INSTANCES entry must be appId=instanceId',
+      },
+    ],
+  ])('%s', (_name, { instances, message }) => {
+    expectFailure({ ...MANAGED, MANAGED_CONFIG_INSTANCES: instances }, message);
   });
 
   it('rejects a mapping for an identifier the deployment does not serve', () => {
@@ -143,23 +159,6 @@ describe('managed configuration environment', () => {
       'ai-dial-chat=ai-dial-chat',
       'launchpad=launchpad-dev',
     ]);
-  });
-
-  it('rejects mapping both the legacy and the current identifier', () => {
-    expectFailure(
-      {
-        ...MANAGED,
-        MANAGED_CONFIG_INSTANCES: 'chat-ui=chat-dev,ai-dial-chat=chat-prod',
-      },
-      'maps an application identifier twice',
-    );
-  });
-
-  it('rejects a malformed pair', () => {
-    expectFailure(
-      { ...MANAGED, MANAGED_CONFIG_INSTANCES: 'Chat_UI=chat-dev' },
-      'Each MANAGED_CONFIG_INSTANCES entry must be appId=instanceId',
-    );
   });
 
   it('accepts and ignores active keys outside active mode, so the mode alone rolls back', () => {

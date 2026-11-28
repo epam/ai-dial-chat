@@ -55,46 +55,47 @@ describe('isValidEndpointUrl', () => {
     expect(isValidEndpointUrl('http://example.com')).toBe(true);
   });
 
-  it('rejects an unsupported protocol', () => {
-    expect(isValidEndpointUrl('ftp://example.com')).toBe(false);
-  });
-
-  /* DIAL Core rejects a stored `sse://` endpoint with "invalid URI scheme sse". */
-  it('rejects an sse URL, which the SSE transport never uses', () => {
-    expect(isValidEndpointUrl('sse://example.com/stream')).toBe(false);
+  it.each([
+    ['rejects an unsupported protocol', { url: 'ftp://example.com' }],
+    /* DIAL Core rejects a stored `sse://` endpoint with "invalid URI scheme sse". */
+    [
+      'rejects an sse URL, which the SSE transport never uses',
+      { url: 'sse://example.com/stream' },
+    ],
+    ['rejects an unparseable value', { url: 'not a url' }],
+  ])('%s', (_name, { url }) => {
+    expect(isValidEndpointUrl(url)).toBe(false);
   });
 
   it('rejects a URL with a trailing dot or double slash', () => {
     expect(isValidEndpointUrl('https://example.com.')).toBe(false);
     expect(isValidEndpointUrl('https://example.com//')).toBe(false);
   });
-
-  it('rejects an unparseable value', () => {
-    expect(isValidEndpointUrl('not a url')).toBe(false);
-  });
 });
 
 describe('normalizeReturnedEndpointUrl', () => {
-  it('repairs a single-slash URL scheme', () => {
-    expect(normalizeReturnedEndpointUrl('https:/mcp.example.com')).toBe(
-      'https://mcp.example.com',
-    );
-  });
-
-  it('decodes percent-encoded URLs before repairing them', () => {
-    expect(normalizeReturnedEndpointUrl('https%3A%2F%2Fmcp.example.com')).toBe(
-      'https://mcp.example.com',
-    );
-  });
-
-  it('returns the trimmed value unchanged when no repair produces a valid URL', () => {
-    expect(normalizeReturnedEndpointUrl('  not a url  ')).toBe('not a url');
-  });
-
-  it('returns an already-valid URL unchanged', () => {
-    expect(normalizeReturnedEndpointUrl('https://mcp.example.com')).toBe(
-      'https://mcp.example.com',
-    );
+  it.each([
+    [
+      'repairs a single-slash URL scheme',
+      { url: 'https:/mcp.example.com', expected: 'https://mcp.example.com' },
+    ],
+    [
+      'decodes percent-encoded URLs before repairing them',
+      {
+        url: 'https%3A%2F%2Fmcp.example.com',
+        expected: 'https://mcp.example.com',
+      },
+    ],
+    [
+      'returns the trimmed value unchanged when no repair produces a valid URL',
+      { url: '  not a url  ', expected: 'not a url' },
+    ],
+    [
+      'returns an already-valid URL unchanged',
+      { url: 'https://mcp.example.com', expected: 'https://mcp.example.com' },
+    ],
+  ])('%s', (_name, { url, expected }) => {
+    expect(normalizeReturnedEndpointUrl(url)).toBe(expected);
   });
 
   it('returns an empty string for a missing value', () => {

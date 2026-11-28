@@ -28,23 +28,26 @@ const RW = { applications: ['read', 'write'] };
 
 /* Cases mirror `libs/chat-shared/src/utils/tests/org-unit.spec.ts`. */
 describe('normalizeOrgUnitFolder', () => {
-  it('decodes segments, strips the public root and keeps one trailing slash', () => {
-    expect(normalizeOrgUnitFolder('public/Acme/US%20Risk/')).toBe(
-      'Acme/US Risk/',
-    );
-  });
-
-  it('keeps a malformed escape as written', () => {
-    expect(normalizeOrgUnitFolder('public/100%/')).toBe('100%/');
+  it.each([
+    [
+      'decodes segments, strips the public root and keeps one trailing slash',
+      { folder: 'public/Acme/US%20Risk/', expected: 'Acme/US Risk/' },
+    ],
+    [
+      'keeps a malformed escape as written',
+      { folder: 'public/100%/', expected: '100%/' },
+    ],
+    [
+      'strips only the leading public root, not a unit named public',
+      { folder: 'public/public/', expected: 'public/' },
+    ],
+  ])('%s', (_name, { folder, expected }) => {
+    expect(normalizeOrgUnitFolder(folder)).toBe(expected);
   });
 
   it('returns an empty string for the public root and for a folder outside it', () => {
     expect(normalizeOrgUnitFolder('public/')).toBe('');
     expect(normalizeOrgUnitFolder('Acme/Risk/')).toBe('');
-  });
-
-  it('strips only the leading public root, not a unit named public', () => {
-    expect(normalizeOrgUnitFolder('public/public/')).toBe('public/');
   });
 });
 

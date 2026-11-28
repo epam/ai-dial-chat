@@ -172,29 +172,22 @@ describe('SkillsController (integration)', () => {
       );
     });
 
-    it('returns 400 when bucket is missing', async () => {
-      await request(app.getHttpServer()).get('/api/v1/skills').expect(400);
-      expect(service.listSkills).not.toHaveBeenCalled();
-    });
-
-    it('returns 400 for an invalid bucket name', async () => {
-      await request(app.getHttpServer())
-        .get('/api/v1/skills?bucket=invalid/bucket')
-        .expect(400);
-      expect(service.listSkills).not.toHaveBeenCalled();
-    });
-
-    it('returns 400 for a negative limit', async () => {
-      await request(app.getHttpServer())
-        .get('/api/v1/skills?bucket=my-bucket&limit=-1')
-        .expect(400);
-      expect(service.listSkills).not.toHaveBeenCalled();
-    });
-
-    it('returns 400 for a limit exceeding 1000', async () => {
-      await request(app.getHttpServer())
-        .get('/api/v1/skills?bucket=my-bucket&limit=1001')
-        .expect(400);
+    it.each([
+      ['returns 400 when bucket is missing', { url: '/api/v1/skills' }],
+      [
+        'returns 400 for an invalid bucket name',
+        { url: '/api/v1/skills?bucket=invalid/bucket' },
+      ],
+      [
+        'returns 400 for a negative limit',
+        { url: '/api/v1/skills?bucket=my-bucket&limit=-1' },
+      ],
+      [
+        'returns 400 for a limit exceeding 1000',
+        { url: '/api/v1/skills?bucket=my-bucket&limit=1001' },
+      ],
+    ])('%s', async (_name, { url }) => {
+      await request(app.getHttpServer()).get(url).expect(400);
       expect(service.listSkills).not.toHaveBeenCalled();
     });
 
@@ -324,26 +317,23 @@ describe('SkillsController (integration)', () => {
       expect(res.body).not.toHaveProperty('canEdit');
     });
 
-    it('returns 400 when bucket is missing', async () => {
-      await request(app.getHttpServer())
-        .get('/api/v1/skills/metadata?path=team-a/docs-helper')
-        .expect(400);
-      expect(service.getSkillMetadata).not.toHaveBeenCalled();
-    });
-
-    it('returns 400 for an invalid bucket name', async () => {
-      await request(app.getHttpServer())
-        .get(
-          '/api/v1/skills/metadata?bucket=invalid/bucket&path=team-a/docs-helper',
-        )
-        .expect(400);
-      expect(service.getSkillMetadata).not.toHaveBeenCalled();
-    });
-
-    it('returns 400 when path is missing', async () => {
-      await request(app.getHttpServer())
-        .get('/api/v1/skills/metadata?bucket=my-bucket')
-        .expect(400);
+    it.each([
+      [
+        'returns 400 when bucket is missing',
+        { url: '/api/v1/skills/metadata?path=team-a/docs-helper' },
+      ],
+      [
+        'returns 400 for an invalid bucket name',
+        {
+          url: '/api/v1/skills/metadata?bucket=invalid/bucket&path=team-a/docs-helper',
+        },
+      ],
+      [
+        'returns 400 when path is missing',
+        { url: '/api/v1/skills/metadata?bucket=my-bucket' },
+      ],
+    ])('%s', async (_name, { url }) => {
+      await request(app.getHttpServer()).get(url).expect(400);
       expect(service.getSkillMetadata).not.toHaveBeenCalled();
     });
 
@@ -691,21 +681,45 @@ describe('SkillsController (integration)', () => {
       );
     });
 
-    it('returns 400 when a wrong-case Markdown filename is neither SKILL.md nor a ZIP', async () => {
-      service.importSkillArchive.mockRejectedValue(
-        new BadRequestException(
-          'Expected a ZIP archive or a file named exactly SKILL.md, but the upload is not a valid ZIP archive',
-        ),
-      );
+    it.each([
+      [
+        'returns 400 when a wrong-case Markdown filename is neither SKILL.md nor a ZIP',
+        {
+          error: new BadRequestException(
+            'Expected a ZIP archive or a file named exactly SKILL.md, but the upload is not a valid ZIP archive',
+          ),
+          content: '---\nname: docs-helper\ndescription: y\n---\n',
+          fileName: 'skill.md',
+          status: 400,
+        },
+      ],
+      [
+        'returns 400 when the service rejects missing frontmatter fields on a standalone manifest',
+        {
+          error: new BadRequestException(
+            'SKILL.md frontmatter must include a non-empty "description"',
+          ),
+          content: '---\nname: docs-helper\n---\n',
+          fileName: 'SKILL.md',
+          status: 400,
+        },
+      ],
+      [
+        'returns 409 when a standalone-manifest import collides with an existing skill',
+        {
+          error: new ConflictException(),
+          content: '---\nname: docs-helper\ndescription: y\n---\n',
+          fileName: 'SKILL.md',
+          status: 409,
+        },
+      ],
+    ])('%s', async (_name, { error, content, fileName, status }) => {
+      service.importSkillArchive.mockRejectedValue(error);
 
       await request(app.getHttpServer())
         .post('/api/v1/skills/import')
-        .attach(
-          'file',
-          Buffer.from('---\nname: docs-helper\ndescription: y\n---\n'),
-          'skill.md',
-        )
-        .expect(400);
+        .attach('file', Buffer.from(content), fileName)
+        .expect(status);
     });
 
     it('returns 413 when the service rejects an oversized standalone manifest', async () => {
@@ -730,36 +744,6 @@ describe('SkillsController (integration)', () => {
         .post('/api/v1/skills/import')
         .attach('file', Buffer.from([0xff, 0xfe, 0xfd]), 'SKILL.md')
         .expect(400);
-    });
-
-    it('returns 400 when the service rejects missing frontmatter fields on a standalone manifest', async () => {
-      service.importSkillArchive.mockRejectedValue(
-        new BadRequestException(
-          'SKILL.md frontmatter must include a non-empty "description"',
-        ),
-      );
-
-      await request(app.getHttpServer())
-        .post('/api/v1/skills/import')
-        .attach(
-          'file',
-          Buffer.from('---\nname: docs-helper\n---\n'),
-          'SKILL.md',
-        )
-        .expect(400);
-    });
-
-    it('returns 409 when a standalone-manifest import collides with an existing skill', async () => {
-      service.importSkillArchive.mockRejectedValue(new ConflictException());
-
-      await request(app.getHttpServer())
-        .post('/api/v1/skills/import')
-        .attach(
-          'file',
-          Buffer.from('---\nname: docs-helper\ndescription: y\n---\n'),
-          'SKILL.md',
-        )
-        .expect(409);
     });
 
     it('returns 400 when no file is attached', async () => {

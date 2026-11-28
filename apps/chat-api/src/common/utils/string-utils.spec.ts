@@ -3,32 +3,33 @@ import { StringUtils } from './string-utils';
 
 describe('StringUtils', () => {
   describe('stripTrailingSlashes', () => {
-    it('removes a single trailing slash', () => {
-      expect(StringUtils.stripTrailingSlashes('http://core/v1/')).toBe(
-        'http://core/v1',
-      );
-    });
-
-    it('removes repeated trailing slashes', () => {
-      expect(StringUtils.stripTrailingSlashes('folder///')).toBe('folder');
-    });
-
-    it('preserves slashes inside and at the start of the value', () => {
-      expect(StringUtils.stripTrailingSlashes('//a/b/c')).toBe('//a/b/c');
-    });
-
-    it('returns an empty string when the value is only slashes', () => {
-      expect(StringUtils.stripTrailingSlashes('////')).toBe('');
-    });
-
-    it('returns an empty string for an empty value', () => {
-      expect(StringUtils.stripTrailingSlashes('')).toBe('');
-    });
-
-    it('leaves a value without trailing slashes unchanged', () => {
-      expect(StringUtils.stripTrailingSlashes('folder/file.txt')).toBe(
-        'folder/file.txt',
-      );
+    it.each([
+      [
+        'removes a single trailing slash',
+        { value: 'http://core/v1/', expected: 'http://core/v1' },
+      ],
+      [
+        'removes repeated trailing slashes',
+        { value: 'folder///', expected: 'folder' },
+      ],
+      [
+        'preserves slashes inside and at the start of the value',
+        { value: '//a/b/c', expected: '//a/b/c' },
+      ],
+      [
+        'returns an empty string when the value is only slashes',
+        { value: '////', expected: '' },
+      ],
+      [
+        'returns an empty string for an empty value',
+        { value: '', expected: '' },
+      ],
+      [
+        'leaves a value without trailing slashes unchanged',
+        { value: 'folder/file.txt', expected: 'folder/file.txt' },
+      ],
+    ])('%s', (_name, { value, expected }) => {
+      expect(StringUtils.stripTrailingSlashes(value)).toBe(expected);
     });
 
     it('handles a long run of trailing slashes in linear time', () => {
@@ -39,26 +40,30 @@ describe('StringUtils', () => {
   });
 
   describe('sanitizeForLog', () => {
-    it('strips C0 control characters that could forge extra log lines', () => {
-      const result = StringUtils.sanitizeForLog(
-        'my-app\nfake log line injected\r\x07',
-      );
+    it.each([
+      [
+        'strips C0 control characters that could forge extra log lines',
+        {
+          value: 'my-app\nfake log line injected\r\x07',
+          expected: 'my-appfake log line injected',
+        },
+      ],
+      [
+        'strips C1 control characters, including NEL (U+0085)',
+        { value: 'my-app\u0085fake log line', expected: 'my-appfake log line' },
+      ],
+      [
+        'strips Unicode bidi-override and zero-width codepoints',
+        { value: 'my\u200B-\u202Eapp\u2066\u200E\u200F', expected: 'my-app' },
+      ],
+      [
+        'leaves an already-safe string unchanged',
+        { value: 'gpt-4o', expected: 'gpt-4o' },
+      ],
+    ])('%s', (_name, { value, expected }) => {
+      const result = StringUtils.sanitizeForLog(value);
 
-      expect(result).toBe('my-appfake log line injected');
-    });
-
-    it('strips C1 control characters, including NEL (U+0085)', () => {
-      const result = StringUtils.sanitizeForLog('my-app\u0085fake log line');
-
-      expect(result).toBe('my-appfake log line');
-    });
-
-    it('strips Unicode bidi-override and zero-width codepoints', () => {
-      const result = StringUtils.sanitizeForLog(
-        'my\u200B-\u202Eapp\u2066\u200E\u200F',
-      );
-
-      expect(result).toBe('my-app');
+      expect(result).toBe(expected);
     });
 
     it('truncates to the default max length of 200 characters, keeping the leading prefix', () => {
@@ -74,12 +79,6 @@ describe('StringUtils', () => {
       );
 
       expect(result).toBe('a'.repeat(10));
-    });
-
-    it('leaves an already-safe string unchanged', () => {
-      const result = StringUtils.sanitizeForLog('gpt-4o');
-
-      expect(result).toBe('gpt-4o');
     });
   });
 });

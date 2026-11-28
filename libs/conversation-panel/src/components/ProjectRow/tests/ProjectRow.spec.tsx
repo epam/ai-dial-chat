@@ -271,40 +271,10 @@ describe('ProjectRow', () => {
     expect(button.classList.contains('pe-2')).toBe(true);
   });
 
-  it('keeps the row highlight while the trigger is hovered and gives the trigger its own hover', () => {
-    renderRow({ getActions: actions });
-
-    expect(screen.getAllByRole('listitem')[0].className).toMatch(/row/);
-    expect(
-      screen.getByRole('button', { name: 'More actions' }).className,
-    ).toMatch(/trigger/);
-  });
-
   it('renders no actions trigger without actions', () => {
     renderRow({ getActions: () => [] });
 
     expect(screen.queryByRole('button', { name: 'More actions' })).toBeNull();
-  });
-
-  it('reports the trigger when the actions menu opens', () => {
-    const onActionMenuOpen = vi.fn();
-    renderRow({ getActions: actions, onActionMenuOpen });
-
-    const trigger = screen.getByRole('button', { name: 'More actions' });
-    fireEvent.click(trigger);
-
-    expect(onActionMenuOpen).toHaveBeenCalledWith(project, trigger);
-  });
-
-  it('renders the actions trigger with the host label and items', () => {
-    renderRow({ getActions: actions, actionsLabel: 'Project actions' });
-
-    expect(
-      screen.getByRole('button', { name: 'Project actions' }),
-    ).toBeTruthy();
-    const menu = screen.getByRole('list', { name: 'menu items' });
-    expect(within(menu).getByText('Unpin')).toBeTruthy();
-    expect(within(menu).getByText('Edit')).toBeTruthy();
   });
 });
 
@@ -595,7 +565,57 @@ describe('ProjectSeeAllRow', () => {
     expect(screen.queryByRole('button', { name: 'More actions' })).toBeNull();
   });
 
-  it('renders the project actions trigger with the host label and items', () => {
+  it('does not activate See all when the actions trigger is clicked', () => {
+    renderRow({ getActions: actions });
+
+    fireEvent.click(screen.getByRole('button', { name: 'More actions' }));
+
+    expect(onSeeAll).not.toHaveBeenCalled();
+  });
+
+  it('starts its text at the inline start', () => {
+    renderRow();
+
+    expect(screen.getByText('See all').className).toContain('text-start');
+  });
+});
+
+/*
+ * Both rows render the same project actions menu, so one suite proves the
+ * trigger label, the menu-open report and the hover classes on each.
+ */
+describe.each([
+  [
+    'ProjectRow',
+    (props: Partial<React.ComponentProps<typeof ProjectRow>>) =>
+      render(
+        <ProjectRow
+          project={project}
+          isActive={false}
+          onSelectProject={vi.fn()}
+          {...props}
+        />,
+      ),
+  ],
+  [
+    'ProjectSeeAllRow',
+    (props: Partial<React.ComponentProps<typeof ProjectSeeAllRow>>) =>
+      render(
+        <ProjectSeeAllRow
+          project={project}
+          position={{
+            posInSet: 2,
+            setSize: 2,
+            isFirstNested: false,
+            isLastNested: true,
+          }}
+          onSeeAll={vi.fn()}
+          {...props}
+        />,
+      ),
+  ],
+])('%s — project actions menu', (_name, renderRow) => {
+  it('renders the actions trigger with the host label and items', () => {
     renderRow({ getActions: actions, actionsLabel: 'Project actions' });
 
     expect(
@@ -623,19 +643,5 @@ describe('ProjectSeeAllRow', () => {
     expect(
       screen.getByRole('button', { name: 'More actions' }).className,
     ).toMatch(/trigger/);
-  });
-
-  it('does not activate See all when the actions trigger is clicked', () => {
-    renderRow({ getActions: actions });
-
-    fireEvent.click(screen.getByRole('button', { name: 'More actions' }));
-
-    expect(onSeeAll).not.toHaveBeenCalled();
-  });
-
-  it('starts its text at the inline start', () => {
-    renderRow();
-
-    expect(screen.getByText('See all').className).toContain('text-start');
   });
 });

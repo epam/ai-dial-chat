@@ -68,24 +68,30 @@ describe('getNextCronOccurrence', () => {
     ).toBe('2026-10-12T09:00');
   });
 
-  it('returns today for a weekly trigger on the current weekday', () => {
-    expect(
-      getNextCronOccurrence(
-        cron({ hour: '9', minute: '0', day_of_week: '2' }),
-        'UTC',
-        from,
-      ),
-    ).toBe('2026-10-07T09:00');
-  });
-
-  it('returns next week when the weekday time has already passed', () => {
-    expect(
-      getNextCronOccurrence(
-        cron({ hour: '7', minute: '0', day_of_week: '2' }),
-        'UTC',
-        from,
-      ),
-    ).toBe('2026-10-14T07:00');
+  it.each([
+    [
+      'returns today for a weekly trigger on the current weekday',
+      {
+        trigger: { hour: '9', minute: '0', day_of_week: '2' },
+        expected: '2026-10-07T09:00',
+      },
+    ],
+    [
+      'returns next week when the weekday time has already passed',
+      {
+        trigger: { hour: '7', minute: '0', day_of_week: '2' },
+        expected: '2026-10-14T07:00',
+      },
+    ],
+    [
+      'returns the earliest matching day of a weekday list',
+      {
+        trigger: { hour: '9', minute: '0', day_of_week: '0,4' },
+        expected: '2026-10-09T09:00',
+      },
+    ],
+  ])('%s', (_name, { trigger, expected }) => {
+    expect(getNextCronOccurrence(cron(trigger), 'UTC', from)).toBe(expected);
   });
 
   it('uses the weekday of the task zone when it is already tomorrow there', () => {
@@ -138,16 +144,6 @@ describe('getNextCronOccurrence', () => {
         from,
       ),
     ).toBe('2026-10-31T09:00');
-  });
-
-  it('returns the earliest matching day of a weekday list', () => {
-    expect(
-      getNextCronOccurrence(
-        cron({ hour: '9', minute: '0', day_of_week: '0,4' }),
-        'UTC',
-        from,
-      ),
-    ).toBe('2026-10-09T09:00');
   });
 
   it('returns undefined for a day constraint it cannot evaluate', () => {

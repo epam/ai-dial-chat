@@ -19,16 +19,18 @@ const fileManager = (viewportWidth: number, maxWidth = viewportWidth - 400) =>
 
 describe('resolveCanvasWidth', () => {
   describe('file manager route', () => {
-    it('opens at a third of a typical viewport', () => {
-      expect(fileManager(1440).defaultWidth).toBe(475);
-    });
-
-    it('never opens narrower than 400 px', () => {
-      expect(fileManager(1000).defaultWidth).toBe(400);
-    });
-
-    it('never opens wider than 640 px', () => {
-      expect(fileManager(2560).defaultWidth).toBe(640);
+    it.each([
+      [
+        'opens at a third of a typical viewport',
+        { viewportWidth: 1440, expected: 475 },
+      ],
+      [
+        'never opens narrower than 400 px',
+        { viewportWidth: 1000, expected: 400 },
+      ],
+      ['never opens wider than 640 px', { viewportWidth: 2560, expected: 640 }],
+    ])('%s', (_name, { viewportWidth, expected }) => {
+      expect(fileManager(viewportWidth).defaultWidth).toBe(expected);
     });
 
     it('stays within the maximum width the main content allows', () => {

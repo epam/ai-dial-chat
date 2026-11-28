@@ -6,66 +6,67 @@ import {
 } from '../file-name';
 
 describe('splitFileNameExtension', () => {
-  it('splits a name with an extension', () => {
-    expect(splitFileNameExtension('report.pdf')).toEqual({
-      base: 'report',
-      extension: '.pdf',
-    });
-  });
-
-  it('treats only the last dot as the extension separator', () => {
-    expect(splitFileNameExtension('archive.tar.gz')).toEqual({
-      base: 'archive.tar',
-      extension: '.gz',
-    });
-  });
-
-  it('returns an empty extension for a name with no dot', () => {
-    expect(splitFileNameExtension('README')).toEqual({
-      base: 'README',
-      extension: '',
-    });
-  });
-
-  it('treats a leading dot as part of the base name, not an extension', () => {
-    expect(splitFileNameExtension('.gitignore')).toEqual({
-      base: '.gitignore',
-      extension: '',
-    });
+  it.each([
+    [
+      'splits a name with an extension',
+      { name: 'report.pdf', expected: { base: 'report', extension: '.pdf' } },
+    ],
+    [
+      'treats only the last dot as the extension separator',
+      {
+        name: 'archive.tar.gz',
+        expected: { base: 'archive.tar', extension: '.gz' },
+      },
+    ],
+    [
+      'returns an empty extension for a name with no dot',
+      { name: 'README', expected: { base: 'README', extension: '' } },
+    ],
+    [
+      'treats a leading dot as part of the base name, not an extension',
+      { name: '.gitignore', expected: { base: '.gitignore', extension: '' } },
+    ],
+  ])('%s', (_name, { name, expected }) => {
+    expect(splitFileNameExtension(name)).toEqual(expected);
   });
 });
 
 describe('sanitizeFileName', () => {
-  it('replaces forbidden chars and preserves extension', () => {
-    expect(sanitizeFileName('my:report;2026.pdf')).toBe('my_report_2026.pdf');
-  });
-
-  it('preserves extension unchanged', () => {
-    expect(sanitizeFileName('data:export.csv')).toBe('data_export.csv');
-  });
-
-  it('trims trailing dot from base name', () => {
-    expect(sanitizeFileName('archive..tar')).toBe('archive.tar');
-  });
-
-  it('handles file with no extension', () => {
-    expect(sanitizeFileName('README:')).toBe('README_');
-  });
-
-  it('leaves clean names unchanged', () => {
-    expect(sanitizeFileName('report_2026-Q1.pdf')).toBe('report_2026-Q1.pdf');
-  });
-
-  it('replaces colon in base name', () => {
-    expect(sanitizeFileName('my:notes.txt')).toBe('my_notes.txt');
-  });
-
-  it('replaces multiple forbidden chars in file with no extension', () => {
-    expect(sanitizeFileName('file:name')).toBe('file_name');
-  });
-
-  it('treats dotfiles as no-extension (does not strip the leading dot)', () => {
-    expect(sanitizeFileName('.gitignore')).toBe('.gitignore');
+  it.each([
+    [
+      'replaces forbidden chars and preserves extension',
+      { name: 'my:report;2026.pdf', expected: 'my_report_2026.pdf' },
+    ],
+    [
+      'preserves extension unchanged',
+      { name: 'data:export.csv', expected: 'data_export.csv' },
+    ],
+    [
+      'trims trailing dot from base name',
+      { name: 'archive..tar', expected: 'archive.tar' },
+    ],
+    [
+      'handles file with no extension',
+      { name: 'README:', expected: 'README_' },
+    ],
+    [
+      'leaves clean names unchanged',
+      { name: 'report_2026-Q1.pdf', expected: 'report_2026-Q1.pdf' },
+    ],
+    [
+      'replaces colon in base name',
+      { name: 'my:notes.txt', expected: 'my_notes.txt' },
+    ],
+    [
+      'replaces multiple forbidden chars in file with no extension',
+      { name: 'file:name', expected: 'file_name' },
+    ],
+    [
+      'treats dotfiles as no-extension (does not strip the leading dot)',
+      { name: '.gitignore', expected: '.gitignore' },
+    ],
+  ])('%s', (_name, { name, expected }) => {
+    expect(sanitizeFileName(name)).toBe(expected);
   });
 });
 

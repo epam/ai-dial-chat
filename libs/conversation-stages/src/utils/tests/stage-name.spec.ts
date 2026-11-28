@@ -80,21 +80,23 @@ describe('isIdentifierLike', () => {
     expect(isIdentifierLike('My_OMDB_Agent__0_0_1_tool')).toBe(true);
   });
 
-  it('does not treat prose with an embedded identifier as an identifier', () => {
-    expect(isIdentifierLike('Call My_OMDB_Agent__0_0_1_tool')).toBe(false);
+  it.each([
+    [
+      'does not treat prose with an embedded identifier as an identifier',
+      { value: 'Call My_OMDB_Agent__0_0_1_tool' },
+    ],
+    [
+      'does not treat a whitespace-free string with no underscore as an identifier',
+      { value: 'Standalone' },
+    ],
+    ['returns false for an empty string', { value: '' }],
+  ])('%s', (_name, { value }) => {
+    expect(isIdentifierLike(value)).toBe(false);
   });
 
   it('does not treat ordinary prose as an identifier', () => {
     expect(isIdentifierLike('Read Weather Data File')).toBe(false);
     expect(isIdentifierLike('Via MCP')).toBe(false);
     expect(isIdentifierLike('Notion · create pages')).toBe(false);
-  });
-
-  it('does not treat a whitespace-free string with no underscore as an identifier', () => {
-    expect(isIdentifierLike('Standalone')).toBe(false);
-  });
-
-  it('returns false for an empty string', () => {
-    expect(isIdentifierLike('')).toBe(false);
   });
 });

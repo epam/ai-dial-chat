@@ -32,40 +32,51 @@ describe('resolveResourceKind', () => {
 });
 
 describe('toShareResourceUrl', () => {
-  it('percent-encodes a prompt resource id containing spaces', () => {
-    expect(
-      toShareResourceUrl('prompts/owner-bucket/Work/AI/tone of voice'),
-    ).toBe('prompts/owner-bucket/Work/AI/tone%20of%20voice');
-  });
-
-  it('leaves a full prompts/{bucket}/{path} itemId unmodified when already encoded', () => {
-    expect(toShareResourceUrl('prompts/my-bucket/Work/AI/summarize')).toBe(
-      'prompts/my-bucket/Work/AI/summarize',
-    );
-  });
-
-  it('leaves any non-prompt itemId untouched, with no per-kind qualification', () => {
-    expect(toShareResourceUrl('applications/other-bucket/my-app')).toBe(
-      'applications/other-bucket/my-app',
-    );
-  });
-
-  it('percent-encodes a project id with a space and URI-reserved characters', () => {
-    expect(toShareResourceUrl('projects/a1b2c3/marketing/Q4 launch #1?')).toBe(
-      'projects/a1b2c3/marketing/Q4%20launch%20%231%3F',
-    );
-  });
-
-  it('does not double-encode an already-encoded project id', () => {
-    expect(toShareResourceUrl('projects/a1b2c3/Q4%20launch')).toBe(
-      'projects/a1b2c3/Q4%20launch',
-    );
-  });
-
-  it('leaves a skill itemId with a space unmodified', () => {
-    expect(toShareResourceUrl('skills/owner-bucket/team a/docs helper')).toBe(
-      'skills/owner-bucket/team a/docs helper',
-    );
+  it.each([
+    [
+      'percent-encodes a prompt resource id containing spaces',
+      {
+        itemId: 'prompts/owner-bucket/Work/AI/tone of voice',
+        expected: 'prompts/owner-bucket/Work/AI/tone%20of%20voice',
+      },
+    ],
+    [
+      'leaves a full prompts/{bucket}/{path} itemId unmodified when already encoded',
+      {
+        itemId: 'prompts/my-bucket/Work/AI/summarize',
+        expected: 'prompts/my-bucket/Work/AI/summarize',
+      },
+    ],
+    [
+      'leaves any non-prompt itemId untouched, with no per-kind qualification',
+      {
+        itemId: 'applications/other-bucket/my-app',
+        expected: 'applications/other-bucket/my-app',
+      },
+    ],
+    [
+      'percent-encodes a project id with a space and URI-reserved characters',
+      {
+        itemId: 'projects/a1b2c3/marketing/Q4 launch #1?',
+        expected: 'projects/a1b2c3/marketing/Q4%20launch%20%231%3F',
+      },
+    ],
+    [
+      'does not double-encode an already-encoded project id',
+      {
+        itemId: 'projects/a1b2c3/Q4%20launch',
+        expected: 'projects/a1b2c3/Q4%20launch',
+      },
+    ],
+    [
+      'leaves a skill itemId with a space unmodified',
+      {
+        itemId: 'skills/owner-bucket/team a/docs helper',
+        expected: 'skills/owner-bucket/team a/docs helper',
+      },
+    ],
+  ])('%s', (_name, { itemId, expected }) => {
+    expect(toShareResourceUrl(itemId)).toBe(expected);
   });
 });
 
@@ -302,47 +313,25 @@ describe('collectApplicationPromptResourceUrls', () => {
     ).toEqual(['prompts/owner-bucket/my-prompt', 'prompts/owner-bucket/other']);
   });
 
-  it('drops a skill url containing a `..` path-traversal segment', () => {
+  it.each([
+    [
+      'drops a skill url containing a `..` path-traversal segment',
+      { url: 'prompts/owner-bucket/../../other-bucket/target' },
+    ],
+    [
+      'drops a percent-encoded `..` traversal segment that decodes after normalization',
+      { url: 'prompts/owner-bucket/%2E%2E/other-bucket/target' },
+    ],
+    [
+      'drops a `..` traversal hidden behind a percent-encoded slash (`%2F`)',
+      { url: 'prompts/owner-bucket/..%2F..%2Fother-bucket/target' },
+    ],
+  ])('%s', (_name, { url }) => {
     expect(
       collectApplicationPromptResourceUrls({
         application_properties: {
           skills: [
-            {
-              type: 'dial-prompt',
-              url: 'prompts/owner-bucket/../../other-bucket/target',
-            },
-            { type: 'dial-prompt', url: 'prompts/owner-bucket/kept' },
-          ],
-        },
-      }),
-    ).toEqual(['prompts/owner-bucket/kept']);
-  });
-
-  it('drops a percent-encoded `..` traversal segment that decodes after normalization', () => {
-    expect(
-      collectApplicationPromptResourceUrls({
-        application_properties: {
-          skills: [
-            {
-              type: 'dial-prompt',
-              url: 'prompts/owner-bucket/%2E%2E/other-bucket/target',
-            },
-            { type: 'dial-prompt', url: 'prompts/owner-bucket/kept' },
-          ],
-        },
-      }),
-    ).toEqual(['prompts/owner-bucket/kept']);
-  });
-
-  it('drops a `..` traversal hidden behind a percent-encoded slash (`%2F`)', () => {
-    expect(
-      collectApplicationPromptResourceUrls({
-        application_properties: {
-          skills: [
-            {
-              type: 'dial-prompt',
-              url: 'prompts/owner-bucket/..%2F..%2Fother-bucket/target',
-            },
+            { type: 'dial-prompt', url },
             { type: 'dial-prompt', url: 'prompts/owner-bucket/kept' },
           ],
         },

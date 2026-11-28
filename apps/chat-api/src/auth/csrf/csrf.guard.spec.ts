@@ -81,23 +81,14 @@ function expectInvalidCsrfError(action: () => void): void {
 }
 
 describe('CsrfGuard', () => {
-  it('allows GET requests without any CSRF check', () => {
-    const guard = buildGuard();
-    const ctx = buildContext({ method: 'GET', user: null });
-    expect(guard.canActivate(ctx)).toBe(true);
-  });
-
-  it('allows HEAD requests without any CSRF check', () => {
-    const guard = buildGuard();
-    const ctx = buildContext({ method: 'HEAD', user: null });
-    expect(guard.canActivate(ctx)).toBe(true);
-  });
-
-  it('allows OPTIONS requests without any CSRF check', () => {
-    const guard = buildGuard();
-    const ctx = buildContext({ method: 'OPTIONS', user: null });
-    expect(guard.canActivate(ctx)).toBe(true);
-  });
+  it.each(['GET', 'HEAD', 'OPTIONS'])(
+    'allows %s requests without any CSRF check',
+    (method) => {
+      const guard = buildGuard();
+      const ctx = buildContext({ method, user: null });
+      expect(guard.canActivate(ctx)).toBe(true);
+    },
+  );
 
   it('skips CSRF check for @Public() routes', () => {
     const guard = buildGuard(true);

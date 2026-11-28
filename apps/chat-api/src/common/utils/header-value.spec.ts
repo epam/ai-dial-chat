@@ -23,8 +23,42 @@ describe('buildProjectIdHeaders', () => {
 });
 
 describe('encodeHeaderValue', () => {
-  it('returns an empty string unchanged', () => {
-    expect(encodeHeaderValue('')).toBe('');
+  it.each([
+    ['returns an empty string unchanged', { value: '', expected: '' }],
+    [
+      'keeps spaces literal',
+      { value: 'My Conversation', expected: 'My Conversation' },
+    ],
+    [
+      'percent-encodes an em dash',
+      { value: 'Costs — revenue', expected: 'Costs %E2%80%94 revenue' },
+    ],
+    [
+      'percent-encodes Cyrillic text',
+      { value: 'Привет', expected: '%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82' },
+    ],
+    [
+      'percent-encodes emoji outside the BMP',
+      { value: 'Hello 🙂', expected: 'Hello %F0%9F%99%82' },
+    ],
+    [
+      'percent-encodes mathematical and currency symbols',
+      { value: 'Value ≥ €100', expected: 'Value %E2%89%A5 %E2%82%AC100' },
+    ],
+    [
+      'percent-encodes a literal % so the encoding stays reversible',
+      { value: '100% sure', expected: '100%25 sure' },
+    ],
+    [
+      'percent-encodes control characters that could split a header',
+      { value: 'a\r\nb\tc', expected: 'a%0D%0Ab%09c' },
+    ],
+    [
+      'does not throw on a lone surrogate',
+      { value: 'a\uD800b', expected: 'a%EF%BF%BDb' },
+    ],
+  ])('%s', (_name, { value, expected }) => {
+    expect(encodeHeaderValue(value)).toBe(expected);
   });
 
   it('leaves a plain-ASCII conversation id byte-identical', () => {
@@ -33,47 +67,9 @@ describe('encodeHeaderValue', () => {
     expect(encodeHeaderValue(id)).toBe(id);
   });
 
-  it('keeps spaces literal', () => {
-    expect(encodeHeaderValue('My Conversation')).toBe('My Conversation');
-  });
-
-  it('percent-encodes an em dash', () => {
-    expect(encodeHeaderValue('Costs — revenue')).toBe(
-      'Costs %E2%80%94 revenue',
-    );
-  });
-
-  it('percent-encodes Cyrillic text', () => {
-    expect(encodeHeaderValue('Привет')).toBe(
-      '%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82',
-    );
-  });
-
-  it('percent-encodes emoji outside the BMP', () => {
-    expect(encodeHeaderValue('Hello 🙂')).toBe('Hello %F0%9F%99%82');
-  });
-
-  it('percent-encodes mathematical and currency symbols', () => {
-    expect(encodeHeaderValue('Value ≥ €100')).toBe(
-      'Value %E2%89%A5 %E2%82%AC100',
-    );
-  });
-
-  it('percent-encodes a literal % so the encoding stays reversible', () => {
-    expect(encodeHeaderValue('100% sure')).toBe('100%25 sure');
-  });
-
   it('round-trips through decodeURIComponent', () => {
     const id = 'a1b2c3/gpt-4o__Привет — 100% 🙂__uuid';
     expect(decodeURIComponent(encodeHeaderValue(id))).toBe(id);
-  });
-
-  it('percent-encodes control characters that could split a header', () => {
-    expect(encodeHeaderValue('a\r\nb\tc')).toBe('a%0D%0Ab%09c');
-  });
-
-  it('does not throw on a lone surrogate', () => {
-    expect(encodeHeaderValue('a\uD800b')).toBe('a%EF%BF%BDb');
   });
 
   it('produces a value Headers accepts for every reported character class', () => {

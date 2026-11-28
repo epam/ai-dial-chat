@@ -7,28 +7,34 @@ const OPTIONS = {
 };
 
 describe('resolveCallbackUrl', () => {
-  it('resolves a missing callbackUrl to the configured app root', () => {
-    expect(resolveCallbackUrl(undefined, OPTIONS)).toBe(
-      'http://localhost:4207/',
-    );
-  });
-
-  it('resolves a relative callbackUrl against the configured app origin', () => {
-    expect(resolveCallbackUrl('/conversation?x=1#last', OPTIONS)).toBe(
-      'http://localhost:4207/conversation?x=1#last',
-    );
-  });
-
-  it('accepts an absolute callbackUrl from the configured app origin', () => {
-    expect(
-      resolveCallbackUrl('http://localhost:4207/conversation', OPTIONS),
-    ).toBe('http://localhost:4207/conversation');
-  });
-
-  it('accepts an absolute callbackUrl from the callback base origin', () => {
-    expect(resolveCallbackUrl('http://localhost:5000/', OPTIONS)).toBe(
-      'http://localhost:5000/',
-    );
+  it.each([
+    [
+      'resolves a missing callbackUrl to the configured app root',
+      { callbackUrl: undefined, expected: 'http://localhost:4207/' },
+    ],
+    [
+      'resolves a relative callbackUrl against the configured app origin',
+      {
+        callbackUrl: '/conversation?x=1#last',
+        expected: 'http://localhost:4207/conversation?x=1#last',
+      },
+    ],
+    [
+      'accepts an absolute callbackUrl from the configured app origin',
+      {
+        callbackUrl: 'http://localhost:4207/conversation',
+        expected: 'http://localhost:4207/conversation',
+      },
+    ],
+    [
+      'accepts an absolute callbackUrl from the callback base origin',
+      {
+        callbackUrl: 'http://localhost:5000/',
+        expected: 'http://localhost:5000/',
+      },
+    ],
+  ])('%s', (_name, { callbackUrl, expected }) => {
+    expect(resolveCallbackUrl(callbackUrl, OPTIONS)).toBe(expected);
   });
 
   it.each([

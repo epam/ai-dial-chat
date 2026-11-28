@@ -18,44 +18,62 @@ const LONG_FIRST_MESSAGE =
 
 describe('conversation naming helpers', () => {
   describe('prepareEntityName', () => {
-    it('should return empty string when prompt is undefined', () => {
-      const result = prepareEntityName(undefined);
-      expect(result).toBe('');
-    });
-
-    it('should return empty string when prompt is empty', () => {
-      const result = prepareEntityName('');
-      expect(result).toBe('');
-    });
-
-    it('should return the first line of a multiline prompt', () => {
-      const result = prepareEntityName('First line\nSecond line');
-      expect(result).toBe('First line');
-    });
-
-    it('should handle Windows line endings (\\r\\n)', () => {
-      const result = prepareEntityName('First line\r\nSecond line');
-      expect(result).toBe('First line');
-    });
-
-    it('should handle Mac line endings (\\r)', () => {
-      const result = prepareEntityName('First line\rSecond line');
-      expect(result).toBe('First line');
-    });
-
-    it('should trim whitespace', () => {
-      const result = prepareEntityName('  Hello world  ');
-      expect(result).toBe('Hello world');
-    });
-
-    it('should remove trailing dots rejected by DIAL Core resource names', () => {
-      const result = prepareEntityName('Hello world.');
-      expect(result).toBe('Hello world');
-    });
-
-    it('should trim whitespace left after removing trailing dots', () => {
-      const result = prepareEntityName('Hello world .');
-      expect(result).toBe('Hello world');
+    it.each([
+      [
+        'should return empty string when prompt is undefined',
+        { prompt: undefined, expected: '' },
+      ],
+      [
+        'should return empty string when prompt is empty',
+        { prompt: '', expected: '' },
+      ],
+      [
+        'should return the first line of a multiline prompt',
+        { prompt: 'First line\nSecond line', expected: 'First line' },
+      ],
+      [
+        'should handle Windows line endings (\\r\\n)',
+        { prompt: 'First line\r\nSecond line', expected: 'First line' },
+      ],
+      [
+        'should handle Mac line endings (\\r)',
+        { prompt: 'First line\rSecond line', expected: 'First line' },
+      ],
+      [
+        'should trim whitespace',
+        { prompt: '  Hello world  ', expected: 'Hello world' },
+      ],
+      [
+        'should remove trailing dots rejected by DIAL Core resource names',
+        { prompt: 'Hello world.', expected: 'Hello world' },
+      ],
+      [
+        'should trim whitespace left after removing trailing dots',
+        { prompt: 'Hello world .', expected: 'Hello world' },
+      ],
+      [
+        'should filter out empty lines and use first non-empty line',
+        { prompt: '\n\nHello world\nAnother line', expected: 'Hello world' },
+      ],
+      [
+        'should strip null bytes',
+        { prompt: 'Hello\u0000world', expected: 'Hello world' },
+      ],
+      [
+        'should strip Unicode bidi override characters',
+        { prompt: 'Hello‮world', expected: 'Hello world' },
+      ],
+      [
+        'should strip Unicode bidi embedding codepoints',
+        { prompt: '‪Hello‬world‫', expected: 'Hello world' },
+      ],
+      [
+        'should strip Unicode bidi isolate codepoints',
+        { prompt: '⁦Hello⁩world', expected: 'Hello world' },
+      ],
+    ])('%s', (_name, { prompt, expected }) => {
+      const result = prepareEntityName(prompt);
+      expect(result).toBe(expected);
     });
 
     it('should truncate ASCII input to 255 UTF-8 bytes', () => {
@@ -88,31 +106,6 @@ describe('conversation naming helpers', () => {
 
     it('returns an empty title for a zero byte limit', () => {
       expect(prepareEntityName('Hello', 0)).toBe('');
-    });
-
-    it('should filter out empty lines and use first non-empty line', () => {
-      const result = prepareEntityName('\n\nHello world\nAnother line');
-      expect(result).toBe('Hello world');
-    });
-
-    it('should strip null bytes', () => {
-      const result = prepareEntityName('Hello\u0000world');
-      expect(result).toBe('Hello world');
-    });
-
-    it('should strip Unicode bidi override characters', () => {
-      const result = prepareEntityName('Hello\u202Eworld');
-      expect(result).toBe('Hello world');
-    });
-
-    it('should strip Unicode bidi embedding codepoints', () => {
-      const result = prepareEntityName('\u202AHello\u202Cworld\u202B');
-      expect(result).toBe('Hello world');
-    });
-
-    it('should strip Unicode bidi isolate codepoints', () => {
-      const result = prepareEntityName('\u2066Hello\u2069world');
-      expect(result).toBe('Hello world');
     });
 
     it('should strip every character DIAL Core rejects in a resource name', () => {
@@ -156,37 +149,58 @@ describe('conversation naming helpers', () => {
   });
 
   describe('getConversationName', () => {
-    it('should use prompt if provided', () => {
-      const result = getConversationName('Default Name', 'Custom prompt');
-      expect(result).toBe('Custom prompt');
-    });
-
-    it('should use defaultName if prompt is not provided', () => {
-      const result = getConversationName('Default Name');
-      expect(result).toBe('Default Name');
-    });
-
-    it('should use defaultName if prompt contains only whitespace', () => {
-      const result = getConversationName('Default Name', '   \n ');
-      expect(result).toBe('Default Name');
-    });
-
-    it('should use defaultName if prompt contains only dots', () => {
-      const result = getConversationName('Default Name', '...');
-      expect(result).toBe('Default Name');
-    });
-
-    it('should apply name cleaning to defaultName when prompt is not provided', () => {
-      const result = getConversationName('Default :Name;');
-      expect(result).toBe('Default  Name');
-    });
-
-    it('should apply name cleaning to prompt when provided', () => {
-      const result = getConversationName(
-        'Default Name',
-        'Custom :prompt; with "special" chars',
-      );
-      expect(result).toBe('Custom  prompt  with  special  chars');
+    it.each([
+      [
+        'should use prompt if provided',
+        {
+          defaultName: 'Default Name',
+          prompt: 'Custom prompt',
+          expected: 'Custom prompt',
+        },
+      ],
+      [
+        'should use defaultName if prompt is not provided',
+        {
+          defaultName: 'Default Name',
+          prompt: undefined,
+          expected: 'Default Name',
+        },
+      ],
+      [
+        'should use defaultName if prompt contains only whitespace',
+        {
+          defaultName: 'Default Name',
+          prompt: '   \n ',
+          expected: 'Default Name',
+        },
+      ],
+      [
+        'should use defaultName if prompt contains only dots',
+        {
+          defaultName: 'Default Name',
+          prompt: '...',
+          expected: 'Default Name',
+        },
+      ],
+      [
+        'should apply name cleaning to defaultName when prompt is not provided',
+        {
+          defaultName: 'Default :Name;',
+          prompt: undefined,
+          expected: 'Default  Name',
+        },
+      ],
+      [
+        'should apply name cleaning to prompt when provided',
+        {
+          defaultName: 'Default Name',
+          prompt: 'Custom :prompt; with "special" chars',
+          expected: 'Custom  prompt  with  special  chars',
+        },
+      ],
+    ])('%s', (_name, { defaultName, prompt, expected }) => {
+      const result = getConversationName(defaultName, prompt);
+      expect(result).toBe(expected);
     });
 
     it('applies the byte limit to the prompt and to the default name', () => {

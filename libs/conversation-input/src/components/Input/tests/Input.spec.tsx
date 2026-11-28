@@ -1311,40 +1311,33 @@ describe('Input — textInsertion', () => {
     expect(textarea.value).toBe('');
   });
 
-  it('keeps the typed draft and inserts at the caret', async () => {
+  it.each([
+    [
+      'keeps the typed draft and inserts at the caret',
+      { draft: 'my draft', selection: [3, 3], expected: 'my PROMPTdraft' },
+    ],
+    [
+      'appends when the caret sits at the end of the draft',
+      { draft: 'draft ', selection: [6, 6], expected: 'draft PROMPT' },
+    ],
+    [
+      'replaces the selection rather than the whole draft',
+      {
+        draft: 'keep drop keep',
+        selection: [5, 9],
+        expected: 'keep PROMPT keep',
+      },
+    ],
+  ])('%s', async (_name, { draft, selection: [start, end], expected }) => {
     const { rerender } = renderWithInsertion(0, '');
     const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
 
-    fireEvent.change(textarea, { target: { value: 'my draft' } });
-    textarea.setSelectionRange(3, 3);
+    fireEvent.change(textarea, { target: { value: draft } });
+    textarea.setSelectionRange(start, end);
     rerender(<Input textInsertion={{ text: 'PROMPT', revision: 1 }} />);
     await flushInsertion();
 
-    expect(textarea.value).toBe('my PROMPTdraft');
-  });
-
-  it('appends when the caret sits at the end of the draft', async () => {
-    const { rerender } = renderWithInsertion(0, '');
-    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
-
-    fireEvent.change(textarea, { target: { value: 'draft ' } });
-    textarea.setSelectionRange(6, 6);
-    rerender(<Input textInsertion={{ text: 'PROMPT', revision: 1 }} />);
-    await flushInsertion();
-
-    expect(textarea.value).toBe('draft PROMPT');
-  });
-
-  it('replaces the selection rather than the whole draft', async () => {
-    const { rerender } = renderWithInsertion(0, '');
-    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
-
-    fireEvent.change(textarea, { target: { value: 'keep drop keep' } });
-    textarea.setSelectionRange(5, 9);
-    rerender(<Input textInsertion={{ text: 'PROMPT', revision: 1 }} />);
-    await flushInsertion();
-
-    expect(textarea.value).toBe('keep PROMPT keep');
+    expect(textarea.value).toBe(expected);
   });
 
   it('reports the merged value through onChange', async () => {

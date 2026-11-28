@@ -62,32 +62,33 @@ describe('DialClientService', () => {
     expect(service.dialApiVersion).toBe('2024-10-21');
   });
 
-  it('uses CHAT_VERSION in the User-Agent when configured', () => {
-    const service = new DialClientService(
-      makeConfigService('2026.08.25-a1b2c3d'),
-    );
+  it.each([
+    [
+      'uses CHAT_VERSION in the User-Agent when configured',
+      {
+        version: '2026.08.25-a1b2c3d',
+        expected: 'ai-dial-chat/2026.08.25-a1b2c3d',
+      },
+    ],
+    [
+      'uses the package version when CHAT_VERSION is blank',
+      { version: '   ', expected: `ai-dial-chat/${PACKAGE_VERSION}` },
+    ],
+    [
+      'normalizes unsupported User-Agent version characters',
+      {
+        version: ' release 2026/08 ',
+        expected: 'ai-dial-chat/release-2026-08',
+      },
+    ],
+    [
+      'uses unknown when the version has no supported characters',
+      { version: '🎉', expected: 'ai-dial-chat/unknown' },
+    ],
+  ])('%s', (_name, { version, expected }) => {
+    const service = new DialClientService(makeConfigService(version));
 
-    expect(service.userAgent).toBe('ai-dial-chat/2026.08.25-a1b2c3d');
-  });
-
-  it('uses the package version when CHAT_VERSION is blank', () => {
-    const service = new DialClientService(makeConfigService('   '));
-
-    expect(service.userAgent).toBe(`ai-dial-chat/${PACKAGE_VERSION}`);
-  });
-
-  it('normalizes unsupported User-Agent version characters', () => {
-    const service = new DialClientService(
-      makeConfigService(' release 2026/08 '),
-    );
-
-    expect(service.userAgent).toBe('ai-dial-chat/release-2026-08');
-  });
-
-  it('uses unknown when the version has no supported characters', () => {
-    const service = new DialClientService(makeConfigService('🎉'));
-
-    expect(service.userAgent).toBe('ai-dial-chat/unknown');
+    expect(service.userAgent).toBe(expected);
   });
 
   it('sets the canonical User-Agent while preserving request headers and options', async () => {

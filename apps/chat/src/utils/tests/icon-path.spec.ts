@@ -8,21 +8,37 @@ import {
 } from '../icon-path';
 
 describe('getIconMimeType', () => {
-  it('returns image/svg+xml for an SVG icon regardless of extension case', () => {
-    expect(getIconMimeType('chat-favicon.svg')).toBe('image/svg+xml');
-    expect(getIconMimeType('CHAT-FAVICON.SVG')).toBe('image/svg+xml');
-  });
-
-  it('returns the raster MIME type for PNG and ICO icons', () => {
-    expect(getIconMimeType('favicon.png')).toBe('image/png');
-    expect(getIconMimeType('favicon.ico')).toBe('image/x-icon');
-  });
-
-  it('ignores a query string or fragment after the extension', () => {
-    expect(getIconMimeType('https://cdn.example.com/logo.svg?v=2')).toBe(
-      'image/svg+xml',
-    );
-    expect(getIconMimeType('logo.svg#brand')).toBe('image/svg+xml');
+  it.each([
+    [
+      'returns image/svg+xml for an SVG icon regardless of extension case',
+      {
+        cases: [
+          ['chat-favicon.svg', 'image/svg+xml'],
+          ['CHAT-FAVICON.SVG', 'image/svg+xml'],
+        ],
+      },
+    ],
+    [
+      'returns the raster MIME type for PNG and ICO icons',
+      {
+        cases: [
+          ['favicon.png', 'image/png'],
+          ['favicon.ico', 'image/x-icon'],
+        ],
+      },
+    ],
+    [
+      'ignores a query string or fragment after the extension',
+      {
+        cases: [
+          ['https://cdn.example.com/logo.svg?v=2', 'image/svg+xml'],
+          ['logo.svg#brand', 'image/svg+xml'],
+        ],
+      },
+    ],
+  ])('%s', (_name, { cases: [[first, firstType], [second, secondType]] }) => {
+    expect(getIconMimeType(first)).toBe(firstType);
+    expect(getIconMimeType(second)).toBe(secondType);
   });
 
   it('returns undefined for a missing or unknown extension', () => {
@@ -51,18 +67,32 @@ describe('getIconPath', () => {
     );
   });
 
-  it('should handle special characters in icon name', () => {
-    const iconName = 'icon with spaces.svg';
+  it.each([
+    [
+      'should handle special characters in icon name',
+      {
+        iconName: 'icon with spaces.svg',
+        expected: 'iconName=icon%20with%20spaces.svg',
+      },
+    ],
+    [
+      'should encode URL special characters',
+      {
+        iconName: 'icon&name=test.svg',
+        expected: 'iconName=icon%26name%3Dtest.svg',
+      },
+    ],
+    [
+      'should handle icon names with unicode characters',
+      {
+        iconName: 'icon-ñ-test.svg',
+        expected: 'iconName=icon-%C3%B1-test.svg',
+      },
+    ],
+  ])('%s', (_name, { iconName, expected }) => {
     const result = getIconPath(iconName);
 
-    expect(result).toContain('iconName=icon%20with%20spaces.svg');
-  });
-
-  it('should encode URL special characters', () => {
-    const iconName = 'icon&name=test.svg';
-    const result = getIconPath(iconName);
-
-    expect(result).toContain('iconName=icon%26name%3Dtest.svg');
+    expect(result).toContain(expected);
   });
 
   it('should handle undefined icon name', () => {
@@ -84,13 +114,6 @@ describe('getIconPath', () => {
     expect(result).toBe(
       `${ApiEndpoints.THEME_ICON}?iconName=icon-name.test.svg`,
     );
-  });
-
-  it('should handle icon names with unicode characters', () => {
-    const iconName = 'icon-ñ-test.svg';
-    const result = getIconPath(iconName);
-
-    expect(result).toContain('iconName=icon-%C3%B1-test.svg');
   });
 });
 
@@ -121,36 +144,43 @@ describe('resolveDialFileDownloadUrl', () => {
 });
 
 describe('resolveMarkdownUrl', () => {
-  it('rewrites a DIAL file ID to the BFF download URL', () => {
-    expect(
-      resolveMarkdownUrl(
-        'files/9gRuhxHb/appdata/applications/public/demo/chart.png',
-      ),
-    ).toBe(
-      '/api/v1/files/download?bucket=9gRuhxHb&path=appdata%2Fapplications%2Fpublic%2Fdemo%2Fchart.png',
-    );
-  });
-
-  it('leaves http(s) URLs unchanged', () => {
-    expect(resolveMarkdownUrl('https://example.com/chart.png')).toBe(
-      'https://example.com/chart.png',
-    );
-  });
-
-  it('rewrites a project file id to the BFF project artifact URL', () => {
-    expect(
-      resolveMarkdownUrl('projects/b/Q4%20launch/files/artifacts/chart.png'),
-    ).toBe('/api/v1/projects/projects%2Fb%2FQ4%20launch/artifacts/chart.png');
-  });
-
-  it('leaves an incomplete files/ id unchanged', () => {
-    expect(resolveMarkdownUrl('files/only-bucket')).toBe('files/only-bucket');
-  });
-
-  it('strips a #page=N anchor before resolving so it is not percent-encoded into path', () => {
-    expect(resolveMarkdownUrl('files/bucket/report.pdf#page=3')).toBe(
-      '/api/v1/files/download?bucket=bucket&path=report.pdf',
-    );
+  it.each([
+    [
+      'rewrites a DIAL file ID to the BFF download URL',
+      {
+        url: 'files/9gRuhxHb/appdata/applications/public/demo/chart.png',
+        expected:
+          '/api/v1/files/download?bucket=9gRuhxHb&path=appdata%2Fapplications%2Fpublic%2Fdemo%2Fchart.png',
+      },
+    ],
+    [
+      'leaves http(s) URLs unchanged',
+      {
+        url: 'https://example.com/chart.png',
+        expected: 'https://example.com/chart.png',
+      },
+    ],
+    [
+      'rewrites a project file id to the BFF project artifact URL',
+      {
+        url: 'projects/b/Q4%20launch/files/artifacts/chart.png',
+        expected:
+          '/api/v1/projects/projects%2Fb%2FQ4%20launch/artifacts/chart.png',
+      },
+    ],
+    [
+      'leaves an incomplete files/ id unchanged',
+      { url: 'files/only-bucket', expected: 'files/only-bucket' },
+    ],
+    [
+      'strips a #page=N anchor before resolving so it is not percent-encoded into path',
+      {
+        url: 'files/bucket/report.pdf#page=3',
+        expected: '/api/v1/files/download?bucket=bucket&path=report.pdf',
+      },
+    ],
+  ])('%s', (_name, { url, expected }) => {
+    expect(resolveMarkdownUrl(url)).toBe(expected);
   });
 });
 

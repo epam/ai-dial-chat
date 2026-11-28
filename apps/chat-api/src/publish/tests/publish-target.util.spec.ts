@@ -26,45 +26,60 @@ import {
  * still gets accepted, so these assert the exact strings rather than a shape.
  */
 describe('getPublishedTargetUrl', () => {
-  it('targets the public root when folderPath is empty', () => {
-    expect(getPublishedTargetUrl('toolsets', '', 'tool-abc123__1.2.0')).toBe(
-      'toolsets/public/tool-abc123__1.2.0',
-    );
-  });
-
-  it('percent-encodes a folder name containing spaces', () => {
-    expect(
-      getPublishedTargetUrl('applications', 'Organization/Data Science', 'app'),
-    ).toBe('applications/public/Organization/Data%20Science/app');
-  });
-
-  it('percent-encodes a non-ASCII folder name', () => {
-    expect(getPublishedTargetUrl('prompts', 'test 14.04/Ünïcode', 'p')).toBe(
-      'prompts/public/test%2014.04/%C3%9Cn%C3%AFcode/p',
-    );
-  });
-
-  it('keeps a nested skill grouping folder intact', () => {
-    expect(
-      getPublishedTargetUrl(
-        'skills',
-        'Organization/Data Science/Published models',
-        'skill-a',
-      ),
-    ).toBe(
-      'skills/public/Organization/Data%20Science/Published%20models/skill-a',
-    );
-  });
-
-  /*
-   * [#8974](https://github.com/epam/ai-dial-chat/issues/8974): the folder's plain name really contains `%20`. The percent
-   * sign itself has to be escaped, or Core decodes the target folder back to
-   * `test folder` and the published copy lands under the wrong name.
-   */
-  it('escapes a literal percent escape in a plain folder name', () => {
-    expect(getPublishedTargetUrl('skills', 'test%20folder', 'skill-a')).toBe(
-      'skills/public/test%2520folder/skill-a',
-    );
+  it.each([
+    [
+      'targets the public root when folderPath is empty',
+      {
+        type: 'toolsets',
+        folderPath: '',
+        name: 'tool-abc123__1.2.0',
+        expected: 'toolsets/public/tool-abc123__1.2.0',
+      },
+    ],
+    [
+      'percent-encodes a folder name containing spaces',
+      {
+        type: 'applications',
+        folderPath: 'Organization/Data Science',
+        name: 'app',
+        expected: 'applications/public/Organization/Data%20Science/app',
+      },
+    ],
+    [
+      'percent-encodes a non-ASCII folder name',
+      {
+        type: 'prompts',
+        folderPath: 'test 14.04/Ünïcode',
+        name: 'p',
+        expected: 'prompts/public/test%2014.04/%C3%9Cn%C3%AFcode/p',
+      },
+    ],
+    [
+      'keeps a nested skill grouping folder intact',
+      {
+        type: 'skills',
+        folderPath: 'Organization/Data Science/Published models',
+        name: 'skill-a',
+        expected:
+          'skills/public/Organization/Data%20Science/Published%20models/skill-a',
+      },
+    ],
+    /*
+     * [#8974](https://github.com/epam/ai-dial-chat/issues/8974): the folder's plain name really contains `%20`. The percent
+     * sign itself has to be escaped, or Core decodes the target folder back to
+     * `test folder` and the published copy lands under the wrong name.
+     */
+    [
+      'escapes a literal percent escape in a plain folder name',
+      {
+        type: 'skills',
+        folderPath: 'test%20folder',
+        name: 'skill-a',
+        expected: 'skills/public/test%2520folder/skill-a',
+      },
+    ],
+  ])('%s', (_name, { type, folderPath, name, expected }) => {
+    expect(getPublishedTargetUrl(type, folderPath, name)).toBe(expected);
   });
 
   it('round-trips a literal percent escape back through stripPublicTargetFolder', () => {
@@ -194,30 +209,51 @@ describe('getPublishedIconTargetUrl', () => {
  * it, so these pin the exact strings and that the two derivations agree.
  */
 describe('published attachment paths', () => {
-  it('nests a file under the published conversation name and its source bucket, keeping the bucket-relative path', () => {
-    expect(
-      getPublishedAttachmentTargetUrl(
-        'Organization/Data Science',
-        'my-chat',
-        'bucket1',
-        'docs/sub/b.pdf',
-      ),
-    ).toBe(
-      'files/public/Organization/Data%20Science/my-chat/bucket1/docs/sub/b.pdf',
-    );
-  });
-
-  it('uses the public root when folderPath is empty', () => {
-    expect(getPublishedAttachmentTargetUrl('', 'my-chat', 'b', 'a.pdf')).toBe(
-      'files/public/my-chat/b/a.pdf',
-    );
-  });
-
-  it('percent-encodes a non-ASCII folder name like every other published path', () => {
-    expect(
-      getPublishedAttachmentTargetUrl('test 14.04/Ünïcode', 'c', 'b', 'a.pdf'),
-    ).toBe('files/public/test%2014.04/%C3%9Cn%C3%AFcode/c/b/a.pdf');
-  });
+  it.each([
+    [
+      'nests a file under the published conversation name and its source bucket, keeping the bucket-relative path',
+      {
+        folderPath: 'Organization/Data Science',
+        conversationName: 'my-chat',
+        bucket: 'bucket1',
+        path: 'docs/sub/b.pdf',
+        expected:
+          'files/public/Organization/Data%20Science/my-chat/bucket1/docs/sub/b.pdf',
+      },
+    ],
+    [
+      'uses the public root when folderPath is empty',
+      {
+        folderPath: '',
+        conversationName: 'my-chat',
+        bucket: 'b',
+        path: 'a.pdf',
+        expected: 'files/public/my-chat/b/a.pdf',
+      },
+    ],
+    [
+      'percent-encodes a non-ASCII folder name like every other published path',
+      {
+        folderPath: 'test 14.04/Ünïcode',
+        conversationName: 'c',
+        bucket: 'b',
+        path: 'a.pdf',
+        expected: 'files/public/test%2014.04/%C3%9Cn%C3%AFcode/c/b/a.pdf',
+      },
+    ],
+  ])(
+    '%s',
+    (_name, { folderPath, conversationName, bucket, path, expected }) => {
+      expect(
+        getPublishedAttachmentTargetUrl(
+          folderPath,
+          conversationName,
+          bucket,
+          path,
+        ),
+      ).toBe(expected);
+    },
+  );
 
   it('derives the attachments folder from the published conversation url', () => {
     expect(

@@ -1754,20 +1754,29 @@ describe('useDialFileMutations', () => {
         return result.current.folderPath;
       };
 
-      it('navigates to root when an ancestor of the browsed folder is deleted', async () => {
+      it.each([
+        [
+          'navigates to root when an ancestor of the browsed folder is deleted',
+          { folderPath: 'a/b/', deletedUrl: '/My files/a/', expected: '' },
+        ],
+        [
+          'navigates to the parent of the deleted ancestor when it is nested',
+          {
+            folderPath: 'x/a/b/c/',
+            deletedUrl: '/My files/x/a/',
+            expected: 'x/',
+          },
+        ],
+        [
+          'navigates to the parent when the browsed folder itself is deleted',
+          { folderPath: 'a/b/', deletedUrl: '/My files/a/b/', expected: 'a/' },
+        ],
+      ])('%s', async (_name, { folderPath, deletedUrl, expected }) => {
         await expect(
-          deleteAndGetFolderPath('a/b/', [
-            { sourceUrl: '/My files/a/', nodeType: DialFileNodeType.FOLDER },
+          deleteAndGetFolderPath(folderPath, [
+            { sourceUrl: deletedUrl, nodeType: DialFileNodeType.FOLDER },
           ]),
-        ).resolves.toBe('');
-      });
-
-      it('navigates to the parent of the deleted ancestor when it is nested', async () => {
-        await expect(
-          deleteAndGetFolderPath('x/a/b/c/', [
-            { sourceUrl: '/My files/x/a/', nodeType: DialFileNodeType.FOLDER },
-          ]),
-        ).resolves.toBe('x/');
+        ).resolves.toBe(expected);
       });
 
       it('navigates above the outermost deleted folder when several contain the browsed folder', async () => {
@@ -1777,14 +1786,6 @@ describe('useDialFileMutations', () => {
             { sourceUrl: '/My files/a/', nodeType: DialFileNodeType.FOLDER },
           ]),
         ).resolves.toBe('');
-      });
-
-      it('navigates to the parent when the browsed folder itself is deleted', async () => {
-        await expect(
-          deleteAndGetFolderPath('a/b/', [
-            { sourceUrl: '/My files/a/b/', nodeType: DialFileNodeType.FOLDER },
-          ]),
-        ).resolves.toBe('a/');
       });
 
       it('keeps the browsed folder when an unrelated folder is deleted', async () => {

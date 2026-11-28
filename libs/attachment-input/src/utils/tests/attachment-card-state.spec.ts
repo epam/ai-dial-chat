@@ -15,50 +15,44 @@ const makeAttachment = (
 });
 
 describe('getAttachmentCardState – typeLabel', () => {
-  it('returns .md for text/markdown contentType with a sentence-ending name', () => {
-    const attachment = makeAttachment({
-      name: '[1] RAG search: List the three main topics covered in the PDF document.',
-      contentType: 'text/markdown',
-    });
+  it.each([
+    [
+      'returns .md for text/markdown contentType with a sentence-ending name',
+      {
+        name: '[1] RAG search: List the three main topics covered in the PDF document.',
+        contentType: 'text/markdown',
+        expected: '.md',
+      },
+    ],
+    [
+      'returns .md for text/markdown contentType even when name contains .pdf',
+      {
+        name: '[1] uploads/2026-03/test_FinancialReport.pdf',
+        contentType: 'text/markdown',
+        expected: '.md',
+      },
+    ],
+    [
+      'returns .txt for text/plain contentType',
+      { name: 'notes', contentType: 'text/plain', expected: '.txt' },
+    ],
+    [
+      'returns .pdf for application/pdf contentType',
+      { name: 'report.pdf', contentType: 'application/pdf', expected: '.pdf' },
+    ],
+    [
+      'falls back to name extension for vendor MIME types',
+      {
+        name: 'document.docx',
+        contentType:
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        expected: '.docx',
+      },
+    ],
+  ])('%s', (_name, { name, contentType, expected }) => {
+    const attachment = makeAttachment({ name, contentType });
     const { typeLabel } = getAttachmentCardState(attachment);
-    expect(typeLabel).toBe('.md');
-  });
-
-  it('returns .md for text/markdown contentType even when name contains .pdf', () => {
-    const attachment = makeAttachment({
-      name: '[1] uploads/2026-03/test_FinancialReport.pdf',
-      contentType: 'text/markdown',
-    });
-    const { typeLabel } = getAttachmentCardState(attachment);
-    expect(typeLabel).toBe('.md');
-  });
-
-  it('returns .txt for text/plain contentType', () => {
-    const attachment = makeAttachment({
-      name: 'notes',
-      contentType: 'text/plain',
-    });
-    const { typeLabel } = getAttachmentCardState(attachment);
-    expect(typeLabel).toBe('.txt');
-  });
-
-  it('returns .pdf for application/pdf contentType', () => {
-    const attachment = makeAttachment({
-      name: 'report.pdf',
-      contentType: 'application/pdf',
-    });
-    const { typeLabel } = getAttachmentCardState(attachment);
-    expect(typeLabel).toBe('.pdf');
-  });
-
-  it('falls back to name extension for vendor MIME types', () => {
-    const attachment = makeAttachment({
-      name: 'document.docx',
-      contentType:
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    });
-    const { typeLabel } = getAttachmentCardState(attachment);
-    expect(typeLabel).toBe('.docx');
+    expect(typeLabel).toBe(expected);
   });
 
   it('does not produce a bare dot when name ends with a period and no contentType', () => {

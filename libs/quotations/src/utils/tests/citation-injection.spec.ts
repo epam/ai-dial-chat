@@ -81,68 +81,87 @@ describe('injectCitationSentinels — offset-based', () => {
 });
 
 describe('stripCitTagsWhileStreaming', () => {
-  it('leaves content unchanged when there is no cit tag', () => {
-    expect(stripCitTagsWhileStreaming('plain text')).toBe('plain text');
-  });
-
-  it('removes a complete cit element entirely', () => {
-    const content =
-      'The patient meets criteria<cit data-id="e43864"></cit>, and the plan is X.';
-    expect(stripCitTagsWhileStreaming(content)).toBe(
-      'The patient meets criteria, and the plan is X.',
-    );
-  });
-
-  it('removes two complete cit elements', () => {
-    const content =
-      'First<cit data-id="e1"></cit> middle<cit data-id="e2"></cit> last';
-    expect(stripCitTagsWhileStreaming(content)).toBe('First middle last');
-  });
-
-  it('renders a dangling open tag and the streamed suffix as text', () => {
-    const content =
-      'The patient meets criteria<cit data-id="e438">and the plan is still streaming in';
-    expect(stripCitTagsWhileStreaming(content)).toBe(
-      'The patient meets criteria&lt;cit data-id="e438"&gt;and the plan is still streaming in',
-    );
-  });
-
-  it('renders an incomplete opening tag fragment as text', () => {
-    const content = 'The patient meets criteria<cit data-id="e4';
-    expect(stripCitTagsWhileStreaming(content)).toBe(
-      'The patient meets criteria&lt;cit data-id="e4',
-    );
-  });
-
-  it('renders unsupported differently-cased markup as text while streaming', () => {
-    expect(stripCitTagsWhileStreaming('<CIT data-id="e1"></CIT>')).toBe(
-      '&lt;CIT data-id="e1"&gt;&lt;/CIT&gt;',
-    );
+  it.each([
+    [
+      'leaves content unchanged when there is no cit tag',
+      { content: 'plain text', expected: 'plain text' },
+    ],
+    [
+      'removes a complete cit element entirely',
+      {
+        content:
+          'The patient meets criteria<cit data-id="e43864"></cit>, and the plan is X.',
+        expected: 'The patient meets criteria, and the plan is X.',
+      },
+    ],
+    [
+      'removes two complete cit elements',
+      {
+        content:
+          'First<cit data-id="e1"></cit> middle<cit data-id="e2"></cit> last',
+        expected: 'First middle last',
+      },
+    ],
+    [
+      'renders a dangling open tag and the streamed suffix as text',
+      {
+        content:
+          'The patient meets criteria<cit data-id="e438">and the plan is still streaming in',
+        expected:
+          'The patient meets criteria&lt;cit data-id="e438"&gt;and the plan is still streaming in',
+      },
+    ],
+    [
+      'renders an incomplete opening tag fragment as text',
+      {
+        content: 'The patient meets criteria<cit data-id="e4',
+        expected: 'The patient meets criteria&lt;cit data-id="e4',
+      },
+    ],
+    [
+      'renders unsupported differently-cased markup as text while streaming',
+      {
+        content: '<CIT data-id="e1"></CIT>',
+        expected: '&lt;CIT data-id="e1"&gt;&lt;/CIT&gt;',
+      },
+    ],
+  ])('%s', (_name, { content, expected }) => {
+    expect(stripCitTagsWhileStreaming(content)).toBe(expected);
   });
 });
 
 describe('escapeUnsupportedCitTags', () => {
-  it('keeps the supported empty paired data-id element parseable', () => {
-    const content = 'before<cit data-id="e1"></cit>after';
-    expect(escapeUnsupportedCitTags(content)).toBe(content);
-  });
-
-  it('escapes an id tag instead of interpreting it as a citation', () => {
-    expect(escapeUnsupportedCitTags('<cit id="e1"></cit>')).toBe(
-      '&lt;cit id="e1"&gt;&lt;/cit&gt;',
-    );
-  });
-
-  it('escapes a data-id element containing text', () => {
-    expect(escapeUnsupportedCitTags('<cit data-id="e1">visible</cit>')).toBe(
-      '&lt;cit data-id="e1"&gt;visible&lt;/cit&gt;',
-    );
-  });
-
-  it('escapes differently-cased cit markup instead of treating it as supported', () => {
-    expect(escapeUnsupportedCitTags('<CIT data-id="e1"></CIT>')).toBe(
-      '&lt;CIT data-id="e1"&gt;&lt;/CIT&gt;',
-    );
+  it.each([
+    [
+      'keeps the supported empty paired data-id element parseable',
+      {
+        content: 'before<cit data-id="e1"></cit>after',
+        expected: 'before<cit data-id="e1"></cit>after',
+      },
+    ],
+    [
+      'escapes an id tag instead of interpreting it as a citation',
+      {
+        content: '<cit id="e1"></cit>',
+        expected: '&lt;cit id="e1"&gt;&lt;/cit&gt;',
+      },
+    ],
+    [
+      'escapes a data-id element containing text',
+      {
+        content: '<cit data-id="e1">visible</cit>',
+        expected: '&lt;cit data-id="e1"&gt;visible&lt;/cit&gt;',
+      },
+    ],
+    [
+      'escapes differently-cased cit markup instead of treating it as supported',
+      {
+        content: '<CIT data-id="e1"></CIT>',
+        expected: '&lt;CIT data-id="e1"&gt;&lt;/CIT&gt;',
+      },
+    ],
+  ])('%s', (_name, { content, expected }) => {
+    expect(escapeUnsupportedCitTags(content)).toBe(expected);
   });
 });
 

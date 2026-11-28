@@ -209,31 +209,50 @@ describe('ResponsesAdapter', () => {
       expect(request).not.toHaveProperty('temperature');
     });
 
-    it('preserves the minimum valid maxOutputTokens value', () => {
+    it.each([
+      [
+        'preserves the minimum valid maxOutputTokens value',
+        { maxOutputTokens: 1 },
+      ],
+      [
+        'preserves a representative larger maxOutputTokens value',
+        { maxOutputTokens: 4096 },
+      ],
+      /*
+       * max_output_tokens mapping is not gated by any Chat-Completions-scoped
+       * capability flag — this row documents that omission of
+       * maxTokensSupported/maxCompletionTokensSupported has no bearing on it.
+       */
+      [
+        'never maps max_output_tokens when Chat Completions capability flags are false',
+        { maxOutputTokens: 2048 },
+      ],
+    ])('%s', (_name, { maxOutputTokens }) => {
       const { adapter } = makeAdapter();
       const request = adapter.buildRequest({
         model: 'gpt-4o',
-        startConversation: { prompt: '', maxOutputTokens: 1 } as never,
+        startConversation: { prompt: '', maxOutputTokens } as never,
         messagesForCompletion: [],
         temperatureSupported: false,
       });
 
-      expect(request.max_output_tokens).toBe(1);
+      expect(request.max_output_tokens).toBe(maxOutputTokens);
     });
 
-    it('preserves a representative larger maxOutputTokens value', () => {
-      const { adapter } = makeAdapter();
-      const request = adapter.buildRequest({
-        model: 'gpt-4o',
-        startConversation: { prompt: '', maxOutputTokens: 4096 } as never,
-        messagesForCompletion: [],
-        temperatureSupported: false,
-      });
-
-      expect(request.max_output_tokens).toBe(4096);
-    });
-
-    it('omits max_output_tokens when maxOutputTokens is absent', () => {
+    it.each([
+      [
+        'omits max_output_tokens when maxOutputTokens is absent',
+        { property: 'max_output_tokens' },
+      ],
+      [
+        'omits reasoning when reasoningEfforts is absent',
+        { property: 'reasoning' },
+      ],
+      [
+        'omits custom_fields when configuration is absent',
+        { property: 'custom_fields' },
+      ],
+    ])('%s', (_name, { property }) => {
       const { adapter } = makeAdapter();
       const request = adapter.buildRequest({
         model: 'gpt-4o',
@@ -242,7 +261,7 @@ describe('ResponsesAdapter', () => {
         temperatureSupported: false,
       });
 
-      expect(request).not.toHaveProperty('max_output_tokens');
+      expect(request).not.toHaveProperty(property);
     });
 
     it.each([0, -1, 1.5, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1])(
@@ -262,23 +281,6 @@ describe('ResponsesAdapter', () => {
         expect(request).not.toHaveProperty('max_output_tokens');
       },
     );
-
-    it('never maps max_output_tokens when Chat Completions capability flags are false', () => {
-      const { adapter } = makeAdapter();
-      const request = adapter.buildRequest({
-        model: 'gpt-4o',
-        startConversation: { prompt: '', maxOutputTokens: 2048 } as never,
-        messagesForCompletion: [],
-        temperatureSupported: false,
-      });
-
-      /*
-       * max_output_tokens mapping is not gated by any Chat-Completions-scoped
-       * capability flag — this test documents that omission of
-       * maxTokensSupported/maxCompletionTokensSupported has no bearing on it.
-       */
-      expect(request.max_output_tokens).toBe(2048);
-    });
 
     it('includes both temperature and max_output_tokens alongside the unchanged base body', () => {
       const { adapter } = makeAdapter();
@@ -334,18 +336,6 @@ describe('ResponsesAdapter', () => {
       expect(request).not.toHaveProperty('reasoning');
     });
 
-    it('omits reasoning when reasoningEfforts is absent', () => {
-      const { adapter } = makeAdapter();
-      const request = adapter.buildRequest({
-        model: 'gpt-4o',
-        startConversation: { prompt: '' } as never,
-        messagesForCompletion: [],
-        temperatureSupported: false,
-      });
-
-      expect(request).not.toHaveProperty('reasoning');
-    });
-
     it('includes custom_fields.configuration when configuration is provided', () => {
       const { adapter } = makeAdapter();
       const configuration = { mode: 'deep-research', sources: 5 };
@@ -358,18 +348,6 @@ describe('ResponsesAdapter', () => {
       });
 
       expect(request.custom_fields).toEqual({ configuration });
-    });
-
-    it('omits custom_fields when configuration is absent', () => {
-      const { adapter } = makeAdapter();
-      const request = adapter.buildRequest({
-        model: 'gpt-4o',
-        startConversation: { prompt: '' } as never,
-        messagesForCompletion: [],
-        temperatureSupported: false,
-      });
-
-      expect(request).not.toHaveProperty('custom_fields');
     });
   });
 

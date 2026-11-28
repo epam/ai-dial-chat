@@ -16,18 +16,21 @@ import {
 } from '../skill';
 
 describe('normalizeSkillName', () => {
-  it('lowercases and hyphenates a name with spaces and mixed case', () => {
-    expect(normalizeSkillName('Good Morning Breakfast')).toBe(
-      'good-morning-breakfast',
-    );
-  });
-
-  it('collapses repeated separators into a single hyphen', () => {
-    expect(normalizeSkillName('weird -- name__here')).toBe('weird-name-here');
-  });
-
-  it('trims leading and trailing hyphens', () => {
-    expect(normalizeSkillName('  --My Skill--  ')).toBe('my-skill');
+  it.each([
+    [
+      'lowercases and hyphenates a name with spaces and mixed case',
+      { input: 'Good Morning Breakfast', expected: 'good-morning-breakfast' },
+    ],
+    [
+      'collapses repeated separators into a single hyphen',
+      { input: 'weird -- name__here', expected: 'weird-name-here' },
+    ],
+    [
+      'trims leading and trailing hyphens',
+      { input: '  --My Skill--  ', expected: 'my-skill' },
+    ],
+  ])('%s', (_name, { input, expected }) => {
+    expect(normalizeSkillName(input)).toBe(expected);
   });
 });
 
@@ -36,35 +39,34 @@ describe('isValidSkillRelativePath', () => {
     expect(isValidSkillRelativePath('agents/analyzer.md')).toBe(true);
   });
 
-  it('rejects an absolute path', () => {
-    expect(isValidSkillRelativePath('/etc/passwd')).toBe(false);
+  it.each([
+    ['rejects an absolute path', { path: '/etc/passwd' }],
+    ['rejects a path traversal segment', { path: '../secrets.md' }],
+    [
+      'rejects a reserved entry name anywhere in the path',
+      { path: 'a/.dial-resource/b' },
+    ],
+    ['rejects a control character', { path: 'notes\x00.md' }],
+  ])('%s', (_name, { path }) => {
+    expect(isValidSkillRelativePath(path)).toBe(false);
   });
 
-  it('rejects a path traversal segment', () => {
-    expect(isValidSkillRelativePath('../secrets.md')).toBe(false);
-  });
-
-  it('rejects a reserved entry name anywhere in the path', () => {
-    expect(isValidSkillRelativePath('a/.dial-resource/b')).toBe(false);
-  });
-
-  it('rejects the .dial_folder marker name anywhere in the path', () => {
-    expect(isValidSkillRelativePath('docs/.dial_folder')).toBe(false);
-    expect(isValidSkillRelativePath('.dial_folder/probe')).toBe(false);
-  });
-
-  it('rejects a reserved first segment', () => {
-    expect(isValidSkillRelativePath('files/notes.md')).toBe(false);
-    expect(isValidSkillRelativePath('v/notes.md')).toBe(false);
-  });
-
-  it('rejects a control character', () => {
-    expect(isValidSkillRelativePath('notes\x00.md')).toBe(false);
-  });
-
-  it('rejects a Windows drive letter or backslash', () => {
-    expect(isValidSkillRelativePath('C:/notes.md')).toBe(false);
-    expect(isValidSkillRelativePath('notes\\file.md')).toBe(false);
+  it.each([
+    [
+      'rejects the .dial_folder marker name anywhere in the path',
+      { paths: ['docs/.dial_folder', '.dial_folder/probe'] },
+    ],
+    [
+      'rejects a reserved first segment',
+      { paths: ['files/notes.md', 'v/notes.md'] },
+    ],
+    [
+      'rejects a Windows drive letter or backslash',
+      { paths: ['C:/notes.md', 'notes\\file.md'] },
+    ],
+  ])('%s', (_name, { paths: [first, second] }) => {
+    expect(isValidSkillRelativePath(first)).toBe(false);
+    expect(isValidSkillRelativePath(second)).toBe(false);
   });
 });
 
@@ -300,22 +302,25 @@ describe('startsWithFrontmatterBlock', () => {
     expect(startsWithFrontmatterBlock(pasted)).toBe(true);
   });
 
-  it('flags a block preceded by blank lines', () => {
-    expect(startsWithFrontmatterBlock('\n\n---\nname: pdf\n---\nbody')).toBe(
-      true,
-    );
-  });
-
-  it('flags a block whose fenced content is not parseable YAML', () => {
-    expect(startsWithFrontmatterBlock('---\nname: [unclosed\n---\nbody')).toBe(
-      true,
-    );
-  });
-
-  it('flags fences carrying trailing whitespace', () => {
-    expect(startsWithFrontmatterBlock('---  \nname: pdf\n---\t\nbody')).toBe(
-      true,
-    );
+  it.each([
+    [
+      'flags a block preceded by blank lines',
+      { value: '\n\n---\nname: pdf\n---\nbody' },
+    ],
+    [
+      'flags a block whose fenced content is not parseable YAML',
+      { value: '---\nname: [unclosed\n---\nbody' },
+    ],
+    [
+      'flags fences carrying trailing whitespace',
+      { value: '---  \nname: pdf\n---\t\nbody' },
+    ],
+    [
+      'ignores a leading byte-order mark',
+      { value: '\uFEFF---\nname: pdf\n---\nbody' },
+    ],
+  ])('%s', (_name, { value }) => {
+    expect(startsWithFrontmatterBlock(value)).toBe(true);
   });
 
   it('treats a horizontal rule further down the body as ordinary Markdown', () => {
@@ -351,11 +356,5 @@ describe('startsWithFrontmatterBlock', () => {
       startsWithFrontmatterBlock(lf),
     );
     expect(startsWithFrontmatterBlock(crlf)).toBe(true);
-  });
-
-  it('ignores a leading byte-order mark', () => {
-    expect(startsWithFrontmatterBlock('\uFEFF---\nname: pdf\n---\nbody')).toBe(
-      true,
-    );
   });
 });

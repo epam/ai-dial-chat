@@ -27,47 +27,41 @@ describe('validate - ALLOWED_IFRAME_ORIGINS', () => {
     ]);
   });
 
-  it('rejects an entry with no protocol', () => {
+  it.each([
+    [
+      'rejects an entry with no protocol',
+      { origins: 'quickapps.aks.dev.dial.parts' },
+    ],
+    [
+      'rejects an entry with a disallowed protocol',
+      { origins: 'ftp://quickapps.aks.dev.dial.parts' },
+    ],
+    [
+      'rejects an entry with a path',
+      { origins: 'https://quickapps.test/embed' },
+    ],
+    [
+      'rejects an entry with a query string',
+      { origins: 'https://quickapps.test?x=1' },
+    ],
+    [
+      'rejects an entry containing CSP-breaking characters',
+      { origins: "https://evil.example.com; script-src 'none'" },
+    ],
+    ['rejects a bare wildcard host', { origins: 'https://*' }],
+    [
+      'rejects a wildcard outside the leftmost label',
+      { origins: 'https://foo.*.example.com' },
+    ],
+    [
+      'rejects a wildcard entry with a path',
+      { origins: 'https://*.example.com/embed' },
+    ],
+  ])('%s', (_name, { origins }) => {
     expect(() =>
       validate({
         ...validBaseConfig,
-        ALLOWED_IFRAME_ORIGINS: 'quickapps.aks.dev.dial.parts',
-      }),
-    ).toThrow(/Environment validation failed/);
-  });
-
-  it('rejects an entry with a disallowed protocol', () => {
-    expect(() =>
-      validate({
-        ...validBaseConfig,
-        ALLOWED_IFRAME_ORIGINS: 'ftp://quickapps.aks.dev.dial.parts',
-      }),
-    ).toThrow(/Environment validation failed/);
-  });
-
-  it('rejects an entry with a path', () => {
-    expect(() =>
-      validate({
-        ...validBaseConfig,
-        ALLOWED_IFRAME_ORIGINS: 'https://quickapps.test/embed',
-      }),
-    ).toThrow(/Environment validation failed/);
-  });
-
-  it('rejects an entry with a query string', () => {
-    expect(() =>
-      validate({
-        ...validBaseConfig,
-        ALLOWED_IFRAME_ORIGINS: 'https://quickapps.test?x=1',
-      }),
-    ).toThrow(/Environment validation failed/);
-  });
-
-  it('rejects an entry containing CSP-breaking characters', () => {
-    expect(() =>
-      validate({
-        ...validBaseConfig,
-        ALLOWED_IFRAME_ORIGINS: "https://evil.example.com; script-src 'none'",
+        ALLOWED_IFRAME_ORIGINS: origins,
       }),
     ).toThrow(/Environment validation failed/);
   });
@@ -91,33 +85,6 @@ describe('validate - ALLOWED_IFRAME_ORIGINS', () => {
       'https://quickapps.test',
       'https://*.example.com',
     ]);
-  });
-
-  it('rejects a bare wildcard host', () => {
-    expect(() =>
-      validate({
-        ...validBaseConfig,
-        ALLOWED_IFRAME_ORIGINS: 'https://*',
-      }),
-    ).toThrow(/Environment validation failed/);
-  });
-
-  it('rejects a wildcard outside the leftmost label', () => {
-    expect(() =>
-      validate({
-        ...validBaseConfig,
-        ALLOWED_IFRAME_ORIGINS: 'https://foo.*.example.com',
-      }),
-    ).toThrow(/Environment validation failed/);
-  });
-
-  it('rejects a wildcard entry with a path', () => {
-    expect(() =>
-      validate({
-        ...validBaseConfig,
-        ALLOWED_IFRAME_ORIGINS: 'https://*.example.com/embed',
-      }),
-    ).toThrow(/Environment validation failed/);
   });
 });
 

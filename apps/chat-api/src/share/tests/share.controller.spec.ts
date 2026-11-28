@@ -337,10 +337,23 @@ describe('ShareController (integration)', () => {
       );
     });
 
-    it('returns 400 for a bucket-relative prompt path with no prefix', async () => {
+    it.each([
+      [
+        'returns 400 for a bucket-relative prompt path with no prefix',
+        { itemId: 'Work/AI/summarize' },
+      ],
+      [
+        'returns 400 when a conversation itemId contains a path traversal attempt',
+        { itemId: 'conversations/owner-bucket/../../etc/passwd' },
+      ],
+      [
+        'returns 400 when itemId contains a path traversal attempt',
+        { itemId: '../etc/passwd' },
+      ],
+    ])('%s', async (_name, { itemId }) => {
       await request(app.getHttpServer())
         .post('/api/v1/share/discard')
-        .send({ itemId: 'Work/AI/summarize' })
+        .send({ itemId })
         .expect(400);
 
       expect(service.discardShared).not.toHaveBeenCalled();
@@ -412,24 +425,6 @@ describe('ShareController (integration)', () => {
         TEST_USER.at,
         TEST_USER.sub,
       );
-    });
-
-    it('returns 400 when a conversation itemId contains a path traversal attempt', async () => {
-      await request(app.getHttpServer())
-        .post('/api/v1/share/discard')
-        .send({ itemId: 'conversations/owner-bucket/../../etc/passwd' })
-        .expect(400);
-
-      expect(service.discardShared).not.toHaveBeenCalled();
-    });
-
-    it('returns 400 when itemId contains a path traversal attempt', async () => {
-      await request(app.getHttpServer())
-        .post('/api/v1/share/discard')
-        .send({ itemId: '../etc/passwd' })
-        .expect(400);
-
-      expect(service.discardShared).not.toHaveBeenCalled();
     });
 
     it('returns 401 when the service throws UnauthorizedException', async () => {
@@ -577,41 +572,20 @@ describe('ShareController (integration)', () => {
       },
     );
 
-    it('accepts a nested toolset resource path', async () => {
-      const itemId = 'toolsets/owner-bucket/folder/my-toolset';
-
-      await request(app.getHttpServer())
-        .post('/api/v1/share/revoke')
-        .send({ itemId })
-        .expect(200);
-
-      expect(service.revokeShared).toHaveBeenCalledWith(
-        itemId,
-        TEST_USER.at,
-        TEST_USER.sub,
-        TEST_USER.bucket,
-      );
-    });
-
-    it('accepts a conversation resource path', async () => {
-      const itemId = 'conversations/owner-bucket/my-chat';
-
-      await request(app.getHttpServer())
-        .post('/api/v1/share/revoke')
-        .send({ itemId })
-        .expect(200);
-
-      expect(service.revokeShared).toHaveBeenCalledWith(
-        itemId,
-        TEST_USER.at,
-        TEST_USER.sub,
-        TEST_USER.bucket,
-      );
-    });
-
-    it('accepts a skills/{bucket}/{path} resource path', async () => {
-      const itemId = 'skills/owner-bucket/team-a/docs-helper';
-
+    it.each([
+      [
+        'accepts a nested toolset resource path',
+        { itemId: 'toolsets/owner-bucket/folder/my-toolset' },
+      ],
+      [
+        'accepts a conversation resource path',
+        { itemId: 'conversations/owner-bucket/my-chat' },
+      ],
+      [
+        'accepts a skills/{bucket}/{path} resource path',
+        { itemId: 'skills/owner-bucket/team-a/docs-helper' },
+      ],
+    ])('%s', async (_name, { itemId }) => {
       await request(app.getHttpServer())
         .post('/api/v1/share/revoke')
         .send({ itemId })

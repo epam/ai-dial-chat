@@ -26,22 +26,33 @@ const resolve = createPublishDependencyIconResolver({
 });
 
 describe('createPublishDependencyIconResolver', () => {
-  it('gives an application the resolved icon of the loaded deployment', () => {
-    expect(
-      resolve(dependency('applications/b/Agent%20One__1.0.0', 'application')),
-    ).toBe('/resolved/agent.png');
-  });
-
-  it('matches an application whose id is encoded differently', () => {
-    expect(
-      resolve(dependency('applications/b/Agent One__1.0.0', 'application')),
-    ).toBe('/resolved/agent.png');
-  });
-
-  it('gives a toolset the resolved icon of the loaded toolset', () => {
-    expect(resolve(dependency('toolsets/b/Search__1.0.0', 'toolset'))).toBe(
-      '/resolved/search.png',
-    );
+  it.each([
+    [
+      'gives an application the resolved icon of the loaded deployment',
+      {
+        id: 'applications/b/Agent%20One__1.0.0',
+        type: 'application' as const,
+        expected: '/resolved/agent.png',
+      },
+    ],
+    [
+      'matches an application whose id is encoded differently',
+      {
+        id: 'applications/b/Agent One__1.0.0',
+        type: 'application' as const,
+        expected: '/resolved/agent.png',
+      },
+    ],
+    [
+      'gives a toolset the resolved icon of the loaded toolset',
+      {
+        id: 'toolsets/b/Search__1.0.0',
+        type: 'toolset' as const,
+        expected: '/resolved/search.png',
+      },
+    ],
+  ])('%s', (_name, { id, type, expected }) => {
+    expect(resolve(dependency(id, type))).toBe(expected);
   });
 
   it('gives nothing for an entity the host has not loaded', () => {

@@ -21,20 +21,24 @@ const makeFile = (overrides: Partial<DialFile>): DialFile => ({
 });
 
 describe('virtualPathToApiPath', () => {
-  it('maps the root virtual path to an empty API path', () => {
-    expect(virtualPathToApiPath('/My files', ROOT_LABEL)).toBe('');
-  });
-
-  it('maps nested folder virtual paths to API folder paths', () => {
-    expect(virtualPathToApiPath('/My files/reports/', ROOT_LABEL)).toBe(
-      'reports/',
-    );
-  });
-
-  it('collapses double slashes from a folder-prefix + leading-slash paste destination', () => {
-    expect(
-      virtualPathToApiPath('/My files/folder_for_test//file.png', ROOT_LABEL),
-    ).toBe('folder_for_test/file.png/');
+  it.each([
+    [
+      'maps the root virtual path to an empty API path',
+      { path: '/My files', expected: '' },
+    ],
+    [
+      'maps nested folder virtual paths to API folder paths',
+      { path: '/My files/reports/', expected: 'reports/' },
+    ],
+    [
+      'collapses double slashes from a folder-prefix + leading-slash paste destination',
+      {
+        path: '/My files/folder_for_test//file.png',
+        expected: 'folder_for_test/file.png/',
+      },
+    ],
+  ])('%s', (_name, { path, expected }) => {
+    expect(virtualPathToApiPath(path, ROOT_LABEL)).toBe(expected);
   });
 });
 

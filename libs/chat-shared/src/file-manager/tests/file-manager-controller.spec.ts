@@ -71,23 +71,28 @@ describe('FileManagerController', () => {
 });
 
 describe('getParentFolderPath', () => {
-  it('returns the parent folder for a file in a subfolder', () => {
-    expect(getParentFolderPath('reports/file.txt')).toBe('reports/');
-  });
-
-  it('returns the parent folder for a virtual folder path', () => {
-    expect(getParentFolderPath('/My files/reports/')).toBe('/My files/');
-  });
-
-  it('returns empty string for a root-level file', () => {
-    expect(getParentFolderPath('report.pdf')).toBe('');
-  });
-
-  it('returns empty string for a path with no parent', () => {
-    expect(getParentFolderPath('file')).toBe('');
-  });
-
-  it('handles deeply nested paths', () => {
-    expect(getParentFolderPath('/a/b/c/d.txt')).toBe('/a/b/c/');
+  it.each([
+    [
+      'returns the parent folder for a file in a subfolder',
+      { path: 'reports/file.txt', expected: 'reports/' },
+    ],
+    [
+      'returns the parent folder for a virtual folder path',
+      { path: '/My files/reports/', expected: '/My files/' },
+    ],
+    [
+      'returns empty string for a root-level file',
+      { path: 'report.pdf', expected: '' },
+    ],
+    [
+      'returns empty string for a path with no parent',
+      { path: 'file', expected: '' },
+    ],
+    [
+      'handles deeply nested paths',
+      { path: '/a/b/c/d.txt', expected: '/a/b/c/' },
+    ],
+  ])('%s', (_title, { path, expected }) => {
+    expect(getParentFolderPath(path)).toBe(expected);
   });
 });

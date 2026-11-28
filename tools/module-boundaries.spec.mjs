@@ -76,52 +76,56 @@ const projectCwdErrors = async (projectRoot, specifier, importedNames) => {
   );
 };
 
-test('a UI lib cannot import the generated API client', async () => {
-  const errors = await boundaryErrors(
-    'libs/catalog',
-    '@epam/ai-dial-chat-api-client',
-  );
-  assert.equal(errors.length, 1);
-  assert.match(errors[0].message, /type:ui/);
-});
-
-test('chat-shared cannot import a feature lib', async () => {
+for (const [title, { project, importPath, message }] of [
+  [
+    'a UI lib cannot import the generated API client',
+    {
+      project: 'libs/catalog',
+      importPath: '@epam/ai-dial-chat-api-client',
+      message: /type:ui/,
+    },
+  ],
   // Every feature lib already depends on chat-shared, so Nx reports the cycle
   // before it checks tags.
-  const errors = await boundaryErrors(
-    'libs/chat-shared',
-    '@epam/ai-dial-catalog',
-  );
-  assert.equal(errors.length, 1);
-  assert.match(errors[0].message, /Circular dependency/);
-});
-
-test('chat-shared cannot import a non-shared lib', async () => {
-  const errors = await boundaryErrors(
-    'libs/chat-shared',
-    '@epam/ai-dial-chat-api-client',
-  );
-  assert.equal(errors.length, 1);
-  assert.match(errors[0].message, /type:shared/);
-});
-
-test('the backend cannot import a frontend lib', async () => {
-  const errors = await boundaryErrors(
-    'apps/chat-api',
-    '@epam/ai-dial-chat-shared',
-  );
-  assert.equal(errors.length, 1);
-  assert.match(errors[0].message, /type:backend/);
-});
-
-test('a sandbox app cannot import the generated API client', async () => {
-  const errors = await boundaryErrors(
-    'apps/chat-overlay-sandbox',
-    '@epam/ai-dial-chat-api-client',
-  );
-  assert.equal(errors.length, 1);
-  assert.match(errors[0].message, /type:fixture/);
-});
+  [
+    'chat-shared cannot import a feature lib',
+    {
+      project: 'libs/chat-shared',
+      importPath: '@epam/ai-dial-catalog',
+      message: /Circular dependency/,
+    },
+  ],
+  [
+    'chat-shared cannot import a non-shared lib',
+    {
+      project: 'libs/chat-shared',
+      importPath: '@epam/ai-dial-chat-api-client',
+      message: /type:shared/,
+    },
+  ],
+  [
+    'the backend cannot import a frontend lib',
+    {
+      project: 'apps/chat-api',
+      importPath: '@epam/ai-dial-chat-shared',
+      message: /type:backend/,
+    },
+  ],
+  [
+    'a sandbox app cannot import the generated API client',
+    {
+      project: 'apps/chat-overlay-sandbox',
+      importPath: '@epam/ai-dial-chat-api-client',
+      message: /type:fixture/,
+    },
+  ],
+]) {
+  test(title, async () => {
+    const errors = await boundaryErrors(project, importPath);
+    assert.equal(errors.length, 1);
+    assert.match(errors[0].message, message);
+  });
+}
 
 test('a consumer fixture cannot import the generated API client', async () => {
   const errors = await boundaryErrors(

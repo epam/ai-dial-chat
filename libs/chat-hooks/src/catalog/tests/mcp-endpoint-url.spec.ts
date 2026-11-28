@@ -30,33 +30,41 @@ describe('mcp-endpoint-url', () => {
   });
 
   describe('buildApplicationMcpUrl', () => {
-    it('matches the application URL shape', () => {
-      expect(buildApplicationMcpUrl('https://dial.example.com', 'my-app')).toBe(
-        'https://dial.example.com/v1/deployments/my-app/mcp',
-      );
-    });
-
-    it('encodes path segments independently, without affecting separators', () => {
+    it.each([
+      [
+        'matches the application URL shape',
+        {
+          deploymentId: 'my-app',
+          expected: 'https://dial.example.com/v1/deployments/my-app/mcp',
+        },
+      ],
+      [
+        'encodes path segments independently, without affecting separators',
+        {
+          deploymentId: 'applications/public/my app',
+          expected:
+            'https://dial.example.com/v1/deployments/applications/public/my%20app/mcp',
+        },
+      ],
+      [
+        'does not double-encode an already-encoded space',
+        {
+          deploymentId: 'my%20app',
+          expected: 'https://dial.example.com/v1/deployments/my%20app/mcp',
+        },
+      ],
+      [
+        'preserves a literal %2F inside a segment instead of splitting it further',
+        {
+          deploymentId: 'Team%2FApp One',
+          expected:
+            'https://dial.example.com/v1/deployments/Team%2FApp%20One/mcp',
+        },
+      ],
+    ])('%s', (_name, { deploymentId, expected }) => {
       expect(
-        buildApplicationMcpUrl(
-          'https://dial.example.com',
-          'applications/public/my app',
-        ),
-      ).toBe(
-        'https://dial.example.com/v1/deployments/applications/public/my%20app/mcp',
-      );
-    });
-
-    it('does not double-encode an already-encoded space', () => {
-      expect(
-        buildApplicationMcpUrl('https://dial.example.com', 'my%20app'),
-      ).toBe('https://dial.example.com/v1/deployments/my%20app/mcp');
-    });
-
-    it('preserves a literal %2F inside a segment instead of splitting it further', () => {
-      expect(
-        buildApplicationMcpUrl('https://dial.example.com', 'Team%2FApp One'),
-      ).toBe('https://dial.example.com/v1/deployments/Team%2FApp%20One/mcp');
+        buildApplicationMcpUrl('https://dial.example.com', deploymentId),
+      ).toBe(expected);
     });
   });
 

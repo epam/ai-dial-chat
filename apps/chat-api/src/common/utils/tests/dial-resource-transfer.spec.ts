@@ -38,20 +38,25 @@ const makeClient = (overrides: Record<string, unknown>) =>
   overrides as unknown as DialClientService['client'];
 
 describe('path helpers', () => {
-  it('builds a nested path from a plain folder and an encoded leaf', () => {
-    expect(buildFolderResourcePath('My Folder/Sub', 'agent__1.0.0')).toBe(
-      'My%20Folder/Sub/agent__1.0.0',
-    );
-  });
-
-  it('keeps a root path as the leaf only', () => {
-    expect(buildFolderResourcePath('', 'agent__1.0.0')).toBe('agent__1.0.0');
-  });
-
-  it('keeps a literal percent in a plain folder name', () => {
-    expect(buildFolderResourcePath('test%20folder', 'a')).toBe(
-      'test%2520folder/a',
-    );
+  it.each([
+    [
+      'builds a nested path from a plain folder and an encoded leaf',
+      {
+        folder: 'My Folder/Sub',
+        leaf: 'agent__1.0.0',
+        expected: 'My%20Folder/Sub/agent__1.0.0',
+      },
+    ],
+    [
+      'keeps a root path as the leaf only',
+      { folder: '', leaf: 'agent__1.0.0', expected: 'agent__1.0.0' },
+    ],
+    [
+      'keeps a literal percent in a plain folder name',
+      { folder: 'test%20folder', leaf: 'a', expected: 'test%2520folder/a' },
+    ],
+  ])('%s', (_name, { folder, leaf, expected }) => {
+    expect(buildFolderResourcePath(folder, leaf)).toBe(expected);
   });
 
   it('returns the last segment as the leaf', () => {

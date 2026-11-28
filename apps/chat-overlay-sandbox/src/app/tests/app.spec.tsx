@@ -80,46 +80,37 @@ describe('App', () => {
     ).toBeTruthy();
   });
 
-  it('navigates to the manager case', async () => {
+  it.each([
+    [
+      'navigates to the manager case',
+      { button: 'ChatOverlayManager case', content: 'Manager case content' },
+    ],
+    [
+      'navigates to the conversation-list case',
+      {
+        button: 'Conversation-list methods case',
+        content: 'Conversation-list case content',
+      },
+    ],
+    [
+      'navigates to the enabledFeatures case',
+      {
+        button: 'enabledFeatures case',
+        content: 'Enabled-features case content',
+      },
+    ],
+    [
+      'navigates to the provider auth UI mode case',
+      {
+        button: 'Provider auth UI mode case',
+        content: 'Auth UI mode case content',
+      },
+    ],
+  ])('%s', async (_name, { button, content }) => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(
-      screen.getByRole('button', { name: 'ChatOverlayManager case' }),
-    );
-    expect(screen.getByText('Manager case content')).toBeTruthy();
-  });
-
-  it('navigates to the conversation-list case', async () => {
-    const user = userEvent.setup();
-    render(<App />);
-
-    await user.click(
-      screen.getByRole('button', {
-        name: 'Conversation-list methods case',
-      }),
-    );
-    expect(screen.getByText('Conversation-list case content')).toBeTruthy();
-  });
-
-  it('navigates to the enabledFeatures case', async () => {
-    const user = userEvent.setup();
-    render(<App />);
-
-    await user.click(
-      screen.getByRole('button', { name: 'enabledFeatures case' }),
-    );
-    expect(screen.getByText('Enabled-features case content')).toBeTruthy();
-  });
-
-  it('navigates to the provider auth UI mode case', async () => {
-    const user = userEvent.setup();
-    render(<App />);
-
-    await user.click(
-      screen.getByRole('button', { name: 'Provider auth UI mode case' }),
-    );
-
-    expect(screen.getByText('Auth UI mode case content')).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: button }));
+    expect(screen.getByText(content)).toBeTruthy();
   });
 });

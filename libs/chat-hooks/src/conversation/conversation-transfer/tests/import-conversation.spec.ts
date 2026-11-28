@@ -265,28 +265,48 @@ describe('rebaseConversationId', () => {
     expect(subPath).not.toContain('analyze this document');
   });
 
-  it('replaces the title of an old-chat filename that carries no trailing uuid', () => {
+  it.each([
+    [
+      'replaces the title of an old-chat filename that carries no trailing uuid',
+      {
+        id: 'old-bucket/gpt-4o__hello',
+        name: 'Greeting and assistance inquiry',
+        expected: /^gpt-4o__Greeting and assistance inquiry__[0-9a-f-]{36}$/,
+      },
+    ],
+    [
+      'keeps a title containing the __ separator intact',
+      {
+        id: 'old-bucket/gpt-4o__a__b__550e8400-e29b-41d4-a716-446655440000',
+        name: 'left__right',
+        expected: /^gpt-4o__left__right__[0-9a-f-]{36}$/,
+      },
+    ],
+    [
+      'treats a numeric title outside an applications path as a title, not a version suffix',
+      {
+        id: 'old-bucket/gpt-4o__1.0__550e8400-e29b-41d4-a716-446655440000',
+        name: 'Number sequence inquiry',
+        expected: /^gpt-4o__Number sequence inquiry__[0-9a-f-]{36}$/,
+      },
+    ],
+    [
+      'only re-suffixes a filename that has no __ separator at all',
+      {
+        id: 'old-bucket/legacy-name',
+        name: 'Some Name',
+        expected: /^legacy-name__[0-9a-f-]{36}$/,
+      },
+    ],
+  ])('%s', (_name, { id, name, expected }) => {
     const conversation = makeConversation({
-      id: 'old-bucket/gpt-4o__hello',
+      id,
       folderId: 'old-bucket',
-      name: 'Greeting and assistance inquiry',
+      name,
     });
     const { subPath } = rebaseConversationId(conversation, 'new-bucket');
 
-    expect(subPath).toMatch(
-      /^gpt-4o__Greeting and assistance inquiry__[0-9a-f-]{36}$/,
-    );
-  });
-
-  it('keeps a title containing the __ separator intact', () => {
-    const conversation = makeConversation({
-      id: 'old-bucket/gpt-4o__a__b__550e8400-e29b-41d4-a716-446655440000',
-      folderId: 'old-bucket',
-      name: 'left__right',
-    });
-    const { subPath } = rebaseConversationId(conversation, 'new-bucket');
-
-    expect(subPath).toMatch(/^gpt-4o__left__right__[0-9a-f-]{36}$/);
+    expect(subPath).toMatch(expected);
   });
 
   it('preserves a versioned application deployment id and its version suffix', () => {
@@ -303,47 +323,50 @@ describe('rebaseConversationId', () => {
     );
   });
 
-  it('treats a numeric title outside an applications path as a title, not a version suffix', () => {
+  it.each([
+    [
+      'strips characters DIAL Core rejects from the name and stores the sanitized one',
+      {
+        id: 'old-bucket/gpt-4o__hello',
+        name: 'Q1: revenue/cost {draft}',
+        expectedSubPath: /^gpt-4o__Q1 revenuecost draft__[0-9a-f-]{36}$/,
+        /* The stored name must equal the filename title, so the list renders
+         * the same string whether or not it read the body back. */
+        expectedName: 'Q1 revenuecost draft',
+      },
+    ],
+    [
+      'keeps only the first non-empty line of a multi-line name',
+      {
+        id: 'old-bucket/gpt-4o__hello',
+        name: '\n  First line  \nSecond line',
+        expectedSubPath: /^gpt-4o__First line__[0-9a-f-]{36}$/,
+        expectedName: 'First line',
+      },
+    ],
+    [
+      'falls back to the exported filename title when the name sanitizes to nothing',
+      {
+        id: 'old-bucket/gpt-4o__hello__550e8400-e29b-41d4-a716-446655440000',
+        name: '///',
+        expectedSubPath: /^gpt-4o__hello__[0-9a-f-]{36}$/,
+        /* Nothing usable to write back, so the source name is left untouched. */
+        expectedName: '///',
+      },
+    ],
+  ])('%s', (_name, { id, name, expectedSubPath, expectedName }) => {
     const conversation = makeConversation({
-      id: 'old-bucket/gpt-4o__1.0__550e8400-e29b-41d4-a716-446655440000',
+      id,
       folderId: 'old-bucket',
-      name: 'Number sequence inquiry',
-    });
-    const { subPath } = rebaseConversationId(conversation, 'new-bucket');
-
-    expect(subPath).toMatch(/^gpt-4o__Number sequence inquiry__[0-9a-f-]{36}$/);
-  });
-
-  it('strips characters DIAL Core rejects from the name and stores the sanitized one', () => {
-    const conversation = makeConversation({
-      id: 'old-bucket/gpt-4o__hello',
-      folderId: 'old-bucket',
-      name: 'Q1: revenue/cost {draft}',
+      name,
     });
     const { conversation: result, subPath } = rebaseConversationId(
       conversation,
       'new-bucket',
     );
 
-    expect(subPath).toMatch(/^gpt-4o__Q1 revenuecost draft__[0-9a-f-]{36}$/);
-    /* The stored name must equal the filename title, so the list renders the
-     * same string whether or not it read the body back. */
-    expect(result.name).toBe('Q1 revenuecost draft');
-  });
-
-  it('keeps only the first non-empty line of a multi-line name', () => {
-    const conversation = makeConversation({
-      id: 'old-bucket/gpt-4o__hello',
-      folderId: 'old-bucket',
-      name: '\n  First line  \nSecond line',
-    });
-    const { conversation: result, subPath } = rebaseConversationId(
-      conversation,
-      'new-bucket',
-    );
-
-    expect(subPath).toMatch(/^gpt-4o__First line__[0-9a-f-]{36}$/);
-    expect(result.name).toBe('First line');
+    expect(subPath).toMatch(expectedSubPath);
+    expect(result.name).toBe(expectedName);
   });
 
   it('truncates a name longer than 255 utf-8 bytes', () => {
@@ -358,33 +381,6 @@ describe('rebaseConversationId', () => {
     );
 
     expect(result.name).toBe('a'.repeat(255));
-  });
-
-  it('falls back to the exported filename title when the name sanitizes to nothing', () => {
-    const conversation = makeConversation({
-      id: 'old-bucket/gpt-4o__hello__550e8400-e29b-41d4-a716-446655440000',
-      folderId: 'old-bucket',
-      name: '///',
-    });
-    const { conversation: result, subPath } = rebaseConversationId(
-      conversation,
-      'new-bucket',
-    );
-
-    expect(subPath).toMatch(/^gpt-4o__hello__[0-9a-f-]{36}$/);
-    /* Nothing usable to write back, so the source name is left untouched. */
-    expect(result.name).toBe('///');
-  });
-
-  it('only re-suffixes a filename that has no __ separator at all', () => {
-    const conversation = makeConversation({
-      id: 'old-bucket/legacy-name',
-      folderId: 'old-bucket',
-      name: 'Some Name',
-    });
-    const { subPath } = rebaseConversationId(conversation, 'new-bucket');
-
-    expect(subPath).toMatch(/^legacy-name__[0-9a-f-]{36}$/);
   });
 });
 

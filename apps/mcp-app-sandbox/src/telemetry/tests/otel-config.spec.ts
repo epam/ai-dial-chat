@@ -50,52 +50,39 @@ describe('parseOtelConfig', () => {
     ).toBe('otlp');
   });
 
-  it('parses a single metrics exporter', () => {
+  it.each([
+    ['parses a single metrics exporter', { value: 'otlp', expected: ['otlp'] }],
+    [
+      'parses a comma-separated list of both metrics exporters',
+      { value: 'otlp,prometheus', expected: ['otlp', 'prometheus'] },
+    ],
+    [
+      'tolerates whitespace around comma-separated metrics exporters',
+      { value: ' otlp , prometheus ', expected: ['otlp', 'prometheus'] },
+    ],
+    [
+      'disables metrics entirely when the list includes none, regardless of other entries',
+      { value: 'otlp,none', expected: [] },
+    ],
+    [
+      'defaults to prometheus when OTEL_METRICS_EXPORTER is an empty string',
+      { value: '', expected: ['prometheus'] },
+    ],
+    [
+      'drops unrecognized tokens from the metrics exporter list',
+      { value: 'otlp,zipkin', expected: ['otlp'] },
+    ],
+    [
+      'deduplicates repeated metrics exporter tokens',
+      { value: 'otlp,otlp', expected: ['otlp'] },
+    ],
+  ])('%s', (_name, { value, expected }) => {
     expect(
-      parseOtelConfig({ OTEL_METRICS_EXPORTER: 'otlp' }).metricsExporters,
-    ).toEqual(['otlp']);
-  });
-
-  it('parses a comma-separated list of both metrics exporters', () => {
-    expect(
-      parseOtelConfig({ OTEL_METRICS_EXPORTER: 'otlp,prometheus' })
-        .metricsExporters,
-    ).toEqual(['otlp', 'prometheus']);
-  });
-
-  it('tolerates whitespace around comma-separated metrics exporters', () => {
-    expect(
-      parseOtelConfig({ OTEL_METRICS_EXPORTER: ' otlp , prometheus ' })
-        .metricsExporters,
-    ).toEqual(['otlp', 'prometheus']);
-  });
-
-  it('disables metrics entirely when the list includes none, regardless of other entries', () => {
-    expect(
-      parseOtelConfig({ OTEL_METRICS_EXPORTER: 'otlp,none' }).metricsExporters,
-    ).toEqual([]);
+      parseOtelConfig({ OTEL_METRICS_EXPORTER: value }).metricsExporters,
+    ).toEqual(expected);
   });
 
   it('defaults to prometheus when OTEL_METRICS_EXPORTER is unset', () => {
     expect(parseOtelConfig({}).metricsExporters).toEqual(['prometheus']);
-  });
-
-  it('defaults to prometheus when OTEL_METRICS_EXPORTER is an empty string', () => {
-    expect(
-      parseOtelConfig({ OTEL_METRICS_EXPORTER: '' }).metricsExporters,
-    ).toEqual(['prometheus']);
-  });
-
-  it('drops unrecognized tokens from the metrics exporter list', () => {
-    expect(
-      parseOtelConfig({ OTEL_METRICS_EXPORTER: 'otlp,zipkin' })
-        .metricsExporters,
-    ).toEqual(['otlp']);
-  });
-
-  it('deduplicates repeated metrics exporter tokens', () => {
-    expect(
-      parseOtelConfig({ OTEL_METRICS_EXPORTER: 'otlp,otlp' }).metricsExporters,
-    ).toEqual(['otlp']);
   });
 });

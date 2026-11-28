@@ -2,10 +2,41 @@ import { describe, expect, it } from 'vitest';
 import { isMimeTypeAllowed, mimeTypesToExtensionLabels } from '../attachment';
 
 describe('mimeTypesToExtensionLabels', () => {
-  it('converts exact MIME types to uppercase subtype labels', () => {
-    expect(mimeTypesToExtensionLabels(['application/pdf'])).toBe('PDF');
-    expect(mimeTypesToExtensionLabels(['text/csv'])).toBe('CSV');
-    expect(mimeTypesToExtensionLabels(['image/jpeg'])).toBe('JPEG');
+  it.each([
+    [
+      'converts exact MIME types to uppercase subtype labels',
+      {
+        cases: [
+          ['application/pdf', 'PDF'],
+          ['text/csv', 'CSV'],
+          ['image/jpeg', 'JPEG'],
+        ],
+      },
+    ],
+    [
+      'converts wildcard MIME types to human-readable group labels',
+      {
+        cases: [
+          ['image/*', 'Image files'],
+          ['audio/*', 'Audio files'],
+          ['video/*', 'Video files'],
+        ],
+      },
+    ],
+    [
+      'labels an aliased MIME type from its canonical entry',
+      {
+        cases: [
+          ['text/json', 'JSON'],
+          ['image/jpg', 'JPEG'],
+          ['application/x-zip-compressed', 'ZIP'],
+        ],
+      },
+    ],
+  ])('%s', (_name, { cases }) => {
+    for (const [mimeType, label] of cases) {
+      expect(mimeTypesToExtensionLabels([mimeType])).toBe(label);
+    }
   });
 
   it('converts common vendor and structured MIME types to extension labels', () => {
@@ -17,12 +48,6 @@ describe('mimeTypesToExtensionLabels', () => {
         'font/woff2',
       ]),
     ).toBe('DOCX, AZW, EPUB, WOFF2');
-  });
-
-  it('converts wildcard MIME types to human-readable group labels', () => {
-    expect(mimeTypesToExtensionLabels(['image/*'])).toBe('Image files');
-    expect(mimeTypesToExtensionLabels(['audio/*'])).toBe('Audio files');
-    expect(mimeTypesToExtensionLabels(['video/*'])).toBe('Video files');
   });
 
   it('falls back to "<major> files" for unrecognised wildcard groups', () => {
@@ -39,14 +64,6 @@ describe('mimeTypesToExtensionLabels', () => {
     ).toBe('PDF, JPEG, CSV');
     expect(mimeTypesToExtensionLabels(['image/*', 'application/pdf'])).toBe(
       'Image files, PDF',
-    );
-  });
-
-  it('labels an aliased MIME type from its canonical entry', () => {
-    expect(mimeTypesToExtensionLabels(['text/json'])).toBe('JSON');
-    expect(mimeTypesToExtensionLabels(['image/jpg'])).toBe('JPEG');
-    expect(mimeTypesToExtensionLabels(['application/x-zip-compressed'])).toBe(
-      'ZIP',
     );
   });
 
@@ -74,33 +91,81 @@ describe('isMimeTypeAllowed', () => {
     expect(isMimeTypeAllowed('audio/webm', ['audio/*'])).toBe(true);
   });
 
-  it('returns false when a wildcard does not cover the given MIME type', () => {
-    expect(isMimeTypeAllowed('video/mp4', ['image/*'])).toBe(false);
-  });
-
-  it('does not match partial major type without wildcard', () => {
-    expect(isMimeTypeAllowed('image/png', ['image/jpeg'])).toBe(false);
+  it.each([
+    [
+      'returns false when a wildcard does not cover the given MIME type',
+      { contentType: 'video/mp4', allowed: 'image/*', expected: false },
+    ],
+    [
+      'does not match partial major type without wildcard',
+      { contentType: 'image/png', allowed: 'image/jpeg', expected: false },
+    ],
+    [
+      'ignores letter case and parameters on both sides',
+      {
+        contentType: 'Application/JSON; charset=utf-8',
+        allowed: 'TEXT/JSON',
+        expected: true,
+      },
+    ],
+    [
+      'still matches a literal text subtype against a text wildcard',
+      { contentType: 'text/json', allowed: 'text/*', expected: true },
+    ],
+    [
+      'matches an aliased type against the wildcard of its canonical major type',
+      { contentType: 'text/json', allowed: 'application/*', expected: true },
+    ],
+    [
+      'does not treat distinct formats sharing an extension as aliases',
+      {
+        contentType: 'video/mp2t',
+        allowed: 'text/typescript',
+        expected: false,
+      },
+    ],
+  ])('%s', (_name, { contentType, allowed, expected }) => {
+    expect(isMimeTypeAllowed(contentType, [allowed])).toBe(expected);
   });
 
   it('returns false (reject all) when allowedTypes is empty', () => {
     expect(isMimeTypeAllowed('application/pdf', [])).toBe(false);
   });
 
-  it('returns true when allowedTypes contains the global wildcard "*"', () => {
-    expect(isMimeTypeAllowed('application/pdf', ['*'])).toBe(true);
-    expect(isMimeTypeAllowed('image/png', ['*'])).toBe(true);
-  });
-
-  it('returns true when allowedTypes contains "*/*"', () => {
-    expect(isMimeTypeAllowed('application/pdf', ['*/*'])).toBe(true);
-    expect(isMimeTypeAllowed('audio/webm', ['*/*'])).toBe(true);
-  });
-
-  it('matches a stored content type against an aliased declared type', () => {
+  it.each([
+    [
+      'returns true when allowedTypes contains the global wildcard "*"',
+      {
+        cases: [
+          ['application/pdf', '*'],
+          ['image/png', '*'],
+        ],
+      },
+    ],
+    [
+      'returns true when allowedTypes contains "*/*"',
+      {
+        cases: [
+          ['application/pdf', '*/*'],
+          ['audio/webm', '*/*'],
+        ],
+      },
+    ],
     /* [#8939](https://github.com/epam/ai-dial-chat/issues/8939): a deployment declaring `text/json` must accept the
        `application/json` DIAL Core stores for a .json file. */
-    expect(isMimeTypeAllowed('application/json', ['text/json'])).toBe(true);
-    expect(isMimeTypeAllowed('text/json', ['application/json'])).toBe(true);
+    [
+      'matches a stored content type against an aliased declared type',
+      {
+        cases: [
+          ['application/json', 'text/json'],
+          ['text/json', 'application/json'],
+        ],
+      },
+    ],
+  ])('%s', (_name, { cases }) => {
+    for (const [contentType, allowed] of cases) {
+      expect(isMimeTypeAllowed(contentType, [allowed])).toBe(true);
+    }
   });
 
   it.each([
@@ -112,23 +177,5 @@ describe('isMimeTypeAllowed', () => {
     ['application/msword', 'application/vnd.ms-word'],
   ])('matches %s against the declared alias %s', (contentType, declared) => {
     expect(isMimeTypeAllowed(contentType, [declared])).toBe(true);
-  });
-
-  it('ignores letter case and parameters on both sides', () => {
-    expect(
-      isMimeTypeAllowed('Application/JSON; charset=utf-8', ['TEXT/JSON']),
-    ).toBe(true);
-  });
-
-  it('still matches a literal text subtype against a text wildcard', () => {
-    expect(isMimeTypeAllowed('text/json', ['text/*'])).toBe(true);
-  });
-
-  it('matches an aliased type against the wildcard of its canonical major type', () => {
-    expect(isMimeTypeAllowed('text/json', ['application/*'])).toBe(true);
-  });
-
-  it('does not treat distinct formats sharing an extension as aliases', () => {
-    expect(isMimeTypeAllowed('video/mp2t', ['text/typescript'])).toBe(false);
   });
 });
